@@ -172,4 +172,60 @@ class ExecContextGraphServiceTest {
         assertFalse(vertices.contains(new ExecContextData.TaskVertex(102L)),
                 "dead-ancestor task #102 (upstream #101 is ERROR) must NOT be handed out for assigning");
     }
+
+    @Test
+    public void test_findAllForAssigning_convergenceAfterSkippedConditionalBranchIsAssignable() {
+        // Mirrors the mhdg-rg req-rung shape: a nop-wrapper (OK) whose conditional child nop-objectives is
+        // SKIPPED (hasObjectives=false), rejoining the sequential sibling resolve-requirement-status:
+        //   200(open,OK) -> 201(nop-wrapper,OK)
+        //   201 -> 202(nop-objectives, SKIPPED)          [conditional branch, 'when' false]
+        //   201 -> 203(resolve-requirement-status, NONE) [sequential sibling]
+        //   202 -> 203                                    [conditional branch rejoins here]
+        //   203 -> 204(mh.finish, leaf, NONE)
+        // #203 is REACHABLE via its live OK parent #201, so it MUST be assignable even though its other
+        // parent #202 was SKIPPED by a false 'when' condition.
+        String graphYaml = """
+            graph: |
+              strict digraph G {
+                200 [ ctxid="1" ];
+                201 [ ctxid="1" ];
+                202 [ ctxid="1" ];
+                203 [ ctxid="1" ];
+                204 [ ctxid="1" ];
+                200 -> 201;
+                201 -> 202;
+                201 -> 203;
+                202 -> 203;
+                203 -> 204;
+              }
+            version: 1
+            """;
+        String stateYaml = """
+            states:
+              200: OK
+              201: OK
+              202: SKIPPED
+              203: NONE
+              204: NONE
+            version: 1
+            """;
+
+        ExecContextGraph ecg = new ExecContextGraph();
+        ecg.id = 2909L;
+        ecg.execContextId = 42L;
+        ecg.version = 2;
+        ecg.setParams(graphYaml);
+
+        ExecContextTaskState ects = new ExecContextTaskState();
+        ects.id = 2909L;
+        ects.execContextId = 42L;
+        ects.setParams(stateYaml);
+
+        List<ExecContextData.TaskVertex> vertices = ExecContextGraphService.findAllForAssigning(ecg, ects, true);
+
+        // Green-1 (characterization of current BUGGY behavior): #203 is NOT handed out for assigning,
+        // because isParentFullyProcessed() blocks it on the SKIPPED ancestor #202 - so the EC stalls.
+        assertTrue(vertices.contains(new ExecContextData.TaskVertex(203L)),
+                "convergence task #203 after a SKIPPED conditional branch must be assignable (reachable via OK parent #201)");
+    }
 }

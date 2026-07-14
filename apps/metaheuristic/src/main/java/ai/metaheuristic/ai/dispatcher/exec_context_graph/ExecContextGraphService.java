@@ -587,10 +587,22 @@ public class ExecContextGraphService {
             if (!EnumsApi.TaskExecState.isFinishedState(state)) {
                 return false;
             }
-            // A task on a dead branch must never be handed out for assigning: if any ancestor terminally
-            // ERRORed or was SKIPPED, this task is unreachable and must be SKIPPED by skip-propagation,
-            // not executed on a broken/absent upstream (e.g. an in-band grafted line whose head terminally failed).
-            if (state == EnumsApi.TaskExecState.ERROR || state == EnumsApi.TaskExecState.SKIPPED) {
+        }
+        // A task on a dead branch must never be handed out for assigning: if any ancestor terminally
+        // ERRORed or was SKIPPED, this task is unreachable and must be SKIPPED by skip-propagation,
+        // not executed on a broken/absent upstream (e.g. an in-band grafted line whose head terminally failed).
+        // Refined: a task is unreachable ONLY when EVERY DIRECT parent is dead (ERROR/SKIPPED) - i.e. there is
+        // no live incoming path. A task that still has a LIVE (non-dead) direct parent IS reachable and must
+        // run, even if a sibling conditional branch that rejoins here was SKIPPED (e.g. mh.nop-objectives when
+        // its when-condition is false); blocking on ANY dead ANCESTOR stalls that legitimate convergence forever.
+        Set<ExecContextData.TaskVertex> directParents = graph.incomingEdgesOf(vertex).stream()
+                .map(graph::getEdgeSource).collect(Collectors.toSet());
+        if (!directParents.isEmpty()) {
+            boolean anyLiveParent = directParents.stream().anyMatch(p -> {
+                EnumsApi.TaskExecState st = stateParamsYaml.states.getOrDefault(p.taskId, EnumsApi.TaskExecState.NONE);
+                return st != EnumsApi.TaskExecState.ERROR && st != EnumsApi.TaskExecState.SKIPPED;
+            });
+            if (!anyLiveParent) {
                 return false;
             }
         }
