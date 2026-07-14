@@ -98,26 +98,7 @@ public class ExecContextVariableStateService {
     @Transactional
     public void registerCreatedTasks(Long execContextVariableStateId, List<ExecContextApiData.VariableState> events) {
         register(execContextVariableStateId, (ecpy)-> {
-            for (ExecContextApiData.VariableState event : events) {
-                boolean isNew = true;
-                for (ExecContextApiData.VariableState state : ecpy.states) {
-                    if (state.taskId.equals(event.taskId)) {
-                        isNew = false;
-                        if (state.inputs != null && !state.inputs.isEmpty()) {
-                            state.inputs.clear();
-                        }
-                        if (state.outputs != null && !state.outputs.isEmpty()) {
-                            state.outputs.clear();
-                        }
-                        state.inputs = event.inputs;
-                        state.outputs = event.outputs;
-                        break;
-                    }
-                }
-                if (isNew) {
-                    ecpy.states.add(event);
-                }
-            }
+            ExecContextVariableStateUtils.registerCreatedTasks(ecpy.states, events);
         });
     }
 
