@@ -676,4 +676,42 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
                 "Should find branch #1's variable, not #0 or #2. " +
                 "Walk from 1,2,5|1#0 → 1,2#1 (exact match for #1).");
     }
+
+    /**
+     * CT (Characterization Test) — an async-state ANCESTOR masks a nearer DB-ONLY variable.
+     *
+     * Production scenario (execContext #67, DSLv2 group-graft recursion): the rebound per-level
+     * 'depth' is written to the DB at the grafted line-root ctx by createInputVariablesForSubProcess
+     * (the splitter / graft bind() path), which — unlike an external-Function upload or an
+     * internal-context task output — does NOT register the variable in ExecContextVariableState. So the
+     * nearer 'depth' is DB-only, while a same-named level-0 ancestor 'depth' IS in the async state. When
+     * the grafted recurse gate resolves 'depth' by name, the async ancestry walk misses the nearer
+     * DB-only ctx and climbs to the registered ancestor, reading the wrong (farther) value.
+     *
+     * Setup (name-shared, mirrors the production topology):
+     *   - ancestor 'depth' at "1"     : in DB AND registered in ExecContextVariableState
+     *   - nearer   'depth' at "1,2#1" : in DB ONLY (not registered) — the injected bind variable
+     *   - search from "1,2,5|1#0"     : walk = 1,2,5|1#0 -> 1,2#1 -> 1 -> null
+     *
+     * Nearest-wins REQUIRES the "1,2#1" variable. Step 1 (Green) documents the current BUGGY behavior:
+     * the async-registered ancestor at "1" masks it and is returned instead.
+     */
+    @Test
+    public void test_CT_asyncAncestorMasksNearerDbOnlyVariable() {
+        Long execContextId = setupExecContext(List.of());
+
+        // ancestor: in DB + registered in the async state (the level-0 'depth')
+        Variable ancestorVar = createAndRegisterVariable("1", execContextId);
+        // nearer: in DB ONLY, NOT registered (the injected graft-bind 'depth' at the line root)
+        Variable nearerVar = createVariable("1,2#1", execContextId);
+
+        Variable found = variableTxService.findVariableInAllInternalContexts(
+                currentVarName, "1,2,5|1#0", execContextId);
+
+        assertNotNull(found);
+        // DESIRED (nearest-wins): the nearer DB-only variable at "1,2#1" must win over the ancestor at "1"
+        assertEquals(nearerVar.id, found.id,
+                "nearest-wins: the nearer DB-only variable at '1,2#1' must not be masked by the " +
+                "async-registered ancestor at '1'");
+    }
 }

@@ -509,6 +509,16 @@ public class VariableTxService {
                 Variable v = variableRepository.findByIdAsSimple(variableId);
                 return v==null ? VARIABLE_OT_FOUND : new VariableSearch(v,SearchResultType.found_ec);
             }
+            // The ExecContextVariableState is populated asynchronously; a variable already written to the DB
+            // at THIS (nearer) ctx may be absent from 'info' while a same-named FARTHER ancestor IS present
+            // (e.g. a splitter / graft bind() variable created via createInputVariablesForSubProcess, which
+            // does not register the async state). Probe the DB at the EXACT ctx BEFORE climbing so a nearer
+            // DB-present variable is never masked by a farther async-present one (nearest-wins). Exact-ctx
+            // only: the walk visits real ancestors, so this cannot leak a sibling #-instance.
+            Variable vDbAtLevel = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, currTaskContextId, execContextId);
+            if (vDbAtLevel != null) {
+                return new VariableSearch(vDbAtLevel, SearchResultType.found_db);
+            }
             currTaskContextId = VariableUtils.getParentContext(currTaskContextId);
         }
 
