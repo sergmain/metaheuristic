@@ -383,7 +383,12 @@ public class ExecContextGraftService {
         if (S.b(outputVar)) {
             return null;
         }
-        Variable v = variableTxService.findVariableInAllInternalContexts(outputVar, currTaskContextId, execContextId);
+        // read the per-line output at EXACTLY currTaskContextId - NOT via an ancestry walk. After the DSL v2
+        // migration dropped the per-level {L} suffix every level shares this single name (e.g. reqJson), so an
+        // ancestry walk from the per-line ctx could return a same-named ANCESTOR (its per-line row is written in
+        // the same tx and is not yet in the async ExecContextVariableState), masking the exact per-line value -
+        // which made every grafted rung store the same content.
+        Variable v = variableTxService.findVariableByExactTaskContextId(outputVar, currTaskContextId, execContextId);
         if (v == null) {
             return null;
         }

@@ -475,6 +475,18 @@ public class VariableTxService {
         return variableSearch.variable;
     }
 
+    /**
+     * EXACT-context lookup: the variable named {@code variable} at PRECISELY {@code taskContextId} (no
+     * ancestry walk, no #-suffix sibling LIKE). Used when a value MUST be read at the exact ctx where it
+     * was written - e.g. a dynamic batch-line-splitter's per-line output, which after the DSL v2 removal
+     * of the per-level {@code {L}} suffix shares a single name across every level: an ancestry walk from the
+     * per-line ctx could otherwise return a same-named ANCESTOR and mask the per-line value.
+     */
+    @Nullable
+    public Variable findVariableByExactTaskContextId(String variable, String taskContextId, Long execContextId) {
+        return variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, taskContextId, execContextId);
+    }
+
     public VariableSearch findVariableInAllInternalContextsAsVariableSearch(String variable, String taskContextId, Long execContextId) {
         ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
