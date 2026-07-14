@@ -587,6 +587,12 @@ public class ExecContextGraphService {
             if (!EnumsApi.TaskExecState.isFinishedState(state)) {
                 return false;
             }
+            // A task on a dead branch must never be handed out for assigning: if any ancestor terminally
+            // ERRORed or was SKIPPED, this task is unreachable and must be SKIPPED by skip-propagation,
+            // not executed on a broken/absent upstream (e.g. an in-band grafted line whose head terminally failed).
+            if (state == EnumsApi.TaskExecState.ERROR || state == EnumsApi.TaskExecState.SKIPPED) {
+                return false;
+            }
         }
         return true;
     }

@@ -124,4 +124,52 @@ class ExecContextGraphServiceTest {
         // Even deeper: 4 levels
         assertTrue(ExecContextGraphService.isDescendantContext("1,2,5,6,7,8|1|1|0|0#0", wrapperCtx));
     }
+
+    @Test
+    public void test_findAllForAssigning_deadAncestorNotAssignable() {
+        // A grafted line, linear: 100(root, OK) -> 101(head, ERROR) -> 102(downstream, NONE) -> 103(mh.finish, leaf, NONE)
+        // #102 is a NONE task whose grafted head #101 terminally ERRORed - a dead/broken upstream.
+        // Such a task must NEVER be handed out for assigning/execution.
+        String graphYaml = """
+            graph: |
+              strict digraph G {
+                100 [ ctxid="1" ];
+                101 [ ctxid="1" ];
+                102 [ ctxid="1" ];
+                103 [ ctxid="1" ];
+                100 -> 101;
+                101 -> 102;
+                102 -> 103;
+              }
+            version: 1
+            """;
+        String stateYaml = """
+            states:
+              100: OK
+              101: ERROR
+              102: NONE
+              103: NONE
+            version: 1
+            """;
+
+        ExecContextGraph ecg = new ExecContextGraph();
+        ecg.id = 2908L;
+        ecg.execContextId = 42L;
+        ecg.version = 2;
+        ecg.setParams(graphYaml);
+
+        ExecContextTaskState ects = new ExecContextTaskState();
+        ects.id = 2908L;
+        ects.execContextId = 42L;
+        ects.setParams(stateYaml);
+
+        List<ExecContextData.TaskVertex> vertices = ExecContextGraphService.findAllForAssigning(ecg, ects, true);
+
+        System.out.println(vertices);
+
+        // Green-1 (characterization of current BUGGY behavior): the dead-branch task #102 IS returned as
+        // assignable, because isParentFullyProcessed() treats an ERROR ancestor as a "finished" (ready) parent.
+        assertFalse(vertices.contains(new ExecContextData.TaskVertex(102L)),
+                "dead-ancestor task #102 (upstream #101 is ERROR) must NOT be handed out for assigning");
+    }
 }

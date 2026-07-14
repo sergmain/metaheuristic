@@ -455,4 +455,59 @@ class ExecContextGraphSkippedPropagationTest {
             ExecContextGraphService.setStateForAllChildrenTasksStatic(dac, stateParams, taskId, status, TaskExecState.SKIPPED, taskContextId);
         }
     }
+
+    /**
+     * A DSL v2 in-band grafted group lays its body as a linear same-taskContextId chain. When that line's
+     * head terminally ERRORs, EVERY downstream task sharing the head's taskContextId must be SKIPPED -
+     * never left NONE, never executed. Shape: a parent-context task (OK) -> grafted-line head -> six
+     * same-context downstream steps -> mh.finish (leaf). The second downstream step is the one prone to
+     * slipping through and running before skip-propagation reaches it.
+     */
+    @Test
+    public void test_graftedLineHeadTerminalError_skipsWholeSameContextTail() {
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
+        ExecContextTaskStateParamsYaml stateParams = new ExecContextTaskStateParamsYaml();
+
+        final String parentCtx = "1,2,3,6,7,8,9|1|0|0|0|0#0";
+        final String lineCtx = "1,2,3,6,7,8,9,13|1|0|0|0|0|0#1";
+
+        ExecContextData.TaskVertex r    = addVertex(graph, 1386L, parentCtx);
+        ExecContextData.TaskVertex head = addVertex(graph, 1387L, lineCtx);
+        ExecContextData.TaskVertex d1   = addVertex(graph, 1388L, lineCtx);
+        ExecContextData.TaskVertex d2   = addVertex(graph, 1389L, lineCtx);
+        ExecContextData.TaskVertex d3   = addVertex(graph, 1390L, lineCtx);
+        ExecContextData.TaskVertex d4   = addVertex(graph, 1391L, lineCtx);
+        ExecContextData.TaskVertex d5   = addVertex(graph, 1392L, lineCtx);
+        ExecContextData.TaskVertex d6   = addVertex(graph, 1393L, lineCtx);
+        ExecContextData.TaskVertex fin  = addVertex(graph, 1368L, "1");
+
+        graph.addEdge(r, head);
+        graph.addEdge(head, d1);
+        graph.addEdge(d1, d2);
+        graph.addEdge(d2, d3);
+        graph.addEdge(d3, d4);
+        graph.addEdge(d4, d5);
+        graph.addEdge(d5, d6);
+        graph.addEdge(d6, fin);
+
+        stateParams.states.put(1386L, TaskExecState.OK);
+        stateParams.states.put(1387L, TaskExecState.IN_PROGRESS);
+        for (long i = 1388L; i <= 1393L; i++) {
+            stateParams.states.put(i, TaskExecState.NONE);
+        }
+        stateParams.states.put(1368L, TaskExecState.NONE);
+
+        ExecContextData.ExecContextDAC dac = new ExecContextData.ExecContextDAC(1L, graph, 1);
+        ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+
+        // Act: the grafted line head terminally ERRORs.
+        updateTaskState(dac, stateParams, 1387L, TaskExecState.ERROR, lineCtx, status);
+
+        assertEquals(TaskExecState.ERROR, stateParams.states.get(1387L));
+        for (long i = 1388L; i <= 1393L; i++) {
+            assertEquals(TaskExecState.SKIPPED, stateParams.states.get(i),
+                    "grafted-line task #" + i + " (same taskContextId as the ERRORed head) must be SKIPPED");
+        }
+        assertEquals(TaskExecState.NONE, stateParams.states.get(1368L), "mh.finish (leaf) must not be SKIPPED");
+    }
 }
