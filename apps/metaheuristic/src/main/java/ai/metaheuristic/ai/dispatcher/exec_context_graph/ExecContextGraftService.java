@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -50,7 +49,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 /**
  * DSL v2 - the MH-owned runtime GRAFT primitive (025-MHSC-DSL-V2-PLAN, Phase 1).
@@ -78,7 +76,7 @@ import java.util.stream.Collectors;
  * <p>Non-transactional orchestration (SPRING-TX-RULES sec 1/sec 2): resolves context, acquires the
  * four sync locks, and delegates each write to {@link ExecContextGraftTxService}.
  *
- * <p>Error code prefix: {@code 01.830.} (unique to this class).
+ * Error code prefix: {@code 830.}
  *
  * @author Sergio Lissner
  */
@@ -506,32 +504,7 @@ public class ExecContextGraftService {
         ecd.execContextParamsYaml = bodyParams;
         // descendants: the TARGET's live direct children (same as v0) - the line's tail wires into the
         // single shared downstream terminal; body source does not change what the target flows into.
-        //
-        // 027 - the comment above states the intent, but a splitter target's live direct children are NOT
-        // only that terminal: every line ALREADY grafted under the same target is a direct child of it too.
-        // Wiring a fresh line's tail into a SIBLING line's head makes that sibling a graph-descendant of
-        // this line. MH's reset is a plain descendant walk (TaskResetTxService -> findDescendants), so an
-        // objection that resets THIS line's reset-point drags the sibling line's head off terminal and
-        // re-runs it. When that head is a store-req, the re-run mints a duplicate requirement with no
-        // parent binding - the very "a reset must re-run the objection subtree but NOT store-req"
-        // invariant this plan exists to hold, reached cross-line instead of in-line.
-        //
-        // A descendant at the TARGET's OWN process context is the shared terminal (what the target's whole
-        // fan-out converges into). A descendant in a STRICT SUB-context of the target is, by the Phase-0
-        // rebase above, a grafted sibling line's head - never a terminal. Keep the former, drop the latter;
-        // every line still reaches the terminal, so the convergence/join is unchanged.
-        final Set<ExecContextData.TaskVertex> directDescendants =
-                execContextGraphService.findDirectDescendants(sec.execContextGraphId, targetTaskId);
-        ecd.descendants = directDescendants.stream()
-                .filter(v -> targetProcessCtx.equals(
-                        ContextUtils.getProcessContextId(ContextUtils.getLevel(v.taskContextId))))
-                .collect(Collectors.toCollection(HashSet::new));
-        if (ecd.descendants.size() != directDescendants.size()) {
-            log.debug("01.830.360 group '{}' graft under target #{} (ctx={}): dropped {} sibling-line descendant(s) "
-                            + "from the tail wiring, kept {} terminal descendant(s)",
-                    groupName, targetTaskId, targetProcessCtx,
-                    directDescendants.size() - ecd.descendants.size(), ecd.descendants.size());
-        }
+        ecd.descendants = execContextGraphService.findDirectDescendants(sec.execContextGraphId, targetTaskId);
         return ecd;
     }
 

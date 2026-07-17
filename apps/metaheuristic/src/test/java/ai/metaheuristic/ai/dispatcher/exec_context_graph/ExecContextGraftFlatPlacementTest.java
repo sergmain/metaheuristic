@@ -80,6 +80,40 @@ public class ExecContextGraftFlatPlacementTest {
         assertFalse(kept.contains(headB), "the graft's own line must be excluded");
     }
 
+    /**
+     * GREEN-1 characterization. LINE ISOLATION currently isolates only against lines sharing THIS line's
+     * ctx prefix. A target's direct children are not always one body path: the RG DSLv2 pipeline grafts
+     * imported lines at {@code "1,13#N"} under the SAME splitter target that already carries the native
+     * decompose line at {@code "1,2#1"}. Different body path, same target - so the prefix test
+     * ({@code "1,13#"}) does not match {@code "1,2#1"} and the NATIVE line head survives as a tail edge.
+     *
+     * <p>That edge is not cosmetic: MH's reset is a plain descendant walk
+     * ({@code TaskResetTxService -> findDescendants}), so an objection resetting the imported line drags
+     * the native line's head off terminal and re-runs it. Observed live (EC #9): tail task 504
+     * {@code [1,13,16|2#0]} had edges to BOTH 445 {@code mhdg-rg.post-processing} (ctx "1", the terminal -
+     * correct) and 447 {@code mhdg-rg.store-req} (ctx "1,2#1", the native head - wrong), and the re-run
+     * of store-req minted a duplicate requirement with no parent binding.
+     *
+     * <p>Flip to Red by asserting the foreign-path head is excluded.
+     */
+    @Test
+    public void test_filterTerminalDescendants_foreignBodyPathLineHeadUnderSameTarget() {
+        // Target at ctx "1". Native line came from body path "1,2"; the graft's line is body path "1,13".
+        ExecContextData.TaskVertex terminal = v(90L, "1");         // mh.finish - the shared terminal
+        ExecContextData.TaskVertex nativeHead = v(47L, "1,2#1");   // native line head - a SIBLING line
+        ExecContextData.TaskVertex ownHead = v(21L, "1,13#2");     // the graft's own line head
+        Set<ExecContextData.TaskVertex> descendants = new LinkedHashSet<>(Set.of(terminal, nativeHead, ownHead));
+
+        Set<ExecContextData.TaskVertex> kept =
+                ExecContextGraftTxService.filterTerminalDescendants(descendants, "1,13#2", CTX);
+
+        assertTrue(kept.contains(terminal), "the shared terminal must always survive");
+        assertFalse(kept.contains(ownHead), "the graft's own line must be excluded");
+        assertFalse(kept.contains(nativeHead),
+                "a sibling line head under the same target must be excluded regardless of body path; kept=" + ids(kept));
+        assertEquals(1, kept.size(), "only the shared terminal should remain; kept=" + ids(kept));
+    }
+
     @Test
     public void test_filterTerminalDescendants_noHashKeepsAll() {
         // Defensive branch: a line ctx with no '#' yields a null prefix -> keep everything.

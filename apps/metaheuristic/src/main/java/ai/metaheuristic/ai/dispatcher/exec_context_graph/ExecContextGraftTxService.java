@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context_graph;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
@@ -223,10 +224,23 @@ public class ExecContextGraftTxService {
     }
 
     /**
-     * LINE ISOLATION predicate - keep only the descendants that are OUTSIDE the grafted line's own
-     * per-line context prefix (everything up to and including the '#'), i.e. the shared downstream
-     * terminal; drop every sibling line head that shares the splitter's per-line prefix. Pure static
-     * with a ctx-resolver function so it is unit-testable without a Spring context / DB.
+     * LINE ISOLATION predicate - keep only the shared downstream terminal; drop every SIBLING LINE HEAD
+     * under the same target. Pure static with a ctx-resolver function so it is unit-testable without a
+     * Spring context / DB.
+     *
+     * <p>Sibling-ness is decided by DERIVED PARENT, not by ctx prefix. The prefix test
+     * ({@code ctx.startsWith(lineCtxId up to '#')}) only isolates against lines sharing THIS line's body
+     * path, which silently assumes a target's children are all one body path. They are not: a graft can
+     * attach a line at body path {@code "1,13"} under a target that already carries a line at
+     * {@code "1,2"}. Both are direct children of the same target and both are line heads, but the
+     * prefixes differ - so a prefix test lets the foreign-path head through as a tail edge. MH's reset
+     * is a plain descendant walk, so that stray edge drags the other line's head off terminal and
+     * re-runs it. Two line heads are siblings iff they derive up to the SAME parent, which is exactly
+     * what the target is; that is the property to test.
+     *
+     * <p>Kept conservatively: a vertex whose ctx cannot be resolved (null), and any vertex that is not a
+     * line ctx at all (no '#') - the shared terminal sits at the target's own level. A {@code lineCtxId}
+     * with no '#' is not a line, so nothing is isolated and everything is kept.
      *
      * @param descendants the target's live direct descendants
      * @param lineCtxId   this graft's fresh line ctx (e.g. "1,2#2")
@@ -235,14 +249,22 @@ public class ExecContextGraftTxService {
     static Set<ExecContextData.TaskVertex> filterTerminalDescendants(
             Set<ExecContextData.TaskVertex> descendants, String lineCtxId,
             Function<ExecContextData.TaskVertex, String> ctxResolver) {
-        final int hashIdx = lineCtxId.lastIndexOf('#');
-        final String lineCtxPrefix = hashIdx >= 0 ? lineCtxId.substring(0, hashIdx + 1) : null;
+        if (lineCtxId.lastIndexOf('#') < 0) {
+            return new LinkedHashSet<>(descendants);
+        }
+        final String lineParentCtxId = ContextUtils.deriveParentTaskContextId(lineCtxId);
         Set<ExecContextData.TaskVertex> out = new LinkedHashSet<>();
         for (ExecContextData.TaskVertex v : descendants) {
-            String ctx = ctxResolver.apply(v);
-            if (lineCtxPrefix == null || ctx == null || !ctx.startsWith(lineCtxPrefix)) {
+            final String ctx = ctxResolver.apply(v);
+            if (ctx == null || ctx.lastIndexOf('#') < 0) {
                 out.add(v);
+                continue;
             }
+            if (lineParentCtxId != null && lineParentCtxId.equals(ContextUtils.deriveParentTaskContextId(ctx))) {
+                // a sibling line head under the same target - never a tail target
+                continue;
+            }
+            out.add(v);
         }
         return out;
     }
