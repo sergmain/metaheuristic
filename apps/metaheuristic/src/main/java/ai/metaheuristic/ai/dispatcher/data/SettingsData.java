@@ -24,6 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,6 +35,18 @@ import java.util.List;
 public class SettingsData {
 
     public record ApiKey(String name, String value) {}
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class Languages extends BaseDataClass {
+        // enabled locales, e.g. ["en", "ru"]
+        public List<String> locales = new ArrayList<>();
+
+        public Languages(List<String> locales) {
+            this.locales = locales;
+        }
+    }
 
     @Data
     @EqualsAndHashCode(callSuper = false)

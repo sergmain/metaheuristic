@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Serge
@@ -48,5 +49,25 @@ public class TestDispatcherParamsYamlUtils {
         assertEquals(3, p.batches.size());
         assertEquals(5, p.experiments.size());
         assertEquals(1, p.longRunnings.size());
+
+        // 'metas' was added later without a version bump; an old v2 yaml that lacks it
+        // must still deserialize, leaving metas as a non-null empty map.
+        assertNotNull(p.metas);
+        assertTrue(p.metas.isEmpty());
+    }
+
+    @Test
+    public void test_metasRoundTrip() {
+        DispatcherParamsYaml src = new DispatcherParamsYaml();
+        src.metas.put("mh.languages", "[\"en\",\"ru\"]");
+
+        String yaml = DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(src);
+        assertNotNull(yaml);
+
+        DispatcherParamsYaml restored = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        assertNotNull(restored);
+        assertNotNull(restored.metas);
+        assertEquals(1, restored.metas.size());
+        assertEquals("[\"en\",\"ru\"]", restored.metas.get("mh.languages"));
     }
 }

@@ -21,17 +21,23 @@ import ai.metaheuristic.ai.dispatcher.account.AccountService;
 import ai.metaheuristic.ai.dispatcher.account.AccountTxService;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.data.SettingsData;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.account.UserContext;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,8 +52,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SettingsService {
 
+    // key used in DispatcherParamsYaml.metas; value is a json list of enabled locales
+    public static final String MH_LANGUAGES = "mh.languages";
+    // English is always an enabled/supported language regardless of what is stored
+    public static final String LOCALE_EN = "en";
+
     private final AccountTxService accountTxService;
     private final AccountService accountService;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
 
     public SettingsData.ApiKeys getApiKeys(UserContext context) {
         if (!(context instanceof DispatcherContext dispatcherContext)) {
@@ -91,5 +103,48 @@ public class SettingsService {
 
     public OperationStatusRest restLanguage(UserContext context) {
         return accountTxService.resetLanguage(context.getAccountId(), context.getCompanyId());
+    }
+
+    /**
+     * the dispatcher-wide list of supported languages (locales). the returned list always includes English.
+     */
+    public SettingsData.Languages getLanguages() {
+        String json = dispatcherParamsTopLevelService.getMeta(MH_LANGUAGES);
+        return new SettingsData.Languages(normalizeLocales(parseLocales(json)));
+    }
+
+    /**
+     * store the dispatcher-wide list of supported languages. English is always kept enabled.
+     * @param locales a json array of locale codes, e.g. ["en","ru"]
+     */
+    public OperationStatusRest saveLanguages(String locales) {
+        List<String> normalized = normalizeLocales(parseLocales(locales));
+        // JsonUtils uses jackson 3 whose write is unchecked; serializing a List<String> can't fail here
+        dispatcherParamsTopLevelService.putMeta(MH_LANGUAGES, JsonUtils.getMapper().writeValueAsString(normalized));
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    // lower-cases, trims, de-duplicates (keeping order) and always puts English first
+    private static List<String> normalizeLocales(List<String> locales) {
+        LinkedHashSet<String> set = new LinkedHashSet<>();
+        set.add(LOCALE_EN);
+        for (String locale : locales) {
+            if (locale!=null && !locale.isBlank()) {
+                set.add(locale.trim().toLowerCase());
+            }
+        }
+        return new ArrayList<>(set);
+    }
+
+    private static List<String> parseLocales(@Nullable String json) {
+        if (json==null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return new ArrayList<>(Arrays.asList(JsonUtils.getMapper().readValue(json, String[].class)));
+        } catch (RuntimeException e) {
+            log.warn("236.180 Can't parse languages json: {}", json, e);
+            return List.of();
+        }
     }
 }

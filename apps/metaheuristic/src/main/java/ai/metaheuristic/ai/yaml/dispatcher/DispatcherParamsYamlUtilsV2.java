@@ -53,6 +53,8 @@ public class DispatcherParamsYamlUtilsV2
         v1.experiments.stream().collect(Collectors.toCollection(()->t.experiments));
         v1.longRunnings.stream().map(DispatcherParamsYamlUtilsV2::toLongRunning).collect(Collectors.toCollection(()->t.longRunnings));
 
+        t.metas.putAll(v1.metas);
+
         return t;
     }
 

@@ -78,4 +78,14 @@ public class SettingsRestController {
         return settingsService.setLanguage(lang, context);
     }
 
+    @GetMapping("/languages")
+    public SettingsData.Languages languages() {
+        return settingsService.getLanguages();
+    }
+
+    @PostMapping("/save-languages-commit")
+    public OperationStatusRest saveLanguages(@RequestParam String locales) {
+        return settingsService.saveLanguages(locales);
+    }
+
 }

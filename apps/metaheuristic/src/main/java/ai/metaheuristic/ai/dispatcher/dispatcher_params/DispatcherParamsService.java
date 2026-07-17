@@ -253,6 +253,23 @@ public class DispatcherParamsService {
         return dispatcherParamsYaml==null ? List.of() : new ArrayList<>(dispatcherParamsYaml.batches);
     }
 
+    @Nullable
+    public String getMeta(String key) {
+        find();
+        return dispatcherParamsYaml==null ? null : dispatcherParamsYaml.metas.get(key);
+    }
+
+    @Transactional
+    public void putMeta(String key, String value) {
+        updateParams((dpy) -> {
+            if (value.equals(dpy.metas.get(key))) {
+                return Boolean.FALSE;
+            }
+            dpy.metas.put(key, value);
+            return Boolean.TRUE;
+        });
+    }
+
     private void save(Dispatcher dispatcher) {
         TxUtils.checkTxExists();
         if (!Consts.DISPATCHERS_CACHE.equals(dispatcher.code)) {

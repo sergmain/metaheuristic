@@ -23,7 +23,9 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <b>!!! BEFORE MAKING ANY EDITION IN THIS CLASS, READ <a href="https://github.com/sergmain/metaheuristic/wiki/multi-versioning-mechanic">...</a></b>
@@ -55,4 +57,8 @@ public class DispatcherParamsYaml implements BaseParams {
     public final List<String> batches = new ArrayList<>();
     public final List<String> experiments = new ArrayList<>();
     public final List<LongRunningExecContext> longRunnings = new ArrayList<>();
+
+    // generic key/value metadata. key 'mh.languages' holds a json list of enabled locales.
+    // added without a version bump: old yaml lacking this key just keeps the empty map (skipMissingProperties).
+    public final Map<String, String> metas = new LinkedHashMap<>();
 }

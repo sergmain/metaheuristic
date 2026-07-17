@@ -21,7 +21,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -48,4 +50,8 @@ public class DispatcherParamsYamlV2 implements BaseParams {
     public final List<String> batches = new ArrayList<>();
     public final List<String> experiments = new ArrayList<>();
     public final List<LongRunningExecContextV2> longRunnings = new ArrayList<>();
+
+    // generic key/value metadata. key 'mh.languages' holds a json list of enabled locales.
+    // added without a version bump: old yaml lacking this key just keeps the empty map (skipMissingProperties).
+    public final Map<String, String> metas = new LinkedHashMap<>();
 }

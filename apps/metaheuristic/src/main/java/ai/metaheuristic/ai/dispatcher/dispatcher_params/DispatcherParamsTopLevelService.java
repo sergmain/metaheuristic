@@ -169,4 +169,23 @@ public class DispatcherParamsTopLevelService {
         }
     }
 
+    @Nullable
+    public String getMeta(String key) {
+        try {
+            readLock.lock();
+            return dispatcherParamsService.getMeta(key);
+        } finally {
+            readLock.unlock();
+        }
+    }
+
+    public void putMeta(String key, String value) {
+        try {
+            writeLock.lock();
+            dispatcherParamsService.putMeta(key, value);
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
 }
