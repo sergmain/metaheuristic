@@ -28,7 +28,7 @@ import org.springframework.stereotype.Repository;
  * Time: 10:22 PM
  */
 @Repository
-@Profile(value={"dispatcher & mysql"})
+@Profile(value={"dispatcher & (mysql | mariadb)"})
 public interface VariableBlobMysqlRepository extends VariableBlobDatabaseSpecificRepository<Variable, Long> {
 
     @Override

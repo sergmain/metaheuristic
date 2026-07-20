@@ -32,7 +32,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Slf4j
-@Profile({"dispatcher & mysql"})
+@Profile({"dispatcher & (mysql | mariadb)"})
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class VariableMysqlService implements VariableDatabaseSpecificService {
 

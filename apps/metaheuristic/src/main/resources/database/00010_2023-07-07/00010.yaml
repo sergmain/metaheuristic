@@ -10,7 +10,7 @@ databaseChangeLog:
               stripComments:  true
               relativeToChangelogFile: true
          -  sqlFile:
-              dbms:  'mysql'
+              dbms:  'mysql,mariadb'
               path:  00010-MySQL-Initial-revision.sql
               stripComments:  true
               relativeToChangelogFile: true
