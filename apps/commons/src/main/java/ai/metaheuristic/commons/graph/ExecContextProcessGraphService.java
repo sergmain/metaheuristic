@@ -137,7 +137,10 @@ public class ExecContextProcessGraphService {
     public static List<String> getTopologyOfProcesses(ExecContextParamsYaml execContextParamsYaml) {
         DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
-        TopologicalOrderIterator<ExecContextApiData.ProcessVertex, DefaultEdge> iterator = new TopologicalOrderIterator<>(processGraph);
+        // stable authored-order tie-break: among topologically-concurrent process vertices the one
+        // authored earlier (lower vertex id) is emitted first, so header columns follow declaration
+        // order and runtime task edges render left-to-right instead of right-to-left.
+        TopologicalOrderIterator<ExecContextApiData.ProcessVertex, DefaultEdge> iterator = new TopologicalOrderIterator<>(processGraph, Comparator.comparingLong(o -> o.id));
 
         List<String> processes = new ArrayList<>();
         iterator.forEachRemaining(o->processes.add(o.process));
