@@ -17,6 +17,9 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.SourceCodeGraph;
+import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -30,6 +33,9 @@ import java.nio.charset.StandardCharsets;
 import static ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils.NULL_CHECK_FUNC;
 import static ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils.validateSourceCodeParamsYaml;
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.SOURCE_OF_VARIABLE_NOT_FOUND_ERROR;
+import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR;
+import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR;
+import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
@@ -80,5 +86,47 @@ public class SourceCodeValidationUtilsTest {
         assertNull(result);
 //        assertNotNull(result);
 //        assertEquals(OUTPUT_VARIABLE_NOT_DEFINED_ERROR, result.status, result.error);
+    }
+
+    private static final String MHSC_BAD_EXTERNAL = """
+            source "test" {
+                my-proc := no-such-func {
+                    timeout 10
+                }
+            }""";
+
+    private static final String MHSC_BAD_INTERNAL = """
+            source "test" {
+                my-proc := internal no-such-internal {
+                    timeout 10
+                }
+            }""";
+
+    // CT: characterization of the mhsc verifier gap. A process referencing an unregistered EXTERNAL
+    // function must be rejected the same way the yaml path rejects it (this is the ref that produced
+    // the 375.140 shadow error at task-production time).
+    @Test
+    public void test_validateSourceCodeMhsc_missingExternalFunction() {
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, MHSC_BAD_EXTERNAL);
+        SourceCodeApiData.SourceCodeValidationResult result = SourceCodeValidationUtils.validateSourceCodeMhsc(
+                graph, code -> true, fnDef -> false);
+        assertEquals(FUNCTION_NOT_FOUND_ERROR, result.status, result.error);
+    }
+
+    @Test
+    public void test_validateSourceCodeMhsc_missingInternalFunction() {
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, MHSC_BAD_INTERNAL);
+        SourceCodeApiData.SourceCodeValidationResult result = SourceCodeValidationUtils.validateSourceCodeMhsc(
+                graph, code -> !"no-such-internal".equals(code), fnDef -> true);
+        assertEquals(INTERNAL_FUNCTION_NOT_FOUND_ERROR, result.status, result.error);
+    }
+
+    // all references resolve (incl. auto-added mh.finish, which the internal resolver accepts) -> OK
+    @Test
+    public void test_validateSourceCodeMhsc_allResolvable() {
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, MHSC_BAD_EXTERNAL);
+        SourceCodeApiData.SourceCodeValidationResult result = SourceCodeValidationUtils.validateSourceCodeMhsc(
+                graph, code -> true, fnDef -> true);
+        assertEquals(OK, result.status, result.error);
     }
 }

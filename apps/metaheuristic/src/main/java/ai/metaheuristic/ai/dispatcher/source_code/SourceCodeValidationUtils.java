@@ -21,6 +21,8 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.SourceCodeGraph;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -29,6 +31,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
@@ -391,5 +394,91 @@ public class SourceCodeValidationUtils {
             }
         }
         return null;
+    }
+
+    /**
+     * MHSC counterpart of {@link #validateSourceCodeParamsYaml}. The MHSG parser
+     * ({@code SourceCodeGraphFactory.parse}) already rejects malformed structure at parse time, but it
+     * lives in {@code commons} and has no DB/registry access, so it cannot resolve function references.
+     * That gap let a SourceCode whose function code was never registered pass verification and fail only
+     * at task-production time (375.140). This runs the same function-existence check the yaml path does
+     * (via {@code checkFunctions}) over the parsed graph's flat process list, incl. pre/post functions.
+     *
+     * <p>Resolution is injected so the util stays DB-free and Spring-less-testable:
+     * {@code internalFunctionResolver} answers "is this internal function code registered?" and
+     * {@code externalFunctionResolver} answers "does this external function definition resolve?".
+     * Returns an OK result when every reference resolves; otherwise the first failure.
+     */
+    public static SourceCodeApiData.SourceCodeValidationResult validateSourceCodeMhsc(
+            SourceCodeGraph sourceCodeGraph,
+            Predicate<String> internalFunctionResolver,
+            Predicate<ExecContextParamsYaml.FunctionDefinition> externalFunctionResolver) {
+        for (ExecContextParamsYaml.Process process : sourceCodeGraph.processes) {
+            SourceCodeApiData.SourceCodeValidationResult r =
+                    checkMhscProcessFunctions(process, internalFunctionResolver, externalFunctionResolver);
+            if (r.status != OK) {
+                return r;
+            }
+        }
+        return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
+    }
+
+    private static SourceCodeApiData.SourceCodeValidationResult checkMhscProcessFunctions(
+            ExecContextParamsYaml.Process process,
+            Predicate<String> internalFunctionResolver,
+            Predicate<ExecContextParamsYaml.FunctionDefinition> externalFunctionResolver) {
+        if (process.function != null) {
+            SourceCodeApiData.SourceCodeValidationResult r =
+                    checkMhscFunctionDef(process.processCode, process.function, internalFunctionResolver, externalFunctionResolver);
+            if (r.status != OK) {
+                return r;
+            }
+        }
+        if (process.preFunctions != null) {
+            for (ExecContextParamsYaml.FunctionDefinition fnDef : process.preFunctions) {
+                SourceCodeApiData.SourceCodeValidationResult r =
+                        checkMhscFunctionDef(process.processCode, fnDef, internalFunctionResolver, externalFunctionResolver);
+                if (r.status != OK) {
+                    return r;
+                }
+            }
+        }
+        if (process.postFunctions != null) {
+            for (ExecContextParamsYaml.FunctionDefinition fnDef : process.postFunctions) {
+                SourceCodeApiData.SourceCodeValidationResult r =
+                        checkMhscFunctionDef(process.processCode, fnDef, internalFunctionResolver, externalFunctionResolver);
+                if (r.status != OK) {
+                    return r;
+                }
+            }
+        }
+        return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
+    }
+
+    private static SourceCodeApiData.SourceCodeValidationResult checkMhscFunctionDef(
+            String processCode,
+            ExecContextParamsYaml.FunctionDefinition fnDef,
+            Predicate<String> internalFunctionResolver,
+            Predicate<ExecContextParamsYaml.FunctionDefinition> externalFunctionResolver) {
+        if (S.b(fnDef.code)) {
+            return new SourceCodeApiData.SourceCodeValidationResult(
+                    EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR,
+                    S.f("01.177.500 Process '%s' has a function reference with a blank code", processCode));
+        }
+        if (fnDef.context == EnumsApi.FunctionExecContext.internal) {
+            if (!internalFunctionResolver.test(fnDef.code)) {
+                return new SourceCodeApiData.SourceCodeValidationResult(
+                        EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR,
+                        S.f("01.177.520 Unknown internal function '%s' in process '%s'", fnDef.code, processCode));
+            }
+        }
+        else {
+            if (!externalFunctionResolver.test(fnDef)) {
+                return new SourceCodeApiData.SourceCodeValidationResult(
+                        EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR,
+                        S.f("01.177.540 Function '%s' wasn't found for process '%s'", fnDef.code, processCode));
+            }
+        }
+        return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
     }
 }

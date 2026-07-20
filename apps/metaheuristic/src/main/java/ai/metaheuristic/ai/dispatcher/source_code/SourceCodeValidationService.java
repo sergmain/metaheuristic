@@ -112,13 +112,25 @@ public class SourceCodeValidationService {
             }
         }
         else {
+            final SourceCodeGraph sourceCodeGraph;
             try {
-                SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+                sourceCodeGraph = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
             }
             catch(Throwable th) {
                 return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.GENERAL_ERROR, "178.065 error while parsing SourceCode in MHSG format");
 
+            }
+            // Same function-existence check the yaml branch runs via checkFunctions, but over the parsed
+            // MHSG graph. Resolution is injected so SourceCodeValidationUtils stays DB-free: internal ->
+            // registry, external -> function DB. Closes the gap that let an unregistered function code pass
+            // verification and fail only at task-production (375.140).
+            SourceCodeApiData.SourceCodeValidationResult mhscErrors = SourceCodeValidationUtils.validateSourceCodeMhsc(
+                    sourceCodeGraph,
+                    code -> internalFunctionRegisterService.get(code) != null,
+                    fnDef -> functionTopLevelService.getFunctionConfig(fnDef) != null);
+            if (mhscErrors.status != OK) {
+                return mhscErrors;
             }
         }
         return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
