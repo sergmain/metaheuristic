@@ -202,11 +202,34 @@ public class ExecContextUtils {
                 }
             }
 
-            // group grafted processes by their static anchor, preserving topological discovery order
+            // process-level edges among grafted processes, collapsed from the task DAG: procA -> procB
+            // whenever any task edge a -> b carries two distinct grafted process codes. Runtime recursion
+            // repeats the same (-r) process codes across levels, so this collapsed graph is NOT acyclic.
+            Map<String, Set<String>> graftedProcEdges = new HashMap<>();
+            for (DefaultEdge de : taskGraph.edgeSet()) {
+                TaskApiData.TaskState su = raw.taskStates.get(taskGraph.getEdgeSource(de));
+                TaskApiData.TaskState tv = raw.taskStates.get(taskGraph.getEdgeTarget(de));
+                if (su == null || tv == null) {
+                    continue;
+                }
+                String pu = su.processCode();
+                String pv = tv.processCode();
+                if (pu.equals(pv) || staticSet.contains(pu) || staticSet.contains(pv)) {
+                    continue;
+                }
+                graftedProcEdges.computeIfAbsent(pu, k -> new HashSet<>()).add(pv);
+            }
+
+            // group grafted processes by their static anchor (discovery order), then order each group by
+            // the collapsed process edges so a real edge such as store-objective-result -> resolve-requirement-status
+            // places store LEFT of resolve regardless of which lane surfaced each one first. Cross-lane
+            // "first occurrence" alone gets this wrong when a no-objectives lane surfaces resolve before
+            // any store task exists.
             LinkedHashMap<String, List<String>> byAnchor = new LinkedHashMap<>();
             for (Map.Entry<String, String> e : graftedAnchor.entrySet()) {
                 byAnchor.computeIfAbsent(e.getValue(), k -> new ArrayList<>()).add(e.getKey());
             }
+            byAnchor.replaceAll((anchor, procs) -> orderGraftedGroupByEdges(procs, graftedProcEdges));
             // emit the static backbone, inserting grafted processes right after their anchor
             for (String staticProc : staticOrder) {
                 effectiveProcessCodes.add(staticProc);
@@ -349,6 +372,57 @@ public class ExecContextUtils {
     }
 
     // public for testing - will be refactored in Option 5d
+    /**
+     * Orders one anchor group of grafted process codes by the collapsed process-edge graph: a process is
+     * emitted before any process it points to. The collapsed graph may be cyclic (runtime recursion repeats
+     * a process code across levels), so this is a cycle-tolerant Kahn walk — when no zero-in-degree process
+     * remains, the earliest one in discovery order is forced, dropping the minimal set of back-edges.
+     * Genuinely-concurrent processes (e.g. parallel branches, no edge between them) keep discovery order.
+     */
+    public static List<String> orderGraftedGroupByEdges(List<String> discoveryOrder, Map<String, Set<String>> procEdges) {
+        LinkedHashSet<String> remaining = new LinkedHashSet<>(discoveryOrder);
+        Map<String, Integer> indeg = new HashMap<>();
+        for (String pr : remaining) {
+            indeg.put(pr, 0);
+        }
+        for (String u : remaining) {
+            Set<String> outs = procEdges.get(u);
+            if (outs == null) {
+                continue;
+            }
+            for (String v : outs) {
+                if (!u.equals(v) && indeg.containsKey(v)) {
+                    indeg.merge(v, 1, Integer::sum);
+                }
+            }
+        }
+        List<String> result = new ArrayList<>(remaining.size());
+        while (!remaining.isEmpty()) {
+            String pick = null;
+            for (String pr : remaining) {
+                if (indeg.get(pr) == 0) {
+                    pick = pr;
+                    break;
+                }
+            }
+            if (pick == null) {
+                // cycle: force the earliest-in-discovery-order remaining process
+                pick = remaining.iterator().next();
+            }
+            result.add(pick);
+            remaining.remove(pick);
+            Set<String> outs = procEdges.get(pick);
+            if (outs != null) {
+                for (String v : outs) {
+                    if (remaining.contains(v)) {
+                        indeg.merge(v, -1, Integer::sum);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
     public static int findOrAssignCol(ExecContextApiData.ColumnHeader[] headers, String process) {
         int idx = -1;
         for (int i = 0; i < headers.length; i++) {
