@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
@@ -51,6 +52,7 @@ import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +64,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 /**
  * @author Serge
@@ -94,9 +97,20 @@ public class TaskWithInternalContextEventService {
     private final VariableService variableTopLevelService;
     private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     private final InternalFunctionProcessor internalFunctionProcessor;
+    private final Globals globals;
 
     public final MultiTenantedQueue<Long, TaskWithInternalContextEvent> TASK_WITH_INTERNAL_CTX_MTQ =
         new MultiTenantedQueue<>(100, Duration.ofSeconds(0), true, null, this::process);
+
+    // bounds how many internal-function Tasks execute concurrently across the whole dispatcher.
+    // The MultiTenantedQueue is now keyed by taskId (one virtual thread per ready Task), so this
+    // permit count is the real ceiling on parallel internal-function execution.
+    private Semaphore internalFunctionSemaphore;
+
+    @PostConstruct
+    public void init() {
+        this.internalFunctionSemaphore = new Semaphore(globals.dispatcher.internalFunctionMaxConcurrency, true);
+    }
 
     @SuppressWarnings("MethodMayBeStatic")
     @PreDestroy
@@ -113,6 +127,25 @@ public class TaskWithInternalContextEventService {
     }
 
     private void process(final TaskWithInternalContextEvent event) {
+        TxUtils.checkTxNotExists();
+
+        try {
+            internalFunctionSemaphore.acquire();
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("706.070 interrupted while waiting for an internal-function permit, task #{}", event.taskId);
+            return;
+        }
+        try {
+            processGuarded(event);
+        }
+        finally {
+            internalFunctionSemaphore.release();
+        }
+    }
+
+    private void processGuarded(final TaskWithInternalContextEvent event) {
         TxUtils.checkTxNotExists();
 
         ExecContextImpl execContext = execContextCache.findById(event.execContextId, true);
@@ -154,69 +187,63 @@ public class TaskWithInternalContextEventService {
 
     private void processInternalFunction(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId) {
         TxUtils.checkTxNotExists();
-        TaskLastProcessingHelper.lastTaskId = null;
-        try {
-            TaskImpl task = taskRepository.findByIdReadOnly(taskId);
-            if (task==null) {
-                log.warn("706.180 Task #{} with internal context doesn't exist", taskId);
-                return;
-            }
+        TaskImpl task = taskRepository.findByIdReadOnly(taskId);
+        if (task==null) {
+            log.warn("706.180 Task #{} with internal context doesn't exist", taskId);
+            return;
+        }
 
-            if (task.execState != EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                log.error("706.210 Task #"+task.id+" already in progress.");
-                return;
-            }
+        if (task.execState != EnumsApi.TaskExecState.IN_PROGRESS.value) {
+            log.error("706.210 Task #"+task.id+" already in progress.");
+            return;
+        }
 
-            TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
-            ExecContextParamsYaml.Process p = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
-            if (p == null) {
-                if (CommonConsts.MH_FINISH_FUNCTION.equals(taskParamsYaml.task.processCode)) {
-                    ExecContextParamsYaml.FunctionDefinition function =
-                            new ExecContextParamsYaml.FunctionDefinition(CommonConsts.MH_FINISH_FUNCTION, "", EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
-                    p = new ExecContextParamsYaml.Process(CommonConsts.MH_FINISH_FUNCTION, CommonConsts.MH_FINISH_FUNCTION, CommonConsts.TOP_LEVEL_CONTEXT_ID, function);
-                }
-                else {
-                    final String msg = "706.240 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + simpleExecContext.execContextId;
-                    log.warn(msg);
-                    throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found, msg));
-                }
-            }
-
-            boolean notSkip = true;
-            if (!S.b(p.condition)) {
-                // in EvaluateExpressionLanguage.evaluate() we need only to use variableService.setVariableAsNull(v.id)
-                // because mh.evaluate doesn't have any output variables
-                Object obj = EvaluateExpressionLanguage.evaluate(
-                    simpleExecContext.execContextId, taskId, taskParamsYaml.task.taskContextId, p.condition,
-                    internalFunctionVariableService, globalVariableService, variableTxService, variableRepository,
-                        (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
-                                ()-> variableTxService.setVariableAsNull(taskId, v.id)));
-                if (obj!=null && !(obj instanceof Boolean)) {
-                    if (obj instanceof VariableUtils.VariableHolder variableHolder) {
-                        obj = extractBooleanFromVariableHolder(variableHolder);
-                    }
-                    else {
-                        final String es = "706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
-                        log.error(es);
-                        throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken, es);
-                    }
-                }
-                notSkip = Boolean.TRUE.equals(obj);
-                int i=0;
-            }
-            if (notSkip) {
-                initInputVariableEmptiness(simpleExecContext.execContextId, taskId, taskParamsYaml);
-                boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, taskParamsYaml.task.taskContextId, taskParamsYaml);
-                if (!isLongRunning) {
-                    taskWithInternalContextService.storeResult(taskId, taskParamsYaml.task.function.code);
-                }
+        TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
+        ExecContextParamsYaml.Process p = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
+        if (p == null) {
+            if (CommonConsts.MH_FINISH_FUNCTION.equals(taskParamsYaml.task.processCode)) {
+                ExecContextParamsYaml.FunctionDefinition function =
+                        new ExecContextParamsYaml.FunctionDefinition(CommonConsts.MH_FINISH_FUNCTION, "", EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
+                p = new ExecContextParamsYaml.Process(CommonConsts.MH_FINISH_FUNCTION, CommonConsts.MH_FINISH_FUNCTION, CommonConsts.TOP_LEVEL_CONTEXT_ID, function);
             }
             else {
-                taskWithInternalContextService.skipTask(taskId);
+                final String msg = "706.240 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + simpleExecContext.execContextId;
+                log.warn(msg);
+                throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found, msg));
             }
         }
-        finally {
-            TaskLastProcessingHelper.lastTaskId = taskId;
+
+        boolean notSkip = true;
+        if (!S.b(p.condition)) {
+            // in EvaluateExpressionLanguage.evaluate() we need only to use variableService.setVariableAsNull(v.id)
+            // because mh.evaluate doesn't have any output variables
+            Object obj = EvaluateExpressionLanguage.evaluate(
+                simpleExecContext.execContextId, taskId, taskParamsYaml.task.taskContextId, p.condition,
+                internalFunctionVariableService, globalVariableService, variableTxService, variableRepository,
+                    (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
+                            ()-> variableTxService.setVariableAsNull(taskId, v.id)));
+            if (obj!=null && !(obj instanceof Boolean)) {
+                if (obj instanceof VariableUtils.VariableHolder variableHolder) {
+                    obj = extractBooleanFromVariableHolder(variableHolder);
+                }
+                else {
+                    final String es = "706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
+                    log.error(es);
+                    throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken, es);
+                }
+            }
+            notSkip = Boolean.TRUE.equals(obj);
+            int i=0;
+        }
+        if (notSkip) {
+            initInputVariableEmptiness(simpleExecContext.execContextId, taskId, taskParamsYaml);
+            boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, taskParamsYaml.task.taskContextId, taskParamsYaml);
+            if (!isLongRunning) {
+                taskWithInternalContextService.storeResult(taskId, taskParamsYaml.task.function.code);
+            }
+        }
+        else {
+            taskWithInternalContextService.skipTask(taskId);
         }
     }
 

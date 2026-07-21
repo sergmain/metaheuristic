@@ -339,6 +339,9 @@ public class Globals {
 
         public int maxTriesAfterError = 3;
 
+        // max number of internal-function Tasks executed concurrently across the whole dispatcher
+        public int internalFunctionMaxConcurrency = 20;
+
         @DataSizeUnit(DataUnit.MEGABYTES)
         public DataSize chunkSize = DataSize.ofMegabytes(10);
 
@@ -348,6 +351,10 @@ public class Globals {
 
         public void setMaxTriesAfterError(int maxTriesAfterError) {
             this.maxTriesAfterError = EnvProperty.minMax(maxTriesAfterError, 0, 10);
+        }
+
+        public void setInternalFunctionMaxConcurrency(int internalFunctionMaxConcurrency) {
+            this.internalFunctionMaxConcurrency = EnvProperty.minMax(internalFunctionMaxConcurrency, 1, 1000);
         }
 
         @DeprecatedConfigurationProperty(replacement = "mh.publicKeyStore")

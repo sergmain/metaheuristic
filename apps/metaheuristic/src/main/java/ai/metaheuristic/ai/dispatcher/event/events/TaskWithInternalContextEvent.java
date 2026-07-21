@@ -34,8 +34,12 @@ public class TaskWithInternalContextEvent implements EventWithId<Long> {
     public final Long execContextId;
     public final Long taskId;
 
+    // tenant key for MultiTenantedQueue: taskId => one virtual thread per ready internal-function Task,
+    // enabling parallel execution of internal Functions (including within a single ExecContext).
+    // The DAG contract is preserved upstream of the queue: findAllForAssigning only emits an event
+    // for a Task whose upstream vertices are already complete.
     @Override
     public Long getId() {
-        return execContextId;
+        return taskId;
     }
 }
