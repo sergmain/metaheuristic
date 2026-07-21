@@ -47,6 +47,11 @@ public class MhscIncludeResolver {
 
     private static final int MAX_INCLUDE_DEPTH = 10;
 
+    // Matches a 'description' source-option field at statement start (indentation allowed).
+    // The description field is valid only in the top-level .mhsc source(...) header, never in a .mhscp part.
+    private static final Pattern DESCRIPTION_FIELD_PATTERN =
+            Pattern.compile("^[ \\t]*description[ \\t]*=[ \\t]*[\"']", Pattern.MULTILINE);
+
     /**
      * Resolve all {@code include "name"} directives in the given .mhsc content.
      * Part files are looked up in {@code sourceDir} with the {@code .mhscp} extension.
@@ -104,6 +109,10 @@ public class MhscIncludeResolver {
             }
 
             String partContent = contentResolver.apply(name);
+
+            if (DESCRIPTION_FIELD_PATTERN.matcher(partContent).find()) {
+                throw new BundleProcessingException("01.564.580 The 'description' field is not allowed in a .mhscp part file (include \"" + name + "\"); declare 'description' only in the top-level .mhsc source(...) header");
+            }
 
             Set<String> newVisited = new HashSet<>(visited);
             newVisited.add(name);

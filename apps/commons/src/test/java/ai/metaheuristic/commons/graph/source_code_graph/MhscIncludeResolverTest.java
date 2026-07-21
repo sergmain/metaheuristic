@@ -239,4 +239,18 @@ class MhscIncludeResolverTest {
         assertFalse(filter.accept(new File("test.mhscp")), ".mhscp must NOT match .mhsc filter");
         assertFalse(filter.accept(new File("rg-shared-body.mhscp")), ".mhscp part file must NOT match");
     }
+
+    @Test
+    void test_descriptionField_inPart_rejected() {
+        // The 'description' field is a top-level source(...) option; a .mhscp part is a body
+        // fragment and must not declare it. The resolver reads part content, so it is the
+        // single choke point that knows content came from a part file.
+        String content = "source \"t\" {\n    include \"body\"\n}\n";
+        String part = "    description = \"nope\"\n    mh.nop := internal mh.nop { timeout 10 }";
+
+        BundleProcessingException ex = assertThrows(BundleProcessingException.class,
+                () -> MhscIncludeResolver.resolve(content, mapResolver(Map.of("body", part))));
+        assertTrue(ex.message.contains("description"));
+        assertTrue(ex.message.contains("body"));
+    }
 }

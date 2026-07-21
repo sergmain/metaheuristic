@@ -134,6 +134,8 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                         scg.ac = new SourceCodeGraph.AccessControl(unquote(opt.STRING().getText()));
                     } else if (opt.getText().startsWith("type")) {
                         scg.type = unquote(opt.STRING().getText());
+                    } else if (opt.getText().startsWith("description")) {
+                        scg.description = unquote(opt.STRING().getText());
                     }
                 }
             }
