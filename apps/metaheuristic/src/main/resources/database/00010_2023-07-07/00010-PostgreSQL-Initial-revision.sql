@@ -21,6 +21,23 @@ create table MH_IDS
     STUB    varchar(1) null
 );
 
+CREATE TABLE mh_function_execution_time
+(
+    ID                  SERIAL PRIMARY KEY,
+    VERSION             NUMERIC(10, 0)  NOT NULL,
+    CREATED_ON          bigint not null,
+    FUNCTION_TYPE       VARCHAR(50) NOT NULL,
+    KEY_SHA256_LENGTH   VARCHAR(100) NOT NULL,
+    KEY_VALUE           VARCHAR(512) NOT NULL,
+    PARAMS              TEXT null
+);
+
+CREATE UNIQUE INDEX mh_function_execution_time_key_sha256_length_unq_idx
+    ON mh_function_execution_time (KEY_SHA256_LENGTH);
+
+CREATE INDEX mh_function_execution_time_function_type_idx
+    ON mh_function_execution_time (FUNCTION_TYPE);
+
 CREATE TABLE MH_CACHE_PROCESS
 (
     ID                  SERIAL PRIMARY KEY,
@@ -307,11 +324,11 @@ CREATE TABLE MH_TASK
   ASSIGNED_ON                   bigint,
   UPDATED_ON                    bigint,
   COMPLETED_ON                  bigint,
-  IS_COMPLETED                  BOOLEAN default false not null,
+  IS_COMPLETED                  smallint not null default 0,
   FUNCTION_EXEC_RESULTS         TEXT,
   EXEC_CONTEXT_ID               NUMERIC(10, 0)   NOT NULL,
   EXEC_STATE                    smallint not null default 0,
-  IS_RESULT_RECEIVED            BOOLEAN not null default false,
+  IS_RESULT_RECEIVED            smallint not null default 0,
   RESULT_RESOURCE_SCHEDULED_ON  bigint,
   ACCESS_BY_PROCESSOR_ON        bigint
 );
@@ -542,7 +559,7 @@ CREATE table mhbp_kb
     CODE            VARCHAR(50)     NOT NULL,
     DISABLED        BOOLEAN         not null default false,
     PARAMS          TEXT            not null,
-    STATUS          BOOLEAN not null default false
+    STATUS          smallint        not null default 0
 );
 
 CREATE INDEX mhbp_kb_company_id_idx
@@ -559,7 +576,7 @@ CREATE table mhbp_chapter
     CODE            VARCHAR(100)    NOT NULL,
     DISABLED        BOOLEAN         not null default false,
     PARAMS          TEXT            not null,
-    STATUS          BOOLEAN         not null default false,
+    STATUS          smallint        not null default 0,
     PROMPT_COUNT    int             not null
 );
 
@@ -608,7 +625,7 @@ CREATE table mhbp_answer
     CHAPTER_ID      NUMERIC(10, 0)  NOT NULL,
     ANSWERED_ON     bigint          NOT NULL,
     Q_CODE          VARCHAR(50)     NOT NULL,
-    STATUS          BOOLEAN not null default false,
+    STATUS          smallint        not null default 0,
     PARAMS          TEXT            not null,
     TOTAL           int             not null,
     FAILED          int             not null,
@@ -628,7 +645,7 @@ CREATE table mhbp_session
     STARTED_ON      bigint          NOT NULL,
     PROVIDER_CODE   VARCHAR(50)     NOT NULL,
     FINISHED_ON     bigint,
-    STATUS          BOOLEAN not null default false
+    STATUS          smallint        not null default 0
 );
 
 CREATE INDEX mhbp_session_company_id_idx
