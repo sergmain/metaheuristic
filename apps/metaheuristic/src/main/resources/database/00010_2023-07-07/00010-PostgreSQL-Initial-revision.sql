@@ -138,6 +138,23 @@ update MH_COMPANY set HEAD_REVISION_ID =
     (select ID from MH_COMPANY_REVISION where COMPANY_ID=(select ID from MH_COMPANY where UNIQUE_ID=1) and REVISION=1)
     where UNIQUE_ID=1;
 
+-- Seed: 'Company #1' (UNIQUE_ID=2) - envelope + first revision
+insert into MH_COMPANY
+(id, version, UNIQUE_ID, IS_DELETED, HEAD_REVISION_ID)
+VALUES
+(nextval('mh_company_id_seq'), 0, 2, false, null);
+
+insert into MH_COMPANY_REVISION
+(id, version, COMPANY_ID, REVISION, NAME, PARAMS, IS_DELETED, CREATED_ON)
+VALUES
+(nextval('mh_company_revision_id_seq'), 0,
+ (select ID from MH_COMPANY where UNIQUE_ID=2), 1, 'Company #1', '', false,
+ EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint * 1000);
+
+update MH_COMPANY set HEAD_REVISION_ID =
+    (select ID from MH_COMPANY_REVISION where COMPANY_ID=(select ID from MH_COMPANY where UNIQUE_ID=2) and REVISION=1)
+    where UNIQUE_ID=2;
+
 -- !!! this insert must be after creating 'master company'
 insert into MH_GEN_IDS
 (SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)
@@ -192,6 +209,48 @@ CREATE UNIQUE INDEX MH_ACCOUNT_REVISION_ACCOUNT_ID_REVISION_UNQ_IDX
 
 CREATE INDEX MH_ACCOUNT_REVISION_ACCOUNT_ID_IDX
     ON MH_ACCOUNT_REVISION (ACCOUNT_ID);
+
+-- Seed: 'rest_user' - envelope + first revision
+insert into MH_ACCOUNT
+(id, version, COMPANY_ID, is_acc_not_expired, is_not_locked, is_cred_not_expired, is_enabled, USERNAME, PASSWORD, ROLES, CREATED_ON, IS_DELETED, HEAD_REVISION_ID)
+VALUES
+(nextval('mh_account_id_seq'), 0, 1, true, true, true, true, 'rest_user',
+ '$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu',
+ 'ROLE_ASSET_REST_ACCESS, ROLE_SERVER_REST_ACCESS',
+ EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint * 1000, false, null);
+
+insert into MH_ACCOUNT_REVISION
+(id, version, ACCOUNT_ID, REVISION, PUBLIC_NAME, UPDATED_ON, IS_DELETED, CREATED_ON)
+VALUES
+(nextval('mh_account_revision_id_seq'), 0,
+ (select ID from MH_ACCOUNT where USERNAME='rest_user'), 1, 'Rest user',
+ EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint * 1000, false,
+ EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint * 1000);
+
+update MH_ACCOUNT set HEAD_REVISION_ID =
+    (select ID from MH_ACCOUNT_REVISION where ACCOUNT_ID=(select ID from MH_ACCOUNT where USERNAME='rest_user') and REVISION=1)
+    where USERNAME='rest_user';
+
+-- Seed: 'qqq' - envelope + first revision
+insert into MH_ACCOUNT
+(id, version, COMPANY_ID, is_acc_not_expired, is_not_locked, is_cred_not_expired, is_enabled, USERNAME, PASSWORD, ROLES, CREATED_ON, IS_DELETED, HEAD_REVISION_ID)
+VALUES
+(nextval('mh_account_id_seq'), 0, 2, true, true, true, true, 'qqq',
+ '$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu',
+ 'ROLE_ADMIN',
+ EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint * 1000, false, null);
+
+insert into MH_ACCOUNT_REVISION
+(id, version, ACCOUNT_ID, REVISION, PUBLIC_NAME, UPDATED_ON, IS_DELETED, CREATED_ON)
+VALUES
+(nextval('mh_account_revision_id_seq'), 0,
+ (select ID from MH_ACCOUNT where USERNAME='qqq'), 1, 'admin for company #1',
+ EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint * 1000, false,
+ EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint * 1000);
+
+update MH_ACCOUNT set HEAD_REVISION_ID =
+    (select ID from MH_ACCOUNT_REVISION where ACCOUNT_ID=(select ID from MH_ACCOUNT where USERNAME='qqq') and REVISION=1)
+    where USERNAME='qqq';
 
 CREATE TABLE MH_PROCESSOR
 (
