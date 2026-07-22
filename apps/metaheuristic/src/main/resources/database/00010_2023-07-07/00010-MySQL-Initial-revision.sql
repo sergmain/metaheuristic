@@ -135,6 +135,19 @@ VALUES
 
 update mh_company set HEAD_REVISION_ID = 1 where ID = 1;
 
+-- Seed: 'Company #1' (UNIQUE_ID=2) - envelope + first revision
+insert into mh_company
+(id, version, UNIQUE_ID, IS_DELETED, HEAD_REVISION_ID)
+VALUES
+(2, 0, 2, false, null);
+
+insert into mh_company_revision
+(id, version, COMPANY_ID, REVISION, NAME, PARAMS, IS_DELETED, CREATED_ON)
+VALUES
+(2, 0, 2, 1, 'Company #1', '', false, UNIX_TIMESTAMP() * 1000);
+
+update mh_company set HEAD_REVISION_ID = 2 where ID = 2;
+
 -- !!! this insert must be executed after creating 'master company' immediately;
 
 insert mh_gen_ids
@@ -191,6 +204,38 @@ CREATE UNIQUE INDEX mh_account_revision_account_id_revision_unq_idx
 CREATE INDEX mh_account_revision_account_id_idx
     ON mh_account_revision (ACCOUNT_ID);
 
+-- Seed: 'rest_user' - envelope + first revision
+insert into mh_account
+(id, version, COMPANY_ID, is_acc_not_expired, is_not_locked, is_cred_not_expired, is_enabled, USERNAME, PASSWORD, ROLES, CREATED_ON, IS_DELETED, HEAD_REVISION_ID)
+VALUES
+(1, 0, 1, true, true, true, true, 'rest_user',
+ '$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu',
+ 'ROLE_ASSET_REST_ACCESS, ROLE_SERVER_REST_ACCESS',
+ UNIX_TIMESTAMP() * 1000, false, null);
+
+insert into mh_account_revision
+(id, version, ACCOUNT_ID, REVISION, PUBLIC_NAME, UPDATED_ON, IS_DELETED, CREATED_ON)
+VALUES
+(1, 0, 1, 1, 'Rest user', UNIX_TIMESTAMP() * 1000, false, UNIX_TIMESTAMP() * 1000);
+
+update mh_account set HEAD_REVISION_ID = 1 where ID = 1;
+
+-- Seed: 'qqq' - envelope + first revision
+insert into mh_account
+(id, version, COMPANY_ID, is_acc_not_expired, is_not_locked, is_cred_not_expired, is_enabled, USERNAME, PASSWORD, ROLES, CREATED_ON, IS_DELETED, HEAD_REVISION_ID)
+VALUES
+(2, 0, 2, true, true, true, true, 'qqq',
+ '$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu',
+ 'ROLE_ADMIN',
+ UNIX_TIMESTAMP() * 1000, false, null);
+
+insert into mh_account_revision
+(id, version, ACCOUNT_ID, REVISION, PUBLIC_NAME, UPDATED_ON, IS_DELETED, CREATED_ON)
+VALUES
+(2, 0, 2, 1, 'admin for company #1', UNIX_TIMESTAMP() * 1000, false, UNIX_TIMESTAMP() * 1000);
+
+update mh_account set HEAD_REVISION_ID = 2 where ID = 2;
+
 CREATE TABLE mh_processor
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
@@ -220,7 +265,7 @@ CREATE TABLE mh_log_data
   ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
   REF_ID      NUMERIC(10, 0) NOT NULL,
   VERSION     NUMERIC(5, 0)  NOT NULL,
-  UPDATE_TS   TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP default CURRENT_TIMESTAMP,
+  UPDATE_TS   TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP default CURRENT_TIMESTAMP,
   LOG_TYPE    NUMERIC(5, 0)  NOT NULL,
   LOG_DATA    MEDIUMTEXT not null
 );
@@ -325,11 +370,11 @@ CREATE TABLE mh_task
     ASSIGNED_ON                 bigint,
     UPDATED_ON                  bigint,
     COMPLETED_ON                bigint,
-    IS_COMPLETED                tinyint(1) not null default 0,
+    IS_COMPLETED                tinyint    not null default 0,
     FUNCTION_EXEC_RESULTS       MEDIUMTEXT,
     EXEC_CONTEXT_ID             NUMERIC(10, 0)   NOT NULL,
-    EXEC_STATE                  tinyint(1) not null default 0,
-    IS_RESULT_RECEIVED          tinyint(1) not null default 0,
+    EXEC_STATE                  tinyint    not null default 0,
+    IS_RESULT_RECEIVED          tinyint    not null default 0,
     RESULT_RESOURCE_SCHEDULED_ON bigint,
     ACCESS_BY_PROCESSOR_ON      bigint
 );
@@ -367,7 +412,7 @@ CREATE TABLE mh_source_code
     LATCH           varchar(50)
 );
 
-CREATE INDEX mh_source_company_id_idx
+CREATE INDEX mh_source_code_company_id_idx
     ON mh_source_code (COMPANY_ID);
 
 CREATE UNIQUE INDEX mh_source_code_uid_unq_idx
@@ -465,7 +510,7 @@ create table mh_batch
     EXEC_CONTEXT_ID     NUMERIC(10, 0),
     DATA_ID         NUMERIC(10, 0),
     CREATED_ON      bigint         NOT NULL,
-    EXEC_STATE      tinyint(1) not null default 0,
+    EXEC_STATE      tinyint    not null default 0,
     PARAMS          MEDIUMTEXT,
     IS_DELETED      BOOLEAN not null default false
 );
@@ -574,7 +619,7 @@ CREATE table mhbp_kb
     CODE            VARCHAR(50)     NOT NULL,
     DISABLED        BOOLEAN         not null default false,
     PARAMS          TEXT            not null,
-    STATUS          tinyint(1)      NOT NULL default 0
+    STATUS          tinyint         NOT NULL default 0
 );
 
 CREATE INDEX mhbp_kb_company_id_idx
@@ -591,7 +636,7 @@ CREATE table mhbp_chapter
     CODE            VARCHAR(100)    NOT NULL,
     DISABLED        BOOLEAN         not null default false,
     PARAMS          LONGTEXT        not null,
-    STATUS          tinyint(1)      NOT NULL default 0,
+    STATUS          tinyint         NOT NULL default 0,
     PROMPT_COUNT    int             not null
 );
 
@@ -641,7 +686,7 @@ CREATE table mhbp_answer
     CHAPTER_ID      INT UNSIGNED  NOT NULL,
     ANSWERED_ON     bigint          NOT NULL,
     Q_CODE          VARCHAR(50)     NOT NULL,
-    STATUS          tinyint(1)      NOT NULL,
+    STATUS          tinyint         NOT NULL,
     PARAMS          TEXT            not null,
     TOTAL           int             not null,
     FAILED          int             not null,
