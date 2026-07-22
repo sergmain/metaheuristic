@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_graph;
 
+import ai.metaheuristic.ai.Consts;
+
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -75,6 +77,7 @@ import java.util.stream.Collectors;
 public class ExecContextGraphService {
 
     private static final String TASK_CONTEXT_ID_ATTR = "ctxid";
+    private static final String TAG_ATTR = "tag";
 
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextGraphRepository execContextGraphRepository;
@@ -170,6 +173,10 @@ public class ExecContextGraphService {
         Function<ExecContextData.TaskVertex, Map<String, Attribute>> vertexAttributeProvider = v -> {
             Map<String, Attribute> m = new HashMap<>();
             m.put(TASK_CONTEXT_ID_ATTR, DefaultAttribute.createAttribute(v.taskContextId));
+            // rare: only a tagged vertex adds this key, so all other vertices serialize unchanged.
+            if (v.tag != null) {
+                m.put(TAG_ATTR, DefaultAttribute.createAttribute(v.tag));
+            }
             return m;
         };
 
@@ -237,6 +244,9 @@ public class ExecContextGraphService {
         switch(vertex.getSecond()) {
             case TASK_CONTEXT_ID_ATTR:
                 vertex.getFirst().taskContextId = attribute.getValue();
+                break;
+            case TAG_ATTR:
+                vertex.getFirst().tag = attribute.getValue();
                 break;
             case "ID":
                 // do nothing
@@ -682,6 +692,10 @@ public class ExecContextGraphService {
                 // leaf vertex (mh.finish) — never skip
                 continue;
             }
+            if (Consts.TAG_TERMINAL.equals(tv.tag)) {
+                // a `tag terminal` process must run even when its upstream errors — never skip it
+                continue;
+            }
             if (allParentsErrorOrSkipped(execContextDAC.graph(), stateParamsYaml, tv)) {
                 toMark.add(tv);
             }
@@ -727,6 +741,10 @@ public class ExecContextGraphService {
                 }
                 // leaf vertex (no outgoing edges, i.e. mh.finish) — never skip, it must always execute
                 if (execContextDAC.graph().outgoingEdgesOf(tv).isEmpty()) {
+                    continue;
+                }
+                // a `tag terminal` process must run even when its upstream errors — never skip it
+                if (Consts.TAG_TERMINAL.equals(tv.tag)) {
                     continue;
                 }
                 if (allParentsErrorOrSkipped(execContextDAC.graph(), stateParamsYaml, tv)) {
@@ -775,6 +793,12 @@ public class ExecContextGraphService {
     public OperationStatusRest addNewTasksToGraph(
         ExecContextData.GraphAndStates graphAndStates, List<Long> parentTaskIds,
             List<TaskApiData.TaskWithContext> taskIds, EnumsApi.TaskExecState state) {
+        return addNewTasksToGraph(graphAndStates, parentTaskIds, taskIds, state, null);
+    }
+
+    public OperationStatusRest addNewTasksToGraph(
+        ExecContextData.GraphAndStates graphAndStates, List<Long> parentTaskIds,
+            List<TaskApiData.TaskWithContext> taskIds, EnumsApi.TaskExecState state, @Nullable String tag) {
         TxUtils.checkTxExists();
 
         changeGraphWithState(graphAndStates, (graph, stateParamsYaml) -> {
@@ -785,7 +809,7 @@ public class ExecContextGraphService {
 
             taskIds.forEach(taskWithContext -> {
                 stateParamsYaml.states.put(taskWithContext.taskId, state);
-                final ExecContextData.TaskVertex v = new ExecContextData.TaskVertex(taskWithContext.taskId, taskWithContext.taskContextId );
+                final ExecContextData.TaskVertex v = new ExecContextData.TaskVertex(taskWithContext.taskId, taskWithContext.taskContextId, tag);
                 graph.addVertex(v);
                 vertices.forEach(parentV -> graph.addEdge(parentV, v) );
             });

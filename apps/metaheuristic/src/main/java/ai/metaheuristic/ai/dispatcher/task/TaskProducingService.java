@@ -116,7 +116,7 @@ public class TaskProducingService {
             log.info("(targetState.value!=t.execState)");
             throw new IllegalStateException("(targetState.value!=t.execState)");
         }
-        execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, taskWithContexts, targetState);
+        execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, taskWithContexts, targetState, process.tag);
 
         result.status = EnumsApi.TaskProducingStatus.OK;
         return result;
@@ -237,7 +237,7 @@ public class TaskProducingService {
                 throw new IllegalStateException("(targetState.value!=t.execState)");
             }
             List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), actualProcessContextId));
-            execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, currTaskIds, targetState);
+            execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, currTaskIds, targetState, p.tag);
             createdInBlock.put(p.processCode, t.getId());
             if (process.logic == EnumsApi.SourceCodeSubProcessLogic.and) {
                 // Parallel: each subprocess branches from the original parent, collect ALL for downstream linking

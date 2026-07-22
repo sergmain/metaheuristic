@@ -99,6 +99,10 @@ public class ExecContextData {
     public static class TaskVertex {
         public Long taskId;
         public String taskContextId;
+        // A process tag carried into the DAG. Almost always null; set only for the rare process
+        // that declared one in .mhsc (e.g. `tag terminal`). Serialized to the graph DOT only when
+        // non-null (ExecContextGraphService.asString), so untagged vertices stay byte-identical.
+        @org.jspecify.annotations.Nullable public String tag;
 
         public TaskVertex(Long taskId) {
             this.taskId = taskId;
@@ -107,6 +111,12 @@ public class ExecContextData {
         public TaskVertex(Long taskId, String taskContextId) {
             this.taskId = taskId;
             this.taskContextId = taskContextId;
+        }
+
+        public TaskVertex(Long taskId, String taskContextId, @org.jspecify.annotations.Nullable String tag) {
+            this.taskId = taskId;
+            this.taskContextId = taskContextId;
+            this.tag = tag;
         }
     }
 

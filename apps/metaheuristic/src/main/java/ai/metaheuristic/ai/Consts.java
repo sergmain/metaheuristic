@@ -125,6 +125,8 @@ public class Consts {
     public static final Long ID_1 = 1L;
 
     public static final String MH_NOP_FUNCTION = "mh.nop";
+    // process tag marking a process that must run even when its upstream errors, and must never be SKIPPED
+    public static final String TAG_TERMINAL = "terminal";
     public static final String MH_BATCH_SPLITTER_FUNCTION = "mh.batch-splitter";
     public static final String MH_BATCH_LINE_SPLITTER_FUNCTION = "mh.batch-line-splitter";
 

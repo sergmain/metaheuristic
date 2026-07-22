@@ -76,6 +76,24 @@ public class TaskStateService {
         }
     }
 
+    private boolean allDirectParentsDead(ExecContextGraph ecg, ExecContextData.TaskVertex subTask) {
+        Set<ExecContextData.TaskVertex> parents = ExecContextGraphService.findDirectAncestors(ecg, subTask);
+        if (parents.isEmpty()) {
+            return false;
+        }
+        for (ExecContextData.TaskVertex parent : parents) {
+            TaskImpl p = taskRepository.findByIdReadOnly(parent.taskId);
+            if (p == null) {
+                return false;
+            }
+            EnumsApi.TaskExecState st = EnumsApi.TaskExecState.from(p.execState);
+            if (st != EnumsApi.TaskExecState.ERROR && st != EnumsApi.TaskExecState.SKIPPED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private void changeTaskStateToInitForChildrenTasksTxEventInternal(ChangeTaskStateToInitForChildrenTasksEvent event) {
         TxUtils.checkTxNotExists();
 
@@ -141,6 +159,19 @@ public class TaskStateService {
             // terminal flow-control decision for THIS run; a completing parent must NOT un-skip it back to INIT.
             TaskImpl subTaskEntity = taskRepository.findByIdReadOnly(subTask.taskId);
             if (subTaskEntity != null && EnumsApi.TaskExecState.from(subTaskEntity.execState) == EnumsApi.TaskExecState.SKIPPED) {
+                continue;
+            }
+            // A child whose EVERY direct parent is dead (ERROR/SKIPPED) is on a dead branch and must NOT be
+            // advanced to INIT — the graph SKIPPED-cascade owns it. Advancing it here pulls it out of PRE_INIT
+            // into INIT->NONE, which strands the run: the child sits NONE-but-completed and its own downstream
+            // never releases (production ExecContext #11, task #562). This is the ALL-parents test on purpose:
+            // a child with even ONE live parent is a legitimate convergence point (e.g. a condition-gated mh.nop
+            // sibling rejoining) and MUST still advance — that is exactly what the earlier reverted `anyParentError`
+            // variant got wrong. Leaves (mh.finish) and `tag terminal` vertices are exempt: they must always run.
+            if (allDirectParentsDead(ecg, subTask)
+                    && !ExecContextGraphService.findDirectDescendants(ecg, subTask.taskId).isEmpty()
+                    && !ai.metaheuristic.ai.Consts.TAG_TERMINAL.equals(subTask.tag)) {
+                log.info("189.230 not advancing task #{} to INIT: all direct parents are ERROR/SKIPPED (dead branch)", subTask.taskId);
                 continue;
             }
             if (nextState) {
