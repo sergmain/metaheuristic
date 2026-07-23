@@ -605,6 +605,14 @@ public class ExecContextGraphService {
         // no live incoming path. A task that still has a LIVE (non-dead) direct parent IS reachable and must
         // run, even if a sibling conditional branch that rejoins here was SKIPPED (e.g. mh.nop-objectives when
         // its when-condition is false); blocking on ANY dead ANCESTOR stalls that legitimate convergence forever.
+        // A `tag terminal` process is a 'finally' for its upstream: the loop above already guaranteed every
+        // ancestor reached a FINISHED state, and terminal must then run regardless of HOW they finished.
+        // Without this, rule 2 (never SKIP a terminal vertex) only gets it as far as NONE - the dead-branch
+        // check below then refuses to hand it out for assigning, so it never runs and mh.finish behind it
+        // stays PRE_INIT forever (production ExecContext #13, task #580).
+        if (Consts.TAG_TERMINAL.equals(vertex.tag)) {
+            return true;
+        }
         Set<ExecContextData.TaskVertex> directParents = graph.incomingEdgesOf(vertex).stream()
                 .map(graph::getEdgeSource).collect(Collectors.toSet());
         if (!directParents.isEmpty()) {
