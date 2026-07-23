@@ -98,6 +98,7 @@ public class TaskParamsYamlUtilsV3
         trg.checksumMap = src.checksumMap;
         trg.git = src.git;
         trg.assetDir = src.assetDir;
+        trg.cleaningPolicy = src.cleaningPolicy;
         if (src.api != null) {
             trg.api = new TaskParamsYaml.Api(src.api.keyCode);
         }

@@ -213,6 +213,12 @@ public class TaskParamsYamlV3 implements BaseParams {
         @Nullable
         public String assetDir;
 
+        /**
+         * Processor-side cleaning policy, copied from FunctionConfigYaml.function.cleaningPolicy.
+         * @Nullable per the @Nullable-exception rule of the multi-versioning mechanic - no version bump.
+         */
+        public EnumsApi.@Nullable CleaningPolicy cleaningPolicy;
+
         // Stage 5 (vault secret handoff): @Nullable per the @Nullable-exception
         // rule — no version bump. When non-null and task.companyId != 0L, the
         // Processor fetches a sealed API key from the Dispatcher before launching

@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTaskUtils;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DigitUtils;
@@ -59,6 +60,9 @@ import java.util.stream.Stream;
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 import static java.nio.file.StandardOpenOption.*;
 
+/**
+ * <p>Error code prefix: {@code 01.713.} (unique to this class).
+ */
 @SuppressWarnings({"WeakerAccess", "DuplicatedCode"})
 @Service
 @Slf4j
@@ -522,6 +526,7 @@ public class ProcessorTaskService {
             task.functionExecResult = null;
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.UTILS.to(assignedTask.params);
             task.clean = taskParamYaml.task.clean;
+            task.cleaningPolicy = taskParamYaml.task.function.cleaningPolicy;
             task.dispatcherUrl = core.dispatcherUrl.url;
             task.createdOn = System.currentTimeMillis();
             task.assetsPrepared = false;
@@ -702,6 +707,42 @@ public class ProcessorTaskService {
             } catch (Throwable th) {
                 log.error("713.600 Error deleting task " + taskId, th);
             }
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
+        }
+    }
+
+    /**
+     * Deletes the 'asset' sub-dir of a task's dir, i.e. the dir which was filled in by TaskProcessor
+     * from Function's assetDir. Everything else in taskDir is left as is.
+     * Path-based and static on purpose - it's testable without a Spring context.
+     *
+     * @return true when the dir existed before the call and doesn't exist after it.
+     */
+    public static boolean deleteTaskAssetDir(Path taskDir) {
+        final Path assetDir = taskDir.resolve(ConstsApi.ASSET_DIR);
+        if (Files.notExists(assetDir)) {
+            return false;
+        }
+        deleteDir(assetDir, "delete asset dir of task because of cleaningPolicy==ASSETS");
+        return Files.notExists(assetDir);
+    }
+
+    public void deleteAssetDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, final Long taskId) {
+        MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.getProcessorEnv().metadataParams().processorStateByDispatcherUrl(core);
+
+        final Path processorDir = processorPath.resolve(core.coreCode);
+        final Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
+        final Path dispatcherDir = processorTaskDir.resolve(processorState.dispatcherCode);
+        final Path taskDir = DirUtils.getPoweredPath(dispatcherDir, taskId);
+
+        try {
+            ProcessorSyncHolder.writeLock.lock();
+            if (deleteTaskAssetDir(taskDir)) {
+                log.info("01.713.640 asset dir of task #{} was deleted, url {}", taskId, core.dispatcherUrl.url);
+            }
+        } catch (Throwable th) {
+            log.error("01.713.660 Error deleting asset dir of task " + taskId, th);
         } finally {
             ProcessorSyncHolder.writeLock.unlock();
         }

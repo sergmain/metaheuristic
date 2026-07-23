@@ -185,6 +185,13 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
 
         public @Nullable String assetDir;
 
+        /**
+         * Processor-side cleaning policy, @Nullable per the @Nullable-exception rule of
+         * the multi-versioning mechanic - no version bump. null means 'nothing to clean
+         * because of this Function', the SourceCode's 'clean' option still applies.
+         */
+        public EnumsApi.@Nullable CleaningPolicy cleaningPolicy;
+
         public FunctionConfigYaml.@Nullable Api api = null;
     }
 

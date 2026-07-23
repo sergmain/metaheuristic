@@ -17,13 +17,15 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
+import ai.metaheuristic.api.ConstsApi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.Execution;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
@@ -41,5 +43,36 @@ class ProcessorTaskServiceTest {
 
         Path taskYaml = temp.resolve("taskYaml.yaml");
         assertDoesNotThrow(()->ProcessorTaskService.actualSave(task, taskDir, taskYaml));
+    }
+
+    @Test
+    public void test_deleteTaskAssetDir_deletesAssetDirOnly(@TempDir Path temp) throws Exception {
+        Path assetDir = Files.createDirectories(temp.resolve(ConstsApi.ASSET_DIR).resolve("nested"));
+        Files.writeString(assetDir.resolve("asset.txt"), "asset");
+        Path artifactDir = Files.createDirectories(temp.resolve(ConstsApi.ARTIFACTS_DIR));
+        Files.writeString(artifactDir.resolve("artifact.txt"), "artifact");
+
+        assertTrue(ProcessorTaskService.deleteTaskAssetDir(temp));
+
+        assertTrue(Files.notExists(temp.resolve(ConstsApi.ASSET_DIR)));
+        assertTrue(Files.exists(artifactDir.resolve("artifact.txt")), "only the 'asset' sub-dir must be deleted");
+        assertTrue(Files.exists(temp));
+    }
+
+    @Test
+    public void test_deleteTaskAssetDir_noAssetDir(@TempDir Path temp) throws Exception {
+        Files.createDirectories(temp.resolve(ConstsApi.ARTIFACTS_DIR));
+
+        assertFalse(ProcessorTaskService.deleteTaskAssetDir(temp));
+
+        assertTrue(Files.exists(temp.resolve(ConstsApi.ARTIFACTS_DIR)));
+    }
+
+    @Test
+    public void test_deleteTaskAssetDir_isIdempotent(@TempDir Path temp) throws Exception {
+        Files.createDirectories(temp.resolve(ConstsApi.ASSET_DIR));
+
+        assertTrue(ProcessorTaskService.deleteTaskAssetDir(temp));
+        assertFalse(ProcessorTaskService.deleteTaskAssetDir(temp));
     }
 }

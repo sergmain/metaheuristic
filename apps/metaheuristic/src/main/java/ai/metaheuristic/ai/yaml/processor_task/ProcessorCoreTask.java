@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.yaml.processor_task;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
@@ -101,6 +102,10 @@ public class ProcessorCoreTask {
 
     // need to clean a dir of task after processing this task?
     public boolean clean;
+
+    // cleaning policy of Function of this task, null means that Function doesn't require any cleaning.
+    // ALL is an equivalent of clean==true, ASSETS deletes only the 'asset' sub-dir of task's dir.
+    public EnumsApi.@Nullable CleaningPolicy cleaningPolicy;
 
     // TODO 2020-12-30 need to change it to DispatcherServerUrl when this class will be based on BaseClass
     // TODO 2021-08-07 you mean ProcessorAndCoreData.DispatcherUrl()? and what the point of this change?

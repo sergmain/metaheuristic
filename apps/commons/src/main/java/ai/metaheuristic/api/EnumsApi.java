@@ -260,6 +260,16 @@ public class EnumsApi {
 
     }
 
+    /**
+     * Defines what a Processor deletes after a Task, which used this Function, was completed and delivered.
+     * This is a Processor-side only option, there isn't any business logic for it at Dispatcher side.
+     *
+     * ALL    - the whole dir of Task is deleted, i.e. exactly the same behaviour as SourceCode's 'clean' option.
+     * ASSETS - only the 'asset' sub-dir of Task's dir is deleted. It exists only when
+     *          FunctionConfigYaml.function.assetDir isn't null, the rest of Task's dir is left as is.
+     */
+    public enum CleaningPolicy { ALL, ASSETS }
+
     public enum SourceCodeValidateStatus { OK, NOT_VERIFIED_YET,
         SOURCE_CODE_NOT_FOUND_ERROR,
         EXEC_CONTEXT_NOT_FOUND_ERROR,

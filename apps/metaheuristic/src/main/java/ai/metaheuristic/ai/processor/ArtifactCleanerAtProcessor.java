@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -77,11 +78,33 @@ public class ArtifactCleanerAtProcessor {
                     processorTaskService.delete(core, task.getTaskId());
                     continue;
                 }
-                if (task.clean && task.delivered && task.completed) {
-                    log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), core.dispatcherUrl.url);
+                final boolean done = task.delivered && task.completed;
+                if (isTaskDirCleaningRequired(task.clean, task.cleaningPolicy, done)) {
+                    log.info("Delete task with ((task.clean || cleaningPolicy==ALL) && task.delivered && task.completed), id {}, url {}", task.getTaskId(), core.dispatcherUrl.url);
                     processorTaskService.delete(core, task.getTaskId());
+                    continue;
+                }
+                if (isAssetDirCleaningRequired(task.cleaningPolicy, done)) {
+                    processorTaskService.deleteAssetDir(core, task.getTaskId());
                 }
             }
         }
+    }
+
+    /**
+     * The whole dir of a task is deleted either because SourceCode declared 'clean',
+     * or because Function of that task declared cleaningPolicy==ALL - both mean the very same thing.
+     * Static and free of any state on purpose - it's testable without a Spring context.
+     */
+    public static boolean isTaskDirCleaningRequired(boolean clean, EnumsApi.@Nullable CleaningPolicy cleaningPolicy, boolean done) {
+        return done && (clean || cleaningPolicy==EnumsApi.CleaningPolicy.ALL);
+    }
+
+    /**
+     * Only the 'asset' sub-dir of a task's dir is deleted, the rest of taskDir stays.
+     * cleaningPolicy==ALL is intentionally not handled here, it's already covered by isTaskDirCleaningRequired().
+     */
+    public static boolean isAssetDirCleaningRequired(EnumsApi.@Nullable CleaningPolicy cleaningPolicy, boolean done) {
+        return done && cleaningPolicy==EnumsApi.CleaningPolicy.ASSETS;
     }
 }
