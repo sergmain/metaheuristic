@@ -29,6 +29,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -83,6 +84,10 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
 
     @Query(value="select sc.id from ExecContextImpl e, SourceCodeImpl sc where e.sourceCodeId=sc.id and e.state=:execState")
     List<Long> findAllSourceCodeIdsByExecState(int execState);
+
+    @Query(value="select distinct e.sourceCodeId from ExecContextImpl e where e.state in :execStates")
+    @Transactional(readOnly = true)
+    List<Long> findAllSourceCodeIdsByExecStates(Collection<Integer> execStates);
 
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState")
     List<Long> findIdsByExecState(int execState);

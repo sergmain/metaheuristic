@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -43,6 +44,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -57,14 +59,30 @@ public class SourceCodeTxService {
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final SourceCodeRepository sourceCodeRepository;
     private final SourceCodeValidationService sourceCodeValidationService;
+    private final ExecContextRepository execContextRepository;
 
     @Transactional(readOnly = true)
     public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, UserContext context) {
+        return getSourceCodes(pageable, isArchive, List.of(), context);
+    }
+
+    /**
+     * @param execStates if not empty, only SourceCodes which have at least one ExecContext in one of these states are returned
+     */
+    @Transactional(readOnly = true)
+    public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, List<EnumsApi.ExecContextState> execStates, UserContext context) {
         pageable = PageUtils.fixPageSize(globals.dispatcher.rowsLimit.sourceCode, pageable);
         List<Long> sourceCodeIds = sourceCodeRepository.findAllIdsByOrderByIdDesc(context.getCompanyId());
         AtomicInteger count = new AtomicInteger();
 
+        // null means 'no filtering by state of ExecContext at all', an empty set means 'nothing matched'
+        @Nullable final Set<Long> idsWithRequestedExecStates = execStates.isEmpty()
+                ? null
+                : Set.copyOf(execContextRepository.findAllSourceCodeIdsByExecStates(
+                        execStates.stream().map(o -> o.code).collect(Collectors.toList())));
+
         List<SourceCode> activeSourceCodes = sourceCodeIds.stream()
+                .filter(id -> idsWithRequestedExecStates==null || idsWithRequestedExecStates.contains(id))
                 .map(sourceCodeCache::findById)
                 .filter(Objects::nonNull)
                 .filter(sourceCode-> {

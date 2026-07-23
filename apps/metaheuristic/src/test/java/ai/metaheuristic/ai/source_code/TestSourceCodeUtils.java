@@ -20,7 +20,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import static ai.metaheuristic.ai.dispatcher.source_code.SourceCodeUtils.isVariableNameOk;
+import static ai.metaheuristic.ai.dispatcher.source_code.SourceCodeUtils.parseExecContextStates;
+import static ai.metaheuristic.api.EnumsApi.ExecContextState.STARTED;
+import static ai.metaheuristic.api.EnumsApi.ExecContextState.STOPPED;
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,6 +39,26 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 @Execution(ExecutionMode.CONCURRENT)
 public class TestSourceCodeUtils {
+
+    @Test
+    public void test_parseExecContextStates() {
+        assertEquals(List.of(), parseExecContextStates(null));
+        assertEquals(List.of(), parseExecContextStates(List.of()));
+        assertEquals(List.of(), parseExecContextStates(List.of("")));
+        assertEquals(List.of(), parseExecContextStates(List.of("   ")));
+        assertEquals(List.of(), parseExecContextStates(List.of("no-such-state")));
+        assertEquals(List.of(), parseExecContextStates(Collections.singletonList(null)));
+
+        assertEquals(List.of(STARTED), parseExecContextStates(List.of("STARTED")));
+        assertEquals(List.of(STARTED), parseExecContextStates(List.of(" started ")));
+        assertEquals(List.of(STOPPED), parseExecContextStates(List.of("stopped")));
+        assertEquals(List.of(STARTED, STOPPED), parseExecContextStates(List.of("STARTED", "STOPPED")));
+        assertEquals(List.of(STOPPED, STARTED), parseExecContextStates(List.of("STOPPED", "STARTED")));
+
+        // duplicates are collapsed, unknown entries don't kill the valid ones
+        assertEquals(List.of(STARTED), parseExecContextStates(List.of("STARTED", "STARTED")));
+        assertEquals(List.of(STARTED), parseExecContextStates(Arrays.asList("STARTED", "bad", null, "  ")));
+    }
 
     @Test
     public void test() {

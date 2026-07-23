@@ -25,6 +25,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +34,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/rest/v1/dispatcher/source-code")
@@ -47,9 +50,12 @@ public class SourceCodeRestController {
 
     @GetMapping("/source-codes")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
-    public SourceCodeApiData.SourceCodesResult sourceCodes(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
+    public SourceCodeApiData.SourceCodesResult sourceCodes(
+            @PageableDefault(size = 5) Pageable pageable,
+            @RequestParam(name = "states", required = false) @Nullable List<String> states,
+            Authentication authentication) {
         UserContext context = userContextService.getContext(authentication);
-        return sourceCodeTxService.getSourceCodes(pageable, false, context);
+        return sourceCodeTxService.getSourceCodes(pageable, false, SourceCodeUtils.parseExecContextStates(states), context);
     }
 
     @GetMapping("/simple-source-codes")

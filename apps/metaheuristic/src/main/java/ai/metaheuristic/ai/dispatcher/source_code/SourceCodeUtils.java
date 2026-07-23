@@ -20,8 +20,11 @@ import ai.metaheuristic.api.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -107,6 +110,22 @@ public class SourceCodeUtils {
         Map<String, Integer> map = parseLatch(latch);
         Integer count = map.get(code);
         return count != null && count > 0;
+    }
+
+    /**
+     * Parse a list of ExecContext state names, as they arrive from UI, into a list of EnumsApi.ExecContextState.
+     * Blank and unknown names are silently skipped, so a malformed filter degrades to 'no filter' instead of an error.
+     */
+    public static List<EnumsApi.ExecContextState> parseExecContextStates(@Nullable Collection<String> states) {
+        if (states==null || states.isEmpty()) {
+            return List.of();
+        }
+        return states.stream()
+                .filter(o -> o!=null && !o.isBlank())
+                .map(o -> EnumsApi.ExecContextState.from(o.strip().toUpperCase()))
+                .filter(o -> o!=EnumsApi.ExecContextState.UNKNOWN)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     public static EnumsApi.SourceCodeLang determineLang(String sourceCodeAsStr) {
