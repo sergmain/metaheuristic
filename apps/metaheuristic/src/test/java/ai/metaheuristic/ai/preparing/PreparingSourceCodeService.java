@@ -46,6 +46,8 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.SourceCodeGraph;
+import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -315,8 +317,13 @@ public class PreparingSourceCodeService {
     }
 
     public void produceTasksForTest(String sourceCodeParams, PreparingData.PreparingSourceCodeData preparingSourceCodeData ) {
-        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeParams);
-        assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
+        // Lang-aware sanity check that the raw source defines at least one process. Parsing the raw
+        // text as YAML (SourceCodeParamsYamlUtils) only works for lang=yaml; a .mhsc DSLv2 source is
+        // not YAML and blows up with WrongVersionOfParamsException. Read the lang the SourceCode was
+        // created with and parse via SourceCodeGraphFactory, which dispatches per lang (yaml AND mhsc).
+        EnumsApi.SourceCodeLang lang = preparingSourceCodeData.getSourceCode().getSourceCodeStoredParamsYaml().lang;
+        SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(lang, sourceCodeParams);
+        assertFalse(sourceCodeGraph.processes.isEmpty());
 
         System.out.println("start checkConsistencyOfSourceCode()");
         SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(preparingSourceCodeData.getSourceCode());
@@ -356,8 +363,11 @@ public class PreparingSourceCodeService {
      * {@link TxSupportForTestingService#produceTasksWithoutStarting}.
      */
     public void produceTasksForTestWithoutStarting(String sourceCodeParams, PreparingData.PreparingSourceCodeData preparingSourceCodeData) {
-        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeParams);
-        assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
+        // Lang-aware sanity check (see produceTasksForTest): .mhsc DSLv2 sources are not YAML, so
+        // dispatch the raw-source parse through SourceCodeGraphFactory by the SourceCode's own lang.
+        EnumsApi.SourceCodeLang lang = preparingSourceCodeData.getSourceCode().getSourceCodeStoredParamsYaml().lang;
+        SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(lang, sourceCodeParams);
+        assertFalse(sourceCodeGraph.processes.isEmpty());
 
         SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(preparingSourceCodeData.getSourceCode());
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
