@@ -199,6 +199,42 @@ public class TestSourceCodeGraphLanguageMhsc {
     }
 
     @Test
+    public void test_cacheDecl_on_defaultsToNotCachingMetas() {
+        String mhsc = """
+            source "test" {
+                my-proc := some-func {
+                    timeout 10
+                    cache on
+                }
+            }""";
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("my-proc"))
+                .findFirst().orElseThrow();
+        assertNotNull(p.cache);
+        assertTrue(p.cache.enabled);
+        assertFalse(p.cache.cacheMeta);
+    }
+
+    @Test
+    public void test_cacheDecl_onWithCacheMeta() {
+        String mhsc = """
+            source "test" {
+                my-proc := some-func {
+                    timeout 10
+                    cache on, cacheMeta
+                }
+            }""";
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("my-proc"))
+                .findFirst().orElseThrow();
+        assertNotNull(p.cache);
+        assertTrue(p.cache.enabled);
+        assertTrue(p.cache.cacheMeta);
+    }
+
+    @Test
     public void test_priority_negative() {
         String mhsc = """
             source "test" {
