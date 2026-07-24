@@ -158,9 +158,9 @@ public class SouthbridgeController {
     @PostMapping("/upload/{random-part}")
     public UploadResult uploadVariable(
             MultipartFile file,
-            Long taskId,
-            Long variableId,
-            Boolean nullified,
+            @Nullable Long taskId,
+            @Nullable Long variableId,
+            @Nullable Boolean nullified,
             @PathVariable("random-part") String randomPart
     ) {
         log.debug("uploadVariable(), taskId: #{}, variableId: {}", taskId, variableId);

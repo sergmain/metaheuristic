@@ -64,7 +64,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MultiValueMap;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -179,9 +178,9 @@ public class SouthbridgeService {
     // This is the method that currently contains the stale-disk-cache bug: if the asset
     // file already exists, it is used as-is without consulting the DB — even if the
     // underlying variable blob has been updated since.
-    private CleanerInfo streamAssetFile(
-            final EnumsApi.DataType binaryType, AssetFile assetFile, final String dataId,
-            BiConsumer<String, Path> dataSaver, @Nullable final String chunkSize, final int chunkNum) {
+    private static CleanerInfo streamAssetFile(
+        final EnumsApi.DataType binaryType, AssetFile assetFile, final String dataId,
+        BiConsumer<String, Path> dataSaver, @Nullable final String chunkSize, final int chunkNum) {
 
         CleanerInfo resource = new CleanerInfo();
 

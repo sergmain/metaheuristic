@@ -37,7 +37,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
-import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.utils.ContextUtils;
@@ -227,9 +226,6 @@ public class TaskProducingService {
             };
 
             t = createTaskHelper(simpleExecContext.execContextId, execContextParamsYaml, p, actualProcessContextId, inlines, List.of(parentTaskId), EnumsApi.TaskExecState.PRE_INIT);
-//            if (t==null) {
-//                throw new BreakFromLambdaException("375.120 Creation of task failed");
-//            }
 
             final EnumsApi.TaskExecState targetState = EnumsApi.TaskExecState.from(t.execState);
             if (targetState.value!=t.execState) {
@@ -256,7 +252,6 @@ public class TaskProducingService {
         }
     }
 
-//    @Nullable
     private TaskImpl createTaskHelper(
         Long execContextId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process,
         String taskContextId, @Nullable Map<String, Map<String, String>> inlines, List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {

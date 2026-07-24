@@ -731,7 +731,7 @@ public class VariableTxService {
         if (sv.nullified) {
             // this exception will be caught later is processed in correct way
             // so it's not an error but handler of work flow
-            throw new VariableIsNullException(variableId);
+            throw new VariableIsNullException("01.171.750 Variable #"+variableId+" is nullified. Must not be queried", variableId);
         }
         storeToFile(variableId, trgFile);
     }

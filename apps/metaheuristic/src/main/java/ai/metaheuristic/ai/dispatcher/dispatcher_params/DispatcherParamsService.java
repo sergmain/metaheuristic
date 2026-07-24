@@ -29,8 +29,6 @@ import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYamlUtils;
 import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -144,30 +142,9 @@ public class DispatcherParamsService {
             if (process.function.code.equals(functionCode)) {
                 return process;
             }
-//            ExecContextParamsYaml.Process result = findProcessForFunction(process, functionCode);
-//            if (result!=null) {
-//                return result;
-//            }
         }
         return null;
     }
-
-/*
-    private static ExecContextParamsYaml.@Nullable Process findProcessForFunction(ExecContextParamsYaml.Process process, String functionCode) {
-        if (process.function.code.equals(functionCode)) {
-            return process;
-        }
-        if (process.subProcesses!=null && process.subProcesses.processes!=null) {
-            for (SourceCodeParamsYaml.Process p : process.subProcesses.processes) {
-                SourceCodeParamsYaml.Process result = findProcessForFunction(p, functionCode);
-                if (result!=null) {
-                    return result;
-                }
-            }
-        }
-        return null;
-    }
-*/
 
     private void registerExperiment(String uid) {
         updateParams((dpy) -> {

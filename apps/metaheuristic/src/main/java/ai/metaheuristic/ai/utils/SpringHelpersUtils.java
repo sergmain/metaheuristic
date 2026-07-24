@@ -57,7 +57,7 @@ public class SpringHelpersUtils {
             "mcp",
 
             // db's profiles
-            "mysql", "mariadb", "postgresql", "h2", "hsqldb", "derby", "generic", "custom"
+            "mysql", "mariadb", "postgresql", "h2", "derby", "generic", "custom"
         ));
     }
 

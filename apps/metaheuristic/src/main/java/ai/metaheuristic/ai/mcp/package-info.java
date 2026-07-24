@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,18 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.exceptions;
+@NullMarked
+package ai.metaheuristic.ai.mcp;
 
-import org.jspecify.annotations.Nullable;
-
-/**
- * @author Sergio Lissner
- * Date: 9/12/2022
- * Time: 7:21 AM
- */
-public class VariableIsNullException extends VariableCommonException {
-
-    public VariableIsNullException(String message, @Nullable Long variableId) {
-        super(message, variableId);
-    }
-}
+import org.jspecify.annotations.NullMarked;

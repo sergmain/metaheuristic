@@ -38,7 +38,12 @@ public class StandaloneEnvYamlProvider implements EnvYamlProvider {
               - code: java-25
                 exec: java -Dfile.encoding=UTF-8 -jar
                 verify:
-                  run: false
+                  run: true
+                  params: --version
+              - code: java-25-64m
+                exec: java -Xms64m -Xmx64m -Dfile.encoding=UTF-8 -jar
+                verify:
+                  run: true
                   params: --version
               - code: python-3
                 exec: python

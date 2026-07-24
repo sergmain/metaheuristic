@@ -130,7 +130,9 @@ public class ExecContextTaskStateService {
 
         }
         catch (CommonRollbackException e) {
-            //
+            if (e.status== EnumsApi.OperationStatus.ERROR) {
+                log.error("01.417.015 Error "+e.getErrorMessage(), e);
+            }
         }
         catch (Throwable th) {
             log.error("417.020 Error, need to investigate ", th);

@@ -90,9 +90,9 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
     public FunctionConfigYaml clone() {
         FunctionConfigYaml clone = (FunctionConfigYaml) super.clone();
         clone.function = this.function.clone();
-        clone.system = this.system.clone();
-//        clone.system.archive = this.system.archive;
-//        clone.system.checksumMap.putAll(this.system.checksumMap);
+        if (this.system!=null) {
+            clone.system = this.system.clone();
+        }
         return clone;
     }
 

@@ -18,14 +18,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
-import ai.metaheuristic.ai.dispatcher.signal_bus.GlobPattern;
-import ai.metaheuristic.ai.dispatcher.signal_bus.QueryResult;
-import ai.metaheuristic.ai.dispatcher.signal_bus.ScopeRef;
-import ai.metaheuristic.ai.dispatcher.signal_bus.SignalBus;
-import ai.metaheuristic.ai.dispatcher.signal_bus.SignalEntry;
-import ai.metaheuristic.ai.dispatcher.signal_bus.SignalKind;
-import ai.metaheuristic.ai.dispatcher.signal_bus.SignalKindRegistry;
-import ai.metaheuristic.ai.dispatcher.signal_bus.SignalPollResponse;
+import ai.metaheuristic.ai.dispatcher.signal_bus.*;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,19 +27,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * GET /rest/v1/dispatcher/signals — poll endpoint for the Signal Bus.
@@ -83,8 +67,7 @@ public class SignalBusRestController {
         long n = __pollN.incrementAndGet();
         long t0 = System.nanoTime();
         log.warn("SIG-DBG poll#{} ENTER afterRev={} kinds={} topics={} max={} principal={}",
-            n, afterRev, kinds, topics, max,
-            authentication != null ? authentication.getName() : "<null>");
+            n, afterRev, kinds, topics, max, authentication.getName());
 
         UserContext ctx = userContextService.getContext(authentication);
         if (!(ctx instanceof DispatcherContext dctx)) {

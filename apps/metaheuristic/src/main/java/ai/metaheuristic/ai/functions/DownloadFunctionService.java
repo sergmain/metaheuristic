@@ -152,7 +152,6 @@ public class DownloadFunctionService {
 
         String functionZipFilename = ArtifactCommonUtils.normalizeCode(task.functionCode) + CommonConsts.ZIP_EXT;
         String mask = functionZipFilename + ".%s.tmp";
-//        Path parentDir = assetFile.file.getParent();
         Path parentDir = DirUtils.getParent(assetFile.file, Path.of(actualFunctionFile));
         if (parentDir==null) {
             log.error("811.070 parentDir is null");
