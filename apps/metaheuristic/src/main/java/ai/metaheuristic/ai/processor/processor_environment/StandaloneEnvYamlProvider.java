@@ -40,8 +40,8 @@ public class StandaloneEnvYamlProvider implements EnvYamlProvider {
                 verify:
                   run: true
                   params: --version
-              - code: java-25-64m
-                exec: java -Xms64m -Xmx64m -Dfile.encoding=UTF-8 -jar
+              - code: java-25-128m
+                exec: java -Xms128m -Xmx256m -Dfile.encoding=UTF-8 -jar
                 verify:
                   run: true
                   params: --version

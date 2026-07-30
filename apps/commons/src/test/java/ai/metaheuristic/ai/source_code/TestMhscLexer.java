@@ -34,12 +34,12 @@ import static org.junit.jupiter.api.Assertions.*;
 @Execution(ExecutionMode.CONCURRENT)
 public class TestMhscLexer {
 
-    private List<? extends Token> tokenize(String input) {
+    private static List<? extends Token> tokenize(String input) {
         MhSourceCodeLexer lexer = new MhSourceCodeLexer(CharStreams.fromString(input));
         return lexer.getAllTokens();
     }
 
-    private void assertTokenTypes(String input, int... expectedTypes) {
+    private static void assertTokenTypes(String input, int... expectedTypes) {
         List<? extends Token> tokens = tokenize(input);
         // Filter out EOF
         List<? extends Token> nonEof = tokens.stream().filter(t -> t.getType() != Token.EOF).toList();

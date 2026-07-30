@@ -31,18 +31,21 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit tests for individual MhSourceCode parser rules.
  */
+@SuppressWarnings("SpellCheckingInspection")
 @Execution(ExecutionMode.CONCURRENT)
 public class TestMhscParserRules {
 
-    private static class ParseResult<T> {
-        final T tree;
-        final List<String> errors;
-        ParseResult(T tree, List<String> errors) { this.tree = tree; this.errors = errors; }
-        void assertNoErrors() { assertTrue(errors.isEmpty(), "Parse errors: " + errors); }
-        void assertHasErrors() { assertFalse(errors.isEmpty(), "Expected parse errors but got none"); }
-    }
+    private record ParseResult<T>(T tree, List<String> errors) {
+        void assertNoErrors() {
+            assertTrue(errors.isEmpty(), "Parse errors: " + errors);
+        }
 
-    private MhSourceCodeParser makeParser(String input, List<String> errors) {
+        void assertHasErrors() {
+            assertFalse(errors.isEmpty(), "Expected parse errors but got none");
+        }
+        }
+
+    private static MhSourceCodeParser makeParser(String input, List<String> errors) {
         MhSourceCodeLexer lexer = new MhSourceCodeLexer(CharStreams.fromString(input));
         lexer.removeErrorListeners();
         lexer.addErrorListener(new BaseErrorListener() {
@@ -63,40 +66,40 @@ public class TestMhscParserRules {
         return p;
     }
 
-    private ParseResult<MhSourceCodeParser.IdRefContext> parseIdRef(String input) {
+    private static ParseResult<MhSourceCodeParser.IdRefContext> parseIdRef(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).idRef(), e);
     }
-    private ParseResult<MhSourceCodeParser.VarDefContext> parseVarDef(String input) {
+    private static ParseResult<MhSourceCodeParser.VarDefContext> parseVarDef(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).varDef(), e);
     }
-    private ParseResult<MhSourceCodeParser.VarDefListContext> parseVarDefList(String input) {
+    private static ParseResult<MhSourceCodeParser.VarDefListContext> parseVarDefList(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).varDefList(), e);
     }
-    private ParseResult<MhSourceCodeParser.MetaDeclContext> parseMetaDecl(String input) {
+    private static ParseResult<MhSourceCodeParser.MetaDeclContext> parseMetaDecl(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).metaDecl(), e);
     }
-    private ParseResult<MhSourceCodeParser.ConditionExprContext> parseConditionExpr(String input) {
+    private static ParseResult<MhSourceCodeParser.ConditionExprContext> parseConditionExpr(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).conditionExpr(), e);
     }
-    private ParseResult<MhSourceCodeParser.FunctionRefContext> parseFunctionRef(String input) {
+    private static ParseResult<MhSourceCodeParser.FunctionRefContext> parseFunctionRef(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).functionRef(), e);
     }
-    private ParseResult<MhSourceCodeParser.ProcessDeclContext> parseProcessDecl(String input) {
+    private static ParseResult<MhSourceCodeParser.ProcessDeclContext> parseProcessDecl(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).processDecl(), e);
     }
-    private ParseResult<MhSourceCodeParser.VariablesBlockContext> parseVariablesBlock(String input) {
+    private static ParseResult<MhSourceCodeParser.VariablesBlockContext> parseVariablesBlock(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).variablesBlock(), e);
     }
-    private ParseResult<MhSourceCodeParser.DefDeclContext> parseDefDecl(String input) {
+    private static ParseResult<MhSourceCodeParser.DefDeclContext> parseDefDecl(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).defDecl(), e);
     }
-    private ParseResult<MhSourceCodeParser.CompilationUnitContext> parseCompilationUnit(String input) {
+    private static ParseResult<MhSourceCodeParser.CompilationUnitContext> parseCompilationUnit(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).compilationUnit(), e);
     }
-    private ParseResult<MhSourceCodeParser.GroupDeclContext> parseGroupDecl(String input) {
+    private static ParseResult<MhSourceCodeParser.GroupDeclContext> parseGroupDecl(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).groupDecl(), e);
     }
-    private ParseResult<MhSourceCodeParser.GraftDeclContext> parseGraftDecl(String input) {
+    private static ParseResult<MhSourceCodeParser.GraftDeclContext> parseGraftDecl(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).graftDecl(), e);
     }
 
@@ -238,9 +241,10 @@ public class TestMhscParserRules {
 
     @Test public void test_varDefList_with_modifiers() {
         var r = parseVarDefList(
-                "projectTask: type=task, ext=\".txt\",\n" +
-                "decompositionPolicy: type=decomposition-policy, ext=\".txt\",\n" +
-                "topLevelPolicy: type=top-level-policy, ext=\".txt\"");
+            """
+                projectTask: type=task, ext=".txt",
+                decompositionPolicy: type=decomposition-policy, ext=".txt",
+                topLevelPolicy: type=top-level-policy, ext=".txt\"""");
         r.assertNoErrors();
         assertEquals(3, r.tree.varDef().size());
     }
@@ -275,11 +279,13 @@ public class TestMhscParserRules {
 
     @Test public void test_metaDecl_many_entries() {
         var r = parseMetaDecl(
-                "meta number-of-lines-per-task = \"1\",\n" +
-                "     variable-for-splitting = \"topLevelReqs\",\n" +
-                "     output-is-dynamic = \"true\",\n" +
-                "     output-variable = \"reqJson0\",\n" +
-                "     is-array = \"false\"");
+            """
+                meta number-of-lines-per-task = "1",
+                     variable-for-splitting = "topLevelReqs",
+                     output-is-dynamic = "true",
+                     output-variable = "reqJson0",
+                     is-array = "false"
+                """);
         r.assertNoErrors();
         assertEquals(5, r.tree.metaEntry().size());
     }
@@ -422,130 +428,143 @@ public class TestMhscParserRules {
 
     @Test public void test_processDecl_with_outputs_and_meta() {
         var r = parseProcessDecl(
-                "mhdg-rg.read-project-task := internal mhdg-rg.read-project-task {\n" +
-                "    meta projectCode = \"projectCode\"\n" +
-                "    -> projectTask: type=task, ext=\".txt\"\n" +
-                "    timeout 60\n" +
-                "}");
+            """
+                mhdg-rg.read-project-task := internal mhdg-rg.read-project-task {
+                    meta projectCode = "projectCode"
+                    -> projectTask: type=task, ext=".txt"
+                    timeout 60
+                }""");
         r.assertNoErrors();
         assertEquals(3, r.tree.processElement().size());
     }
 
     @Test public void test_processDecl_with_inputs_outputs_cache() {
         var r = parseProcessDecl(
-                "mhdg-rg.top-level-task := mhdg-rg.call-cc-1.0.4 {\n" +
-                "    name \"Convert project-level task to top-level requirements\"\n" +
-                "    meta rg-mode = \"task\"\n" +
-                "    <- projectCode, projectTask, topLevelPolicy\n" +
-                "    -> topLevelReqs: type=requirement, ext=\".jsonl\"\n" +
-                "    timeout 120\n" +
-                "    cache on\n" +
-                "}");
+            """
+                mhdg-rg.top-level-task := mhdg-rg.call-cc-1.0.4 {
+                    name "Convert project-level task to top-level requirements"
+                    meta rg-mode = "task"
+                    <- projectCode, projectTask, topLevelPolicy
+                    -> topLevelReqs: type=requirement, ext=".jsonl"
+                    timeout 120
+                    cache on
+                }""");
         r.assertNoErrors();
         assertEquals(6, r.tree.processElement().size());
     }
 
     @Test public void test_processDecl_with_condition() {
         var r = parseProcessDecl(
-                "mh.nop-objectives := internal mh.nop {\n" +
-                "    when hasObjectives ? true : false\n" +
-                "    sequential {\n" +
-                "        inner-proc := internal mh.nop { timeout 10 }\n" +
-                "    }\n" +
-                "}");
+            """
+                mh.nop-objectives := internal mh.nop {
+                    when hasObjectives ? true : false
+                    sequential {
+                        inner-proc := internal mh.nop { timeout 10 }
+                    }
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_processDecl_with_condition_equality() {
         var r = parseProcessDecl(
-                "mh.nop-active := internal mh.nop {\n" +
-                "    when amendmentStatus == \"ACTIVE\" ? true : false\n" +
-                "}");
+            """
+                mh.nop-active := internal mh.nop {
+                    when amendmentStatus == "ACTIVE" ? true : false
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_processDecl_with_parallel_subprocess() {
         var r = parseProcessDecl(
-                "mh.nop-gate := internal mh.nop {\n" +
-                "    parallel {\n" +
-                "        branch-a := internal mh.nop { }\n" +
-                "        branch-b := internal mh.nop { }\n" +
-                "    }\n" +
-                "}");
+            """
+                mh.nop-gate := internal mh.nop {
+                    parallel {
+                        branch-a := internal mh.nop { }
+                        branch-b := internal mh.nop { }
+                    }
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_processDecl_with_sequential_subprocess() {
         var r = parseProcessDecl(
-                "mh.batch := internal mh.batch-line-splitter {\n" +
-                "    sequential {\n" +
-                "        step1 := internal mh.nop { timeout 10 }\n" +
-                "        step2 := internal mh.nop { timeout 20 }\n" +
-                "    }\n" +
-                "}");
+            """
+                mh.batch := internal mh.batch-line-splitter {
+                    sequential {
+                        step1 := internal mh.nop { timeout 10 }
+                        step2 := internal mh.nop { timeout 20 }
+                    }
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_processDecl_with_tag_and_priority() {
         var r = parseProcessDecl(
-                "my-process := some-function {\n" +
-                "    tag ai\n" +
-                "    priority -1\n" +
-                "    timeout 60\n" +
-                "}");
+            """
+                my-process := some-function {
+                    tag ai
+                    priority -1
+                    timeout 60
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_processDecl_with_positive_priority() {
         var r = parseProcessDecl(
-                "my-process := some-function {\n" +
-                "    priority 5\n" +
-                "}");
+            """
+                my-process := some-function {
+                    priority 5
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_processDecl_with_zero_priority() {
         var r = parseProcessDecl(
-                "my-process := some-function {\n" +
-                "    priority 0\n" +
-                "}");
+            """
+                my-process := some-function {
+                    priority 0
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_processDecl_with_tries() {
         var r = parseProcessDecl(
-                "my-process := some-function {\n" +
-                "    tries 3\n" +
-                "}");
+            """
+                my-process := some-function {
+                    tries 3
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_processDecl_with_pre_post_functions() {
         var r = parseProcessDecl(
-                "my-process := main-function {\n" +
-                "    pre internal mh.pre-func\n" +
-                "    post internal mh.post-func\n" +
-                "}");
+            """
+                my-process := main-function {
+                    pre internal mh.pre-func
+                    post internal mh.post-func
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_processDecl_with_params() {
         var r = parseProcessDecl(
-                "edition-maker := edition-maker-5.0.26 {\n" +
-                "    params \"--fill-comment\"\n" +
-                "    <- var-batch-item: array\n" +
-                "    -> result: ext=\".txt\"\n" +
-                "    timeout 1200\n" +
-                "}");
+            """
+                edition-maker := edition-maker-5.0.26 {
+                    params "--fill-comment"
+                    <- var-batch-item: array
+                    -> result: ext=".txt"
+                    timeout 1200
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_processDecl_with_long_params() {
         var r = parseProcessDecl(
-                "image-converter := image-converter-4.2.8 {\n" +
-                "    params \"--dpi 150 --max-width 140 --max-height 250 --convert-wmf false --gray\"\n" +
-                "    timeout 180\n" +
-                "}");
+            """
+                image-converter := image-converter-4.2.8 {
+                    params "--dpi 150 --max-width 140 --max-height 250 --convert-wmf false --gray"
+                    timeout 180
+                }""");
         r.assertNoErrors();
     }
 
@@ -578,90 +597,97 @@ public class TestMhscParserRules {
 
     @Test public void test_compilationUnit_with_variables_and_process() {
         var r = parseCompilationUnit(
-                "source \"test-1.0\" (strict) {\n" +
-                "    variables {\n" +
-                "        <- projectCode\n" +
-                "    }\n" +
-                "    mh.nop-1 := internal mh.nop {\n" +
-                "        timeout 60\n" +
-                "    }\n" +
-                "}");
+            """
+                source "test-1.0" (strict) {
+                    variables {
+                        <- projectCode
+                    }
+                    mh.nop-1 := internal mh.nop {
+                        timeout 60
+                    }
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_compilationUnit_two_processes() {
         var r = parseCompilationUnit(
-                "source \"test-1.0\" {\n" +
-                "    proc1 := internal mh.nop { timeout 10 }\n" +
-                "    proc2 := some-func-1.0 {\n" +
-                "        <- projectCode\n" +
-                "        -> result: type=output, ext=\".txt\"\n" +
-                "        timeout 60\n" +
-                "    }\n" +
-                "}");
+            """
+                source "test-1.0" {
+                    proc1 := internal mh.nop { timeout 10 }
+                    proc2 := some-func-1.0 {
+                        <- projectCode
+                        -> result: type=output, ext=".txt"
+                        timeout 60
+                    }
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_compilationUnit_with_forLoop() {
         var r = parseCompilationUnit(
-                "source \"test-1.0\" {\n" +
-                "    for L in 0 .. 3 {\n" +
-                "        step{L} := internal mh.nop { timeout 10 }\n" +
-                "    }\n" +
-                "}");
+            """
+                source "test-1.0" {
+                    for L in 0 .. 3 {
+                        step{L} := internal mh.nop { timeout 10 }
+                    }
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_compilationUnit_with_template() {
         var r = parseCompilationUnit(
-                "source \"test-1.0\" {\n" +
-                "    template myTmpl(x) {\n" +
-                "        step := internal mh.nop { timeout 10 }\n" +
-                "    }\n" +
-                "    @myTmpl(someArg)\n" +
-                "}");
+            """
+                source "test-1.0" {
+                    template myTmpl(x) {
+                        step := internal mh.nop { timeout 10 }
+                    }
+                    @myTmpl(someArg)
+                }""");
         r.assertHasErrors();
     }
 
     @Test public void test_compilationUnit_template_call_in_subprocess() {
         var r = parseCompilationUnit(
-                "source \"test-1.0\" {\n" +
-                "    template myTmpl(x) {\n" +
-                "        step := internal mh.nop { timeout 10 }\n" +
-                "    }\n" +
-                "    wrapper := internal mh.nop {\n" +
-                "        sequential {\n" +
-                "            @myTmpl(someArg)\n" +
-                "        }\n" +
-                "    }\n" +
-                "}");
+            """
+                source "test-1.0" {
+                    template myTmpl(x) {
+                        step := internal mh.nop { timeout 10 }
+                    }
+                    wrapper := internal mh.nop {
+                        sequential {
+                            @myTmpl(someArg)
+                        }
+                    }
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_compilationUnit_nested_subprocesses() {
         var r = parseCompilationUnit(
-                "source \"test-1.0\" {\n" +
-                "    outer := internal mh.nop {\n" +
-                "        sequential {\n" +
-                "            inner := internal mh.nop {\n" +
-                "                parallel {\n" +
-                "                    a := internal mh.nop { }\n" +
-                "                    b := internal mh.nop { }\n" +
-                "                }\n" +
-                "            }\n" +
-                "        }\n" +
-                "    }\n" +
-                "}");
+            """
+                source "test-1.0" {
+                    outer := internal mh.nop {
+                        sequential {
+                            inner := internal mh.nop {
+                                parallel {
+                                    a := internal mh.nop { }
+                                    b := internal mh.nop { }
+                                }
+                            }
+                        }
+                    }
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_compilationUnit_with_comments() {
         var r = parseCompilationUnit(
-                "// This is a source code\n" +
-                "source \"test-1.0\" {\n" +
-                "    /* block comment */\n" +
-                "    proc1 := internal mh.nop { timeout 10 } // inline comment\n" +
-                "}");
+            """
+                // This is a source code
+                source "test-1.0" {
+                    /* block comment */
+                    proc1 := internal mh.nop { timeout 10 } // inline comment
+                }""");
         r.assertNoErrors();
     }
 
@@ -719,37 +745,40 @@ public class TestMhscParserRules {
 
     @Test public void test_compilationUnit_with_def_and_usage() {
         var r = parseCompilationUnit(
-                "source \"test-1.0\" (strict) {\n" +
-                "    def call_cc_ver = \"1.0.4\"\n" +
-                "    variables {\n" +
-                "        <- projectCode\n" +
-                "    }\n" +
-                "    top_level_task := mhdg-rg.call-cc-${call_cc_ver} {\n" +
-                "        <- projectCode\n" +
-                "        timeout 60\n" +
-                "    }\n" +
-                "}");
+            """
+                source "test-1.0" (strict) {
+                    def call_cc_ver = "1.0.4"
+                    variables {
+                        <- projectCode
+                    }
+                    top_level_task := mhdg-rg.call-cc-${call_cc_ver} {
+                        <- projectCode
+                        timeout 60
+                    }
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_compilationUnit_multiple_defs() {
         var r = parseCompilationUnit(
-                "source \"test-1.0\" (strict) {\n" +
-                "    def call_cc_ver = \"1.0.4\"\n" +
-                "    def read_project_ver = \"1.0.7\"\n" +
-                "    proc1 := mhdg-rg.call-cc-${call_cc_ver} { timeout 60 }\n" +
-                "    proc2 := mhdg-rg.read-project-${read_project_ver} { timeout 60 }\n" +
-                "}");
+            """
+                source "test-1.0" (strict) {
+                    def call_cc_ver = "1.0.4"
+                    def read_project_ver = "1.0.7"
+                    proc1 := mhdg-rg.call-cc-${call_cc_ver} { timeout 60 }
+                    proc2 := mhdg-rg.read-project-${read_project_ver} { timeout 60 }
+                }""");
         r.assertNoErrors();
     }
 
     @Test public void test_compilationUnit_def_after_process_still_parses() {
         var r = parseCompilationUnit(
-                "source \"test-1.0\" {\n" +
-                "    proc1 := internal mh.nop { timeout 10 }\n" +
-                "    def late_def = \"value\"\n" +
-                "    proc2 := internal mh.nop { timeout 10 }\n" +
-                "}");
+            """
+                source "test-1.0" {
+                    proc1 := internal mh.nop { timeout 10 }
+                    def late_def = "value"
+                    proc2 := internal mh.nop { timeout 10 }
+                }""");
         r.assertNoErrors();
     }
 
@@ -791,10 +820,11 @@ public class TestMhscParserRules {
 
     @Test public void test_groupDecl_full_inputs_outputs_resetPoint_body() {
         var r = parseGroupDecl(
-            "group grp1 (<- inA, inB) (-> outC) reset-point head {\n" +
-            "    head := internal mh.nop { }\n" +
-            "    split := internal mh.batch-line-splitter { sequential { leaf := internal mh.nop { } } }\n" +
-            "}");
+            """
+                group grp1 (<- inA, inB) (-> outC) reset-point head {
+                    head := internal mh.nop { }
+                    split := internal mh.batch-line-splitter { sequential { leaf := internal mh.nop { } } }
+                }""");
         r.assertNoErrors();
         assertEquals("grp1", r.tree.ID().getText());
         assertNotNull(r.tree.groupInputs());
@@ -852,16 +882,17 @@ public class TestMhscParserRules {
 
     @Test public void test_compilationUnit_group_plus_inBand_graft() {
         var r = parseCompilationUnit(
-            "source \"test-1.0\" {\n" +
-            "    group grp1 (<- inA) (-> outC) reset-point head {\n" +
-            "        head := internal mh.nop { }\n" +
-            "    }\n" +
-            "    root := internal mh.batch-line-splitter {\n" +
-            "        sequential {\n" +
-            "            graft grp1 bind (inA -> outC) driver run-now\n" +
-            "        }\n" +
-            "    }\n" +
-            "}");
+            """
+                source "test-1.0" {
+                    group grp1 (<- inA) (-> outC) reset-point head {
+                        head := internal mh.nop { }
+                    }
+                    root := internal mh.batch-line-splitter {
+                        sequential {
+                            graft grp1 bind (inA -> outC) driver run-now
+                        }
+                    }
+                }""");
         r.assertNoErrors();
     }
 

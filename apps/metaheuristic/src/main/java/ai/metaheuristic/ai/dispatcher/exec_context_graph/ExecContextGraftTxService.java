@@ -49,7 +49,7 @@ import java.util.Set;
 
 /**
  * DSL v2 graft primitive - the @Transactional write core of {@link ExecContextGraftService}
- * (025-MHSC-DSL-V2-PLAN, Phase 1). Pure MH: no snapshot / requirement / objection awareness.
+ * (025-MHSC-DSL-V2-PLAN, Phase 1). Pure MH
  *
  * <p>Three writes, each its own transaction, each invoked by the orchestrator while holding the
  * relevant sync write locks (SPRING-TX-RULES sec 1/sec 2):

@@ -97,7 +97,7 @@ public class TaskProviderUnassignedTaskService {
             return new TaskData.TaskSearching(environment_is_empty);
         }
 
-        AtomicLong longHolder = getBannedSince().computeIfAbsent(processorAndCoreParams.coreId(), o -> new AtomicLong(0));
+        AtomicLong longHolder = getBannedSince().computeIfAbsent(processorAndCoreParams.processorId(), o -> new AtomicLong(0));
         if (longHolder.get() != 0 && System.currentTimeMillis() - longHolder.get() < TimeUnit.MINUTES.toMillis(30)) {
             return new TaskData.TaskSearching(core_is_banned);
         }
