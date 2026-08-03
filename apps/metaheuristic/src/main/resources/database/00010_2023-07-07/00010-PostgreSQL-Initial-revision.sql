@@ -165,7 +165,7 @@ create table MH_ACCOUNT
   ID                  SERIAL PRIMARY KEY,
   VERSION             NUMERIC(10, 0) NOT NULL,
   COMPANY_ID          NUMERIC(10, 0) NOT NULL,
-  USERNAME            varchar(30)    not null,
+  USERNAME            varchar(50)    not null,
   PASSWORD            varchar(100)   not null,
   ROLES               varchar(100),
   is_acc_not_expired  BOOLEAN        not null default true,
@@ -757,3 +757,50 @@ CREATE table mhbp_scenario
 
 CREATE INDEX mhbp_scenario_account_id_scenario_group_id_idx
     ON mhbp_scenario (ACCOUNT_ID, SCENARIO_GROUP_ID);
+
+-- ---------------------------------------------------------------------
+-- MH_INVITE - single-use invitation token that mints ONE account.
+--
+-- Purpose-agnostic by construction. ROLES is an OPAQUE string supplied by
+-- whoever creates the invite; nothing here interprets it, and no calling
+-- module is named in this schema. That is what keeps the invite mechanism
+-- generic infrastructure rather than one caller's feature living in a
+-- shared place.
+--
+-- Single-use is enforced by a COLUMN, not by cryptography:
+-- INVITED_ACCOUNT_ID IS NOT NULL means redeemed, permanently. A token
+-- that stays valid after it has been used is the defect this design
+-- exists to avoid, and making it a nullable FK means the check cannot be
+-- forgotten by a caller.
+--
+-- EXPIRED_ON is an absolute epoch-millis deadline stored in the row
+-- rather than embedded in the token, so expiry needs no sweep job and no
+-- token parsing to evaluate.
+-- ---------------------------------------------------------------------
+create table MH_INVITE
+(
+    ID                    SERIAL PRIMARY KEY,
+    VERSION               NUMERIC(10, 0) NOT NULL,
+    -- mh_company.UNIQUE_ID - the company the minted account will belong to.
+    COMPANY_ID            NUMERIC(10, 0) NOT NULL,
+    -- High-entropy random, generated with SecureRandom. Unique installation-wide.
+    TOKEN                 varchar(50)    NOT NULL,
+    -- Opaque role string handed to AccountTxService.addAccount() verbatim.
+    ROLES                 varchar(100)   NOT NULL,
+    -- Shown to the operator so one invite can be told from another.
+    DESCRIPTION           varchar(250),
+    CREATED_ON            bigint         NOT NULL,
+    -- Absolute epoch-millis deadline. Past this, redemption is refused.
+    EXPIRED_ON            bigint         NOT NULL,
+    CREATED_BY_ACCOUNT_ID NUMERIC(10, 0) NOT NULL,
+    -- NOT NULL => already redeemed. This column IS the single-use guarantee.
+    INVITED_ACCOUNT_ID    NUMERIC(10, 0),
+    REDEEMED_ON           bigint,
+    IS_DELETED            BOOLEAN        NOT NULL DEFAULT FALSE
+);
+
+CREATE UNIQUE INDEX mh_invite_token_unq_idx
+    ON MH_INVITE (TOKEN);
+
+CREATE INDEX mh_invite_company_id_idx
+    ON MH_INVITE (COMPANY_ID);
