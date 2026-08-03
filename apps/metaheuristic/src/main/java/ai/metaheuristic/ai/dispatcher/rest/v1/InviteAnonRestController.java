@@ -67,12 +67,10 @@ public class InviteAnonRestController {
     public static class RedeemRequest {
         @Nullable
         public String token;
-        @Nullable
-        public String publicName;
     }
 
     /**
-     * Redeem a token for a freshly minted account.
+     * Redeem a token for the credential of an existing account.
      *
      * <p>Always HTTP 200, success or refusal. A distinct status code for
      * refusal is machine-readable evidence about whether a guessed token
@@ -81,8 +79,6 @@ public class InviteAnonRestController {
      */
     @PostMapping("/redeem")
     public InviteData.RedeemedInvite redeem(@RequestBody RedeemRequest request) {
-        return inviteTxService.redeem(
-                request.token==null ? "" : request.token,
-                request.publicName);
+        return inviteTxService.redeem(request.token==null ? "" : request.token);
     }
 }

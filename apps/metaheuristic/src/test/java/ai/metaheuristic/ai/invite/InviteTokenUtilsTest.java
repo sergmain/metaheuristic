@@ -39,29 +39,14 @@ public class InviteTokenUtilsTest {
     private static Invite invite(long expiredOn) {
         Invite i = new Invite();
         i.companyId = 7L;
+        i.accountId = 42L;
         i.token = "t";
-        i.roles = "ROLE_SOMETHING";
         i.expiredOn = expiredOn;
         i.deleted = false;
         return i;
     }
 
     // ---------- generated secrets ----------
-
-    /** USERNAME is varchar(50); a generated username that overflows it fails at insert. */
-    @Test
-    public void test_newUsername_fitsColumnAndCharsetConstraints() {
-        for (int i = 0; i < 200; i++) {
-            String u = InviteTokenUtils.newUsername();
-
-            assertEquals(22, u.length(), u);
-            assertTrue(u.length() <= 50, u);
-            // AccountTxService rejects '='; HTTP Basic splits credentials on ':'
-            assertFalse(u.contains("="), u);
-            assertFalse(u.contains(":"), u);
-            assertTrue(u.matches("[A-Za-z0-9_-]+"), u);
-        }
-    }
 
     /** TOKEN is varchar(50). */
     @Test
@@ -93,13 +78,13 @@ public class InviteTokenUtilsTest {
     @Test
     public void test_generatedSecretsDoNotRepeat() {
         Set<String> tokens = new HashSet<>();
-        Set<String> usernames = new HashSet<>();
+        Set<String> passwords = new HashSet<>();
         for (int i = 0; i < 1000; i++) {
             tokens.add(InviteTokenUtils.newToken());
-            usernames.add(InviteTokenUtils.newUsername());
+            passwords.add(InviteTokenUtils.newPassword());
         }
         assertEquals(1000, tokens.size());
-        assertEquals(1000, usernames.size());
+        assertEquals(1000, passwords.size());
     }
 
     // ---------- redemption eligibility ----------
@@ -130,7 +115,7 @@ public class InviteTokenUtilsTest {
     @Test
     public void test_redeemedInvite_isRefused() {
         Invite i = invite(NOW + 1);
-        i.invitedAccountId = 42L;
+        i.redeemedOn = NOW;
 
         assertEquals("alreadyRedeemed", InviteTokenUtils.redemptionRefusalReason(i, NOW));
         assertEquals("alreadyRedeemed",
@@ -155,11 +140,11 @@ public class InviteTokenUtilsTest {
     public void test_withdrawnBeatsRedeemedBeatsExpired() {
         Invite withdrawnAndRedeemed = invite(NOW - 1);
         withdrawnAndRedeemed.deleted = true;
-        withdrawnAndRedeemed.invitedAccountId = 42L;
+        withdrawnAndRedeemed.redeemedOn = NOW;
         assertEquals("withdrawn", InviteTokenUtils.redemptionRefusalReason(withdrawnAndRedeemed, NOW));
 
         Invite redeemedAndExpired = invite(NOW - 1);
-        redeemedAndExpired.invitedAccountId = 42L;
+        redeemedAndExpired.redeemedOn = NOW;
         assertEquals("alreadyRedeemed", InviteTokenUtils.redemptionRefusalReason(redeemedAndExpired, NOW));
     }
 }

@@ -32,16 +32,11 @@ import java.util.Base64;
  * couple of observed values, which for an invite scheme means one recipient can
  * derive everyone else's tokens.
  *
- * <p><b>Base64url, no padding.</b> Two hard downstream constraints shape this,
- * and both are silent if violated:
- * <ul>
- *   <li>{@code mh_account.USERNAME} is {@code varchar(50)}. 128 bits of
- *       Base64url is 22 characters, leaving ample headroom.</li>
- *   <li>{@code AccountTxService.addAccount} rejects {@code '='} in a username,
- *       and HTTP Basic splits credentials on {@code ':'}. The Base64url
- *       alphabet ({@code A-Za-z0-9-_}) contains neither, and dropping padding
- *       removes the only source of {@code '='}.</li>
- * </ul>
+ * <p><b>Base64url, no padding.</b> The generated password is transmitted in
+ * HTTP Basic credentials, which are split on {@code ':'}; the Base64url
+ * alphabet ({@code A-Za-z0-9-_}) contains no colon, and dropping padding
+ * removes the only source of {@code '='}. The token must also fit
+ * {@code TOKEN varchar(50)} — 256 bits of Base64url is 43 characters.
  *
  * @author Sergio Lissner
  * Date: 8/2/2026
@@ -50,15 +45,6 @@ public class InviteTokenUtils {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final Base64.Encoder ENCODER = Base64.getUrlEncoder().withoutPadding();
-
-    /**
-     * 128 bits -> 22 chars, well inside {@code USERNAME varchar(50)}.
-     *
-     * <p>Not raised now that the column is wider: 128 bits is already far past
-     * any collision concern for an identifier, so extra length would buy
-     * nothing and only make the username harder to handle by hand.
-     */
-    public static final int USERNAME_BYTES = 16;
 
     /** 256 bits -> 43 chars. Fits {@code TOKEN varchar(50)}. */
     public static final int TOKEN_BYTES = 32;
@@ -76,11 +62,6 @@ public class InviteTokenUtils {
 
     public static String newToken() {
         return randomString(TOKEN_BYTES);
-    }
-
-    /** Globally unique by construction, so it never collides with {@code mh_account_username_unq_idx}. */
-    public static String newUsername() {
-        return randomString(USERNAME_BYTES);
     }
 
     public static String newPassword() {
@@ -107,7 +88,7 @@ public class InviteTokenUtils {
         if (invite.deleted) {
             return "withdrawn";
         }
-        if (invite.invitedAccountId!=null) {
+        if (invite.redeemedOn!=null) {
             return "alreadyRedeemed";
         }
         if (nowMillis >= invite.expiredOn) {

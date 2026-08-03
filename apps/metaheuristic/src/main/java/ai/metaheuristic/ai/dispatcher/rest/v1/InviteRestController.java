@@ -16,12 +16,10 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.invite.InviteData;
 import ai.metaheuristic.ai.dispatcher.invite.InviteTokenUtils;
 import ai.metaheuristic.ai.dispatcher.invite.InviteTxService;
-import ai.metaheuristic.ai.sec.RoleService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.Data;
@@ -43,11 +41,11 @@ import org.springframework.web.bind.annotation.*;
  * company cannot mint an account into another company's tenancy, and there is
  * no parameter through which they could try.
  *
- * <p>The roles requested for the minted account are validated against the
- * installed role set BEFORE an invite is issued. Without that, an admin could
- * name an arbitrary string and discover later that the account it minted holds
- * an authority nobody meant to grant — and by then the invite would already be
- * in an outside party's hands, which is far too late to take back.
+ * <p>An invite sets the password of an EXISTING account; it never creates one.
+ * The account, its username and its roles are established beforehand through
+ * the ordinary account machinery, so this surface grants no authority — it only
+ * hands possession of an account that already exists and already carries
+ * whatever roles an admin deliberately gave it.
  *
  * <p>Redemption is deliberately NOT here: it lives on the anonymous surface,
  * because the redeemer has no credential at that point by definition.
@@ -66,14 +64,13 @@ public class InviteRestController {
 
     private final InviteTxService inviteTxService;
     private final UserContextService userContextService;
-    private final RoleService roleService;
 
     @Data
     @NoArgsConstructor
     public static class NewInviteRequest {
-        /** Roles the minted account will carry. Validated against the installed role set. */
+        /** The EXISTING account whose password this invite will set. */
         @Nullable
-        public String roles;
+        public Long accountId;
         @Nullable
         public String description;
         /** Time-to-live in hours; falls back to the default when absent or non-positive. */
@@ -85,34 +82,18 @@ public class InviteRestController {
     public InviteData.CreatedInvite create(@RequestBody NewInviteRequest request, Authentication authentication) {
         UserContext context = userContextService.getContext(authentication);
 
-        if (request.roles==null || request.roles.isBlank()) {
-            return InviteData.CreatedInvite.error("01.241.020 roles must not be blank");
-        }
-
-        // Validate every requested role against the installed set. A role that
-        // does not exist would otherwise be stored verbatim and granted verbatim.
-        // Company-aware, following the AccountTxService precedent: company 1 has
-        // a wider role set, and checking it against the regular list would refuse
-        // roles its own admin is entitled to grant.
-        final var possibleRoles = Consts.ID_1.equals(context.getCompanyId())
-                ? roleService.getCompany1PossibleRoles()
-                : roleService.getPossibleRoles();
-        for (String role : request.roles.split(",")) {
-            final String trimmed = role.trim();
-            if (trimmed.isEmpty()) {
-                continue;
-            }
-            if (!possibleRoles.contains(trimmed)) {
-                return InviteData.CreatedInvite.error("01.241.040 Unknown role: " + trimmed);
-            }
+        if (request.accountId==null) {
+            return InviteData.CreatedInvite.error("01.241.020 accountId must not be null");
         }
 
         final long ttlMillis = request.ttlHours==null || request.ttlHours <= 0
                 ? InviteTokenUtils.DEFAULT_TTL_MILLIS
                 : request.ttlHours * 3600_000L;
 
+        // The service re-checks that the account belongs to this company: an
+        // account id carries no tenancy on its own.
         return inviteTxService.createInvite(
-                context.getCompanyId(), request.roles, context.getAccountId(),
+                context.getCompanyId(), request.accountId, context.getAccountId(),
                 request.description, ttlMillis);
     }
 

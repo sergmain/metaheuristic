@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.invite;
 import ai.metaheuristic.ai.dispatcher.account.AccountTxService;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Invite;
-import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.InviteRepository;
 import ai.metaheuristic.api.EnumsApi;
@@ -33,16 +32,20 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 /**
  * Creation and redemption of single-use {@link Invite} tokens.
  *
- * <p>Purpose-agnostic: {@code roles} arrives from the caller and is passed to
- * {@link AccountTxService#addAccount} untouched. Nothing here knows or asks
- * what any role means.
+ * <p>An invite sets the password of an EXISTING account. It never creates one:
+ * the account, its username and its roles are established beforehand through
+ * the ordinary account machinery, and this service only hands possession of it
+ * to the intended holder. Purpose-agnostic — nothing here knows why the account
+ * exists.
  *
- * <p><b>Redemption discloses no reason.</b> {@link InviteTokenUtils} tells
- * apart notFound / withdrawn / alreadyRedeemed / expired, and this service logs
- * the distinction for the operator — but every refusal returns the same opaque
+ * <p><b>Redemption discloses no reason.</b> {@link InviteTokenUtils} tells apart
+ * notFound / withdrawn / alreadyRedeemed / expired, and this service logs the
+ * distinction for the operator — but every refusal returns the same opaque
  * message. A caller holding a guessed token that learns "expired" rather than
  * "not found" has learned the token was real, which turns a refusal into an
  * oracle for enumerating valid tokens.
@@ -65,24 +68,34 @@ public class InviteTxService {
     private final AccountRepository accountRepository;
     private final AccountTxService accountTxService;
 
+    /**
+     * Issue a token that will set the password of {@code accountId}.
+     *
+     * <p>The account must already belong to {@code companyUniqueId}. Checking it
+     * here rather than trusting the caller is what stops an admin of one company
+     * issuing a token against another company's account — the request names an
+     * account id, and an id alone carries no tenancy.
+     */
     @Transactional
     public InviteData.CreatedInvite createInvite(
-            Long companyUniqueId, String roles, Long createdByAccountId,
+            Long companyUniqueId, Long accountId, Long createdByAccountId,
             @Nullable String description, long ttlMillis) {
 
-        if (StringUtils.isBlank(roles)) {
-            return InviteData.CreatedInvite.error("01.238.020 roles must not be blank");
-        }
         if (ttlMillis <= 0) {
             return InviteData.CreatedInvite.error("01.238.040 ttlMillis must be positive, actual: " + ttlMillis);
+        }
+
+        final Account account = accountRepository.findById(accountId).orElse(null);
+        if (account==null || !Objects.equals(account.companyId, companyUniqueId)) {
+            return InviteData.CreatedInvite.error("01.238.020 Account wasn't found, accountId: " + accountId);
         }
 
         final long now = System.currentTimeMillis();
 
         Invite invite = new Invite();
         invite.companyId = companyUniqueId;
+        invite.accountId = accountId;
         invite.token = InviteTokenUtils.newToken();
-        invite.roles = roles;
         invite.description = description;
         invite.createdOn = now;
         invite.expiredOn = now + ttlMillis;
@@ -95,16 +108,17 @@ public class InviteTxService {
     }
 
     /**
-     * Redeem a token, minting one account in the invite's company carrying the
-     * invite's roles.
+     * Redeem a token, setting a freshly generated password on the invite's
+     * account and returning the credential once.
      *
-     * <p>The generated username is random rather than caller-supplied: it is
-     * globally unique by construction, so it can never collide with
-     * {@code mh_account_username_unq_idx}, and an unauthenticated caller never
-     * gets to choose an identifier that other people will see.
+     * <p>The password is GENERATED rather than chosen by the redeemer: this
+     * credential is used by a machine over HTTP Basic, so there is no human
+     * memorability to trade against entropy, and letting an unauthenticated
+     * caller choose it would put the account's strength in the hands of whoever
+     * happened to hold the token.
      */
     @Transactional
-    public InviteData.RedeemedInvite redeem(String token, @Nullable String publicName) {
+    public InviteData.RedeemedInvite redeem(String token) {
         if (StringUtils.isBlank(token)) {
             return InviteData.RedeemedInvite.error(REDEMPTION_REFUSED);
         }
@@ -119,37 +133,29 @@ public class InviteTxService {
             return InviteData.RedeemedInvite.error(REDEMPTION_REFUSED);
         }
 
-        final String username = InviteTokenUtils.newUsername();
-        final String rawPassword = InviteTokenUtils.newPassword();
-
-        AccountData.NewAccount newAccount = new AccountData.NewAccount();
-        newAccount.username = username;
-        newAccount.password = rawPassword;
-        newAccount.password2 = rawPassword;
-        newAccount.publicName = StringUtils.isBlank(publicName)
-                ? (invite.description==null ? username : invite.description)
-                : publicName;
-
-        OperationStatusRest status = accountTxService.addAccount(newAccount, invite.companyId, invite.roles);
-        if (status.status!=EnumsApi.OperationStatus.OK) {
-            log.error("01.238.080 account creation failed during invite redemption: {}", status.getErrorMessagesAsStr());
-            return InviteData.RedeemedInvite.error(REDEMPTION_REFUSED);
-        }
-
-        final Account account = accountRepository.findByUsername(username);
+        final Account account = accountRepository.findById(invite.accountId).orElse(null);
         if (account==null) {
-            log.error("01.238.100 account was reported created but not found, username: {}", username);
+            log.error("01.238.100 invite names an account that no longer exists, accountId: {}", invite.accountId);
             return InviteData.RedeemedInvite.error(REDEMPTION_REFUSED);
         }
 
-        // Marking the invite spent in the SAME transaction as account creation is
-        // what makes single-use real: a crash between the two would otherwise
-        // leave a live token that had already minted an account.
-        invite.invitedAccountId = account.id;
+        final String rawPassword = InviteTokenUtils.newPassword();
+        final OperationStatusRest status = accountTxService.passwordEditFormCommit(
+                account.id, rawPassword, rawPassword, invite.companyId);
+        if (status.status!=EnumsApi.OperationStatus.OK) {
+            log.error("01.238.080 password could not be set during invite redemption: {}",
+                    status.getErrorMessagesAsStr());
+            return InviteData.RedeemedInvite.error(REDEMPTION_REFUSED);
+        }
+
+        // Marking the invite spent in the SAME transaction as the password write
+        // is what makes single-use real: a crash between the two would otherwise
+        // leave a live token whose password had already been handed out.
         invite.redeemedOn = now;
         inviteRepository.save(invite);
 
-        return new InviteData.RedeemedInvite(username, rawPassword, account.id, invite.companyId);
+        return new InviteData.RedeemedInvite(
+                account.getUsername(), rawPassword, account.id, invite.companyId);
     }
 
     /** Withdraw an unredeemed invite. Redeemed rows are kept for audit. */

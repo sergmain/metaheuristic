@@ -27,18 +27,23 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * A single-use invitation token that mints exactly one {@link Account}.
+ * A single-use token that sets the password of ONE EXISTING {@link Account}.
  *
- * <p>Deliberately PURPOSE-AGNOSTIC. {@link #roles} is an opaque string handed
- * to {@code AccountTxService.addAccount()} verbatim; nothing in this class or
- * its service interprets it, and no calling module is named anywhere in this
- * mechanism. That is what makes it generic infrastructure instead of one
- * caller's feature living in a shared place.
+ * <p><b>It does not create an account.</b> The account is created first, by an
+ * admin who chooses its username and roles through the ordinary account
+ * machinery; this row only carries the one-time secret that lets the intended
+ * holder take possession of it. Separating creation from possession is what
+ * makes the username KNOWN before the token is redeemed — a caller can then be
+ * recorded against that account in advance, which is impossible if redemption
+ * is what invents the identifier.
+ *
+ * <p>Deliberately PURPOSE-AGNOSTIC: no calling module is named here, and
+ * nothing in this class records why the account exists.
  *
  * <p><b>Single use is enforced by a column, not by cryptography.</b>
- * {@link #invitedAccountId} being non-null means redeemed, permanently. The
- * column makes "used" and "no longer valid" the same fact, recorded in the same
- * write, so no caller can check one without the other.
+ * {@link #redeemedOn} being non-null means redeemed, permanently. The column
+ * makes "used" and "no longer valid" the same fact, recorded in the same write,
+ * so no caller can check one without the other.
  *
  * <p>{@link #expiredOn} is an absolute epoch-millis deadline held in the row
  * rather than embedded in the token: expiry then needs no sweep job, and
@@ -66,17 +71,17 @@ public class Invite implements Serializable {
     @Version
     public Integer version;
 
-    /** {@code mh_company.UNIQUE_ID} — the company the minted account will belong to. */
+    /** {@code mh_company.UNIQUE_ID} of the account's company; scopes admin operations. */
     @Column(name = "COMPANY_ID", nullable = false)
     public Long companyId;
+
+    /** The EXISTING {@link Account} whose password this token sets. */
+    @Column(name = "ACCOUNT_ID", nullable = false)
+    public Long accountId;
 
     /** High-entropy random, generated with {@code SecureRandom}. Unique installation-wide. */
     @Column(name = "TOKEN", nullable = false)
     public String token;
-
-    /** Opaque. Passed through to account creation without interpretation. */
-    @Column(name = "ROLES", nullable = false)
-    public String roles;
 
     @Nullable
     @Column(name = "DESCRIPTION")
@@ -93,10 +98,6 @@ public class Invite implements Serializable {
     public Long createdByAccountId;
 
     /** Non-null ⇒ already redeemed. This field IS the single-use guarantee. */
-    @Nullable
-    @Column(name = "INVITED_ACCOUNT_ID")
-    public Long invitedAccountId;
-
     @Nullable
     @Column(name = "REDEEMED_ON")
     public Long redeemedOn;
