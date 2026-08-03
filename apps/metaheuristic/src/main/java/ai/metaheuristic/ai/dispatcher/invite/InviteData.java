@@ -16,7 +16,15 @@
 
 package ai.metaheuristic.ai.dispatcher.invite;
 
+import ai.metaheuristic.api.data.BaseDataClass;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Sergio Lissner
@@ -25,10 +33,32 @@ import org.jspecify.annotations.Nullable;
 public class InviteData {
 
     /** What the operator gets back after creating an invite. */
-    public record CreatedInvite(boolean ok, @Nullable String errorMessage, @Nullable Long inviteId,
-                                @Nullable String token, long expiredOn) {
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class CreatedInvite extends BaseDataClass {
+        @Nullable
+        public Long inviteId;
+        @Nullable
+        public String token;
+        public long expiredOn;
+
+        @JsonCreator
+        public CreatedInvite(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
+
+        public CreatedInvite(Long inviteId, String token, long expiredOn) {
+            this.inviteId = inviteId;
+            this.token = token;
+            this.expiredOn = expiredOn;
+        }
+
         public static CreatedInvite error(String msg) {
-            return new CreatedInvite(false, msg, null, null, 0L);
+            return new CreatedInvite(List.of(msg), null);
         }
     }
 
@@ -41,15 +71,40 @@ public class InviteData {
      * require storing it reversibly, and a reversible credential store is
      * strictly worse than reissuing.
      *
-     * <p>On refusal every field but {@link #ok} is null and
-     * {@link #errorMessage} is a fixed opaque string — see
-     * {@code InviteTxService} for why the reason is not disclosed here.
+     * <p>On refusal every payload field stays null and {@code errorMessages}
+     * carries one fixed opaque string — see {@link InviteTxService} for why the
+     * reason is not disclosed.
      */
-    public record RedeemedInvite(boolean ok, @Nullable String errorMessage,
-                                 @Nullable String username, @Nullable String rawPassword,
-                                 @Nullable Long accountId, @Nullable Long companyId) {
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class RedeemedInvite extends BaseDataClass {
+        @Nullable
+        public String username;
+        @Nullable
+        public String rawPassword;
+        @Nullable
+        public Long accountId;
+        @Nullable
+        public Long companyId;
+
+        @JsonCreator
+        public RedeemedInvite(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
+
+        public RedeemedInvite(String username, String rawPassword, Long accountId, Long companyId) {
+            this.username = username;
+            this.rawPassword = rawPassword;
+            this.accountId = accountId;
+            this.companyId = companyId;
+        }
+
         public static RedeemedInvite error(String msg) {
-            return new RedeemedInvite(false, msg, null, null, null, null);
+            return new RedeemedInvite(List.of(msg), null);
         }
     }
 }

@@ -91,7 +91,7 @@ public class InviteTxService {
 
         inviteRepository.save(invite);
 
-        return new InviteData.CreatedInvite(true, null, invite.id, invite.token, invite.expiredOn);
+        return new InviteData.CreatedInvite(invite.id, invite.token, invite.expiredOn);
     }
 
     /**
@@ -149,8 +149,7 @@ public class InviteTxService {
         invite.redeemedOn = now;
         inviteRepository.save(invite);
 
-        return new InviteData.RedeemedInvite(
-                true, null, username, rawPassword, account.id, invite.companyId);
+        return new InviteData.RedeemedInvite(username, rawPassword, account.id, invite.companyId);
     }
 
     /** Withdraw an unredeemed invite. Redeemed rows are kept for audit. */
