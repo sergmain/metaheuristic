@@ -69,10 +69,10 @@ public class RoleService {
         Map<String, EnumsApi.RoleManager> managers = new HashMap<>();
 
         for (RoleProvider.RoleDescriptor d : descriptors) {
-            if (d.scope().appliesToRegularCompany()) {
+            if (d.scope().regularUniverse) {
                 allPossibleRoles.add(d.role());
             }
-            if (d.scope().appliesToCompany1()) {
+            if (d.scope().company1Universe) {
                 allCompany1Roles.add(d.role());
             }
             if (d.managedBy()!=EnumsApi.RoleManager.admin) {

@@ -166,13 +166,13 @@ public class RoleServiceTest {
 
     @Test
     public void test_roleScopePredicates() {
-        assertTrue(EnumsApi.RoleScope.all.appliesToCompany1());
-        assertTrue(EnumsApi.RoleScope.all.appliesToRegularCompany());
+        assertTrue(EnumsApi.RoleScope.all.company1Universe);
+        assertTrue(EnumsApi.RoleScope.all.regularUniverse);
 
-        assertTrue(EnumsApi.RoleScope.company1.appliesToCompany1());
-        assertFalse(EnumsApi.RoleScope.company1.appliesToRegularCompany());
+        assertTrue(EnumsApi.RoleScope.company1.company1Universe);
+        assertFalse(EnumsApi.RoleScope.company1.regularUniverse);
 
-        assertFalse(EnumsApi.RoleScope.notCompany1.appliesToCompany1());
-        assertTrue(EnumsApi.RoleScope.notCompany1.appliesToRegularCompany());
+        assertFalse(EnumsApi.RoleScope.notCompany1.company1Universe);
+        assertTrue(EnumsApi.RoleScope.notCompany1.regularUniverse);
     }
 }
