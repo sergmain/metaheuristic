@@ -42,7 +42,7 @@ public interface RoleProvider {
      * who may grant it, and in which companies it means anything.
      *
      * @param role         Spring Security role name, e.g. {@code ROLE_XXX}
-     * @param managedBy    who may GRANT this role; {@link RoleManager#admin} is
+     * @param managedBy    who may GRANT this role; {@link EnumsApi.RoleManager#admin} is
      *                     ordinary human administration
      * @param scope        which company universes offer it
      */

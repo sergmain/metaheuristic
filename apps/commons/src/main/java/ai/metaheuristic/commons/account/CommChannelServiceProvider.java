@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.commons.account;
 
+import ai.metaheuristic.api.EnumsApi;
+
 import java.util.List;
 
 /**
@@ -42,7 +44,7 @@ public interface CommChannelServiceProvider {
      * @param tag         operator-facing service identifier, unique across the
      *                    installation
      * @param role        the {@code ROLE_*} an activated channel account receives.
-     *                    Must be declared {@link RoleManager#commChannel}-managed
+     *                    Must be declared {@link EnumsApi.RoleManager#commChannel}-managed
      *                    by some {@link RoleProvider}, or the registry refuses to
      *                    start
      * @param description shown when choosing a service to issue against

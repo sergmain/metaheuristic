@@ -45,7 +45,7 @@ public class RoleService {
 
     /**
      * Who may grant each role. A role absent from this map is
-     * {@link RoleManager#admin}-managed, which is every base role and every
+     * {@link EnumsApi.RoleManager#admin}-managed, which is every base role and every
      * provider role that did not say otherwise.
      */
     private final Map<String, EnumsApi.RoleManager> roleManagers;
