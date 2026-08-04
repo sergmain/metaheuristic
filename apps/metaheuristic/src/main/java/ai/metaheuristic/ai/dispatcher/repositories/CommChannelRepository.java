@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.dispatcher.beans.Invite;
+import ai.metaheuristic.ai.dispatcher.beans.CommChannel;
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
@@ -33,22 +33,25 @@ import java.util.List;
 @Repository
 @Transactional
 @Profile("dispatcher")
-public interface InviteRepository extends CrudRepository<Invite, Long> {
+public interface CommChannelRepository extends CrudRepository<CommChannel, Long> {
 
     @Transactional(readOnly = true)
     @Nullable
-    Invite findByToken(String token);
+    CommChannel findByToken(String token);
 
     /**
-     * Pessimistic read for the redemption path: redemption must not race with
-     * itself, or one token mints two accounts. The service takes this row
-     * inside the same transaction that writes {@code INVITED_ACCOUNT_ID}.
+     * Pessimistic read for the activation path: activation must not race with
+     * itself, or one token mints two accounts.
      */
     @Transactional
     @Nullable
-    @Query(value = "select i from Invite i where i.token=:token")
-    Invite findByTokenForUpdate(String token);
+    @Query(value = "select c from CommChannel c where c.token=:token")
+    CommChannel findByTokenForUpdate(String token);
 
     @Transactional(readOnly = true)
-    List<Invite> findAllByCompanyId(Long companyId);
+    List<CommChannel> findAllByCompanyId(Long companyId);
+
+    @Transactional(readOnly = true)
+    @Nullable
+    CommChannel findByAccountId(Long accountId);
 }

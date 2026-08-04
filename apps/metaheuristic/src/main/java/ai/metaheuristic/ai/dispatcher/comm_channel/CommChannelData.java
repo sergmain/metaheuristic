@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.invite;
+package ai.metaheuristic.ai.dispatcher.comm_channel;
 
 import ai.metaheuristic.api.data.BaseDataClass;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,55 +30,58 @@ import java.util.List;
  * @author Sergio Lissner
  * Date: 8/2/2026
  */
-public class InviteData {
+public class CommChannelData {
 
-    /** What the operator gets back after creating an invite. */
+    /** What the operator gets back after issuing a channel token. */
     @Data
     @NoArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class CreatedInvite extends BaseDataClass {
+    public static class IssuedChannel extends BaseDataClass {
         @Nullable
-        public Long inviteId;
+        public Long channelId;
         @Nullable
         public String token;
+        @Nullable
+        public String serviceTag;
         public long expiredOn;
 
         @JsonCreator
-        public CreatedInvite(
+        public IssuedChannel(
             @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
             @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
             this.errorMessages = errorMessages;
             this.infoMessages = infoMessages;
         }
 
-        public CreatedInvite(Long inviteId, String token, long expiredOn) {
-            this.inviteId = inviteId;
+        public IssuedChannel(Long channelId, String token, String serviceTag, long expiredOn) {
+            this.channelId = channelId;
             this.token = token;
+            this.serviceTag = serviceTag;
             this.expiredOn = expiredOn;
         }
 
-        public static CreatedInvite error(String msg) {
-            return new CreatedInvite(List.of(msg), null);
+        public static IssuedChannel error(String msg) {
+            return new IssuedChannel(List.of(msg), null);
         }
     }
 
     /**
-     * What the redeemer gets back.
+     * What the outside party gets back on activation.
      *
      * <p>The raw password is returned EXACTLY ONCE and is never recoverable
-     * afterwards — only its BCrypt hash is stored. A redeemer that loses it
-     * needs a new invite, which is the correct outcome: recovering it would
-     * require storing it reversibly, and a reversible credential store is
-     * strictly worse than reissuing.
+     * afterwards — only its BCrypt hash is stored. Losing it means needing a new
+     * channel, which is the correct outcome: recovering it would require storing
+     * it reversibly, and a reversible credential store is strictly worse than
+     * reissuing.
      *
      * <p>On refusal every payload field stays null and {@code errorMessages}
-     * carries one fixed opaque string — see {@link InviteTxService} for why the
-     * reason is not disclosed.
+     * carries one fixed opaque string — see {@link CommChannelTxService} for why
+     * the reason is not disclosed.
      */
     @Data
     @NoArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class RedeemedInvite extends BaseDataClass {
+    public static class ActivatedChannel extends BaseDataClass {
         @Nullable
         public String username;
         @Nullable
@@ -89,22 +92,22 @@ public class InviteData {
         public Long companyId;
 
         @JsonCreator
-        public RedeemedInvite(
+        public ActivatedChannel(
             @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
             @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
             this.errorMessages = errorMessages;
             this.infoMessages = infoMessages;
         }
 
-        public RedeemedInvite(String username, String rawPassword, Long accountId, Long companyId) {
+        public ActivatedChannel(String username, String rawPassword, Long accountId, Long companyId) {
             this.username = username;
             this.rawPassword = rawPassword;
             this.accountId = accountId;
             this.companyId = companyId;
         }
 
-        public static RedeemedInvite error(String msg) {
-            return new RedeemedInvite(List.of(msg), null);
+        public static ActivatedChannel error(String msg) {
+            return new ActivatedChannel(List.of(msg), null);
         }
     }
 }

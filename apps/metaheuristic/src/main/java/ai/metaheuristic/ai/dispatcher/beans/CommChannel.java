@@ -27,23 +27,19 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * A single-use token that sets the password of ONE EXISTING {@link Account}.
+ * A single-use token that mints ONE {@link Account} bound to one SERVICE.
  *
- * <p><b>It does not create an account.</b> The account is created first, by an
- * admin who chooses its username and roles through the ordinary account
- * machinery; this row only carries the one-time secret that lets the intended
- * holder take possession of it. Separating creation from possession is what
- * makes the username KNOWN before the token is redeemed — a caller can then be
- * recorded against that account in advance, which is impossible if redemption
- * is what invents the identifier.
- *
- * <p>Deliberately PURPOSE-AGNOSTIC: no calling module is named here, and
- * nothing in this class records why the account exists.
+ * <p>A communication channel is an authenticated account bound to one REST
+ * endpoint. Deliberately PURPOSE-AGNOSTIC: {@link #serviceTag} is an opaque
+ * label from whichever module declared the service and {@link #grantedRole} is
+ * the role that module asked for. Nothing here names a business concept, and
+ * <b>what the outside party does with the credential it receives is out of
+ * scope.</b>
  *
  * <p><b>Single use is enforced by a column, not by cryptography.</b>
- * {@link #redeemedOn} being non-null means redeemed, permanently. The column
- * makes "used" and "no longer valid" the same fact, recorded in the same write,
- * so no caller can check one without the other.
+ * {@link #activatedOn} being non-null means used, permanently — one nullable
+ * timestamp making "used" and "no longer valid" the same fact, written once, so
+ * no caller can check one without the other.
  *
  * <p>{@link #expiredOn} is an absolute epoch-millis deadline held in the row
  * rather than embedded in the token: expiry then needs no sweep job, and
@@ -53,13 +49,13 @@ import java.io.Serializable;
  * Date: 8/2/2026
  */
 @Entity
-@Table(name = "MH_INVITE")
+@Table(name = "MH_COMM_CHANNEL")
 @Data
 @NoArgsConstructor
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @ToString(exclude = {"token"})
-public class Invite implements Serializable {
+public class CommChannel implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -71,17 +67,40 @@ public class Invite implements Serializable {
     @Version
     public Integer version;
 
-    /** {@code mh_company.UNIQUE_ID} of the account's company; scopes admin operations. */
+    /** {@code mh_company.UNIQUE_ID} of the company issuing the channel. */
     @Column(name = "COMPANY_ID", nullable = false)
     public Long companyId;
 
-    /** The EXISTING {@link Account} whose password this token sets. */
-    @Column(name = "ACCOUNT_ID", nullable = false)
-    public Long accountId;
+    /** Opaque service label from the registry; decides {@link #grantedRole}. */
+    @Column(name = "SERVICE_TAG", nullable = false)
+    public String serviceTag;
+
+    /**
+     * The {@code ROLE_*} an activated account receives.
+     *
+     * <p>Copied from the registry at ISSUE time rather than re-resolved at
+     * activation, so the grant is fixed at the moment an operator decided it. A
+     * registry edited between issue and activation would otherwise change what a
+     * token in someone's hands is worth.
+     */
+    @Column(name = "GRANTED_ROLE", nullable = false)
+    public String grantedRole;
 
     /** High-entropy random, generated with {@code SecureRandom}. Unique installation-wide. */
     @Column(name = "TOKEN", nullable = false)
     public String token;
+
+    /**
+     * Who the issuer MEANT to send this to, recorded at issue time.
+     *
+     * <p>Audit only — it gates nothing. Whoever activates the token becomes the
+     * counterparty; this field is what lets a human later notice that those two
+     * are not the same. Recording it at activation would record whoever showed
+     * up, which is a different fact and no use at all.
+     */
+    @Nullable
+    @Column(name = "INTENDED_FOR")
+    public String intendedFor;
 
     @Nullable
     @Column(name = "DESCRIPTION")
@@ -90,18 +109,24 @@ public class Invite implements Serializable {
     @Column(name = "CREATED_ON", nullable = false)
     public long createdOn;
 
-    /** Absolute epoch-millis deadline; past this, redemption is refused. */
+    /** Absolute epoch-millis deadline; past this, activation is refused. */
     @Column(name = "EXPIRED_ON", nullable = false)
     public long expiredOn;
 
     @Column(name = "CREATED_BY_ACCOUNT_ID", nullable = false)
     public Long createdByAccountId;
 
-    /** Non-null ⇒ already redeemed. This field IS the single-use guarantee. */
+    /** Non-null ⇒ already activated. This field IS the single-use guarantee. */
     @Nullable
-    @Column(name = "REDEEMED_ON")
-    public Long redeemedOn;
+    @Column(name = "ACTIVATED_ON")
+    public Long activatedOn;
 
+    /** The account minted on activation; null until then. */
+    @Nullable
+    @Column(name = "ACCOUNT_ID")
+    public Long accountId;
+
+    /** Withdrawn before activation, or revoked after it. */
     @Column(name = "IS_DELETED", nullable = false)
     public boolean deleted;
 }

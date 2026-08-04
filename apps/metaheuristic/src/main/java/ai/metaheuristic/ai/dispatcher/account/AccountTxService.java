@@ -31,6 +31,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.account.SimpleAccount;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.RoleManager;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -80,8 +81,36 @@ public class AccountTxService {
         return result;
     }
 
+    /**
+     * Create an account whose ROLE SET is owned by a MECHANISM rather than by a
+     * human administrator.
+     *
+     * <p>The admin-assignment gate in {@link #addAccount} is skipped here on
+     * purpose: that gate exists to stop a HUMAN handing out a mechanism-managed
+     * role, and the caller of this method IS the mechanism. Skipping it is the
+     * whole distinction between the two entry points — not a loophole, because
+     * this method is unreachable from any controller.
+     *
+     * <p>The account is stamped {@code managedBy}, so from this moment no admin
+     * path can edit its roles in either direction.
+     */
+    @Transactional
+    public OperationStatusRest addAccountManagedBy(
+            AccountData.NewAccount acc, Long companyUniqueId, String roles, RoleManager manager) {
+        if (manager==RoleManager.admin) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "235.180 addAccountManagedBy requires a mechanism, not 'admin'");
+        }
+        return addAccountInternal(acc, companyUniqueId, roles, manager);
+    }
+
     @Transactional
     public OperationStatusRest addAccount(AccountData.NewAccount acc, Long companyUniqueId, String roles) {
+        return addAccountInternal(acc, companyUniqueId, roles, RoleManager.admin);
+    }
+
+    private OperationStatusRest addAccountInternal(
+            AccountData.NewAccount acc, Long companyUniqueId, String roles, RoleManager manager) {
 
         if (StringUtils.isBlank(acc.getUsername()) ||
                 StringUtils.isBlank(acc.getPassword()) ||
@@ -113,13 +142,27 @@ public class AccountTxService {
         // same gate. Without it an admin could create a fresh account carrying the
         // managed role — indistinguishable from a real one afterwards, with no
         // record of where it came from.
-        for (String r : StringUtils.split(roles==null ? "" : roles, ',')) {
-            final String trimmed = r.trim();
-            if (!trimmed.isEmpty() && !roleService.isAssignableByAdmin(trimmed)) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "235.160 Role " + trimmed + " is granted by '" + roleService.getRoleManager(trimmed)
-                                + "' and can't be assigned by hand");
+        if (manager==RoleManager.admin) {
+            for (String r : StringUtils.split(roles==null ? "" : roles, ',')) {
+                final String trimmed = r.trim();
+                if (!trimmed.isEmpty() && !roleService.isAssignableByAdmin(trimmed)) {
+                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                            "235.160 Role " + trimmed + " is granted by '" + roleService.getRoleManager(trimmed)
+                                    + "' and can't be assigned by hand");
+                }
             }
+        }
+        else {
+            // Every role granted this way must belong to THIS mechanism; a mechanism
+            // may not use its own entry point to hand out somebody else's role.
+            for (String r : StringUtils.split(roles==null ? "" : roles, ',')) {
+                final String trimmed = r.trim();
+                if (!trimmed.isEmpty() && roleService.getRoleManager(trimmed)!=manager) {
+                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                            "235.190 Role " + trimmed + " isn't managed by '" + manager + "'");
+                }
+            }
+            envelopeDraft.managedBy = manager.name();
         }
 
         envelopeDraft.roles = roles;
