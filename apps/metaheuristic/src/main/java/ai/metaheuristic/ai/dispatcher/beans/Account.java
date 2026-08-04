@@ -95,7 +95,7 @@ public class Account implements UserDetails, Serializable {
     /**
      * Which mechanism owns this account's ROLE SET; {@code null} means ordinary
      * human administration. Holds the name of a
-     * {@link ai.metaheuristic.commons.account.RoleManager} constant.
+     * {@link ai.metaheuristic.api.EnumsApi.RoleManager} constant.
      *
      * <p>❗ Locks the role set ONLY — never {@link #enabled}. Disabling a
      * mechanism-owned account is how an operator shuts it down; if immutability
