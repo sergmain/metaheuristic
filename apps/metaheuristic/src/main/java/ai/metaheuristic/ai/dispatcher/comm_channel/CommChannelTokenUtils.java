@@ -93,33 +93,31 @@ public class CommChannelTokenUtils {
     /**
      * Whether this channel may be activated right now.
      *
-     * <p>Returns a REASON rather than a boolean because the three ways an
-     * channel can be unusable — already activated, expired, withdrawn — need to
-     * be distinguishable in an operator's audit trail, even though the caller
-     * deliberately collapses them into one opaque refusal on the wire.
+     * <p>Returns a REASON rather than a boolean because the four ways a channel
+     * can be unusable need to be distinguishable in an operator's log, even
+     * though the caller deliberately collapses them into one opaque refusal on
+     * the wire.
      *
      * @param nowMillis injected rather than read from the clock, so expiry
      *                  boundaries are testable without sleeping
-     * @return {@code null} when redeemable, otherwise a short reason code
      */
-    @Nullable
-    public static String activationRefusalReason(@Nullable CommChannel channel, long nowMillis) {
+    public static ActivationCheck checkActivatable(@Nullable CommChannel channel, long nowMillis) {
         if (channel==null) {
-            return "notFound";
+            return ActivationCheck.notFound;
         }
         if (channel.deleted) {
-            return "withdrawn";
+            return ActivationCheck.withdrawn;
         }
         if (channel.activatedOn!=null) {
-            return "alreadyActivated";
+            return ActivationCheck.alreadyActivated;
         }
         if (nowMillis >= channel.expiredOn) {
-            return "expired";
+            return ActivationCheck.expired;
         }
-        return null;
+        return ActivationCheck.ok;
     }
 
     public static boolean isActivatable(@Nullable CommChannel channel, long nowMillis) {
-        return activationRefusalReason(channel, nowMillis)==null;
+        return checkActivatable(channel, nowMillis).isOk();
     }
 }

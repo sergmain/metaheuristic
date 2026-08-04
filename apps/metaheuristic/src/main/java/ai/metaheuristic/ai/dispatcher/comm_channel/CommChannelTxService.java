@@ -125,10 +125,10 @@ public class CommChannelTxService {
         final CommChannel channel = commChannelRepository.findByTokenForUpdate(token);
         final long now = System.currentTimeMillis();
 
-        final String refusal = CommChannelTokenUtils.activationRefusalReason(channel, now);
-        if (refusal!=null || channel==null) {
+        final ActivationCheck check = CommChannelTokenUtils.checkActivatable(channel, now);
+        if (!check.isOk() || channel==null) {
             // logged for the operator, never returned to the caller
-            log.warn("01.238.060 channel activation refused, reason: {}", refusal);
+            log.warn("01.238.060 channel activation refused, reason: {}", check);
             return CommChannelData.ActivatedChannel.error(ACTIVATION_REFUSED);
         }
 
