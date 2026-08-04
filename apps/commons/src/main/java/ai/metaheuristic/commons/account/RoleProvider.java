@@ -35,4 +35,41 @@ public interface RoleProvider {
      * @return list of role names, never null
      */
     List<String> getAdditionalRoles();
+
+    /**
+     * One role plus the two things the installation needs to know about it:
+     * who may grant it, and in which companies it means anything.
+     *
+     * @param role         Spring Security role name, e.g. {@code ROLE_XXX}
+     * @param managedBy    who may GRANT this role; {@link RoleManager#admin} is
+     *                     ordinary human administration
+     * @param scope        which company universes offer it
+     */
+    record RoleDescriptor(String role, RoleManager managedBy, RoleScope scope) {}
+
+    /**
+     * Richer form of {@link #getAdditionalRoles()}.
+     *
+     * <p>A {@code default} on purpose: the implementation below reproduces the
+     * behaviour every provider had before this method existed — admin-assignable,
+     * offered in both company universes — so no existing provider has to change,
+     * and one that does not care never learns this method exists.
+     *
+     * <p>Override only for a role that is NOT ordinary: one granted by a
+     * mechanism rather than by a human, or one that is meaningless for the
+     * management company.
+     *
+     * <p>❗ A role whose {@code managedBy} is not {@code admin} must still appear
+     * in the installation's possible-roles list. Withholding it there to make it
+     * unassignable would be caught by the wrong mechanism: the role-toggle path
+     * silently strips any role an account holds that is not in that list, so the
+     * managed role would vanish from managed accounts on the next unrelated
+     * toggle. Membership and assignability are separate questions and are
+     * answered separately.
+     */
+    default List<RoleDescriptor> getAdditionalRoleDescriptors() {
+        return getAdditionalRoles().stream()
+                .map(r -> new RoleDescriptor(r, RoleManager.admin, RoleScope.all))
+                .toList();
+    }
 }

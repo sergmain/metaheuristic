@@ -92,6 +92,19 @@ public class Account implements UserDetails, Serializable {
     @Nullable
     public String roles;
 
+    /**
+     * Which mechanism owns this account's ROLE SET; {@code null} means ordinary
+     * human administration. Holds the name of a
+     * {@link ai.metaheuristic.commons.account.RoleManager} constant.
+     *
+     * <p>❗ Locks the role set ONLY — never {@link #enabled}. Disabling a
+     * mechanism-owned account is how an operator shuts it down; if immutability
+     * covered that too, closing a compromised one would need a redeploy.
+     */
+    @Nullable
+    @Column(name = "MANAGED_BY")
+    public String managedBy;
+
     /** Mirror of the head revision's IS_DELETED. Flipped to true alongside a tombstone revision insert. */
     @Column(name = "IS_DELETED")
     public boolean deleted;

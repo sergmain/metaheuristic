@@ -152,7 +152,13 @@ create table mh_account
     is_enabled          BOOLEAN        NOT NULL default false,
     CREATED_ON          bigint         NOT NULL,
     IS_DELETED          BOOLEAN        NOT NULL DEFAULT FALSE,
-    HEAD_REVISION_ID    bigint
+    HEAD_REVISION_ID    bigint,
+    -- Which mechanism owns this account's ROLE SET; NULL = ordinary human
+    -- administration. Values are the names of RoleManager constants.
+    -- Locks ROLES only -- never IS_ENABLED, because disabling an account is
+    -- the revocation lever and locking that would leave an operator with no
+    -- way to shut a mechanism-owned account down without a redeploy.
+    MANAGED_BY          varchar(50)
 );
 
 CREATE INDEX mh_account_company_id_idx

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.sec;
 
+import ai.metaheuristic.commons.account.RoleManager;
 import ai.metaheuristic.commons.account.RoleProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service that aggregates possible roles from SecConsts and any RoleProvider beans.
@@ -40,29 +43,67 @@ public class RoleService {
     private final List<String> possibleRoles;
     private final List<String> company1PossibleRoles;
 
+    /**
+     * Who may grant each role. A role absent from this map is
+     * {@link RoleManager#admin}-managed, which is every base role and every
+     * provider role that did not say otherwise.
+     */
+    private final Map<String, RoleManager> roleManagers;
+
     public RoleService(@Autowired(required = false) List<RoleProvider> roleProviders) {
-        List<String> additionalRoles = new ArrayList<>();
+        List<RoleProvider.RoleDescriptor> descriptors = new ArrayList<>();
         if (roleProviders != null) {
             for (RoleProvider provider : roleProviders) {
-                List<String> roles = provider.getAdditionalRoles();
-                if (roles != null) {
-                    additionalRoles.addAll(roles);
-                    log.info("Registered additional roles from {}: {}", provider.getClass().getSimpleName(), roles);
+                List<RoleProvider.RoleDescriptor> ds = provider.getAdditionalRoleDescriptors();
+                if (ds != null) {
+                    descriptors.addAll(ds);
+                    log.info("Registered additional roles from {}: {}", provider.getClass().getSimpleName(), ds);
                 }
             }
         }
 
-        // Build immutable lists combining base roles with additional roles
+        // Base roles are admin-managed and keep their existing universes; a provider
+        // role now chooses its universe rather than landing in both unconditionally.
         List<String> allPossibleRoles = new ArrayList<>(SecConsts.POSSIBLE_ROLES);
-        allPossibleRoles.addAll(additionalRoles);
-        this.possibleRoles = List.copyOf(allPossibleRoles);
-
         List<String> allCompany1Roles = new ArrayList<>(SecConsts.COMPANY_1_POSSIBLE_ROLES);
-        allCompany1Roles.addAll(additionalRoles);
+        Map<String, RoleManager> managers = new HashMap<>();
+
+        for (RoleProvider.RoleDescriptor d : descriptors) {
+            if (d.scope().appliesToRegularCompany()) {
+                allPossibleRoles.add(d.role());
+            }
+            if (d.scope().appliesToCompany1()) {
+                allCompany1Roles.add(d.role());
+            }
+            if (d.managedBy()!=RoleManager.admin) {
+                managers.put(d.role(), d.managedBy());
+            }
+        }
+
+        this.possibleRoles = List.copyOf(allPossibleRoles);
         this.company1PossibleRoles = List.copyOf(allCompany1Roles);
+        this.roleManagers = Map.copyOf(managers);
 
         log.info("Total possible roles: {}", this.possibleRoles);
         log.info("Total company-1 possible roles: {}", this.company1PossibleRoles);
+        log.info("Mechanism-managed roles: {}", this.roleManagers);
+    }
+
+    /** Who may grant this role. Never null — an unlisted role is admin-managed. */
+    public RoleManager getRoleManager(String role) {
+        return roleManagers.getOrDefault(role, RoleManager.admin);
+    }
+
+    /**
+     * Whether a human administrator may grant or revoke this role.
+     *
+     * <p>Deliberately SEPARATE from {@link #isValidRole(String)}. A managed role
+     * is still a valid, listed role — it must be, or the role-toggle path would
+     * silently strip it from every account that legitimately holds it. What
+     * changes is who may hand it out.
+     */
+    public boolean isAssignableByAdmin(String role) {
+        return getRoleManager(role)==RoleManager.admin;
     }
 
     /**

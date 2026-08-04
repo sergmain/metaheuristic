@@ -109,6 +109,19 @@ public class AccountTxService {
         Account envelopeDraft = new Account();
         envelopeDraft.username = acc.username;
         envelopeDraft.password = passwordEncoder.encode(acc.password);
+        // Initial grant is the other way a role reaches an account, so it needs the
+        // same gate. Without it an admin could create a fresh account carrying the
+        // managed role — indistinguishable from a real one afterwards, with no
+        // record of where it came from.
+        for (String r : StringUtils.split(roles==null ? "" : roles, ',')) {
+            final String trimmed = r.trim();
+            if (!trimmed.isEmpty() && !roleService.isAssignableByAdmin(trimmed)) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                        "235.160 Role " + trimmed + " is granted by '" + roleService.getRoleManager(trimmed)
+                                + "' and can't be assigned by hand");
+            }
+        }
+
         envelopeDraft.roles = roles;
         envelopeDraft.accountNonExpired = true;
         envelopeDraft.accountNonLocked = true;
@@ -192,10 +205,22 @@ public class AccountTxService {
         if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.110 account wasn't found, accountId: " + accountId);
         }
+        // Wholesale replacement of the role set, so the mechanism gate applies here
+        // exactly as it does to the per-role toggle.
+        if (account.managedBy!=null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "235.170 Account's roles are managed by '" + account.managedBy
+                            + "' and can't be edited by hand, accountId: " + accountId);
+        }
+
         List<String> possibleRoles = roleService.getPossibleRoles();
         String str = Arrays.stream(StringUtils.split(roles, ','))
                 .map(String::strip)
                 .filter(possibleRoles::contains)
+                // A managed role stays in possibleRoles by design, so membership alone
+                // would let this path hand one out. Filtered here instead of refused,
+                // matching how this method already treats an unknown role.
+                .filter(roleService::isAssignableByAdmin)
                 .collect(Collectors.joining(", "));
 
         // ROLES lives on the envelope.
@@ -214,6 +239,24 @@ public class AccountTxService {
         List<String> possibleRoles = Consts.ID_1.equals(companyUniqueId) ? roleService.getCompany1PossibleRoles() : roleService.getPossibleRoles();
         if (!possibleRoles.contains(role)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.130 account wasn't found, accountId: " + accountId);
+        }
+
+        // The account's role set belongs to a mechanism, so no hand-editing of it —
+        // in either direction. This is what stops a mechanism-owned account being
+        // widened with an unrelated role while its own role sits untouched.
+        if (account.managedBy!=null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "235.140 Account's roles are managed by '" + account.managedBy
+                            + "' and can't be edited by hand, accountId: " + accountId);
+        }
+        // The role itself is granted by a mechanism, never handed out by a human.
+        // Checked SEPARATELY from list membership above: a managed role must stay in
+        // possibleRoles, or the strip loop below would delete it from every account
+        // that legitimately holds it on the next unrelated toggle.
+        if (!roleService.isAssignableByAdmin(role)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "235.150 Role " + role + " is granted by '" + roleService.getRoleManager(role)
+                            + "' and can't be assigned by hand");
         }
 
         List<String> currRoles = account.accountRoles.getRolesAsList();
