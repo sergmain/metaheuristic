@@ -31,7 +31,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.account.SimpleAccount;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.account.RoleManager;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -96,8 +95,8 @@ public class AccountTxService {
      */
     @Transactional
     public OperationStatusRest addAccountManagedBy(
-            AccountData.NewAccount acc, Long companyUniqueId, String roles, RoleManager manager) {
-        if (manager==RoleManager.admin) {
+            AccountData.NewAccount acc, Long companyUniqueId, String roles, EnumsApi.RoleManager manager) {
+        if (manager==EnumsApi.RoleManager.admin) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "235.180 addAccountManagedBy requires a mechanism, not 'admin'");
         }
@@ -106,11 +105,11 @@ public class AccountTxService {
 
     @Transactional
     public OperationStatusRest addAccount(AccountData.NewAccount acc, Long companyUniqueId, String roles) {
-        return addAccountInternal(acc, companyUniqueId, roles, RoleManager.admin);
+        return addAccountInternal(acc, companyUniqueId, roles, EnumsApi.RoleManager.admin);
     }
 
     private OperationStatusRest addAccountInternal(
-            AccountData.NewAccount acc, Long companyUniqueId, String roles, RoleManager manager) {
+            AccountData.NewAccount acc, Long companyUniqueId, String roles, EnumsApi.RoleManager manager) {
 
         if (StringUtils.isBlank(acc.getUsername()) ||
                 StringUtils.isBlank(acc.getPassword()) ||
@@ -142,7 +141,7 @@ public class AccountTxService {
         // same gate. Without it an admin could create a fresh account carrying the
         // managed role — indistinguishable from a real one afterwards, with no
         // record of where it came from.
-        if (manager==RoleManager.admin) {
+        if (manager==EnumsApi.RoleManager.admin) {
             for (String r : StringUtils.split(roles==null ? "" : roles, ',')) {
                 final String trimmed = r.trim();
                 if (!trimmed.isEmpty() && !roleService.isAssignableByAdmin(trimmed)) {

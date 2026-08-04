@@ -16,9 +16,8 @@
 
 package ai.metaheuristic.ai.sec;
 
-import ai.metaheuristic.commons.account.RoleManager;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.account.RoleProvider;
-import ai.metaheuristic.commons.account.RoleScope;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
@@ -53,9 +52,9 @@ public class RoleServiceTest {
         @Override
         public List<RoleDescriptor> getAdditionalRoleDescriptors() {
             return List.of(
-                new RoleDescriptor(MANAGED, RoleManager.commChannel, RoleScope.notCompany1),
-                new RoleDescriptor(REGULAR_ONLY, RoleManager.admin, RoleScope.notCompany1),
-                new RoleDescriptor(COMPANY1_ONLY, RoleManager.admin, RoleScope.company1));
+                new RoleDescriptor(MANAGED, EnumsApi.RoleManager.commChannel, EnumsApi.RoleScope.notCompany1),
+                new RoleDescriptor(REGULAR_ONLY, EnumsApi.RoleManager.admin, EnumsApi.RoleScope.notCompany1),
+                new RoleDescriptor(COMPANY1_ONLY, EnumsApi.RoleManager.admin, EnumsApi.RoleScope.company1));
         }
     };
 
@@ -74,7 +73,7 @@ public class RoleServiceTest {
         assertTrue(s.isValidRole(LEGACY));
         assertTrue(s.isValidCompany1Role(LEGACY));
         assertTrue(s.isAssignableByAdmin(LEGACY));
-        assertEquals(RoleManager.admin, s.getRoleManager(LEGACY));
+        assertEquals(EnumsApi.RoleManager.admin, s.getRoleManager(LEGACY));
     }
 
     @Test
@@ -137,7 +136,7 @@ public class RoleServiceTest {
         assertTrue(s.isValidRole(MANAGED));
 
         assertFalse(s.isAssignableByAdmin(MANAGED));
-        assertEquals(RoleManager.commChannel, s.getRoleManager(MANAGED));
+        assertEquals(EnumsApi.RoleManager.commChannel, s.getRoleManager(MANAGED));
     }
 
     /** Membership and assignability are independent questions. */
@@ -159,21 +158,21 @@ public class RoleServiceTest {
     public void test_unknownRole_isAdminManaged() {
         RoleService s = new RoleService(List.of(RICH_PROVIDER));
 
-        assertEquals(RoleManager.admin, s.getRoleManager("ROLE_NEVER_HEARD_OF"));
+        assertEquals(EnumsApi.RoleManager.admin, s.getRoleManager("ROLE_NEVER_HEARD_OF"));
         assertTrue(s.isAssignableByAdmin("ROLE_NEVER_HEARD_OF"));
     }
 
-    // ---------- RoleScope predicates ----------
+    // ---------- EnumsApi.RoleScope predicates ----------
 
     @Test
     public void test_roleScopePredicates() {
-        assertTrue(RoleScope.all.appliesToCompany1());
-        assertTrue(RoleScope.all.appliesToRegularCompany());
+        assertTrue(EnumsApi.RoleScope.all.appliesToCompany1());
+        assertTrue(EnumsApi.RoleScope.all.appliesToRegularCompany());
 
-        assertTrue(RoleScope.company1.appliesToCompany1());
-        assertFalse(RoleScope.company1.appliesToRegularCompany());
+        assertTrue(EnumsApi.RoleScope.company1.appliesToCompany1());
+        assertFalse(EnumsApi.RoleScope.company1.appliesToRegularCompany());
 
-        assertFalse(RoleScope.notCompany1.appliesToCompany1());
-        assertTrue(RoleScope.notCompany1.appliesToRegularCompany());
+        assertFalse(EnumsApi.RoleScope.notCompany1.appliesToCompany1());
+        assertTrue(EnumsApi.RoleScope.notCompany1.appliesToRegularCompany());
     }
 }

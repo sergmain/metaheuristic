@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.sec;
 
-import ai.metaheuristic.commons.account.RoleManager;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.account.RoleProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +48,7 @@ public class RoleService {
      * {@link RoleManager#admin}-managed, which is every base role and every
      * provider role that did not say otherwise.
      */
-    private final Map<String, RoleManager> roleManagers;
+    private final Map<String, EnumsApi.RoleManager> roleManagers;
 
     public RoleService(@Autowired(required = false) List<RoleProvider> roleProviders) {
         List<RoleProvider.RoleDescriptor> descriptors = new ArrayList<>();
@@ -66,7 +66,7 @@ public class RoleService {
         // role now chooses its universe rather than landing in both unconditionally.
         List<String> allPossibleRoles = new ArrayList<>(SecConsts.POSSIBLE_ROLES);
         List<String> allCompany1Roles = new ArrayList<>(SecConsts.COMPANY_1_POSSIBLE_ROLES);
-        Map<String, RoleManager> managers = new HashMap<>();
+        Map<String, EnumsApi.RoleManager> managers = new HashMap<>();
 
         for (RoleProvider.RoleDescriptor d : descriptors) {
             if (d.scope().appliesToRegularCompany()) {
@@ -75,7 +75,7 @@ public class RoleService {
             if (d.scope().appliesToCompany1()) {
                 allCompany1Roles.add(d.role());
             }
-            if (d.managedBy()!=RoleManager.admin) {
+            if (d.managedBy()!=EnumsApi.RoleManager.admin) {
                 managers.put(d.role(), d.managedBy());
             }
         }
@@ -90,8 +90,8 @@ public class RoleService {
     }
 
     /** Who may grant this role. Never null — an unlisted role is admin-managed. */
-    public RoleManager getRoleManager(String role) {
-        return roleManagers.getOrDefault(role, RoleManager.admin);
+    public EnumsApi.RoleManager getRoleManager(String role) {
+        return roleManagers.getOrDefault(role, EnumsApi.RoleManager.admin);
     }
 
     /**
@@ -103,7 +103,7 @@ public class RoleService {
      * changes is who may hand it out.
      */
     public boolean isAssignableByAdmin(String role) {
-        return getRoleManager(role)==RoleManager.admin;
+        return getRoleManager(role)==EnumsApi.RoleManager.admin;
     }
 
     /**

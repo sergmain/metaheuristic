@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.account;
 
+import ai.metaheuristic.api.EnumsApi;
 import java.util.List;
 
 /**
@@ -45,7 +46,7 @@ public interface RoleProvider {
      *                     ordinary human administration
      * @param scope        which company universes offer it
      */
-    record RoleDescriptor(String role, RoleManager managedBy, RoleScope scope) {}
+    record RoleDescriptor(String role, EnumsApi.RoleManager managedBy, EnumsApi.RoleScope scope) {}
 
     /**
      * Richer form of {@link #getAdditionalRoles()}.
@@ -69,7 +70,7 @@ public interface RoleProvider {
      */
     default List<RoleDescriptor> getAdditionalRoleDescriptors() {
         return getAdditionalRoles().stream()
-                .map(r -> new RoleDescriptor(r, RoleManager.admin, RoleScope.all))
+                .map(r -> new RoleDescriptor(r, EnumsApi.RoleManager.admin, EnumsApi.RoleScope.all))
                 .toList();
     }
 }

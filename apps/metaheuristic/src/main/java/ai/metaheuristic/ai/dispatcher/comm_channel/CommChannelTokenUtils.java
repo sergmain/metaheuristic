@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.comm_channel;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.dispatcher.beans.CommChannel;
 import org.jspecify.annotations.Nullable;
 
@@ -101,20 +102,20 @@ public class CommChannelTokenUtils {
      * @param nowMillis injected rather than read from the clock, so expiry
      *                  boundaries are testable without sleeping
      */
-    public static ActivationCheck checkActivatable(@Nullable CommChannel channel, long nowMillis) {
+    public static EnumsApi.ActivationCheck checkActivatable(@Nullable CommChannel channel, long nowMillis) {
         if (channel==null) {
-            return ActivationCheck.notFound;
+            return EnumsApi.ActivationCheck.notFound;
         }
         if (channel.deleted) {
-            return ActivationCheck.withdrawn;
+            return EnumsApi.ActivationCheck.withdrawn;
         }
         if (channel.activatedOn!=null) {
-            return ActivationCheck.alreadyActivated;
+            return EnumsApi.ActivationCheck.alreadyActivated;
         }
         if (nowMillis >= channel.expiredOn) {
-            return ActivationCheck.expired;
+            return EnumsApi.ActivationCheck.expired;
         }
-        return ActivationCheck.ok;
+        return EnumsApi.ActivationCheck.ok;
     }
 
     public static boolean isActivatable(@Nullable CommChannel channel, long nowMillis) {

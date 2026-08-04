@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.comm_channel;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.dispatcher.beans.CommChannel;
-import ai.metaheuristic.ai.dispatcher.comm_channel.ActivationCheck;
 import ai.metaheuristic.ai.dispatcher.comm_channel.CommChannelTokenUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -111,15 +111,15 @@ public class CommChannelTokenUtilsTest {
     public void test_livechannel_isActivatable() {
         CommChannel i = channel(NOW + 1);
 
-        assertEquals(ActivationCheck.ok, CommChannelTokenUtils.checkActivatable(i, NOW));
+        assertEquals(EnumsApi.ActivationCheck.ok, CommChannelTokenUtils.checkActivatable(i, NOW));
         assertTrue(CommChannelTokenUtils.isActivatable(i, NOW));
     }
 
     @Test
     public void test_missingchannel_isRefused() {
-        assertEquals(ActivationCheck.notFound, CommChannelTokenUtils.checkActivatable(null, NOW));
+        assertEquals(EnumsApi.ActivationCheck.notFound, CommChannelTokenUtils.checkActivatable(null, NOW));
         assertFalse(CommChannelTokenUtils.isActivatable(null, NOW));
-        assertFalse(ActivationCheck.notFound.isOk());
+        assertFalse(EnumsApi.ActivationCheck.notFound.isOk());
     }
 
     @Test
@@ -127,7 +127,7 @@ public class CommChannelTokenUtilsTest {
         CommChannel i = channel(NOW + 1);
         i.deleted = true;
 
-        assertEquals(ActivationCheck.withdrawn, CommChannelTokenUtils.checkActivatable(i, NOW));
+        assertEquals(EnumsApi.ActivationCheck.withdrawn, CommChannelTokenUtils.checkActivatable(i, NOW));
     }
 
     /** The single-use guarantee: a spent channel is refused forever after. */
@@ -136,8 +136,8 @@ public class CommChannelTokenUtilsTest {
         CommChannel i = channel(NOW + 1);
         i.activatedOn = NOW;
 
-        assertEquals(ActivationCheck.alreadyActivated, CommChannelTokenUtils.checkActivatable(i, NOW));
-        assertEquals(ActivationCheck.alreadyActivated,
+        assertEquals(EnumsApi.ActivationCheck.alreadyActivated, CommChannelTokenUtils.checkActivatable(i, NOW));
+        assertEquals(EnumsApi.ActivationCheck.alreadyActivated,
                 CommChannelTokenUtils.checkActivatable(i, NOW + 10_000_000L));
     }
 
@@ -146,9 +146,9 @@ public class CommChannelTokenUtilsTest {
     public void test_expiryBoundary() {
         CommChannel i = channel(NOW);
 
-        assertEquals(ActivationCheck.expired, CommChannelTokenUtils.checkActivatable(i, NOW));
-        assertEquals(ActivationCheck.expired, CommChannelTokenUtils.checkActivatable(i, NOW + 1));
-        assertEquals(ActivationCheck.ok, CommChannelTokenUtils.checkActivatable(i, NOW - 1));
+        assertEquals(EnumsApi.ActivationCheck.expired, CommChannelTokenUtils.checkActivatable(i, NOW));
+        assertEquals(EnumsApi.ActivationCheck.expired, CommChannelTokenUtils.checkActivatable(i, NOW + 1));
+        assertEquals(EnumsApi.ActivationCheck.ok, CommChannelTokenUtils.checkActivatable(i, NOW - 1));
     }
 
     /**
@@ -160,10 +160,10 @@ public class CommChannelTokenUtilsTest {
         CommChannel withdrawnAndActivated = channel(NOW - 1);
         withdrawnAndActivated.deleted = true;
         withdrawnAndActivated.activatedOn = NOW;
-        assertEquals(ActivationCheck.withdrawn, CommChannelTokenUtils.checkActivatable(withdrawnAndActivated, NOW));
+        assertEquals(EnumsApi.ActivationCheck.withdrawn, CommChannelTokenUtils.checkActivatable(withdrawnAndActivated, NOW));
 
         CommChannel activatedAndExpired = channel(NOW - 1);
         activatedAndExpired.activatedOn = NOW;
-        assertEquals(ActivationCheck.alreadyActivated, CommChannelTokenUtils.checkActivatable(activatedAndExpired, NOW));
+        assertEquals(EnumsApi.ActivationCheck.alreadyActivated, CommChannelTokenUtils.checkActivatable(activatedAndExpired, NOW));
     }
 }

@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.CommChannelRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.account.CommChannelServiceProvider.CommChannelService;
-import ai.metaheuristic.commons.account.RoleManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -125,7 +124,7 @@ public class CommChannelTxService {
         final CommChannel channel = commChannelRepository.findByTokenForUpdate(token);
         final long now = System.currentTimeMillis();
 
-        final ActivationCheck check = CommChannelTokenUtils.checkActivatable(channel, now);
+        final EnumsApi.ActivationCheck check = CommChannelTokenUtils.checkActivatable(channel, now);
         if (!check.isOk() || channel==null) {
             // logged for the operator, never returned to the caller
             log.warn("01.238.060 channel activation refused, reason: {}", check);
@@ -142,7 +141,7 @@ public class CommChannelTxService {
         newAccount.publicName = channel.description==null ? channel.serviceTag : channel.description;
 
         final OperationStatusRest status = accountTxService.addAccountManagedBy(
-                newAccount, channel.companyId, channel.grantedRole, RoleManager.commChannel);
+                newAccount, channel.companyId, channel.grantedRole, EnumsApi.RoleManager.commChannel);
         if (status.status!=EnumsApi.OperationStatus.OK) {
             log.error("01.238.080 account creation failed during channel activation: {}",
                     status.getErrorMessagesAsStr());

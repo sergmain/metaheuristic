@@ -16,10 +16,10 @@
 
 package ai.metaheuristic.ai.dispatcher.comm_channel;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.sec.RoleService;
 import ai.metaheuristic.commons.account.CommChannelServiceProvider;
 import ai.metaheuristic.commons.account.CommChannelServiceProvider.CommChannelService;
-import ai.metaheuristic.commons.account.RoleManager;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,7 +91,7 @@ public class CommChannelServiceRegistry {
                     // pointing at an admin-assignable role would mint accounts whose
                     // roles an admin could then edit by hand, so the channel would look
                     // owned and not be.
-                    if (roleService.getRoleManager(svc.role())!=RoleManager.commChannel) {
+                    if (roleService.getRoleManager(svc.role())!=EnumsApi.RoleManager.commChannel) {
                         errors.add("01.239.100 service '" + svc.tag() + "' names role " + svc.role()
                                 + " which is managed by '" + roleService.getRoleManager(svc.role())
                                 + "', not 'commChannel'");

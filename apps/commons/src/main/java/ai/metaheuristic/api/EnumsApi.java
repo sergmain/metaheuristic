@@ -602,4 +602,107 @@ public class EnumsApi {
     public enum HttpMethodType { get, post }
 
     public enum GitStatus {unknown, processing, installed, not_found, error }
+
+    /**
+     * Who owns a thing's role set — used in two symmetric places.
+     *
+     * <p>On a ROLE it answers <b>who may grant this role</b>. On an ACCOUNT it
+     * answers <b>who owns this account's role set</b>. Both questions need
+     * answering and neither implies the other:
+     * <ul>
+     *   <li>Role-side only: an admin cannot grant the managed role, but can still
+     *       add OTHER roles to a managed account — the account widens while its
+     *       managed role sits untouched.</li>
+     *   <li>Account-side only: managed accounts are safe, but an admin can create
+     *       a fresh account and hand it the managed role, producing something
+     *       that works exactly like a managed account with no record of where it
+     *       came from. A provenance hole rather than a privilege one, which is
+     *       worse in an audit because nothing looks wrong.</li>
+     * </ul>
+     *
+     * <p><b>An enum, deliberately not a String.</b> A string sitting beside
+     * {@code ROLE_*} names invites being read as a role, and this is not a role:
+     * a managing mechanism is system code, not an authenticated principal
+     * holding an authority.
+     *
+     * <p><b>An owner, deliberately not a boolean.</b> A flag like {@code locked}
+     * records THAT something is protected without recording WHO may unprotect
+     * it; the second mechanism needing the same protection adds a second boolean
+     * and their interaction is undefined. Naming the owner keeps one uniform
+     * check for every mechanism that will ever exist: is the caller the owner?
+     *
+     * <p>Mechanisms are infrastructure, so this enum is closed to plugins. A
+     * plugin contributes ROLES; it does not invent ways of managing them.
+     */
+    public enum RoleManager {
+        /** Ordinary human administration. The default. */
+        admin,
+        /**
+         * Owned by the communication-channel mechanism: granted only when a
+         * channel token is activated, and not editable by hand afterwards.
+         */
+        commChannel
+    }
+
+    /**
+     * Which companies a role may be assigned in.
+     *
+     * <p>The installation separates two role universes — one for the management
+     * company and one for every other — because the management company runs no
+     * business logic. {@link #all} is the default and reproduces the behaviour
+     * that existed before this enum, so nothing changes for a provider that does
+     * not care.
+     */
+    public enum RoleScope {
+        /** Management company only. */
+        company1,
+        /**
+         * Every company EXCEPT the management one. The right scope for any role
+         * that presupposes owning projects or data, since the management company
+         * owns neither.
+         */
+        notCompany1,
+        /** Both universes — the default. */
+        all;
+
+        public boolean appliesToCompany1() {
+            return this==company1 || this==all;
+        }
+
+        public boolean appliesToRegularCompany() {
+            return this==notCompany1 || this==all;
+        }
+    }
+
+    /**
+     * Why a communication-channel token may not be activated, or {@link #ok}
+     * when it may.
+     *
+     * <p>Includes the success case rather than returning {@code null} for it, so
+     * no caller has to null-check and a {@code switch} over the causes can be
+     * exhaustive.
+     *
+     * <p>❗ <b>These values are for the OPERATOR'S LOG and never for the
+     * caller.</b> Telling a caller "expired" rather than "not found" confirms
+     * the token existed, which turns a refusal into an oracle for enumerating
+     * valid tokens. An enum helps keep that true: a String is one concatenation
+     * away from ending up in a response message, whereas reaching one of these
+     * constants requires a deliberate conversion that stands out in review.
+     */
+    public enum ActivationCheck {
+        /** Activatable. */
+        ok,
+        /** No channel carries this token. */
+        notFound,
+        /** Withdrawn by an operator, or the channel was revoked. */
+        withdrawn,
+        /** Already activated. Terminal — the single-use guarantee. */
+        alreadyActivated,
+        /** Past its absolute deadline. */
+        expired;
+
+        public boolean isOk() {
+            return this==ok;
+        }
+    }
 }
