@@ -48,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Phase-2 RUN_NOW acceptance IT for the runtime graft primitive (025-MHSC-DSL-V2-PLAN, Phase 2).
  *
- * <p>Where the Phase-1 IT ({@link ExecContextGraftAttachGroupIT}) proves PLACE_NOW on a STOPPED EC,
+ * <p>Where the Phase-1 IT ({@link ExecContextGraftAttachGroupTest}) proves PLACE_NOW on a STOPPED EC,
  * this one proves the RUN_NOW driver end-to-end on a genuinely FINISHED EC: it grafts a body whose
  * root is an INNER dynamic subprocess (a splitter) and asserts the splitter RE-EXPANDS when driven,
  * with its children born at their own resolvable contexts.
@@ -78,7 +78,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
-public class ExecContextGraftRunNowNestedIT extends PreparingSourceCode {
+public class ExecContextGraftRunNowNestedTest extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;

@@ -46,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Phase-6 (batch 6.3b) acceptance IT for the AUTHORED IN-BAND graft. Where the Phase-2 IT
- * ({@link ExecContextGraftRunNowNestedIT}) drives the graft via an explicit out-of-band
+ * ({@link ExecContextGraftRunNowNestedTest}) drives the graft via an explicit out-of-band
  * {@code attachGroup} service call, THIS test proves the DISPATCHER-NATIVE path end-to-end: a
  * {@code .mhsc} that declares a {@code group} and an in-band {@code graft} compiles to a graft-tagged
  * Process (batch 6.3b-ii), and when the enclosing {@code mh.nop} runs, the dispatcher's task-production
@@ -68,7 +68,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
-public class ExecContextGraftInBandRunNowIT extends PreparingSourceCode {
+public class ExecContextGraftInBandRunNowTest extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;

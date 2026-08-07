@@ -69,7 +69,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @AutoConfigureCache
-public class ExecContextGraftHandleSurvivesCloneIT extends PreparingSourceCode {
+public class ExecContextGraftHandleSurvivesCloneTest extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private ExecContextCache execContextCache;

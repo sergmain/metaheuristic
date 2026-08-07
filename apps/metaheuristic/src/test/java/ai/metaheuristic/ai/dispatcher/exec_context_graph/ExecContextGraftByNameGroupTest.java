@@ -74,7 +74,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @AutoConfigureCache
-public class ExecContextGraftByNameGroupIT extends PreparingSourceCode {
+public class ExecContextGraftByNameGroupTest extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private ExecContextCache execContextCache;
