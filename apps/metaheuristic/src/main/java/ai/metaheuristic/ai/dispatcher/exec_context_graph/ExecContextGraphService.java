@@ -62,6 +62,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -391,6 +392,69 @@ public class ExecContextGraphService {
                     .collect(Collectors.toSet());
             return set;
         });
+    }
+
+    /**
+     * Descendants of {@code taskId}, but only those reachable WITHOUT passing THROUGH a vertex the
+     * caller declines to descend through.
+     *
+     * <p>This is a new traversal rather than a filter over {@link #findDescendants}, because
+     * {@code BreadthFirstIterator} cannot skip a subtree: by the time a vertex is handed to a
+     * filter its successors have already been enqueued.
+     *
+     * <p>"Prune at X" means <em>unreachable except through X</em>. X ITSELF is still a descendant —
+     * it is reached by an edge from its own parent, not through itself — and a vertex with a second
+     * parent outside the pruned region is still reached by that other path. Only vertices whose
+     * every path from the start runs through a declined vertex are excluded. Callers that want X
+     * gone too must exclude it themselves; a walk cannot tell "stop below here" from "stop here"
+     * without losing the exclusive-reachability meaning.
+     *
+     * <p>{@code descendThrough} is never applied to the start vertex: the caller asked for its
+     * descendants, so it is always expanded, and it is never part of the result.
+     *
+     * @param descendThrough given a descendant, whether the walk continues BELOW it
+     */
+    public Set<ExecContextData.TaskVertex> findDescendantsBounded(
+            Long execContextId, Long execContextGraphId, Long taskId,
+            Predicate<ExecContextData.TaskVertex> descendThrough) {
+        ExecContextData.ExecContextDAC execContextDAC = getExecContextDAC(execContextId, execContextGraphId);
+        return findDescendantsBounded(execContextDAC.graph(), taskId, descendThrough);
+    }
+
+    public static Set<ExecContextData.TaskVertex> findDescendantsBounded(
+            DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, Long taskId,
+            Predicate<ExecContextData.TaskVertex> descendThrough) {
+        ExecContextData.TaskVertex start = graph.vertexSet()
+                .stream()
+                .filter(o -> taskId.equals(o.taskId))
+                .findFirst().orElse(null);
+        if (start==null) {
+            return Set.of();
+        }
+
+        Set<ExecContextData.TaskVertex> descendants = new LinkedHashSet<>();
+        Set<ExecContextData.TaskVertex> expanded = new HashSet<>();
+        Deque<ExecContextData.TaskVertex> queue = new ArrayDeque<>();
+        queue.add(start);
+
+        while (!queue.isEmpty()) {
+            ExecContextData.TaskVertex v = queue.poll();
+            if (!expanded.add(v)) {
+                continue;
+            }
+            // the start vertex is always expanded; the bound applies to descendants only
+            if (!v.equals(start) && !descendThrough.test(v)) {
+                continue;
+            }
+            for (DefaultEdge edge : graph.outgoingEdgesOf(v)) {
+                ExecContextData.TaskVertex next = graph.getEdgeTarget(edge);
+                descendants.add(next);
+                if (!expanded.contains(next)) {
+                    queue.add(next);
+                }
+            }
+        }
+        return descendants;
     }
 
     private static Set<ExecContextData.TaskVertex> findDescendantsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, Long taskId) {
