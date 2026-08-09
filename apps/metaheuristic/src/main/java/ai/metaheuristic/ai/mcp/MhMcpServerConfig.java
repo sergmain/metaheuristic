@@ -117,7 +117,6 @@ public class MhMcpServerConfig implements ShutdownInterface {
                 .serverInfo("metaheuristic-mcp-server", "1.0.0")
                 .capabilities(ServerCapabilities.builder()
                         .tools(true)
-                        .logging()
                         .build())
                 .tools(toolDefinitions.getAllToolSpecifications())
                 .build();
