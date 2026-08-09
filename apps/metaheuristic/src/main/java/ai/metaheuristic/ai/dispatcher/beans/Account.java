@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  * PHONE, PHONE_AS_STR, UPDATED_ON, SECRET_KEY, TWO_FA, PARAMS) live in
  * {@link AccountRevision}, append-only, looked up manually by HEAD_REVISION_ID
  * — see AccountService.
- *
+ * <br/>
  * User: Serg
  * Date: 12.08.13
  * Time: 23:19

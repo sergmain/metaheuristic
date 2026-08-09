@@ -54,6 +54,7 @@ public class MultiHttpSecurityConfig {
     private final Globals globals;
 //    private final CorsConfigurationSource corsConfigurationSource;
 
+    @SuppressWarnings("MethodMayBeStatic")
     @Bean
     public PasswordEncoder getPasswordEncoder() {
         return new BCryptPasswordEncoder(10);

@@ -18,6 +18,7 @@ package ai.metaheuristic.commons.account;
 
 import ai.metaheuristic.commons.S;
 import lombok.Data;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +65,7 @@ public class AccountRoles {
         }
     }
 
-    private final Supplier<String> roleGetter;
+    private final Supplier<@Nullable String> roleGetter;
     private final Consumer<String> roleSetter;
 
     private final InitedRoles initedRoles = new InitedRoles();
@@ -74,7 +75,7 @@ public class AccountRoles {
     private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
     private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
-    public AccountRoles(Supplier<String> roleGetter, Consumer<String> roleSetter) {
+    public AccountRoles(Supplier<@Nullable String> roleGetter, Consumer<String> roleSetter) {
         this.roleSetter = roleSetter;
         this.roleGetter = roleGetter;
     }
@@ -157,9 +158,9 @@ public class AccountRoles {
             if (initedRoles.inited) {
                 return;
             }
-            //noinspection ConstantValue
-            if (this.roleGetter.get()!=null) {
-                StringTokenizer st = new StringTokenizer(this.roleGetter.get(), ",");
+            String s = this.roleGetter.get();
+            if (s !=null) {
+                StringTokenizer st = new StringTokenizer(s, ",");
                 while (st.hasMoreTokens()) {
                     String token = st.nextToken();
                     if (S.b(token)) {

@@ -47,7 +47,7 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 @Execution(CONCURRENT)
 public class ExecContextGraphBoundedDescendantsTest {
 
-    private static final Predicate<ExecContextData.TaskVertex> DESCEND_EVERYWHERE = v -> true;
+    private static final Predicate<ExecContextData.TaskVertex> DESCEND_EVERYWHERE = _ -> true;
 
     private static DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graphOf(String edgesAndVertices) {
         return ExecContextGraphService.importExecContextGraph(

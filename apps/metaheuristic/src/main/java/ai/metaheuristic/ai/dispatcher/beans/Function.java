@@ -25,6 +25,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import jakarta.persistence.*;
+
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -70,6 +71,7 @@ public class Function implements Serializable {
 
     private FunctionConfigYaml parseParams() {
         FunctionConfigYaml temp = FunctionConfigYamlUtils.UTILS.to(params);
+        //noinspection ConstantValue
         FunctionConfigYaml ecpy = temp==null ? new FunctionConfigYaml() : temp;
         return ecpy;
     }

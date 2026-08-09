@@ -100,6 +100,7 @@ public class AccountRevision implements Serializable {
     @Column(name = "TWO_FA")
     public boolean twoFA;
 
+    @Nullable
     @Column(name = "PARAMS")
     private String params;
 
