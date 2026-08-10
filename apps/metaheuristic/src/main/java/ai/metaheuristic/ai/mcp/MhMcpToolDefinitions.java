@@ -55,6 +55,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * MCP tool definitions for the Metaheuristic debug/tracing server.
@@ -79,6 +80,8 @@ import java.util.Optional;
  *   mh_get_exec_context_variable_state — ExecContextVariableState by id (raw params YAML, dynamic Variable state)
  *   mh_list_source_codes               — list all SourceCodes with general info (id, uid, companyId, latch, valid)
  *   mh_get_source_code                 — full SourceCode by id, including params YAML (truncated to maxParamsBytes)
+ *
+ * <p>Error code prefix: {@code 01.260.} (unique to this class).
  *
  * @author Serge
  * Date: 4/6/2026
@@ -200,10 +203,42 @@ public class MhMcpToolDefinitions {
             @Nullable String params
     ) {}
 
+    /**
+     * Transport-boundary guard - applied to EVERY tool spec in {@link #getAllToolSpecifications()}.
+     *
+     * <p>The MCP SDK builds the JSON-RPC error frame straight from a thrown exception's
+     * {@code getMessage()} and asserts it non-null ({@code McpSchema$JSONRPCResponse$JSONRPCError}).
+     * An exception whose message is null - any NPE, {@code IllegalStateException()},
+     * {@code NotImplementedException()} - therefore aborts the whole response stream with
+     * "message must not be null" and a 500, and the caller learns neither which tool failed
+     * nor why: the real cause survives only as a {@code Suppressed:} frame in the server log.
+     *
+     * <p>Per MCP semantics a tool failure is a {@code CallToolResult} with {@code isError=true},
+     * not a protocol error - the caller is meant to read it and correct itself. No handler may
+     * throw to the transport. Decorates the spec record's handler; handler bodies are untouched.
+     */
+    static McpServerFeatures.SyncToolSpecification transportGuarded(McpServerFeatures.SyncToolSpecification spec) {
+        final var delegate = spec.callHandler();
+        final String toolName = spec.tool().name();
+        return new McpServerFeatures.SyncToolSpecification(spec.tool(), (exchange, request) -> {
+            try {
+                return delegate.apply(exchange, request);
+            }
+            catch (Throwable th) {
+                log.error("01.260.270 tool '{}' failed, returning it as an isError CallToolResult", toolName, th);
+                final String msg = th.getMessage() == null ? th.toString() : th.getMessage();
+                return CallToolResult.builder()
+                        .addTextContent("01.260.280 ERROR in '" + toolName + "': " + msg)
+                        .isError(true)
+                        .build();
+            }
+        });
+    }
+
     // ==================== Build all tool specifications ====================
 
     public List<McpServerFeatures.SyncToolSpecification> getAllToolSpecifications() {
-        return List.of(
+        return Stream.of(
                 getVariableInfoTool(),
                 getVariableContentTool(),
                 startExecContextTool(),
@@ -216,7 +251,7 @@ public class MhMcpToolDefinitions {
                 getExecContextVariableStateTool(),
                 listSourceCodesTool(),
                 getSourceCodeTool()
-        );
+        ).map(MhMcpToolDefinitions::transportGuarded).toList();
     }
 
     // ==================== Tool 1: get variable info ====================
