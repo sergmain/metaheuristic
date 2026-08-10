@@ -39,7 +39,9 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
@@ -238,137 +240,125 @@ public class MhMcpToolDefinitions {
 
     public List<McpServerFeatures.SyncToolSpecification> getAllToolSpecifications() {
         return Stream.of(
-                getVariableInfoTool(),
-                getVariableContentTool(),
-                startExecContextTool(),
-                stopExecContextTool(),
-                getTaskInfoTool(),
-                resetTaskTool(),
-                getExecContextInfoTool(),
-                getExecContextGraphTool(),
-                getExecContextTaskStateTool(),
-                getExecContextVariableStateTool(),
-                listSourceCodesTool(),
-                getSourceCodeTool()
+                new McpServerFeatures.SyncToolSpecification(GET_VARIABLE_INFO_TOOL, this::handleGetVariableInfo),
+                new McpServerFeatures.SyncToolSpecification(GET_VARIABLE_CONTENT_TOOL, this::handleGetVariableContent),
+                new McpServerFeatures.SyncToolSpecification(START_EXEC_CONTEXT_TOOL, this::handleStartExecContext),
+                new McpServerFeatures.SyncToolSpecification(STOP_EXEC_CONTEXT_TOOL, this::handleStopExecContext),
+                new McpServerFeatures.SyncToolSpecification(GET_TASK_INFO_TOOL, this::handleGetTaskInfo),
+                new McpServerFeatures.SyncToolSpecification(RESET_TASK_TOOL, this::handleResetTask),
+                new McpServerFeatures.SyncToolSpecification(GET_EXEC_CONTEXT_INFO_TOOL, this::handleGetExecContextInfo),
+                new McpServerFeatures.SyncToolSpecification(GET_EXEC_CONTEXT_GRAPH_TOOL, this::handleGetExecContextGraph),
+                new McpServerFeatures.SyncToolSpecification(GET_EXEC_CONTEXT_TASK_STATE_TOOL, this::handleGetExecContextTaskState),
+                new McpServerFeatures.SyncToolSpecification(GET_EXEC_CONTEXT_VARIABLE_STATE_TOOL, this::handleGetExecContextVariableState),
+                new McpServerFeatures.SyncToolSpecification(LIST_SOURCE_CODES_TOOL, this::handleListSourceCodes),
+                new McpServerFeatures.SyncToolSpecification(GET_SOURCE_CODE_TOOL, this::handleGetSourceCode)
         ).map(MhMcpToolDefinitions::transportGuarded).toList();
     }
 
     // ==================== Tool 1: get variable info ====================
 
-    private McpServerFeatures.SyncToolSpecification getVariableInfoTool() {
-        Map<String, Object> props = new HashMap<>();
-        props.put("variableId", Map.of("type", "integer", "description", "Numeric id of the Variable"));
+    private static final Tool GET_VARIABLE_INFO_TOOL = Tool.builder("mh_get_variable_info",
+                    objectSchema(
+                            Map.of("variableId", Map.of("type", "integer", "description", "Numeric id of the Variable")),
+                            List.of("variableId")))
+            .title("Get Variable Info")
+            .description("Get metadata about an internal Variable by its numeric id. Returns name, "
+                    + "execContextId, taskContextId, inited/nullified flags, blobId, filename, and params. "
+                    + "Does NOT return the variable content — use mh_get_variable_content for that.")
+            .build();
 
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder("mh_get_variable_info", objectSchema(props, List.of("variableId")))
-                        .title("Get Variable Info")
-                        .description("Get metadata about an internal Variable by its numeric id. Returns name, "
-                                + "execContextId, taskContextId, inited/nullified flags, blobId, filename, and params. "
-                                + "Does NOT return the variable content — use mh_get_variable_content for that.")
-                        .build())
-                .callHandler((exchange, request) -> {
-                    Long variableId = getRequiredLong(request.arguments(), "variableId");
-                    log.info("260.020 MCP getVariableInfo({})", variableId);
-                    Variable v = variableTxService.getVariable(variableId);
-                    if (v == null) {
-                        return errorResult("Variable #" + variableId + " not found");
-                    }
-                    return toCallToolResult(new VariableInfoDto(
-                            v.id, v.name, v.execContextId, v.taskContextId,
-                            v.inited, v.nullified, v.variableBlobId, v.filename,
-                            v.uploadTs == null ? null : v.uploadTs.toString(),
-                            v.getParams()
-                    ));
-                })
-                .build();
+    private CallToolResult handleGetVariableInfo(McpSyncServerExchange exchange, CallToolRequest request) {
+        Long variableId = getRequiredLong(request.arguments(), "variableId");
+        log.info("260.020 MCP getVariableInfo({})", variableId);
+        Variable v = variableTxService.getVariable(variableId);
+        if (v == null) {
+            return errorResult("Variable #" + variableId + " not found");
+        }
+        return toCallToolResult(new VariableInfoDto(
+                v.id, v.name, v.execContextId, v.taskContextId,
+                v.inited, v.nullified, v.variableBlobId, v.filename,
+                v.uploadTs == null ? null : v.uploadTs.toString(),
+                v.getParams()
+        ));
     }
 
     // ==================== Tool 2: get variable content (with size limit) ====================
 
-    private McpServerFeatures.SyncToolSpecification getVariableContentTool() {
-        Map<String, Object> props = new HashMap<>();
-        props.put("variableId", Map.of("type", "integer", "description", "Numeric id of the Variable"));
-        props.put("maxBytes", Map.of("type", "integer", "description",
-                "Maximum number of bytes to return (default 1024, max 65536)"));
+    private static final Tool GET_VARIABLE_CONTENT_TOOL = Tool.builder("mh_get_variable_content",
+                    objectSchema(
+                            Map.of("variableId", Map.of("type", "integer", "description", "Numeric id of the Variable"),
+                                    "maxBytes", Map.of("type", "integer", "description",
+                                            "Maximum number of bytes to return (default 1024, max 65536)")),
+                            List.of("variableId")))
+            .title("Get Variable Content")
+            .description("Get the textual content of an internal Variable by its numeric id, "
+                    + "truncated to maxBytes (default 1024, max 65536). Returns the content as a UTF-8 "
+                    + "string and a 'truncated' flag indicating whether the original was longer.")
+            .build();
 
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder("mh_get_variable_content", objectSchema(props, List.of("variableId")))
-                        .title("Get Variable Content")
-                        .description("Get the textual content of an internal Variable by its numeric id, "
-                                + "truncated to maxBytes (default 1024, max 65536). Returns the content as a UTF-8 "
-                                + "string and a 'truncated' flag indicating whether the original was longer.")
-                        .build())
-                .callHandler((exchange, request) -> {
-                    Map<String, Object> arguments = request.arguments();
-                    Long variableId = getRequiredLong(arguments, "variableId");
-                    Integer maxBytesArg = getOptionalInt(arguments, "maxBytes");
-                    int limit = maxBytesArg == null
-                            ? DEFAULT_VARIABLE_CONTENT_LIMIT
-                            : Math.min(Math.max(maxBytesArg, 1), MAX_VARIABLE_CONTENT_LIMIT);
-                    log.info("260.040 MCP getVariableContent({}, limit={})", variableId, limit);
+    private CallToolResult handleGetVariableContent(McpSyncServerExchange exchange, CallToolRequest request) {
+        Map<String, Object> arguments = request.arguments();
+        Long variableId = getRequiredLong(arguments, "variableId");
+        Integer maxBytesArg = getOptionalInt(arguments, "maxBytes");
+        int limit = maxBytesArg == null
+                ? DEFAULT_VARIABLE_CONTENT_LIMIT
+                : Math.min(Math.max(maxBytesArg, 1), MAX_VARIABLE_CONTENT_LIMIT);
+        log.info("260.040 MCP getVariableContent({}, limit={})", variableId, limit);
 
-                    Variable v = variableTxService.getVariable(variableId);
-                    if (v == null) {
-                        return errorResult("Variable #" + variableId + " not found");
-                    }
-                    if (!v.inited || v.nullified) {
-                        return toCallToolResult(new VariableContentDto(v.id, v.name, 0, false, null,
-                                "Variable is not inited or is nullified (inited=" + v.inited + ", nullified=" + v.nullified + ")"));
-                    }
-                    try {
-                        String full = variableTxService.getVariableDataAsString(variableId);
-                        if (full == null) {
-                            return toCallToolResult(new VariableContentDto(v.id, v.name, 0, false, null, "Variable content is null"));
-                        }
-                        boolean truncated = full.length() > limit;
-                        String returned = truncated ? full.substring(0, limit) : full;
-                        return toCallToolResult(new VariableContentDto(v.id, v.name, returned.length(), truncated, returned, null));
-                    }
-                    catch (Throwable th) {
-                        log.error("260.060 Error reading variable #" + variableId + " content", th);
-                        return toCallToolResult(new VariableContentDto(v.id, v.name, 0, false, null,
-                                "Error reading content: " + th.getMessage()));
-                    }
-                })
-                .build();
+        Variable v = variableTxService.getVariable(variableId);
+        if (v == null) {
+            return errorResult("Variable #" + variableId + " not found");
+        }
+        if (!v.inited || v.nullified) {
+            return toCallToolResult(new VariableContentDto(v.id, v.name, 0, false, null,
+                    "Variable is not inited or is nullified (inited=" + v.inited + ", nullified=" + v.nullified + ")"));
+        }
+        try {
+            String full = variableTxService.getVariableDataAsString(variableId);
+            if (full == null) {
+                return toCallToolResult(new VariableContentDto(v.id, v.name, 0, false, null, "Variable content is null"));
+            }
+            boolean truncated = full.length() > limit;
+            String returned = truncated ? full.substring(0, limit) : full;
+            return toCallToolResult(new VariableContentDto(v.id, v.name, returned.length(), truncated, returned, null));
+        }
+        catch (Throwable th) {
+            log.error("260.060 Error reading variable #" + variableId + " content", th);
+            return toCallToolResult(new VariableContentDto(v.id, v.name, 0, false, null,
+                    "Error reading content: " + th.getMessage()));
+        }
     }
 
     // ==================== Tool 3a: start execContext ====================
 
-    private McpServerFeatures.SyncToolSpecification startExecContextTool() {
-        Map<String, Object> props = new HashMap<>();
-        props.put("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext"));
+    private static final Tool START_EXEC_CONTEXT_TOOL = Tool.builder("mh_start_exec_context",
+                    objectSchema(
+                            Map.of("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext")),
+                            List.of("execContextId")))
+            .title("Start ExecContext")
+            .description("Start a specific ExecContext by id. Transitions the ExecContext to STARTED state.")
+            .build();
 
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder("mh_start_exec_context", objectSchema(props, List.of("execContextId")))
-                        .title("Start ExecContext")
-                        .description("Start a specific ExecContext by id. Transitions the ExecContext to STARTED state.")
-                        .build())
-                .callHandler((exchange, request) -> {
-                    Long execContextId = getRequiredLong(request.arguments(), "execContextId");
-                    log.info("260.080 MCP startExecContext({})", execContextId);
-                    return toCallToolResult(changeExecContextState(execContextId, EnumsApi.ExecContextState.STARTED));
-                })
-                .build();
+    private CallToolResult handleStartExecContext(McpSyncServerExchange exchange, CallToolRequest request) {
+        Long execContextId = getRequiredLong(request.arguments(), "execContextId");
+        log.info("260.080 MCP startExecContext({})", execContextId);
+        return toCallToolResult(changeExecContextState(execContextId, EnumsApi.ExecContextState.STARTED));
     }
 
     // ==================== Tool 3b: stop execContext ====================
 
-    private McpServerFeatures.SyncToolSpecification stopExecContextTool() {
-        Map<String, Object> props = new HashMap<>();
-        props.put("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext"));
+    private static final Tool STOP_EXEC_CONTEXT_TOOL = Tool.builder("mh_stop_exec_context",
+                    objectSchema(
+                            Map.of("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext")),
+                            List.of("execContextId")))
+            .title("Stop ExecContext")
+            .description("Stop a specific ExecContext by id. Transitions the ExecContext to STOPPED state.")
+            .build();
 
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder("mh_stop_exec_context", objectSchema(props, List.of("execContextId")))
-                        .title("Stop ExecContext")
-                        .description("Stop a specific ExecContext by id. Transitions the ExecContext to STOPPED state.")
-                        .build())
-                .callHandler((exchange, request) -> {
-                    Long execContextId = getRequiredLong(request.arguments(), "execContextId");
-                    log.info("260.100 MCP stopExecContext({})", execContextId);
-                    return toCallToolResult(changeExecContextState(execContextId, EnumsApi.ExecContextState.STOPPED));
-                })
-                .build();
+    private CallToolResult handleStopExecContext(McpSyncServerExchange exchange, CallToolRequest request) {
+        Long execContextId = getRequiredLong(request.arguments(), "execContextId");
+        log.info("260.100 MCP stopExecContext({})", execContextId);
+        return toCallToolResult(changeExecContextState(execContextId, EnumsApi.ExecContextState.STOPPED));
     }
 
     private OperationResultDto changeExecContextState(Long execContextId, EnumsApi.ExecContextState newState) {
@@ -386,270 +376,245 @@ public class MhMcpToolDefinitions {
 
     // ==================== Tool 4: get task info ====================
 
-    private McpServerFeatures.SyncToolSpecification getTaskInfoTool() {
-        Map<String, Object> props = new HashMap<>();
-        props.put("taskId", Map.of("type", "integer", "description", "Numeric id of the Task"));
+    private static final Tool GET_TASK_INFO_TOOL = Tool.builder("mh_get_task_info",
+                    objectSchema(
+                            Map.of("taskId", Map.of("type", "integer", "description", "Numeric id of the Task")),
+                            List.of("taskId")))
+            .title("Get Task Info")
+            .description("Get info about a Task by id: execContextId, current execState, completion flags, "
+                    + "assignment timestamps, and a short excerpt of functionExecResults if present.")
+            .build();
 
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder("mh_get_task_info", objectSchema(props, List.of("taskId")))
-                        .title("Get Task Info")
-                        .description("Get info about a Task by id: execContextId, current execState, completion flags, "
-                                + "assignment timestamps, and a short excerpt of functionExecResults if present.")
-                        .build())
-                .callHandler((exchange, request) -> {
-                    Long taskId = getRequiredLong(request.arguments(), "taskId");
-                    log.info("260.120 MCP getTaskInfo({})", taskId);
-                    TaskImpl task = taskRepository.findByIdReadOnly(taskId);
-                    if (task == null) {
-                        return errorResult("Task #" + taskId + " not found");
-                    }
-                    String excerpt = task.functionExecResults == null
-                            ? null
-                            : (task.functionExecResults.length() > 512
-                                ? task.functionExecResults.substring(0, 512) + "..."
-                                : task.functionExecResults);
-                    return toCallToolResult(new TaskInfoDto(
-                            task.id, task.execContextId, task.coreId,
-                            task.execState, EnumsApi.TaskExecState.from(task.execState).name(),
-                            task.completed, task.resultReceived,
-                            task.assignedOn, task.updatedOn, task.completedOn,
-                            excerpt
-                    ));
-                })
-                .build();
+    private CallToolResult handleGetTaskInfo(McpSyncServerExchange exchange, CallToolRequest request) {
+        Long taskId = getRequiredLong(request.arguments(), "taskId");
+        log.info("260.120 MCP getTaskInfo({})", taskId);
+        TaskImpl task = taskRepository.findByIdReadOnly(taskId);
+        if (task == null) {
+            return errorResult("Task #" + taskId + " not found");
+        }
+        String excerpt = task.functionExecResults == null
+                ? null
+                : (task.functionExecResults.length() > 512
+                    ? task.functionExecResults.substring(0, 512) + "..."
+                    : task.functionExecResults);
+        return toCallToolResult(new TaskInfoDto(
+                task.id, task.execContextId, task.coreId,
+                task.execState, EnumsApi.TaskExecState.from(task.execState).name(),
+                task.completed, task.resultReceived,
+                task.assignedOn, task.updatedOn, task.completedOn,
+                excerpt
+        ));
     }
 
     // ==================== Tool 5: reset task ====================
 
-    private McpServerFeatures.SyncToolSpecification resetTaskTool() {
-        Map<String, Object> props = new HashMap<>();
-        props.put("taskId", Map.of("type", "integer", "description", "Numeric id of the Task"));
+    private static final Tool RESET_TASK_TOOL = Tool.builder("mh_reset_task",
+                    objectSchema(
+                            Map.of("taskId", Map.of("type", "integer", "description", "Numeric id of the Task")),
+                            List.of("taskId")))
+            .title("Reset Task")
+            .description("Reset a specific Task by id. Resets the task to INIT state and, if the parent "
+                    + "ExecContext was FINISHED, transitions it back to STARTED. Delegates to "
+                    + "TaskResetService.resetTaskAndExecContext which acquires the required write locks.")
+            .build();
 
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder("mh_reset_task", objectSchema(props, List.of("taskId")))
-                        .title("Reset Task")
-                        .description("Reset a specific Task by id. Resets the task to INIT state and, if the parent "
-                                + "ExecContext was FINISHED, transitions it back to STARTED. Delegates to "
-                                + "TaskResetService.resetTaskAndExecContext which acquires the required write locks.")
-                        .build())
-                .callHandler((exchange, request) -> {
-                    Long taskId = getRequiredLong(request.arguments(), "taskId");
-                    log.info("260.140 MCP resetTask({})", taskId);
-                    TaskImpl task = taskRepository.findByIdReadOnly(taskId);
-                    if (task == null) {
-                        return toCallToolResult(new OperationResultDto(false, "Task #" + taskId + " not found"));
-                    }
-                    Long execContextId = task.execContextId;
-                    try {
-                        taskResetService.resetTaskAndExecContext(execContextId, taskId);
-                        return toCallToolResult(new OperationResultDto(true,
-                                "Task #" + taskId + " reset in execContext #" + execContextId));
-                    }
-                    catch (Throwable th) {
-                        log.error("260.160 Error resetting task #" + taskId, th);
-                        return toCallToolResult(new OperationResultDto(false, "Error resetting task: " + th.getMessage()));
-                    }
-                })
-                .build();
+    private CallToolResult handleResetTask(McpSyncServerExchange exchange, CallToolRequest request) {
+        Long taskId = getRequiredLong(request.arguments(), "taskId");
+        log.info("260.140 MCP resetTask({})", taskId);
+        TaskImpl task = taskRepository.findByIdReadOnly(taskId);
+        if (task == null) {
+            return toCallToolResult(new OperationResultDto(false, "Task #" + taskId + " not found"));
+        }
+        Long execContextId = task.execContextId;
+        try {
+            taskResetService.resetTaskAndExecContext(execContextId, taskId);
+            return toCallToolResult(new OperationResultDto(true,
+                    "Task #" + taskId + " reset in execContext #" + execContextId));
+        }
+        catch (Throwable th) {
+            log.error("260.160 Error resetting task #" + taskId, th);
+            return toCallToolResult(new OperationResultDto(false, "Error resetting task: " + th.getMessage()));
+        }
     }
 
     // ==================== Tool 6: get exec context info ====================
 
-    private McpServerFeatures.SyncToolSpecification getExecContextInfoTool() {
-        Map<String, Object> props = new HashMap<>();
-        props.put("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext"));
+    private static final Tool GET_EXEC_CONTEXT_INFO_TOOL = Tool.builder("mh_get_exec_context_info",
+                    objectSchema(
+                            Map.of("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext")),
+                            List.of("execContextId")))
+            .title("Get ExecContext Info")
+            .description("Get ExecContext info by id. This is the polling endpoint for execution "
+                    + "completion: call repeatedly (every 3–5 seconds) after the run is launched "
+                    + "until stateName is a terminal state — FINISHED (successful completion), ERROR, "
+                    + "STOPPED, or DOESNT_EXIST. Any other stateName (STARTED, NONE, ...) means the "
+                    + "run is still in progress and you must keep polling. Returns: state (numeric), "
+                    + "stateName, sourceCodeId, companyId, accountId, graph/task-state/variable-state ids, "
+                    + "root id, createdOn/completedOn timestamps, and validity flag.")
+            .build();
 
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder("mh_get_exec_context_info", objectSchema(props, List.of("execContextId")))
-                        .title("Get ExecContext Info")
-                        .description("Get ExecContext info by id. This is the polling endpoint for execution "
-                                + "completion: call repeatedly (every 3–5 seconds) after the run is launched "
-                                + "until stateName is a terminal state — FINISHED (successful completion), ERROR, "
-                                + "STOPPED, or DOESNT_EXIST. Any other stateName (STARTED, NONE, ...) means the "
-                                + "run is still in progress and you must keep polling. Returns: state (numeric), "
-                                + "stateName, sourceCodeId, companyId, accountId, graph/task-state/variable-state ids, "
-                                + "root id, createdOn/completedOn timestamps, and validity flag.")
-                        .build())
-                .callHandler((exchange, request) -> {
-                    Long execContextId = getRequiredLong(request.arguments(), "execContextId");
-                    log.info("260.180 MCP getExecContextInfo({})", execContextId);
-                    ExecContextImpl ec = execContextCache.findById(execContextId, true);
-                    if (ec == null) {
-                        return errorResult("ExecContext #" + execContextId + " not found");
-                    }
-                    SourceCodeApiData.ExecContextResult extended = execContextTopLevelService.getExecContextExtended(execContextId);
-                    boolean valid = extended != null && !extended.isErrorMessages();
-                    String errorMessages = (extended != null && extended.isErrorMessages())
-                            ? String.join("; ", extended.getErrorMessagesAsList())
-                            : null;
-                    return toCallToolResult(new ExecContextInfoDto(
-                            ec.id, ec.sourceCodeId, ec.companyId, ec.accountId,
-                            ec.state, EnumsApi.ExecContextState.toState(ec.state).name(),
-                            ec.createdOn, ec.completedOn,
-                            ec.execContextGraphId, ec.execContextTaskStateId, ec.execContextVariableStateId,
-                            ec.rootExecContextId,
-                            valid, errorMessages
-                    ));
-                })
-                .build();
+    private CallToolResult handleGetExecContextInfo(McpSyncServerExchange exchange, CallToolRequest request) {
+        Long execContextId = getRequiredLong(request.arguments(), "execContextId");
+        log.info("260.180 MCP getExecContextInfo({})", execContextId);
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
+        if (ec == null) {
+            return errorResult("ExecContext #" + execContextId + " not found");
+        }
+        SourceCodeApiData.ExecContextResult extended = execContextTopLevelService.getExecContextExtended(execContextId);
+        boolean valid = extended != null && !extended.isErrorMessages();
+        String errorMessages = (extended != null && extended.isErrorMessages())
+                ? String.join("; ", extended.getErrorMessagesAsList())
+                : null;
+        return toCallToolResult(new ExecContextInfoDto(
+                ec.id, ec.sourceCodeId, ec.companyId, ec.accountId,
+                ec.state, EnumsApi.ExecContextState.toState(ec.state).name(),
+                ec.createdOn, ec.completedOn,
+                ec.execContextGraphId, ec.execContextTaskStateId, ec.execContextVariableStateId,
+                ec.rootExecContextId,
+                valid, errorMessages
+        ));
     }
 
     // ==================== Tool 7: get exec context graph ====================
 
-    private McpServerFeatures.SyncToolSpecification getExecContextGraphTool() {
-        Map<String, Object> props = new HashMap<>();
-        props.put("execContextGraphId", Map.of("type", "integer", "description", "Numeric id of the ExecContextGraph"));
+    private static final Tool GET_EXEC_CONTEXT_GRAPH_TOOL = Tool.builder("mh_get_exec_context_graph",
+                    objectSchema(
+                            Map.of("execContextGraphId", Map.of("type", "integer", "description", "Numeric id of the ExecContextGraph")),
+                            List.of("execContextGraphId")))
+            .title("Get ExecContext Graph")
+            .description("Get an ExecContextGraph by its id (NOT by execContextId — use "
+                    + "mh_get_exec_context_info first to find the execContextGraphId). Returns the raw "
+                    + "params YAML representing the static Process DAG.")
+            .build();
 
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder("mh_get_exec_context_graph", objectSchema(props, List.of("execContextGraphId")))
-                        .title("Get ExecContext Graph")
-                        .description("Get an ExecContextGraph by its id (NOT by execContextId — use "
-                                + "mh_get_exec_context_info first to find the execContextGraphId). Returns the raw "
-                                + "params YAML representing the static Process DAG.")
-                        .build())
-                .callHandler((exchange, request) -> {
-                    Long execContextGraphId = getRequiredLong(request.arguments(), "execContextGraphId");
-                    log.info("260.200 MCP getExecContextGraph({})", execContextGraphId);
-                    Optional<ExecContextGraph> opt = execContextGraphRepository.findById(execContextGraphId);
-                    if (opt.isEmpty()) {
-                        return errorResult("ExecContextGraph #" + execContextGraphId + " not found");
-                    }
-                    ExecContextGraph g = opt.get();
-                    return toCallToolResult(new ExecContextGraphDto(g.id, g.execContextId, g.createdOn, g.getParams()));
-                })
-                .build();
+    private CallToolResult handleGetExecContextGraph(McpSyncServerExchange exchange, CallToolRequest request) {
+        Long execContextGraphId = getRequiredLong(request.arguments(), "execContextGraphId");
+        log.info("260.200 MCP getExecContextGraph({})", execContextGraphId);
+        Optional<ExecContextGraph> opt = execContextGraphRepository.findById(execContextGraphId);
+        if (opt.isEmpty()) {
+            return errorResult("ExecContextGraph #" + execContextGraphId + " not found");
+        }
+        ExecContextGraph g = opt.get();
+        return toCallToolResult(new ExecContextGraphDto(g.id, g.execContextId, g.createdOn, g.getParams()));
     }
 
     // ==================== Tool 8: get exec context task state ====================
 
-    private McpServerFeatures.SyncToolSpecification getExecContextTaskStateTool() {
-        Map<String, Object> props = new HashMap<>();
-        props.put("execContextTaskStateId", Map.of("type", "integer", "description", "Numeric id of the ExecContextTaskState"));
+    private static final Tool GET_EXEC_CONTEXT_TASK_STATE_TOOL = Tool.builder("mh_get_exec_context_task_state",
+                    objectSchema(
+                            Map.of("execContextTaskStateId", Map.of("type", "integer", "description", "Numeric id of the ExecContextTaskState")),
+                            List.of("execContextTaskStateId")))
+            .title("Get ExecContext Task State")
+            .description("Get an ExecContextTaskState by its id (NOT by execContextId — use "
+                    + "mh_get_exec_context_info first to find the execContextTaskStateId). Returns the raw "
+                    + "params YAML representing the dynamic Task execution state.")
+            .build();
 
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder("mh_get_exec_context_task_state", objectSchema(props, List.of("execContextTaskStateId")))
-                        .title("Get ExecContext Task State")
-                        .description("Get an ExecContextTaskState by its id (NOT by execContextId — use "
-                                + "mh_get_exec_context_info first to find the execContextTaskStateId). Returns the raw "
-                                + "params YAML representing the dynamic Task execution state.")
-                        .build())
-                .callHandler((exchange, request) -> {
-                    Long execContextTaskStateId = getRequiredLong(request.arguments(), "execContextTaskStateId");
-                    log.info("260.220 MCP getExecContextTaskState({})", execContextTaskStateId);
-                    Optional<ExecContextTaskState> opt = execContextTaskStateRepository.findById(execContextTaskStateId);
-                    if (opt.isEmpty()) {
-                        return errorResult("ExecContextTaskState #" + execContextTaskStateId + " not found");
-                    }
-                    ExecContextTaskState s = opt.get();
-                    return toCallToolResult(new ExecContextTaskStateDto(s.id, s.execContextId, s.createdOn, s.getParams()));
-                })
-                .build();
+    private CallToolResult handleGetExecContextTaskState(McpSyncServerExchange exchange, CallToolRequest request) {
+        Long execContextTaskStateId = getRequiredLong(request.arguments(), "execContextTaskStateId");
+        log.info("260.220 MCP getExecContextTaskState({})", execContextTaskStateId);
+        Optional<ExecContextTaskState> opt = execContextTaskStateRepository.findById(execContextTaskStateId);
+        if (opt.isEmpty()) {
+            return errorResult("ExecContextTaskState #" + execContextTaskStateId + " not found");
+        }
+        ExecContextTaskState s = opt.get();
+        return toCallToolResult(new ExecContextTaskStateDto(s.id, s.execContextId, s.createdOn, s.getParams()));
     }
 
     // ==================== Tool 9: get exec context variable state ====================
 
-    private McpServerFeatures.SyncToolSpecification getExecContextVariableStateTool() {
-        Map<String, Object> props = new HashMap<>();
-        props.put("execContextVariableStateId", Map.of("type", "integer", "description", "Numeric id of the ExecContextVariableState"));
+    private static final Tool GET_EXEC_CONTEXT_VARIABLE_STATE_TOOL = Tool.builder("mh_get_exec_context_variable_state",
+                    objectSchema(
+                            Map.of("execContextVariableStateId", Map.of("type", "integer", "description", "Numeric id of the ExecContextVariableState")),
+                            List.of("execContextVariableStateId")))
+            .title("Get ExecContext Variable State")
+            .description("Get an ExecContextVariableState by its id (NOT by execContextId \u2014 use "
+                    + "mh_get_exec_context_info first to find the execContextVariableStateId). Returns the raw "
+                    + "params YAML representing the dynamic Variable state (per-variable inited/nullified "
+                    + "status, blob ids, task context ids).")
+            .build();
 
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder("mh_get_exec_context_variable_state", objectSchema(props, List.of("execContextVariableStateId")))
-                        .title("Get ExecContext Variable State")
-                        .description("Get an ExecContextVariableState by its id (NOT by execContextId \u2014 use "
-                                + "mh_get_exec_context_info first to find the execContextVariableStateId). Returns the raw "
-                                + "params YAML representing the dynamic Variable state (per-variable inited/nullified "
-                                + "status, blob ids, task context ids).")
-                        .build())
-                .callHandler((exchange, request) -> {
-                    Long execContextVariableStateId = getRequiredLong(request.arguments(), "execContextVariableStateId");
-                    log.info("260.230 MCP getExecContextVariableState({})", execContextVariableStateId);
-                    Optional<ExecContextVariableState> opt = execContextVariableStateRepository.findById(execContextVariableStateId);
-                    if (opt.isEmpty()) {
-                        return errorResult("ExecContextVariableState #" + execContextVariableStateId + " not found");
-                    }
-                    ExecContextVariableState v = opt.get();
-                    return toCallToolResult(new ExecContextVariableStateDto(v.id, v.execContextId, v.createdOn, v.getParams()));
-                })
-                .build();
+    private CallToolResult handleGetExecContextVariableState(McpSyncServerExchange exchange, CallToolRequest request) {
+        Long execContextVariableStateId = getRequiredLong(request.arguments(), "execContextVariableStateId");
+        log.info("260.230 MCP getExecContextVariableState({})", execContextVariableStateId);
+        Optional<ExecContextVariableState> opt = execContextVariableStateRepository.findById(execContextVariableStateId);
+        if (opt.isEmpty()) {
+            return errorResult("ExecContextVariableState #" + execContextVariableStateId + " not found");
+        }
+        ExecContextVariableState v = opt.get();
+        return toCallToolResult(new ExecContextVariableStateDto(v.id, v.execContextId, v.createdOn, v.getParams()));
     }
 
     // ==================== Tool 10: list source codes ====================
 
-    private McpServerFeatures.SyncToolSpecification listSourceCodesTool() {
-        Map<String, Object> props = new HashMap<>();
+    private static final Tool LIST_SOURCE_CODES_TOOL = Tool.builder("mh_list_source_codes",
+                    objectSchema(Map.of(), List.of()))
+            .title("List SourceCodes")
+            .description("List all SourceCodes in the database with general info: id, uid, "
+                    + "companyId, latch, and valid flag. Returns all rows across all companies "
+                    + "(no companyId filter). Use this to discover available SourceCodes and their "
+                    + "uids before calling tools that require a sourceCodeUidPrefix.")
+            .build();
 
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder("mh_list_source_codes", objectSchema(props, List.of()))
-                        .title("List SourceCodes")
-                        .description("List all SourceCodes in the database with general info: id, uid, "
-                                + "companyId, latch, and valid flag. Returns all rows across all companies "
-                                + "(no companyId filter). Use this to discover available SourceCodes and their "
-                                + "uids before calling tools that require a sourceCodeUidPrefix.")
-                        .build())
-                .callHandler((exchange, request) -> {
-                    log.info("260.250 MCP listSourceCodes()");
-                    List<SourceCodeData.SourceCodeListItem> items = sourceCodeRepository.findAllAsListItems();
-                    return toCallToolResult(items);
-                })
-                .build();
+    private CallToolResult handleListSourceCodes(McpSyncServerExchange exchange, CallToolRequest request) {
+        log.info("260.250 MCP listSourceCodes()");
+        List<SourceCodeData.SourceCodeListItem> items = sourceCodeRepository.findAllAsListItems();
+        return toCallToolResult(items);
     }
 
     // ==================== Tool 11: get source code (full entity, including params YAML) ====================
 
-    private McpServerFeatures.SyncToolSpecification getSourceCodeTool() {
-        Map<String, Object> props = new HashMap<>();
-        props.put("sourceCodeId", Map.of("type", "integer", "description", "Numeric id of the SourceCode (MH_SOURCE_CODE.ID)"));
-        props.put("maxParamsBytes", Map.of("type", "integer", "description",
-                "Maximum number of bytes of the params YAML to return (default 65536, max 1048576). "
-                + "Use mh_list_source_codes first to discover available ids."));
+    private static final Tool GET_SOURCE_CODE_TOOL = Tool.builder("mh_get_source_code",
+                    objectSchema(
+                            Map.of("sourceCodeId", Map.of("type", "integer", "description", "Numeric id of the SourceCode (MH_SOURCE_CODE.ID)"),
+                                    "maxParamsBytes", Map.of("type", "integer", "description",
+                                            "Maximum number of bytes of the params YAML to return (default 65536, max 1048576). "
+                                            + "Use mh_list_source_codes first to discover available ids.")),
+                            List.of("sourceCodeId")))
+            .title("Get SourceCode")
+            .description("Get a SourceCode by id, including the full params YAML body "
+                    + "(the .mhsc/.mhscp source). Returns id, version, companyId, uid, createdOn, "
+                    + "valid flag, latch, params (truncated to maxParamsBytes), and a 'truncated' flag. "
+                    + "Use this to inspect what's actually deployed on the dispatcher when the on-disk "
+                    + "source and the deployed bundle have drifted apart.")
+            .build();
 
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder("mh_get_source_code", objectSchema(props, List.of("sourceCodeId")))
-                        .title("Get SourceCode")
-                        .description("Get a SourceCode by id, including the full params YAML body "
-                                + "(the .mhsc/.mhscp source). Returns id, version, companyId, uid, createdOn, "
-                                + "valid flag, latch, params (truncated to maxParamsBytes), and a 'truncated' flag. "
-                                + "Use this to inspect what's actually deployed on the dispatcher when the on-disk "
-                                + "source and the deployed bundle have drifted apart.")
-                        .build())
-                .callHandler((exchange, request) -> {
-                    Map<String, Object> arguments = request.arguments();
-                    Long sourceCodeId = getRequiredLong(arguments, "sourceCodeId");
-                    Integer maxBytesArg = getOptionalInt(arguments, "maxParamsBytes");
-                    int limit = maxBytesArg == null
-                            ? DEFAULT_SOURCE_CODE_PARAMS_LIMIT
-                            : Math.min(Math.max(maxBytesArg, 1), MAX_SOURCE_CODE_PARAMS_LIMIT);
-                    log.info("260.260 MCP getSourceCode({}, limit={})", sourceCodeId, limit);
+    private CallToolResult handleGetSourceCode(McpSyncServerExchange exchange, CallToolRequest request) {
+        Map<String, Object> arguments = request.arguments();
+        Long sourceCodeId = getRequiredLong(arguments, "sourceCodeId");
+        Integer maxBytesArg = getOptionalInt(arguments, "maxParamsBytes");
+        int limit = maxBytesArg == null
+                ? DEFAULT_SOURCE_CODE_PARAMS_LIMIT
+                : Math.min(Math.max(maxBytesArg, 1), MAX_SOURCE_CODE_PARAMS_LIMIT);
+        log.info("260.260 MCP getSourceCode({}, limit={})", sourceCodeId, limit);
 
-                    SourceCodeImpl sc = sourceCodeRepository.findByIdNullable(sourceCodeId);
-                    if (sc == null) {
-                        return errorResult("SourceCode #" + sourceCodeId + " not found");
-                    }
-                    String fullParams = sc.getParams();
-                    String returnedParams;
-                    boolean truncated;
-                    int returnedBytes;
-                    if (fullParams == null) {
-                        returnedParams = null;
-                        truncated = false;
-                        returnedBytes = 0;
-                    }
-                    else if (fullParams.length() > limit) {
-                        returnedParams = fullParams.substring(0, limit);
-                        truncated = true;
-                        returnedBytes = returnedParams.length();
-                    }
-                    else {
-                        returnedParams = fullParams;
-                        truncated = false;
-                        returnedBytes = fullParams.length();
-                    }
-                    return toCallToolResult(new SourceCodeDto(
-                            sc.id, sc.version, sc.companyId, sc.uid, sc.createdOn, sc.valid, sc.latch,
-                            returnedBytes, truncated, returnedParams
-                    ));
-                })
-                .build();
+        SourceCodeImpl sc = sourceCodeRepository.findByIdNullable(sourceCodeId);
+        if (sc == null) {
+            return errorResult("SourceCode #" + sourceCodeId + " not found");
+        }
+        String fullParams = sc.getParams();
+        String returnedParams;
+        boolean truncated;
+        int returnedBytes;
+        if (fullParams == null) {
+            returnedParams = null;
+            truncated = false;
+            returnedBytes = 0;
+        }
+        else if (fullParams.length() > limit) {
+            returnedParams = fullParams.substring(0, limit);
+            truncated = true;
+            returnedBytes = returnedParams.length();
+        }
+        else {
+            returnedParams = fullParams;
+            truncated = false;
+            returnedBytes = fullParams.length();
+        }
+        return toCallToolResult(new SourceCodeDto(
+                sc.id, sc.version, sc.companyId, sc.uid, sc.createdOn, sc.valid, sc.latch,
+                returnedBytes, truncated, returnedParams
+        ));
     }
 
     // ==================== Utility methods ====================
