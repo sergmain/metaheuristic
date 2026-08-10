@@ -136,7 +136,7 @@ public class ExecContextUtils {
         if (raw.taskEdges != null && !raw.taskEdges.isEmpty()) {
             // The static topology (raw.processCodes) is authoritative for the relative order of static
             // processes — it already places control processes (e.g. the graft node, mh.finish) and
-            // mhdg-rg.post-processing correctly. Only runtime-grafted (DSL v2 recursive-group) body
+            // ordinary static processes correctly. Only runtime-grafted (DSL v2 recursive-group) body
             // processes are missing from it; each is inserted right after its nearest static ancestor
             // in the real task DAG, instead of being appended after the terminal columns. This keeps a
             // static leaf like a graft node in its authored position rather than floating it to the end.

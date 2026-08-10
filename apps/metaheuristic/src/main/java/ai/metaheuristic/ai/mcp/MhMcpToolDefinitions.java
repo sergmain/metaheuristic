@@ -60,8 +60,7 @@ import java.util.stream.Stream;
 /**
  * MCP tool definitions for the Metaheuristic debug/tracing server.
  *
- * Mirrors the MHDG MCP server pattern (apps/metaheuristic/legal/.../MhdgMcpToolDefinitions):
- * tools are built explicitly via the low-level MCP Java SDK
+ * Tools are built explicitly via the low-level MCP Java SDK
  * (io.modelcontextprotocol.sdk:mcp 0.17.2), no Spring AI annotation magic.
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
@@ -464,7 +463,7 @@ public class MhMcpToolDefinitions {
                 .tool(Tool.builder("mh_get_exec_context_info", objectSchema(props, List.of("execContextId")))
                         .title("Get ExecContext Info")
                         .description("Get ExecContext info by id. This is the polling endpoint for execution "
-                                + "completion: call repeatedly (every 3–5 seconds) after mhdg_rg_execute_project "
+                                + "completion: call repeatedly (every 3–5 seconds) after the run is launched "
                                 + "until stateName is a terminal state — FINISHED (successful completion), ERROR, "
                                 + "STOPPED, or DOESNT_EXIST. Any other stateName (STARTED, NONE, ...) means the "
                                 + "run is still in progress and you must keep polling. Returns: state (numeric), "

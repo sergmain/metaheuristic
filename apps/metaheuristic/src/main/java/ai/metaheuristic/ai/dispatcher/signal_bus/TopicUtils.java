@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 /**
  * Utility helpers for topic derivation.
  * stripVersion removes a trailing semver suffix from a SourceCode uid:
- * "mhdg-rg-flat-1.0.0" → "mhdg-rg-flat". Subscribers want to filter on the
+ * "some-workflow-1.0.0" → "some-workflow". Subscribers want to filter on the
  * uid prefix (all versions of a workflow), not the specific version.
  */
 public final class TopicUtils {

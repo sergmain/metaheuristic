@@ -356,8 +356,8 @@ public class ExecContextGraftService {
      * When an in-band graft is driven by a dynamic {@code mh.batch-line-splitter} (its target task), the
      * splitter has already materialized its per-line output variable at the CURRENT (per-line) task ctx.
      * Because the graft lays its body at a fresh ISOLATED sibling line ctx, a sibling cannot resolve that
-     * per-line variable up the ancestry - so a grafted head that consumes it by name (e.g. mhdg-rg
-     * store-req reading {@code reqJson}) would fail with 179.120. This reproduces, for the graft path, the
+     * per-line variable up the ancestry - so a grafted head that consumes it by name (e.g. a body
+     * process reading a per-line variable) would fail with 179.120. This reproduces, for the graft path, the
      * v1 binding that direct sub-process expansion did implicitly: read the splitter's per-line output at
      * {@code currTaskContextId} and carry it as a write-once {@link InputBinding} into the grafted line ctx.
      * Returns null when the target is not a dynamic splitter (no {@code output-variable} meta) or the
