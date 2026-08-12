@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.data.KbData;
+import ai.metaheuristic.ai.dispatcher.license.LicenseType;
 import ai.metaheuristic.ai.exceptions.GlobalConfigurationException;
 import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.api.ConstsApi;
@@ -575,6 +576,42 @@ public class Globals {
 
     }
 
+    /**
+     * {@code mh.license.*}. The AWS keys of the design's Appendix C are deliberately absent:
+     * Scenario A is implemented but unwired, so binding config for it would advertise a backend
+     * that cannot be selected.
+     *
+     * <p>NOTE there is no property for the license verification public key, and there never will
+     * be. It is a compiled-in constant precisely so a customer cannot swap it without rebuilding
+     * MH; a config binding would hand away the entire point of signing.
+     */
+    @Getter
+    @Setter
+    public static class License {
+
+        /** Declared backend. Must agree with the active profile ({@code internal-lm} / {@code aws-lm}). */
+        public LicenseType type = LicenseType.INTERNAL;
+
+        /**
+         * Directory scanned for {@code *.jws}. A DIRECTORY, not a file: an installation holds a
+         * SET of licenses and one path cannot express it.
+         *
+         * <p>Null means the default, {@code ${mh.home}/config/license/}, resolved lazily by
+         * {@link ai.metaheuristic.ai.dispatcher.license.LicenseTokenSupplier} because it is
+         * relative to {@code mh.home}, which is not known at property-binding time.
+         */
+        @Nullable
+        public Path dir = null;
+
+        /**
+         * How long a verified aggregate is reused before re-reading and re-evaluating. This is
+         * what bounds how long validity lags reality: a license expiring mid-run flips to EXPIRED
+         * within this window plus the codec's 60s leeway.
+         */
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration cacheTtl = Duration.ofSeconds(60);
+    }
+
     @Value("${spring.profiles.active}")
     public String[] activeProfiles;
 
@@ -589,6 +626,7 @@ public class Globals {
     public final Function function = new Function();
     public final PublicKeyStore publicKeyStore = new PublicKeyStore();
     public final Security security = new Security();
+    public final License license = new License();
 
     @Nullable
     public String systemOwner = null;
