@@ -61,7 +61,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * goes "1,2,5" -> "1,2" -> "1" -> null and never visits "1,2#1".
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 @Slf4j

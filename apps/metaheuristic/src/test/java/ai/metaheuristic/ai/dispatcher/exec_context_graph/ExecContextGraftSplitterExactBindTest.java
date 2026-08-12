@@ -57,7 +57,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * top requirement's content (all requirements identical).
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 @Transactional

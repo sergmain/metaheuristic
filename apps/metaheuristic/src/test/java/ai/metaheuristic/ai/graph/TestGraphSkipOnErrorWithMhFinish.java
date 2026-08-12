@@ -69,7 +69,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @see ai.metaheuristic.ai.dispatcher.task.TaskStateService#changeTaskStateToInitForChildrenTasksTxEvent
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 public class TestGraphSkipOnErrorWithMhFinish extends PreparingSourceCode {

@@ -65,7 +65,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @Slf4j
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @AutoConfigureCache
 public class TestGraphSkipPropagation extends PreparingSourceCode {
 

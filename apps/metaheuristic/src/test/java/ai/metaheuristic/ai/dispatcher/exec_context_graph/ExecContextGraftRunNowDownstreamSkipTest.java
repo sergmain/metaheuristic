@@ -52,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Terminal-ERROR -> descendants SKIPPED is separately covered by the skip-propagation logic/tests.
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 public class ExecContextGraftRunNowDownstreamSkipTest extends PreparingSourceCode {

@@ -51,7 +51,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * ancestry from that sibling ctx, so the head cannot obtain its input.
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 public class ExecContextGraftSplitterAutoBindTest extends PreparingSourceCode {

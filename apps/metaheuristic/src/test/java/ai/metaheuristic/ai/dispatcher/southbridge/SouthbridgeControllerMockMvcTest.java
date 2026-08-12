@@ -61,7 +61,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
  * Time: 5:07 PM
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 public class SouthbridgeControllerMockMvcTest extends MhSharedItTest {

@@ -34,8 +34,15 @@ import org.springframework.web.bind.annotation.*;
 /**
  * License status and management for the MainAdmin.
  *
- * <p>Bound to {@code internal-lm}: under the external backend AWS is the authority and there is
- * nothing to install, so the endpoints simply do not exist rather than existing and refusing.
+ * <p>Requires a signed-file backend, which today is every runnable one — {@code internal-lm} and
+ * the two test harnesses all supply a {@code SignedFileLicenseSource}. It is deliberately NOT
+ * enumerating them: a list of backend profiles here would have to be edited every time one is
+ * added, which is the negative-list problem wearing a positive hat.
+ *
+ * <p>⚠️ When {@code aws-lm} is actually wired, these endpoints must stop existing under it — AWS is
+ * the authority there and there is nothing to install. That is the moment to introduce a marker
+ * profile for the signed-file family (e.g. via {@code spring.profiles.group}), with a real second
+ * family member to design against rather than a guess.
  *
  * <p>Install is ADD, never replace — an installation holds a SET of licenses, and a trial that
  * cannot be extended is continued by installing a second license beside the first. DELETE exists
@@ -47,7 +54,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/rest/v1/dispatcher/license")
 @Slf4j
-@Profile("dispatcher & !aws-lm")
+@Profile("dispatcher")
 @CrossOrigin
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class LicenseRestController {

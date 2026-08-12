@@ -51,7 +51,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @Import({SpringSecurityWebAuxTestConfig.class})
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 public class SignalBusRestControllerTest extends MhSharedItTest {

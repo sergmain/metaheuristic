@@ -60,7 +60,7 @@ import static org.awaitility.Awaitility.await;
  * a BatchStateSignalTxEvent must reach SignalBus.
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 public class BatchSignalPublishingTest extends PreparingSourceCode {

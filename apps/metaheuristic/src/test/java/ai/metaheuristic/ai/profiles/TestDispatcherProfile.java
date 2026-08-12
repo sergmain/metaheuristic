@@ -46,7 +46,7 @@ import static ai.metaheuristic.api.EnumsApi.DispatcherAssetMode.replicated;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @TestPropertySource(locations="classpath:test-dispatcher-profile.properties")
 @AutoConfigureCache

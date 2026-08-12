@@ -76,7 +76,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * so the test reduces to: configure the provider, run, assert the final graph.
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 public class TestSourceCodeService extends PreparingSourceCode {

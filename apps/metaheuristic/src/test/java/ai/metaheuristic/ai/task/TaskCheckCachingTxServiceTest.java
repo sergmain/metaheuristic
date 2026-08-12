@@ -65,7 +65,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Sergio Lissner
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {

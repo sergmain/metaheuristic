@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * which leaves the static sharedSourceInfra cache stale and makes other tests flaky.
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 @Slf4j

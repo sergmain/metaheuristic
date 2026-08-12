@@ -58,7 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   - ends in state=FINISHED (clone went through CLONING -> FINISHED).
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 public class ExecContextCloneServiceTest extends PreparingSourceCode {

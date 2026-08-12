@@ -36,7 +36,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import java.nio.file.Path;
 
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 @DisplayName("it's actually for encoding a password, not actual test")

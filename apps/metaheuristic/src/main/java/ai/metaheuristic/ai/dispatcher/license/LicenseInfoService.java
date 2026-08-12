@@ -51,7 +51,7 @@ import java.util.Map;
  * @author Serge
  */
 @Service
-@Profile("dispatcher & !aws-lm")
+@Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class LicenseInfoService {

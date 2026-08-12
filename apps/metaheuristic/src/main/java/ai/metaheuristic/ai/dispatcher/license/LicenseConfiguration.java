@@ -35,16 +35,17 @@ import java.time.Instant;
  * its own — it supplies where the tokens come from, what time it is, which deployment we are on,
  * and who we are. Everything else lives in {@code ai.metaheuristic.commons.spi.license}.
  *
- * <p>❗ <b>The internal backend is the DEFAULT for every dispatcher, not an opt-in.</b> The profile
- * expression is {@code !aws-lm} rather than {@code internal-lm} on purpose: an opt-in profile makes
- * the entire licence bypassable by deleting one name from a properties file, which is not a
- * licensing system. Deleting a profile name now does nothing; the only way to reach a dispatcher
- * with no {@code LicenseSource} is to activate {@code aws-lm}, which is reserved and unwired, and
- * such a dispatcher fails to start rather than running unlicensed. That is the honest outcome —
- * that backend genuinely is not wired.
+ * <p>❗ <b>A licence-manager profile is REQUIRED.</b> Every {@code *-lm} backend declares itself
+ * POSITIVELY, exactly as the storage backends do — {@code internal-lm} here, {@code aws-lm} for
+ * AWS, {@code mh-test-lm} and {@code rg-test-lm} for the two test harnesses. A dispatcher started
+ * with none of them has no {@code LicenseSource} and FAILS TO START. That is the point: running
+ * unlicensed is not a state this application has, and a licence you can switch off by deleting a
+ * profile name is not a licence.
  *
- * <p>{@code !test} excludes this class under the test profile, where the test source set supplies
- * its own backend with its own key. Nothing that reads a key from configuration ships.
+ * <p>❗ The expression is positive on purpose. An earlier attempt used {@code !aws-lm & !test},
+ * which made every new backend an edit to every existing annotation and buried the list of what
+ * exists inside a pile of negations. Adding a backend must be additive: declare its own profile,
+ * add its own configuration class, touch nothing here.
  *
  * <p>The bean is typed {@code SignedFileLicenseSource} rather than {@code LicenseSource} so the
  * admin projection can reach {@code currentResult()} for the per-license breakdown. Gates inject
@@ -54,7 +55,7 @@ import java.time.Instant;
  * @author Serge
  */
 @Configuration
-@Profile("dispatcher & !aws-lm & !test")
+@Profile("dispatcher & internal-lm")
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class LicenseConfiguration {

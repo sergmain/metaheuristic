@@ -62,7 +62,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
  * Time: 5:07 PM
  */
 @SpringBootTest(classes = MhComplexTestConfig.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @Import({SpringSecurityWebAuxTestConfig.class})
 @AutoConfigureCache

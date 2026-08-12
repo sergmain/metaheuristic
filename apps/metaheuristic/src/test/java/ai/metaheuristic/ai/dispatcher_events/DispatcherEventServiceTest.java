@@ -52,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
  * Time: 2:47 PM
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"dispatcher", "h2", "test"})
+@ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 public class DispatcherEventServiceTest extends MhSharedItTest {

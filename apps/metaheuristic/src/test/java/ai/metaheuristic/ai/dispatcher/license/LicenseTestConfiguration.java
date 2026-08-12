@@ -31,8 +31,15 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * The licence backend the test suite runs under. Replaces {@link LicenseConfiguration}, which is
- * excluded under the {@code test} profile.
+ * The licence backend the MH test suite runs under, selected by the {@code mh-test-lm} profile.
+ *
+ * <p>One {@code *-lm} profile is active per context and each declares itself positively, so this
+ * is not an override of {@link LicenseConfiguration} — {@code internal-lm} is simply not active in
+ * tests. Adding a backend never edits an existing annotation.
+ *
+ * <p>❗ This licence grants {@code Capability:BATCH} and nothing else. The proprietary side runs
+ * under its own profile, its own key and its own licence, because MH must not name proprietary
+ * capabilities even in a test fixture.
  *
  * <p><b>Everything here is in the test source set and nothing ships.</b> That is the whole point:
  * the production verification key is a compiled-in constant so a customer cannot swap it, and a
@@ -45,7 +52,7 @@ import java.util.List;
  * @author Serge
  */
 @Configuration
-@Profile("dispatcher & test")
+@Profile("dispatcher & mh-test-lm")
 @Slf4j
 public class LicenseTestConfiguration {
 
