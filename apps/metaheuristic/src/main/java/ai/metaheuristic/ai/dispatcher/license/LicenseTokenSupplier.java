@@ -26,14 +26,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * Every license token installed on this dispatcher, from both places one can arrive.
@@ -61,8 +57,6 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class LicenseTokenSupplier {
 
-    public static final String JWS_SUFFIX = ".jws";
-
     private final Globals globals;
     private final LicenseArtifactRepository licenseArtifactRepository;
 
@@ -81,33 +75,12 @@ public class LicenseTokenSupplier {
         return globals.license.dir!=null ? globals.license.dir : globals.getHome().resolve("config").resolve("license");
     }
 
+    /**
+     * Delegated to {@link LicenseDirScanUtils} so the directory decisions can be tested without a
+     * Spring context: this class needs Globals and a repository, that one needs only a Path.
+     */
     private List<String> fromDirectory() {
-        final Path dir = licenseDir();
-        if (!Files.isDirectory(dir)) {
-            return List.of();
-        }
-        final List<String> tokens = new ArrayList<>();
-        try (Stream<Path> files = Files.list(dir)) {
-            files.filter(p -> p.getFileName().toString().endsWith(JWS_SUFFIX))
-                    .sorted()
-                    .forEach(p -> readQuietly(p, tokens));
-        }
-        catch (IOException e) {
-            log.warn("01.256.010 can't list the license dir {}: {}", dir, e.getMessage());
-        }
-        return tokens;
-    }
-
-    private void readQuietly(Path file, List<String> acc) {
-        try {
-            final String token = Files.readString(file, StandardCharsets.UTF_8).strip();
-            if (!token.isBlank()) {
-                acc.add(token);
-            }
-        }
-        catch (IOException | RuntimeException e) {
-            log.warn("01.256.020 can't read the license file {}, skipping it: {}", file, e.getMessage());
-        }
+        return LicenseDirScanUtils.scanDir(licenseDir());
     }
 
     private List<String> fromDatabase() {
