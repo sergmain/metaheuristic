@@ -31,6 +31,10 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
  * matter are: what the chain writes, and what it reads back from a claims set whose registered
  * date claims are NumericDate (seconds since the epoch, per RFC 7519).
  *
+ * The capability vocabulary here is deliberately made-up. MH stores these strings as data and
+ * never as symbols, so the chain must behave identically for values it has never seen - and
+ * naming the real proprietary ones here would breach the seal for no gain.
+ *
  * @author Serge
  */
 @Execution(CONCURRENT)
@@ -43,7 +47,7 @@ public class LicenseClaimsUtilsTest {
         final LicenseClaims c = new LicenseClaims();
         c.licensee = "ACME Aerospace, Inc.";
         c.edition = "ENTERPRISE";
-        c.capabilities = List.of("Capability:RG", "Capability:LEGAL");
+        c.capabilities = List.of("Cat:ALPHA", "Cat:BETA");
         c.databases = List.of("H2", "POSTGRES");
         c.storages = List.of("S3");
         c.iat = IAT;
@@ -59,7 +63,7 @@ public class LicenseClaimsUtilsTest {
         assertEquals(1, back.version);
         assertEquals("ACME Aerospace, Inc.", back.licensee);
         assertEquals("ENTERPRISE", back.edition);
-        assertEquals(List.of("Capability:RG", "Capability:LEGAL"), back.capabilities);
+        assertEquals(List.of("Cat:ALPHA", "Cat:BETA"), back.capabilities);
         assertEquals(List.of("H2", "POSTGRES"), back.databases);
         assertEquals(List.of("S3"), back.storages);
         assertEquals(IAT, back.iat);
@@ -79,14 +83,14 @@ public class LicenseClaimsUtilsTest {
         // exactly the shape a JWTClaimsSet serializes to: registered date claims as NumericDate.
         final String json = """
                 {"licensee":"ACME","edition":"TRIAL","version":1,\
-                "capabilities":["Capability:RG"],"databases":["H2"],"storages":[],\
+                "capabilities":["Cat:ALPHA"],"databases":["H2"],"storages":[],\
                 "iat":1780272000,"exp":1782864000,"installationId":"uuid-A"}""";
 
         final LicenseClaims c = LicenseClaimsUtils.fromJson(1, json);
 
         assertEquals("ACME", c.licensee);
         assertEquals("TRIAL", c.edition);
-        assertEquals(List.of("Capability:RG"), c.capabilities);
+        assertEquals(List.of("Cat:ALPHA"), c.capabilities);
         assertEquals(List.of("H2"), c.databases);
         assertTrue(c.storages.isEmpty());
         assertEquals(Instant.ofEpochSecond(1780272000L), c.iat);
