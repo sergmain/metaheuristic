@@ -16,7 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.license;
 
+import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.commons.spi.license.LicenseState;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -73,5 +77,22 @@ public class LicenseInfoData {
     }
 
     public record LicenseInfo(EffectiveEntitlement effective, List<InstalledLicense> licenses) {
+    }
+
+    /**
+     * The REST envelope. Extends BaseDataClass so a failure carries errorMessages the same way
+     * every other MH endpoint does, rather than inventing a second error convention for one page.
+     */
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class LicenseStatusResult extends BaseDataClass {
+
+        @Nullable
+        public LicenseInfo info;
+
+        public LicenseStatusResult(LicenseInfo info) {
+            this.info = info;
+        }
     }
 }

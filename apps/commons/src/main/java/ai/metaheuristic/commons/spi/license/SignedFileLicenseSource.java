@@ -108,6 +108,19 @@ public class SignedFileLicenseSource implements LicenseSource {
         return fresh;
     }
 
+    /**
+     * Drop the cached aggregate so the next {@link #current()} re-reads the token set.
+     *
+     * <p>Needed because the cache TTL exists to bound how long validity lags the CLOCK, not how
+     * long it lags an ADMIN. When a license is installed or removed through the UI the token set
+     * changed under us and there is nothing to wait for: without this, a freshly installed license
+     * would stay invisible for up to the TTL and the admin would reasonably conclude the upload
+     * failed. Time-driven staleness still resolves on its own.
+     */
+    public void invalidate() {
+        cache.set(null);
+    }
+
     private LicenseAggregate evaluate(Instant now) {
         final String localId = installationId.get();
         final List<LicenseVerificationResult> results = new ArrayList<>();

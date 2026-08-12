@@ -181,6 +181,35 @@ public class SignedFileLicenseSourceTest {
     }
 
     @Test
+    public void test_invalidate_makesAnInstallVisibleImmediately() throws Exception {
+        final Keys k = keys();
+        final String tok = signEnterprise(k.priv(), NOW.plus(Duration.ofDays(365)));
+
+        final AtomicReference<Collection<String>> tokens = new AtomicReference<>(List.of());
+        final SignedFileLicenseSource src = new SignedFileLicenseSource(
+                tokens::get, resolver(k.pub()), () -> NOW, () -> ON_H2, () -> null, Duration.ofSeconds(60));
+
+        assertEquals(LicenseState.NO_LICENSE, src.currentResult().state());
+
+        // the admin installs a license; the clock has not moved, so only invalidation can show it.
+        tokens.set(List.of(tok));
+        assertEquals(LicenseState.NO_LICENSE, src.currentResult().state(), "still cached");
+
+        src.invalidate();
+        assertEquals(LicenseState.VALID, src.currentResult().state(), "invalidated -> re-read");
+    }
+
+    @Test
+    public void test_invalidate_onAnEmptyCacheIsHarmless() {
+        final SignedFileLicenseSource src = new SignedFileLicenseSource(
+                List::of, kid -> null, () -> NOW, () -> ON_H2, () -> null, Duration.ofSeconds(60));
+
+        src.invalidate();
+
+        assertEquals(LicenseState.NO_LICENSE, src.currentResult().state());
+    }
+
+    @Test
     public void test_cachesWithinTtl_andRefreshesAfter() throws Exception {
         final Keys k = keys();
         final String validTok = signEnterprise(k.priv(), NOW.plus(Duration.ofDays(365)));
