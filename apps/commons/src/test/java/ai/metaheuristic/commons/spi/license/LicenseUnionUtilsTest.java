@@ -53,7 +53,8 @@ public class LicenseUnionUtilsTest {
         c.databases = databases;
         c.storages = storages;
         c.exp = exp;
-        return new LicenseVerificationResult(state, c, new ClaimsEntitlements(state, exp, new HashSet<>(capabilities)));
+        return new LicenseVerificationResult(
+                "token-" + capabilities, state, c, new ClaimsEntitlements(state, exp, new HashSet<>(capabilities)));
     }
 
     private static LicenseVerificationResult valid(List<String> capabilities, List<String> databases, List<String> storages) {

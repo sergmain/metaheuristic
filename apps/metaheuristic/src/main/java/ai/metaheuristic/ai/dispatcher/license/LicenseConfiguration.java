@@ -55,6 +55,7 @@ public class LicenseConfiguration {
     private final Globals globals;
     private final LicenseTokenSupplier licenseTokenSupplier;
     private final LicenseInstallationService licenseInstallationService;
+    private final DeploymentValuesResolverHolder deploymentValuesResolverHolder;
 
     @Bean
     public SignedFileLicenseSource licenseSource() {
@@ -63,7 +64,7 @@ public class LicenseConfiguration {
         return SignedFileLicenseSource.withEmbeddedKey(
                 licenseTokenSupplier::tokens,
                 () -> Instant.now(Clock.systemUTC()),
-                () -> DeploymentValuesResolver.resolve(globals.activeProfilesSet),
+                deploymentValuesResolverHolder::current,
                 licenseInstallationService::installationId,
                 globals.license.cacheTtl);
     }

@@ -71,30 +71,30 @@ public class LicenseTokenCodec {
             final JWT parsed = JWTParser.parse(token);
             if (!(parsed instanceof SignedJWT jwt)) {
                 // PlainJWT (alg:none) or EncryptedJWT (JWE - not supported yet) -> reject
-                return invalid(LicenseState.SIGNATURE_INVALID);
+                return invalid(token, LicenseState.SIGNATURE_INVALID);
             }
             if (!JWSAlgorithm.ES256.equals(jwt.getHeader().getAlgorithm())) {
-                return invalid(LicenseState.SIGNATURE_INVALID);
+                return invalid(token, LicenseState.SIGNATURE_INVALID);
             }
             final JOSEObjectType typ = jwt.getHeader().getType();
             if (typ == null || !EXPECTED_TYP.equals(typ.getType())) {
-                return invalid(LicenseState.SIGNATURE_INVALID);
+                return invalid(token, LicenseState.SIGNATURE_INVALID);
             }
             final String kid = jwt.getHeader().getKeyID();
             if (kid == null || kid.isBlank()) {
-                return invalid(LicenseState.SIGNATURE_INVALID);
+                return invalid(token, LicenseState.SIGNATURE_INVALID);
             }
             final ECPublicKey pub = keyByKid.apply(kid);
             if (pub == null) {
-                return invalid(LicenseState.SIGNATURE_INVALID);
+                return invalid(token, LicenseState.SIGNATURE_INVALID);
             }
             if (!jwt.verify(new ECDSAVerifier(pub))) {
-                return invalid(LicenseState.SIGNATURE_INVALID);
+                return invalid(token, LicenseState.SIGNATURE_INVALID);
             }
             claimsSet = jwt.getJWTClaimsSet();
         }
         catch (Exception e) {
-            return invalid(LicenseState.SIGNATURE_INVALID);
+            return invalid(token, LicenseState.SIGNATURE_INVALID);
         }
 
         // A well-signed token whose body we cannot read is MALFORMED, not SIGNATURE_INVALID: the
@@ -104,36 +104,36 @@ public class LicenseTokenCodec {
             claims = toClaims(claimsSet);
         }
         catch (Exception e) {
-            return invalid(LicenseState.MALFORMED);
+            return invalid(token, LicenseState.MALFORMED);
         }
 
         // exp is mandatory (decision 19). There is no timeless license: an omitted exp used to
         // become a perpetual production grant by accident, and a trial that runs out is re-issued.
         if (claims.exp == null) {
-            return result(LicenseState.MALFORMED, claims);
+            return result(token, LicenseState.MALFORMED, claims);
         }
         // installation binding (Appendix G): only when both a claim and a local id are present.
         if (claims.installationId != null && !claims.installationId.isBlank()
                 && localInstallationId != null && !claims.installationId.equals(localInstallationId)) {
-            return result(LicenseState.INSTALL_ID_MISMATCH, claims);
+            return result(token, LicenseState.INSTALL_ID_MISMATCH, claims);
         }
         // time window with leeway.
         if (claims.nbf != null && now.isBefore(claims.nbf.minus(LEEWAY))) {
-            return result(LicenseState.NOT_YET_VALID, claims);
+            return result(token, LicenseState.NOT_YET_VALID, claims);
         }
         if (now.isAfter(claims.exp.plus(LEEWAY))) {
-            return result(LicenseState.EXPIRED, claims);
+            return result(token, LicenseState.EXPIRED, claims);
         }
-        return result(LicenseState.VALID, claims);
+        return result(token, LicenseState.VALID, claims);
     }
 
-    private static LicenseVerificationResult result(LicenseState state, LicenseClaims claims) {
+    private static LicenseVerificationResult result(String token, LicenseState state, LicenseClaims claims) {
         final Set<String> keys = new HashSet<>(claims.capabilities);
-        return new LicenseVerificationResult(state, claims, new ClaimsEntitlements(state, claims.exp, keys));
+        return new LicenseVerificationResult(token, state, claims, new ClaimsEntitlements(state, claims.exp, keys));
     }
 
-    private static LicenseVerificationResult invalid(LicenseState state) {
-        return new LicenseVerificationResult(state, null, ClaimsEntitlements.invalid(state));
+    private static LicenseVerificationResult invalid(String token, LicenseState state) {
+        return new LicenseVerificationResult(token, state, null, ClaimsEntitlements.invalid(state));
     }
 
     /**

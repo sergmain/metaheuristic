@@ -172,14 +172,29 @@ public class LicenseTokenCodecTest {
     @Test
     public void test_tamperedSignature() throws Exception {
         final KeyPair kp = ecKeyPair();
-        String tok = sign((ECPrivateKey) kp.getPrivate(),
+        final String tok = sign((ECPrivateKey) kp.getPrivate(),
                 enterprise().expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
-        final char last = tok.charAt(tok.length() - 1);
-        tok = tok.substring(0, tok.length() - 1) + (last == 'A' ? 'B' : 'A');
 
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, null);
+        final LicenseVerificationResult r =
+                LicenseTokenCodec.verify(tamperSignature(tok), resolver((ECPublicKey) kp.getPublic()), NOW, null);
 
         assertEquals(LicenseState.SIGNATURE_INVALID, r.state());
+    }
+
+    /**
+     * Flip the FIRST character of the signature segment, not the last.
+     *
+     * An ES256 signature is 64 bytes and its base64url form is 86 characters, so 86*6 = 516 bits
+     * carry 512 significant ones: the LAST character holds 2 significant bits and 4 unused padding
+     * bits. 'A' and 'B' differ only in a padding bit, so swapping them at the end decodes to the
+     * same 64 bytes and the token still verifies - which made the obvious "change the last char"
+     * tamper a test that passed 63 times out of 64 and failed whenever the signature happened to
+     * end in 'A'. The first character is fully significant, so this always mutates the signature.
+     */
+    private static String tamperSignature(String token) {
+        final int lastDot = token.lastIndexOf('.');
+        final char first = token.charAt(lastDot + 1);
+        return token.substring(0, lastDot + 1) + (first == 'C' ? 'D' : 'C') + token.substring(lastDot + 2);
     }
 
     @Test
