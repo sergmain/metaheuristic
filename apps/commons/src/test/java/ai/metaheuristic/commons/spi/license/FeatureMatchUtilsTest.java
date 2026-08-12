@@ -25,8 +25,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
- * The Category:VALUE feature model and the '<Category>:ANY' wildcard rule. The vocabulary used here
- * is deliberately made-up - the matcher must behave identically for categories it has never seen,
+ * The Category:VALUE feature model and exact, grant-only matching. The vocabulary used here is
+ * deliberately made-up - the matcher must behave identically for categories it has never seen,
  * which is the whole point of keeping it string-only.
  *
  * @author Serge
@@ -61,25 +61,12 @@ public class FeatureMatchUtilsTest {
     }
 
     @Test
-    public void test_wildcard_grantsEveryValueInItsCategory() {
-        final Set<String> granted = Set.of("Capability:RG", "Database:ANY");
-        assertTrue(FeatureMatchUtils.matches(granted, new Feature("Database", "H2")));
-        assertTrue(FeatureMatchUtils.matches(granted, new Feature("Database", "POSTGRES")));
-        // a value nobody has heard of yet - the reason ANY cannot be expanded at issuance.
-        assertTrue(FeatureMatchUtils.matches(granted, new Feature("Database", "SOME_FUTURE_DB")));
-    }
-
-    @Test
-    public void test_wildcard_isScopedToItsOwnCategory() {
+    public void test_noWildcard() {
+        // 'ANY' is an ordinary value with no special meaning - grants are always enumerated.
         final Set<String> granted = Set.of("Database:ANY");
-        assertFalse(FeatureMatchUtils.matches(granted, new Feature("Capability", "RG")));
-        assertFalse(FeatureMatchUtils.matches(granted, new Feature("Storage", "S3")));
-    }
-
-    @Test
-    public void test_wildcard_asAnExplicitQuery() {
-        assertTrue(FeatureMatchUtils.matches(Set.of("Database:ANY"), new Feature("Database", "ANY")));
-        assertFalse(FeatureMatchUtils.matches(Set.of("Database:H2"), new Feature("Database", "ANY")));
+        assertFalse(FeatureMatchUtils.matches(granted, new Feature("Database", "H2")));
+        assertFalse(FeatureMatchUtils.matches(granted, new Feature("Database", "POSTGRES")));
+        assertTrue(FeatureMatchUtils.matches(granted, new Feature("Database", "ANY")));
     }
 
     @Test

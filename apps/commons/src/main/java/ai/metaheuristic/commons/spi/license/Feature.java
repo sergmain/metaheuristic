@@ -28,8 +28,6 @@ package ai.metaheuristic.commons.spi.license;
  * would have to name jcons/Legal/RG concepts and would breach the seal. Callers write their own
  * string literals at the gate site, e.g. new Feature("Capability", "RG").
  *
- * A grant of '<Category>:ANY' satisfies every query in that category; see FeatureMatchUtils.
- *
  * <p>Error code prefix: {@code 01.250.} (unique to this class).
  *
  * @author Serge
@@ -38,9 +36,6 @@ public record Feature(String category, String value) {   // e.g. new Feature("Ca
 
     /** Separator between category and value in the wire form. */
     public static final String SEPARATOR = ":";
-
-    /** Wildcard value: granting '<Category>:ANY' grants every value in that category. */
-    public static final String ANY = "ANY";
 
     public Feature {
         if (category == null || category.isBlank() || value == null || value.isBlank()) {

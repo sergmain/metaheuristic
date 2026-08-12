@@ -19,14 +19,13 @@ package ai.metaheuristic.commons.spi.license;
 import java.util.Set;
 
 /**
- * Feature matching against a granted key set. The single place the '<Category>:ANY' wildcard is
- * interpreted, shared by every Entitlements implementation so the offline and external backends
- * cannot drift apart on gating semantics.
+ * Feature matching against a granted key set. The single place matching is defined, shared by
+ * every Entitlements implementation so the offline and external backends cannot drift apart on
+ * gating semantics.
  *
- * Why the wildcard is resolved here and not expanded at the issuance boundary: 'ANY' must also
- * cover values that do not exist yet, so it cannot be enumerated when the license is signed. This
- * is the one rule the matcher applies - it still compares strings and learns nothing about what a
- * category or a value means.
+ * Matching is exact and grant-only: a capability is licensed when it appears in the granted set,
+ * and there is no wildcard. An unbounded grant reachable from one license would be unbounded
+ * again under the union of several, so what is permitted is always enumerated at issuance.
  *
  * Total by construction: never throws, never rejects an unknown category.
  *
@@ -37,9 +36,8 @@ public class FeatureMatchUtils {
     private FeatureMatchUtils() {
     }
 
-    /** True when the granted set holds the feature exactly, or holds the wildcard for its category. */
+    /** True when the granted set holds the feature exactly. */
     public static boolean matches(Set<String> grantedKeys, Feature f) {
-        return grantedKeys.contains(f.key())
-                || grantedKeys.contains(f.category() + Feature.SEPARATOR + Feature.ANY);
+        return grantedKeys.contains(f.key());
     }
 }
