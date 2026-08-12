@@ -40,7 +40,7 @@ public class LicenseClaimsBuilderTest {
         final LicenseConfigYaml.License lic = new LicenseConfigYaml.License();
         lic.licensee = "ACME Corp";
         lic.edition = "ENTERPRISE";
-        lic.features = List.of("FEATURE_A", "FEATURE_B", "FEATURE_C");
+        lic.features = List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C");
         return lic;
     }
 
@@ -134,6 +134,6 @@ public class LicenseClaimsBuilderTest {
 
         final LicenseClaimsV1 claims = LicenseClaimsBuilder.build(lic, NOW);
 
-        assertEquals(List.of("FEATURE_A", "FEATURE_B", "FEATURE_C"), claims.features);
+        assertEquals(List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C"), claims.features);
     }
 }

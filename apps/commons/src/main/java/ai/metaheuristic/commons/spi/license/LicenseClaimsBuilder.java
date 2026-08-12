@@ -18,6 +18,7 @@ package ai.metaheuristic.commons.spi.license;
 
 import ai.metaheuristic.api.data.license.LicenseConfigYaml;
 import ai.metaheuristic.commons.S;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -31,6 +32,12 @@ import java.util.List;
  *
  * Resolution: iat = now; exp = expiresAt OR (iat + validityDuration) OR none; nbf = notBefore.
  * Enforces the Appendix D safety rule that a timeless (no-exp) license must be deployment-pinned.
+ *
+ * Feature strings are checked for the 'Category:VALUE' wire form only - a shape check, not a
+ * vocabulary check. Which categories and values exist is proprietary knowledge that never
+ * reaches this class; a typo'd category is a valid license granting nothing.
+ *
+ * <p>Error code prefix: {@code 01.248.} (unique to this class).
  *
  * @author Serge
  */
@@ -78,7 +85,7 @@ public class LicenseClaimsBuilder {
         claims.ver = 1;
         claims.licensee = lic.licensee;
         claims.edition = lic.edition;
-        claims.features = lic.features==null ? new ArrayList<>() : new ArrayList<>(lic.features);
+        claims.features = toFeatureKeys(lic.features);
         claims.iat = now;
         claims.nbf = nbf;
         claims.exp = exp;
@@ -86,5 +93,28 @@ public class LicenseClaimsBuilder {
         claims.forbiddenProfiles = lic.forbiddenProfiles==null ? new ArrayList<>() : new ArrayList<>(lic.forbiddenProfiles);
         claims.installationId = lic.installationId;
         return claims;
+    }
+
+    /**
+     * Shape check of the 'Category:VALUE' wire form. Rebuilding each entry through Feature reuses the
+     * one definition of a well-formed key instead of duplicating the rule here.
+     */
+    private static List<String> toFeatureKeys(@Nullable List<String> features) {
+        final List<String> keys = new ArrayList<>();
+        if (features==null) {
+            return keys;
+        }
+        for (String f : features) {
+            if (S.b(f)) {
+                throw new IllegalStateException("01.248.050 'features' must not contain a blank entry");
+            }
+            final int idx = f.indexOf(Feature.SEPARATOR);
+            if (idx<1 || idx==f.length()-1) {
+                throw new IllegalStateException(
+                        "01.248.060 feature must be in the form 'Category" + Feature.SEPARATOR + "VALUE', actual: " + f);
+            }
+            keys.add(new Feature(f.substring(0, idx), f.substring(idx + Feature.SEPARATOR.length())).key());
+        }
+        return keys;
     }
 }

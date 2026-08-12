@@ -45,9 +45,9 @@ public class LicenseConfigYamlUtilsV1Test {
               licensee: "ACME Aerospace, Inc."
               edition: "ENTERPRISE"
               features:
-                - "FEATURE_A"
-                - "FEATURE_B"
-                - "FEATURE_C"
+                - "Cat:FEATURE_A"
+                - "Cat:FEATURE_B"
+                - "Cat:FEATURE_C"
               validityDuration: "P365D"
             signing:
               algorithm: "ES256"
@@ -62,9 +62,9 @@ public class LicenseConfigYamlUtilsV1Test {
               licensee: "Evaluation User"
               edition: "TRIAL"
               features:
-                - "FEATURE_A"
-                - "FEATURE_B"
-                - "FEATURE_C"
+                - "Cat:FEATURE_A"
+                - "Cat:FEATURE_B"
+                - "Cat:FEATURE_C"
               requiredProfiles:
                 - "h2"
               forbiddenProfiles:
@@ -83,7 +83,7 @@ public class LicenseConfigYamlUtilsV1Test {
         assertEquals(1, c.version);
         assertEquals("ACME Aerospace, Inc.", c.license.licensee);
         assertEquals("ENTERPRISE", c.license.edition);
-        assertEquals(List.of("FEATURE_A", "FEATURE_B", "FEATURE_C"), c.license.features);
+        assertEquals(List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C"), c.license.features);
         assertEquals("P365D", c.license.validityDuration);
         assertNull(c.license.expiresAt);
         assertEquals("ES256", c.signing.algorithm);
@@ -107,7 +107,7 @@ public class LicenseConfigYamlUtilsV1Test {
         final LicenseConfigYaml c = LicenseConfigYamlUtils.BASE_YAML_UTILS.to(ENTERPRISE_YAML);
         final LicenseClaimsV1 claims = LicenseClaimsBuilder.build(c.license, now);
         assertEquals(now.plus(Duration.parse("P365D")), claims.exp);
-        assertEquals(List.of("FEATURE_A", "FEATURE_B", "FEATURE_C"), claims.features);
+        assertEquals(List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C"), claims.features);
     }
 
     @Test

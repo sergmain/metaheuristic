@@ -64,7 +64,7 @@ public class SignedFileLicenseSourceTest {
     private static String signEnterprise(ECPrivateKey priv, Instant exp) throws Exception {
         final JWTClaimsSet claims = new JWTClaimsSet.Builder()
                 .claim("licensee", "ACME").claim("edition", "ENTERPRISE")
-                .claim("features", List.of("FEATURE_A", "FEATURE_B", "FEATURE_C")).claim("ver", 1)
+                .claim("features", List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C")).claim("ver", 1)
                 .issueTime(Date.from(NOW)).expirationTime(Date.from(exp)).build();
         final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.ES256)
                 .keyID(KID).type(new JOSEObjectType("license+jws")).build();
@@ -85,7 +85,7 @@ public class SignedFileLicenseSourceTest {
                 () -> Optional.of(tok), resolver(k.pub()), () -> NOW, Set::of, () -> null, Duration.ofSeconds(60));
 
         assertTrue(src.current().valid());
-        assertTrue(src.current().has(new Feature("FEATURE_C")));
+        assertTrue(src.current().has(new Feature("Cat", "FEATURE_C")));
         assertEquals(LicenseState.VALID, src.currentResult().state());
     }
 

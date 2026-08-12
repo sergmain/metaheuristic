@@ -52,7 +52,7 @@ public final class ClaimsEntitlements implements Entitlements {
 
     @Override
     public boolean has(Feature f) {
-        return valid() && grantedKeys.contains(f.key());
+        return valid() && FeatureMatchUtils.matches(grantedKeys, f);
     }
 
     @Override

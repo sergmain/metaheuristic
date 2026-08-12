@@ -69,7 +69,7 @@ public class LicenseTokenCodecTest {
     private static JWTClaimsSet.Builder enterprise() {
         return new JWTClaimsSet.Builder()
                 .claim("licensee", "ACME").claim("edition", "ENTERPRISE")
-                .claim("features", List.of("FEATURE_A", "FEATURE_B", "FEATURE_C")).claim("ver", 1)
+                .claim("features", List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C")).claim("ver", 1)
                 .issueTime(Date.from(NOW));
     }
 
@@ -87,8 +87,8 @@ public class LicenseTokenCodecTest {
 
         assertEquals(LicenseState.VALID, r.state());
         assertTrue(r.entitlements().valid());
-        assertTrue(r.entitlements().has(new Feature("FEATURE_C")));
-        assertFalse(r.entitlements().has(new Feature("NOT_GRANTED")));
+        assertTrue(r.entitlements().has(new Feature("Cat", "FEATURE_C")));
+        assertFalse(r.entitlements().has(new Feature("Cat", "NOT_GRANTED")));
         assertTrue(r.entitlements().expiresAt().isPresent());
     }
 
@@ -102,7 +102,7 @@ public class LicenseTokenCodecTest {
 
         assertEquals(LicenseState.EXPIRED, r.state());
         assertFalse(r.entitlements().valid());
-        assertFalse(r.entitlements().has(new Feature("FEATURE_C")));
+        assertFalse(r.entitlements().has(new Feature("Cat", "FEATURE_C")));
     }
 
     @Test
