@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,21 +21,30 @@ import org.jspecify.annotations.Nullable;
 import java.security.interfaces.ECPublicKey;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Scenario B backend (offline signed file). Reads a compact JWS license (file first, DB-row
- * fallback - abstracted by the token supplier), verifies it via LicenseTokenCodec against the
- * embedded public key, and answers has(feature) offline. License authority = us; no network at
- * verify time.
+ * Scenario B backend (offline signed file). Reads the SET of compact JWS licenses installed on this
+ * dispatcher (a license directory and DB rows - both abstracted by the token supplier), verifies
+ * each one independently via LicenseTokenCodec against the embedded public key, folds the valid
+ * ones into one effective entitlement, and answers has(feature) offline. License authority = us; no
+ * network at verify time.
  *
- * Spring-less by construction: token source, clock, active profiles, install id and key resolver
- * are injected, so the dispatcher wiring (Globals.license.*, @Profile("internal-lm"), DB-row
- * fallback, REST/admin UI) is a thin adapter over this class.
+ * An installation holds a SET, not one license: a trial cannot be extended because iat is fixed at
+ * signing, so continuing one means installing a second license beside the first. Directory and DB
+ * are additive rather than a precedence pair - the old 'file wins over row' rule existed only
+ * because a single license could be active, and under a set there is nothing to break a tie.
+ * Duplicates are dropped so the same token installed twice is one license, not two.
+ *
+ * Spring-less by construction: token source, clock, resolved deployment values, install id and key
+ * resolver are injected, so the dispatcher wiring (Globals.license.*, @Profile("internal-lm"), the
+ * DB rows, REST/admin UI) is a thin adapter over this class.
  *
  * Pull-with-refresh: current() re-verifies at most once per cache TTL, so validity naturally flips
  * VALID -> EXPIRED as exp passes (bounded by TTL + the codec's +-60s leeway).
@@ -44,42 +53,42 @@ import java.util.function.Supplier;
  */
 public class SignedFileLicenseSource implements LicenseSource {
 
-    private record Cached(Instant at, LicenseVerificationResult result) {
+    private record Cached(Instant at, LicenseAggregate aggregate) {
     }
 
-    private final Supplier<Optional<String>> tokenSupplier;
+    private final Supplier<Collection<String>> tokensSupplier;
     private final Function<String, @Nullable ECPublicKey> keyByKid;
     private final Supplier<Instant> clock;
-    private final Supplier<Set<String>> activeProfiles;
+    private final Supplier<DeploymentValues> deployment;
     private final Supplier<@Nullable String> installationId;
     private final Duration cacheTtl;
 
     private final AtomicReference<Cached> cache = new AtomicReference<>();
 
     public SignedFileLicenseSource(
-            Supplier<Optional<String>> tokenSupplier,
+            Supplier<Collection<String>> tokensSupplier,
             Function<String, @Nullable ECPublicKey> keyByKid,
             Supplier<Instant> clock,
-            Supplier<Set<String>> activeProfiles,
+            Supplier<DeploymentValues> deployment,
             Supplier<@Nullable String> installationId,
             Duration cacheTtl) {
-        this.tokenSupplier = tokenSupplier;
+        this.tokensSupplier = tokensSupplier;
         this.keyByKid = keyByKid;
         this.clock = clock;
-        this.activeProfiles = activeProfiles;
+        this.deployment = deployment;
         this.installationId = installationId;
         this.cacheTtl = cacheTtl;
     }
 
     /** Default wiring against the embedded verification key (LicenseVerificationKeys). */
     public static SignedFileLicenseSource withEmbeddedKey(
-            Supplier<Optional<String>> tokenSupplier,
+            Supplier<Collection<String>> tokensSupplier,
             Supplier<Instant> clock,
-            Supplier<Set<String>> activeProfiles,
+            Supplier<DeploymentValues> deployment,
             Supplier<@Nullable String> installationId,
             Duration cacheTtl) {
         return new SignedFileLicenseSource(
-                tokenSupplier, LicenseVerificationKeys::byKid, clock, activeProfiles, installationId, cacheTtl);
+                tokensSupplier, LicenseVerificationKeys::byKid, clock, deployment, installationId, cacheTtl);
     }
 
     @Override
@@ -87,24 +96,43 @@ public class SignedFileLicenseSource implements LicenseSource {
         return currentResult().entitlements();
     }
 
-    /** Full result (state + claims) for the admin UI; also drives current(). */
-    public LicenseVerificationResult currentResult() {
+    /** Full aggregate (state + per-license breakdown) for the admin UI; also drives current(). */
+    public LicenseAggregate currentResult() {
         final Instant now = clock.get();
         final Cached c = cache.get();
         if (c != null && now.isBefore(c.at().plus(cacheTtl))) {
-            return c.result();
+            return c.aggregate();
         }
-        final LicenseVerificationResult fresh = evaluate(now);
+        final LicenseAggregate fresh = evaluate(now);
         cache.set(new Cached(now, fresh));
         return fresh;
     }
 
-    private LicenseVerificationResult evaluate(Instant now) {
-        final Optional<String> token = tokenSupplier.get();
-        if (token.isEmpty() || token.get().isBlank()) {
-            return new LicenseVerificationResult(
-                    LicenseState.NO_LICENSE, null, ClaimsEntitlements.invalid(LicenseState.NO_LICENSE));
+    private LicenseAggregate evaluate(Instant now) {
+        final String localId = installationId.get();
+        final List<LicenseVerificationResult> results = new ArrayList<>();
+        for (String token : distinctTokens()) {
+            results.add(LicenseTokenCodec.verify(token, keyByKid, now, localId));
         }
-        return LicenseTokenCodec.verify(token.get(), keyByKid, now, activeProfiles.get(), installationId.get());
+        return LicenseUnionUtils.fold(results, deployment.get());
+    }
+
+    /**
+     * The same token can reach us from the directory and from a DB row; installing a license twice
+     * is a no-op and not a second license, otherwise the set fills with copies of one grant and the
+     * admin page becomes unreadable. Insertion order is kept so the breakdown is stable.
+     */
+    private Collection<String> distinctTokens() {
+        final Collection<String> raw = tokensSupplier.get();
+        if (raw == null || raw.isEmpty()) {
+            return List.of();
+        }
+        final LinkedHashSet<String> distinct = new LinkedHashSet<>();
+        for (String t : raw) {
+            if (t != null && !t.isBlank()) {
+                distinct.add(t);
+            }
+        }
+        return distinct;
     }
 }

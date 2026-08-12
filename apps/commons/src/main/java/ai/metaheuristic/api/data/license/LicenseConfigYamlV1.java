@@ -48,12 +48,12 @@ public class LicenseConfigYamlV1 implements BaseParams {
     public static class LicenseV1 {
         public String licensee;
         public String edition;
-        public List<String> features = new ArrayList<>();
+        public List<String> capabilities = new ArrayList<>();
+        public List<String> databases = new ArrayList<>();
+        public List<String> storages = new ArrayList<>();
         @Nullable public String notBefore;
         @Nullable public String expiresAt;
         @Nullable public String validityDuration;
-        public List<String> requiredProfiles = new ArrayList<>();
-        public List<String> forbiddenProfiles = new ArrayList<>();
         @Nullable public String installationId;
     }
 

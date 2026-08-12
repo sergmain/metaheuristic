@@ -50,18 +50,20 @@ public class LicenseConfigYaml implements BaseParams {
         public String licensee;
         // opaque display claim; edition -> feature closure is proprietary and computed off-MH.
         public String edition;
-        // opaque feature-key strings, copied verbatim into the token.
-        public List<String> features = new ArrayList<>();
+        // opaque 'Category:VALUE' capability keys, copied verbatim into the token.
+        public List<String> capabilities = new ArrayList<>();
 
-        // validity. nbf optional. exp is EITHER 'expiresAt' (absolute ISO-8601 instant)
-        // OR 'validityDuration' (ISO-8601 duration added to iat); never both; both absent == timeless.
+        // deployment axes: allow-lists of bare values, NOT composite keys - a database and a
+        // storage backend are MH's own concepts, so there is no category to qualify them with.
+        // An empty list grants nothing on that axis; it does not mean 'unconstrained'.
+        public List<String> databases = new ArrayList<>();
+        public List<String> storages = new ArrayList<>();
+
+        // validity. nbf optional. exp is REQUIRED and is EITHER 'expiresAt' (absolute ISO-8601
+        // instant) OR 'validityDuration' (ISO-8601 duration added to iat); never both, never neither.
         @Nullable public String notBefore;
         @Nullable public String expiresAt;
         @Nullable public String validityDuration;
-
-        // deployment pinning (section 7.7); opaque Spring-profile-name strings.
-        public List<String> requiredProfiles = new ArrayList<>();
-        public List<String> forbiddenProfiles = new ArrayList<>();
 
         @Nullable public String installationId;
     }

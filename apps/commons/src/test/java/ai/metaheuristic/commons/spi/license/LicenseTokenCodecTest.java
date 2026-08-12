@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,13 +36,15 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Round-trip: sign with Nimbus (as the license-signer does), verify with LicenseTokenCodec.
+ *
+ * The vocabulary here is deliberately made-up. The codec must behave identically for capability
+ * categories it has never seen, which is the whole point of keeping them opaque strings.
  *
  * @author Serge
  */
@@ -69,7 +71,10 @@ public class LicenseTokenCodecTest {
     private static JWTClaimsSet.Builder enterprise() {
         return new JWTClaimsSet.Builder()
                 .claim("licensee", "ACME").claim("edition", "ENTERPRISE")
-                .claim("features", List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C")).claim("ver", 1)
+                .claim("capabilities", List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C"))
+                .claim("databases", List.of("H2", "POSTGRES"))
+                .claim("storages", List.of("S3"))
+                .claim("version", 1)
                 .issueTime(Date.from(NOW));
     }
 
@@ -83,7 +88,7 @@ public class LicenseTokenCodecTest {
         final String tok = sign((ECPrivateKey) kp.getPrivate(),
                 enterprise().expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
 
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, Set.of(), null);
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, null);
 
         assertEquals(LicenseState.VALID, r.state());
         assertTrue(r.entitlements().valid());
@@ -93,12 +98,48 @@ public class LicenseTokenCodecTest {
     }
 
     @Test
+    public void test_deploymentAxes_areParsedButNotEnforcedHere() throws Exception {
+        // a token that lists no database at all is still a perfectly VALID license: whether the
+        // running deployment is covered is decided once, against the union of every valid license.
+        final KeyPair kp = ecKeyPair();
+        final String tok = sign((ECPrivateKey) kp.getPrivate(),
+                enterprise().claim("databases", List.of()).claim("storages", List.of())
+                        .expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
+
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, null);
+
+        assertEquals(LicenseState.VALID, r.state());
+        assertNotNull(r.claims());
+        assertTrue(r.claims().databases.isEmpty());
+        assertTrue(r.claims().storages.isEmpty());
+    }
+
+    @Test
+    public void test_claimsAreReadThroughTheChain() throws Exception {
+        final KeyPair kp = ecKeyPair();
+        final String tok = sign((ECPrivateKey) kp.getPrivate(),
+                enterprise().expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
+
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, null);
+
+        assertNotNull(r.claims());
+        assertEquals(1, r.claims().version);
+        assertEquals("ACME", r.claims().licensee);
+        assertEquals("ENTERPRISE", r.claims().edition);
+        assertEquals(List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C"), r.claims().capabilities);
+        assertEquals(List.of("H2", "POSTGRES"), r.claims().databases);
+        assertEquals(List.of("S3"), r.claims().storages);
+        assertEquals(NOW, r.claims().iat);
+        assertEquals(NOW.plus(Duration.ofDays(365)), r.claims().exp);
+    }
+
+    @Test
     public void test_expired() throws Exception {
         final KeyPair kp = ecKeyPair();
         final String tok = sign((ECPrivateKey) kp.getPrivate(),
                 enterprise().expirationTime(Date.from(NOW.minus(Duration.ofDays(1)))).build());
 
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, Set.of(), null);
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, null);
 
         assertEquals(LicenseState.EXPIRED, r.state());
         assertFalse(r.entitlements().valid());
@@ -112,7 +153,7 @@ public class LicenseTokenCodecTest {
                 enterprise().notBeforeTime(Date.from(NOW.plus(Duration.ofDays(2))))
                         .expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
 
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, Set.of(), null);
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, null);
 
         assertEquals(LicenseState.NOT_YET_VALID, r.state());
     }
@@ -123,7 +164,7 @@ public class LicenseTokenCodecTest {
         final String tok = sign((ECPrivateKey) kp.getPrivate(),
                 enterprise().expirationTime(Date.from(NOW.minus(Duration.ofSeconds(30)))).build());
 
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, Set.of(), null);
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, null);
 
         assertEquals(LicenseState.VALID, r.state(), "30s past exp is within the +-60s leeway");
     }
@@ -136,7 +177,7 @@ public class LicenseTokenCodecTest {
         final char last = tok.charAt(tok.length() - 1);
         tok = tok.substring(0, tok.length() - 1) + (last == 'A' ? 'B' : 'A');
 
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, Set.of(), null);
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, null);
 
         assertEquals(LicenseState.SIGNATURE_INVALID, r.state());
     }
@@ -147,7 +188,7 @@ public class LicenseTokenCodecTest {
         final String tok = sign((ECPrivateKey) kp.getPrivate(),
                 enterprise().expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
 
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, _ -> null, NOW, Set.of(), null);
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, _ -> null, NOW, null);
 
         assertEquals(LicenseState.SIGNATURE_INVALID, r.state());
     }
@@ -159,78 +200,44 @@ public class LicenseTokenCodecTest {
         final String tok = sign((ECPrivateKey) signer.getPrivate(),
                 enterprise().expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
 
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) other.getPublic()), NOW, Set.of(), null);
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) other.getPublic()), NOW, null);
 
         assertEquals(LicenseState.SIGNATURE_INVALID, r.state());
     }
 
     @Test
-    public void test_profileRequiredMissing() throws Exception {
-        final KeyPair kp = ecKeyPair();
-        final String tok = sign((ECPrivateKey) kp.getPrivate(),
-                enterprise().claim("required_profiles", List.of("h2"))
-                        .expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
-
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, Set.of("mysql"), null);
-
-        assertEquals(LicenseState.PROFILE_CONSTRAINT_VIOLATED, r.state());
-    }
-
-    @Test
-    public void test_profileRequiredPresent() throws Exception {
-        final KeyPair kp = ecKeyPair();
-        final String tok = sign((ECPrivateKey) kp.getPrivate(),
-                enterprise().claim("required_profiles", List.of("h2"))
-                        .expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
-
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, Set.of("dispatcher", "h2"), null);
-
-        assertEquals(LicenseState.VALID, r.state());
-    }
-
-    @Test
-    public void test_forbiddenProfileActive() throws Exception {
-        final KeyPair kp = ecKeyPair();
-        final String tok = sign((ECPrivateKey) kp.getPrivate(),
-                enterprise().claim("forbidden_profiles", List.of("mysql"))
-                        .expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
-
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, Set.of("mysql"), null);
-
-        assertEquals(LicenseState.PROFILE_CONSTRAINT_VIOLATED, r.state());
-    }
-
-    @Test
-    public void test_timelessWithProfiles_valid() throws Exception {
-        final KeyPair kp = ecKeyPair();
-        final String tok = sign((ECPrivateKey) kp.getPrivate(),
-                enterprise().claim("edition", "TRIAL").claim("required_profiles", List.of("h2")).build());
-
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, Set.of("h2"), null);
-
-        assertEquals(LicenseState.VALID, r.state());
-        assertTrue(r.entitlements().expiresAt().isEmpty());
-    }
-
-    @Test
-    public void test_timelessWithoutProfiles_malformed() throws Exception {
+    public void test_noExp_isMalformed() throws Exception {
+        // there is no timeless license: an omitted exp is a defect, not a perpetual grant.
         final KeyPair kp = ecKeyPair();
         final String tok = sign((ECPrivateKey) kp.getPrivate(), enterprise().build());
 
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, Set.of(), null);
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, null);
 
         assertEquals(LicenseState.MALFORMED, r.state());
         assertFalse(r.entitlements().valid());
     }
 
     @Test
+    public void test_unreadableClaimVersion_isMalformed() throws Exception {
+        // the signature checks out, so blaming the signature would send the admin after the wrong fault.
+        final KeyPair kp = ecKeyPair();
+        final String tok = sign((ECPrivateKey) kp.getPrivate(),
+                enterprise().claim("version", 7)
+                        .expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
+
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, null);
+
+        assertEquals(LicenseState.MALFORMED, r.state());
+    }
+
+    @Test
     public void test_installIdMismatch() throws Exception {
         final KeyPair kp = ecKeyPair();
         final String tok = sign((ECPrivateKey) kp.getPrivate(),
-                enterprise().claim("installation_id", "uuid-A")
+                enterprise().claim("installationId", "uuid-A")
                         .expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
 
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, Set.of(), "uuid-B");
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, "uuid-B");
 
         assertEquals(LicenseState.INSTALL_ID_MISMATCH, r.state());
     }
@@ -239,10 +246,10 @@ public class LicenseTokenCodecTest {
     public void test_installIdMatch_valid() throws Exception {
         final KeyPair kp = ecKeyPair();
         final String tok = sign((ECPrivateKey) kp.getPrivate(),
-                enterprise().claim("installation_id", "uuid-A")
+                enterprise().claim("installationId", "uuid-A")
                         .expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
 
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, Set.of(), "uuid-A");
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, "uuid-A");
 
         assertEquals(LicenseState.VALID, r.state());
     }

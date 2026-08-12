@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.spi.license;
 
+import ai.metaheuristic.api.data.license.LicenseClaims;
 import ai.metaheuristic.api.data.license.LicenseConfigYaml;
 import ai.metaheuristic.commons.S;
 import org.jspecify.annotations.Nullable;
@@ -27,15 +28,22 @@ import java.util.List;
 
 /**
  * Pure, Spring-less resolution of an operator {@link LicenseConfigYaml.License} recipe into a
- * signed-ready {@link LicenseClaimsV1}. Generic and proprietary-free: 'features' pass through as
- * opaque strings, and 'edition' is never expanded into a feature closure here.
+ * signed-ready {@link LicenseClaims}. Generic and proprietary-free: 'capabilities' pass through as
+ * opaque strings, and 'edition' is never expanded into a capability closure here.
  *
- * Resolution: iat = now; exp = expiresAt OR (iat + validityDuration) OR none; nbf = notBefore.
- * Enforces the Appendix D safety rule that a timeless (no-exp) license must be deployment-pinned.
+ * Resolution: iat = now; exp = expiresAt OR (iat + validityDuration); nbf = notBefore.
  *
- * Feature strings are checked for the 'Category:VALUE' wire form only - a shape check, not a
+ * exp is mandatory. There is no timeless license: a recipe that names neither an absolute instant
+ * nor a duration is rejected at issuance rather than producing a token that never stops granting.
+ * A trial that runs out is re-issued - signing is one command - and the deployment axes, not an
+ * absent exp, are what keep a trial off a production datastore.
+ *
+ * Capability strings are checked for the 'Category:VALUE' wire form only - a shape check, not a
  * vocabulary check. Which categories and values exist is proprietary knowledge that never
  * reaches this class; a typo'd category is a valid license granting nothing.
+ *
+ * 'databases' and 'storages' are plain values, not composite keys: they name MH's own concepts, so
+ * there is no category to qualify them with.
  *
  * <p>Error code prefix: {@code 01.248.} (unique to this class).
  *
@@ -46,7 +54,7 @@ public class LicenseClaimsBuilder {
     private LicenseClaimsBuilder() {
     }
 
-    public static LicenseClaimsV1 build(LicenseConfigYaml.License lic, Instant now) {
+    public static LicenseClaims build(LicenseConfigYaml.License lic, Instant now) {
         if (S.b(lic.licensee)) {
             throw new IllegalStateException("248.030 'licensee' must not be blank");
         }
@@ -60,8 +68,6 @@ public class LicenseClaimsBuilder {
             throw new IllegalStateException("248.010 'expiresAt' and 'validityDuration' are mutually exclusive");
         }
 
-        final List<String> requiredProfiles = lic.requiredProfiles==null ? new ArrayList<>() : new ArrayList<>(lic.requiredProfiles);
-
         Instant exp = null;
         if (hasExpiresAt) {
             exp = Instant.parse(lic.expiresAt);
@@ -70,10 +76,10 @@ public class LicenseClaimsBuilder {
             exp = now.plus(Duration.parse(lic.validityDuration));
         }
 
-        // Appendix D safety MUST: a timeless (no exp) license is accepted only when deployment-pinned,
-        // otherwise an omitted exp silently becomes a perpetual production license.
-        if (exp==null && requiredProfiles.isEmpty()) {
-            throw new IllegalStateException("248.020 a license without 'exp' MUST declare a non-empty 'requiredProfiles'");
+        // exp is mandatory (decision 19): an omitted exp used to become a perpetual production
+        // license by accident, and that whole class of bug goes away by refusing to sign one.
+        if (exp==null) {
+            throw new IllegalStateException("01.248.020 a license MUST declare either 'expiresAt' or 'validityDuration'");
         }
 
         Instant nbf = null;
@@ -81,16 +87,15 @@ public class LicenseClaimsBuilder {
             nbf = Instant.parse(lic.notBefore);
         }
 
-        final LicenseClaimsV1 claims = new LicenseClaimsV1();
-        claims.ver = 1;
+        final LicenseClaims claims = new LicenseClaims();
         claims.licensee = lic.licensee;
         claims.edition = lic.edition;
-        claims.features = toFeatureKeys(lic.features);
+        claims.capabilities = toCapabilityKeys(lic.capabilities);
+        claims.databases = toPlainValues(lic.databases);
+        claims.storages = toPlainValues(lic.storages);
         claims.iat = now;
         claims.nbf = nbf;
         claims.exp = exp;
-        claims.requiredProfiles = requiredProfiles;
-        claims.forbiddenProfiles = lic.forbiddenProfiles==null ? new ArrayList<>() : new ArrayList<>(lic.forbiddenProfiles);
         claims.installationId = lic.installationId;
         return claims;
     }
@@ -99,22 +104,40 @@ public class LicenseClaimsBuilder {
      * Shape check of the 'Category:VALUE' wire form. Rebuilding each entry through Feature reuses the
      * one definition of a well-formed key instead of duplicating the rule here.
      */
-    private static List<String> toFeatureKeys(@Nullable List<String> features) {
+    private static List<String> toCapabilityKeys(@Nullable List<String> capabilities) {
         final List<String> keys = new ArrayList<>();
-        if (features==null) {
+        if (capabilities==null) {
             return keys;
         }
-        for (String f : features) {
+        for (String f : capabilities) {
             if (S.b(f)) {
-                throw new IllegalStateException("01.248.050 'features' must not contain a blank entry");
+                throw new IllegalStateException("01.248.050 'capabilities' must not contain a blank entry");
             }
             final int idx = f.indexOf(Feature.SEPARATOR);
             if (idx<1 || idx==f.length()-1) {
                 throw new IllegalStateException(
-                        "01.248.060 feature must be in the form 'Category" + Feature.SEPARATOR + "VALUE', actual: " + f);
+                        "01.248.060 capability must be in the form 'Category" + Feature.SEPARATOR + "VALUE', actual: " + f);
             }
             keys.add(new Feature(f.substring(0, idx), f.substring(idx + Feature.SEPARATOR.length())).key());
         }
         return keys;
+    }
+
+    /**
+     * A deployment axis is an allow-list of bare values. An empty list is legal and grants nothing
+     * on that axis - it is not 'unconstrained' - so only blank entries are rejected.
+     */
+    private static List<String> toPlainValues(@Nullable List<String> values) {
+        final List<String> out = new ArrayList<>();
+        if (values==null) {
+            return out;
+        }
+        for (String v : values) {
+            if (S.b(v)) {
+                throw new IllegalStateException("01.248.070 'databases' and 'storages' must not contain a blank entry");
+            }
+            out.add(v);
+        }
+        return out;
     }
 }

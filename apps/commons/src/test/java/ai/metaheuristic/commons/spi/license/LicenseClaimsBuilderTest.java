@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.spi.license;
 
+import ai.metaheuristic.api.data.license.LicenseClaims;
 import ai.metaheuristic.api.data.license.LicenseConfigYaml;
 
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,9 @@ public class LicenseClaimsBuilderTest {
         final LicenseConfigYaml.License lic = new LicenseConfigYaml.License();
         lic.licensee = "ACME Corp";
         lic.edition = "ENTERPRISE";
-        lic.features = List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C");
+        lic.capabilities = List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C");
+        lic.databases = List.of("H2", "POSTGRES");
+        lic.storages = List.of("S3");
         return lic;
     }
 
@@ -49,7 +52,7 @@ public class LicenseClaimsBuilderTest {
         final LicenseConfigYaml.License lic = baseLicense();
         lic.expiresAt = "2027-01-01T00:00:00Z";
 
-        final LicenseClaimsV1 claims = LicenseClaimsBuilder.build(lic, NOW);
+        final LicenseClaims claims = LicenseClaimsBuilder.build(lic, NOW);
 
         assertEquals(Instant.parse("2027-01-01T00:00:00Z"), claims.exp);
         assertEquals(NOW, claims.iat);
@@ -61,7 +64,7 @@ public class LicenseClaimsBuilderTest {
         final LicenseConfigYaml.License lic = baseLicense();
         lic.validityDuration = "P30D";
 
-        final LicenseClaimsV1 claims = LicenseClaimsBuilder.build(lic, NOW);
+        final LicenseClaims claims = LicenseClaimsBuilder.build(lic, NOW);
 
         assertEquals(NOW.plus(Duration.parse("P30D")), claims.exp);
     }
@@ -72,7 +75,7 @@ public class LicenseClaimsBuilderTest {
         lic.expiresAt = "2027-01-01T00:00:00Z";
         lic.notBefore = "2026-02-01T00:00:00Z";
 
-        final LicenseClaimsV1 claims = LicenseClaimsBuilder.build(lic, NOW);
+        final LicenseClaims claims = LicenseClaimsBuilder.build(lic, NOW);
 
         assertEquals(Instant.parse("2026-02-01T00:00:00Z"), claims.nbf);
     }
@@ -88,23 +91,12 @@ public class LicenseClaimsBuilderTest {
     }
 
     @Test
-    public void test_timeless_withoutRequiredProfiles_rejected() {
+    public void test_noExp_rejected() {
+        // there is no timeless license: neither an absolute instant nor a duration means no signing.
         final LicenseConfigYaml.License lic = baseLicense();
 
         final IllegalStateException ex = assertThrows(IllegalStateException.class, () -> LicenseClaimsBuilder.build(lic, NOW));
-        assertTrue(ex.getMessage().startsWith("248.020"), ex.getMessage());
-    }
-
-    @Test
-    public void test_timeless_withRequiredProfiles_ok() {
-        final LicenseConfigYaml.License lic = baseLicense();
-        lic.edition = "TRIAL";
-        lic.requiredProfiles = List.of("h2");
-
-        final LicenseClaimsV1 claims = LicenseClaimsBuilder.build(lic, NOW);
-
-        assertNull(claims.exp);
-        assertEquals(List.of("h2"), claims.requiredProfiles);
+        assertTrue(ex.getMessage().startsWith("01.248.020"), ex.getMessage());
     }
 
     @Test
@@ -128,12 +120,67 @@ public class LicenseClaimsBuilderTest {
     }
 
     @Test
-    public void test_features_opaque_passthrough() {
+    public void test_capabilities_opaque_passthrough() {
         final LicenseConfigYaml.License lic = baseLicense();
         lic.expiresAt = "2027-01-01T00:00:00Z";
 
-        final LicenseClaimsV1 claims = LicenseClaimsBuilder.build(lic, NOW);
+        final LicenseClaims claims = LicenseClaimsBuilder.build(lic, NOW);
 
-        assertEquals(List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C"), claims.features);
+        assertEquals(List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C"), claims.capabilities);
+    }
+
+    @Test
+    public void test_deploymentAxes_passthrough() {
+        final LicenseConfigYaml.License lic = baseLicense();
+        lic.expiresAt = "2027-01-01T00:00:00Z";
+
+        final LicenseClaims claims = LicenseClaimsBuilder.build(lic, NOW);
+
+        assertEquals(List.of("H2", "POSTGRES"), claims.databases);
+        assertEquals(List.of("S3"), claims.storages);
+    }
+
+    @Test
+    public void test_emptyDeploymentAxes_areLegal() {
+        // empty grants nothing on that axis, which is a meaningful license and not an error.
+        final LicenseConfigYaml.License lic = baseLicense();
+        lic.expiresAt = "2027-01-01T00:00:00Z";
+        lic.databases = List.of();
+        lic.storages = List.of();
+
+        final LicenseClaims claims = LicenseClaimsBuilder.build(lic, NOW);
+
+        assertTrue(claims.databases.isEmpty());
+        assertTrue(claims.storages.isEmpty());
+    }
+
+    @Test
+    public void test_blankCapability_rejected() {
+        final LicenseConfigYaml.License lic = baseLicense();
+        lic.expiresAt = "2027-01-01T00:00:00Z";
+        lic.capabilities = List.of(" ");
+
+        final IllegalStateException ex = assertThrows(IllegalStateException.class, () -> LicenseClaimsBuilder.build(lic, NOW));
+        assertTrue(ex.getMessage().startsWith("01.248.050"), ex.getMessage());
+    }
+
+    @Test
+    public void test_capabilityWithoutCategory_rejected() {
+        final LicenseConfigYaml.License lic = baseLicense();
+        lic.expiresAt = "2027-01-01T00:00:00Z";
+        lic.capabilities = List.of("FEATURE_A");
+
+        final IllegalStateException ex = assertThrows(IllegalStateException.class, () -> LicenseClaimsBuilder.build(lic, NOW));
+        assertTrue(ex.getMessage().startsWith("01.248.060"), ex.getMessage());
+    }
+
+    @Test
+    public void test_blankDeploymentValue_rejected() {
+        final LicenseConfigYaml.License lic = baseLicense();
+        lic.expiresAt = "2027-01-01T00:00:00Z";
+        lic.databases = List.of("H2", " ");
+
+        final IllegalStateException ex = assertThrows(IllegalStateException.class, () -> LicenseClaimsBuilder.build(lic, NOW));
+        assertTrue(ex.getMessage().startsWith("01.248.070"), ex.getMessage());
     }
 }

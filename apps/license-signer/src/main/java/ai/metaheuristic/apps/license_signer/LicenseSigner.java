@@ -18,7 +18,7 @@ package ai.metaheuristic.apps.license_signer;
 
 import ai.metaheuristic.commons.spi.license.JwsSigner;
 import ai.metaheuristic.commons.spi.license.LicenseClaimsBuilder;
-import ai.metaheuristic.commons.spi.license.LicenseClaimsV1;
+import ai.metaheuristic.api.data.license.LicenseClaims;
 import ai.metaheuristic.api.data.license.LicenseConfigYaml;
 import ai.metaheuristic.commons.yaml.license.LicenseConfigYamlUtils;
 import com.nimbusds.jose.JOSEObjectType;
@@ -40,10 +40,11 @@ import java.util.Date;
 /**
  * Generic, proprietary-free license-file creator.
  *
- * Reads a YAML recipe ({@link LicenseConfigYaml}), resolves it into {@link LicenseClaimsV1}, and
- * writes a compact JWS license file (ES256). Feature keys are opaque strings taken verbatim from the
- * config - the tool never expands an 'edition' into a feature closure, so no proprietary closure concept
- * enters MH. The 'signing' section of the config governs the key/output and never enters the token.
+ * Reads a YAML recipe ({@link LicenseConfigYaml}), resolves it into {@link LicenseClaims}, and
+ * writes a compact JWS license file (ES256). Capability keys are opaque strings taken verbatim from
+ * the config - the tool never expands an 'edition' into a capability closure, so no proprietary closure
+ * concept enters MH. The deployment axes ('databases', 'storages') are plain MH values and are copied
+ * just as verbatim. The 'signing' section of the config governs the key/output and never enters the token.
  *
  * @author Serge
  */
@@ -84,7 +85,7 @@ public class LicenseSigner implements CommandLineRunner {
                   gen-key                       generate an EC P-256 signing keypair (base64 PKCS#8 / X.509)
                   sign <license-config.yaml>    read the YAML recipe and write the .jws license file
 
-                The YAML config carries opaque feature-key strings; no feature closure is computed here.
+                The YAML config carries opaque capability keys; no capability closure is computed here.
                 """);
     }
 
@@ -130,8 +131,8 @@ public class LicenseSigner implements CommandLineRunner {
             return;
         }
 
-        // LicenseClaimsBuilder enforces the timeless-requires-required_profiles safety rule.
-        final LicenseClaimsV1 claims;
+        // LicenseClaimsBuilder enforces the mandatory-exp rule: there is no timeless license.
+        final LicenseClaims claims;
         try {
             claims = LicenseClaimsBuilder.build(config.license, Instant.now());
         }
@@ -156,18 +157,29 @@ public class LicenseSigner implements CommandLineRunner {
         Files.writeString(out, jws, StandardCharsets.UTF_8);
 
         System.out.println("License written: " + out.toAbsolutePath());
-        System.out.println("  licensee : " + claims.licensee);
-        System.out.println("  edition  : " + claims.edition);
-        System.out.println("  features : " + claims.features);
-        System.out.println("  exp      : " + (claims.exp==null ? "never (deployment-limited)" : claims.exp));
+        System.out.println("  licensee     : " + claims.licensee);
+        System.out.println("  edition      : " + claims.edition);
+        System.out.println("  capabilities : " + claims.capabilities);
+        System.out.println("  databases    : " + claims.databases);
+        System.out.println("  storages     : " + claims.storages);
+        System.out.println("  exp          : " + claims.exp);
     }
 
-    private static String toPayloadJson(LicenseClaimsV1 claims) {
+    /**
+     * Encode the claims as a JOSE claims set. Nimbus owns this encoding - iat/nbf/exp are registered
+     * claims and must go on the wire as NumericDate - which is why the write path does not run
+     * through the JSON chain the verify side reads with. The two agree because every private claim
+     * is named exactly as the field it maps to, and the empty deployment lists are written out
+     * rather than omitted: an empty allow-list is a grant of nothing and must be legible as such.
+     */
+    private static String toPayloadJson(LicenseClaims claims) {
         final JWTClaimsSet.Builder b = new JWTClaimsSet.Builder()
                 .claim("licensee", claims.licensee)
                 .claim("edition", claims.edition)
-                .claim("features", claims.features)
-                .claim("ver", claims.ver);
+                .claim("capabilities", claims.capabilities)
+                .claim("databases", claims.databases)
+                .claim("storages", claims.storages)
+                .claim("version", claims.version);
         if (claims.iat!=null) {
             b.issueTime(Date.from(claims.iat));
         }
@@ -177,14 +189,8 @@ public class LicenseSigner implements CommandLineRunner {
         if (claims.exp!=null) {
             b.expirationTime(Date.from(claims.exp));
         }
-        if (!claims.requiredProfiles.isEmpty()) {
-            b.claim("required_profiles", claims.requiredProfiles);
-        }
-        if (!claims.forbiddenProfiles.isEmpty()) {
-            b.claim("forbidden_profiles", claims.forbiddenProfiles);
-        }
         if (claims.installationId!=null && !claims.installationId.isBlank()) {
-            b.claim("installation_id", claims.installationId);
+            b.claim("installationId", claims.installationId);
         }
         return b.build().toString();
     }

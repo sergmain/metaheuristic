@@ -54,12 +54,12 @@ public class LicenseConfigYamlUtilsV1
 
         trg.license.licensee = src.license.licensee;
         trg.license.edition = src.license.edition;
-        trg.license.features = src.license.features;
+        trg.license.capabilities = src.license.capabilities;
+        trg.license.databases = src.license.databases;
+        trg.license.storages = src.license.storages;
         trg.license.notBefore = src.license.notBefore;
         trg.license.expiresAt = src.license.expiresAt;
         trg.license.validityDuration = src.license.validityDuration;
-        trg.license.requiredProfiles = src.license.requiredProfiles;
-        trg.license.forbiddenProfiles = src.license.forbiddenProfiles;
         trg.license.installationId = src.license.installationId;
 
         trg.signing.algorithm = src.signing.algorithm;

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.commons.spi.license;
 
+import ai.metaheuristic.api.data.license.LicenseClaims;
+import ai.metaheuristic.commons.json.license.LicenseClaimsUtils;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.crypto.ECDSAVerifier;
@@ -26,25 +28,27 @@ import com.nimbusds.jwt.SignedJWT;
 import org.jspecify.annotations.Nullable;
 
 import java.security.interfaces.ECPublicKey;
-import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
 /**
- * Verify side of the license token. Nimbus-direct (no Spring Security OAuth2 decoder), container-aware:
- * JWTParser dispatches, and only a SignedJWT (compact JWS) is accepted today - a PlainJWT (alg:none)
- * or an EncryptedJWT (JWE, future) is rejected structurally, before any claim is trusted.
+ * Verify side of ONE license token. Nimbus-direct (no Spring Security OAuth2 decoder),
+ * container-aware: JWTParser dispatches, and only a SignedJWT (compact JWS) is accepted today - a
+ * PlainJWT (alg:none) or an EncryptedJWT (JWE, future) is rejected structurally, before any claim
+ * is trusted.
  *
- * Enforces the header contract (ES256, typ=license+jws, kid present), signature over the EC public key
- * selected by kid, the timeless-requires-required_profiles safety rule, the deployment profile
- * constraint, optional installation_id binding, and the exp/nbf window with +-60s leeway (Appendix F).
- * Pure and Spring-less: the clock, active profiles, install id, and key resolver are all parameters.
+ * Enforces the header contract (ES256, typ=license+jws, kid present), signature over the EC public
+ * key selected by kid, the mandatory exp, optional installation_id binding, and the exp/nbf window
+ * with +-60s leeway (Appendix F). Pure and Spring-less: the clock, install id and key resolver are
+ * all parameters.
+ *
+ * Deliberately NOT checked here: the running database and storage. Those are properties of the
+ * installation, not of a token, and are decided once against the union of every valid license
+ * (LicenseUnionUtils) - a license that does not list the running database is not invalid, it simply
+ * does not contribute that database.
  *
  * @author Serge
  */
@@ -60,8 +64,9 @@ public class LicenseTokenCodec {
             String token,
             Function<String, @Nullable ECPublicKey> keyByKid,
             Instant now,
-            Set<String> activeProfiles,
             @Nullable String localInstallationId) {
+
+        final JWTClaimsSet claimsSet;
         try {
             final JWT parsed = JWTParser.parse(token);
             if (!(parsed instanceof SignedJWT jwt)) {
@@ -86,43 +91,44 @@ public class LicenseTokenCodec {
             if (!jwt.verify(new ECDSAVerifier(pub))) {
                 return invalid(LicenseState.SIGNATURE_INVALID);
             }
-
-            final LicenseClaimsV1 claims = toClaims(jwt.getJWTClaimsSet());
-
-            // Appendix D safety MUST: no exp is accepted only when deployment-pinned.
-            if (claims.exp == null && claims.requiredProfiles.isEmpty()) {
-                return result(LicenseState.MALFORMED, claims);
-            }
-            // installation binding (Appendix G): only when both a claim and a local id are present.
-            if (claims.installationId != null && !claims.installationId.isBlank()
-                    && localInstallationId != null && !claims.installationId.equals(localInstallationId)) {
-                return result(LicenseState.INSTALL_ID_MISMATCH, claims);
-            }
-            // deployment profile constraint (section 7.7).
-            if (!claims.requiredProfiles.isEmpty() && !activeProfiles.containsAll(claims.requiredProfiles)) {
-                return result(LicenseState.PROFILE_CONSTRAINT_VIOLATED, claims);
-            }
-            for (String forbidden : claims.forbiddenProfiles) {
-                if (activeProfiles.contains(forbidden)) {
-                    return result(LicenseState.PROFILE_CONSTRAINT_VIOLATED, claims);
-                }
-            }
-            // time window with leeway.
-            if (claims.nbf != null && now.isBefore(claims.nbf.minus(LEEWAY))) {
-                return result(LicenseState.NOT_YET_VALID, claims);
-            }
-            if (claims.exp != null && now.isAfter(claims.exp.plus(LEEWAY))) {
-                return result(LicenseState.EXPIRED, claims);
-            }
-            return result(LicenseState.VALID, claims);
+            claimsSet = jwt.getJWTClaimsSet();
         }
         catch (Exception e) {
             return invalid(LicenseState.SIGNATURE_INVALID);
         }
+
+        // A well-signed token whose body we cannot read is MALFORMED, not SIGNATURE_INVALID: the
+        // signature did check out, and reporting otherwise would send the admin after the wrong fault.
+        final LicenseClaims claims;
+        try {
+            claims = toClaims(claimsSet);
+        }
+        catch (Exception e) {
+            return invalid(LicenseState.MALFORMED);
+        }
+
+        // exp is mandatory (decision 19). There is no timeless license: an omitted exp used to
+        // become a perpetual production grant by accident, and a trial that runs out is re-issued.
+        if (claims.exp == null) {
+            return result(LicenseState.MALFORMED, claims);
+        }
+        // installation binding (Appendix G): only when both a claim and a local id are present.
+        if (claims.installationId != null && !claims.installationId.isBlank()
+                && localInstallationId != null && !claims.installationId.equals(localInstallationId)) {
+            return result(LicenseState.INSTALL_ID_MISMATCH, claims);
+        }
+        // time window with leeway.
+        if (claims.nbf != null && now.isBefore(claims.nbf.minus(LEEWAY))) {
+            return result(LicenseState.NOT_YET_VALID, claims);
+        }
+        if (now.isAfter(claims.exp.plus(LEEWAY))) {
+            return result(LicenseState.EXPIRED, claims);
+        }
+        return result(LicenseState.VALID, claims);
     }
 
-    private static LicenseVerificationResult result(LicenseState state, LicenseClaimsV1 claims) {
-        final Set<String> keys = new HashSet<>(claims.features);
+    private static LicenseVerificationResult result(LicenseState state, LicenseClaims claims) {
+        final Set<String> keys = new HashSet<>(claims.capabilities);
         return new LicenseVerificationResult(state, claims, new ClaimsEntitlements(state, claims.exp, keys));
     }
 
@@ -130,27 +136,14 @@ public class LicenseTokenCodec {
         return new LicenseVerificationResult(state, null, ClaimsEntitlements.invalid(state));
     }
 
-    private static LicenseClaimsV1 toClaims(JWTClaimsSet cs) throws ParseException {
-        final LicenseClaimsV1 c = new LicenseClaimsV1();
-        final Object ver = cs.getClaim("ver");
-        c.ver = ver instanceof Number n ? n.intValue() : 1;
-        c.licensee = cs.getStringClaim("licensee");
-        c.edition = cs.getStringClaim("edition");
-        c.features = stringList(cs, "features");
-        final Date iat = cs.getIssueTime();
-        final Date nbf = cs.getNotBeforeTime();
-        final Date exp = cs.getExpirationTime();
-        c.iat = iat == null ? null : iat.toInstant();
-        c.nbf = nbf == null ? null : nbf.toInstant();
-        c.exp = exp == null ? null : exp.toInstant();
-        c.requiredProfiles = stringList(cs, "required_profiles");
-        c.forbiddenProfiles = stringList(cs, "forbidden_profiles");
-        c.installationId = cs.getStringClaim("installation_id");
-        return c;
-    }
-
-    private static List<String> stringList(JWTClaimsSet cs, String name) throws ParseException {
-        final List<String> v = cs.getStringListClaim(name);
-        return v == null ? new ArrayList<>() : new ArrayList<>(v);
+    /**
+     * The one place the claims chain is entered on the read path. The payload is a JOSE claims set,
+     * so by the time the signature has been checked the raw JSON is behind a JWTClaimsSet and the
+     * version detector has nothing to sniff; the version claim is read here and named explicitly.
+     */
+    private static LicenseClaims toClaims(JWTClaimsSet cs) {
+        final Object ver = cs.getClaim("version");
+        final int version = ver instanceof Number n ? n.intValue() : 1;
+        return LicenseClaimsUtils.fromJson(version, cs.toString());
     }
 }
