@@ -47,6 +47,9 @@ import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.spi.license.Feature;
+import ai.metaheuristic.commons.spi.license.LicenseGuard;
+import ai.metaheuristic.commons.spi.license.LicenseSource;
 import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
@@ -109,6 +112,7 @@ public class BatchTopLevelService {
     private final BatchHelperService batchHelperService;
     private final VariableTxService variableTxService;
     private final ExecContextGraphService execContextGraphService;
+    private final LicenseSource licenseSource;
 
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BatchTopLevelService::isZipEntitySizeOk;
@@ -240,7 +244,21 @@ public class BatchTopLevelService {
         return items;
     }
 
+    /**
+     * ❗ THE gate for {@code Capability:BATCH}. There is exactly one, and it is here rather than on
+     * every public method of this class: submitting a batch is what EXERCISES the capability, while
+     * listing or deleting existing ones is how an operator cleans up after a licence lapses.
+     * Refusing those would strand work an admin can no longer reach without helping anybody.
+     *
+     * <p>The capability is written as a string literal on purpose. There is no constant class to
+     * import: one would have to name proprietary vocabulary, and nothing under
+     * {@code java/metaheuristic} may do that. The issuing side owns the vocabulary; MH compares
+     * strings and never learns what they mean.
+     *
+     * <p>Read fresh on every call — never cached — because validity flips as {@code exp} passes.
+     */
     public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final UserContext userContext) {
+        LicenseGuard.require(licenseSource, new Feature("Capability", "BATCH"));
         if (Consts.ID_1.equals(userContext.getCompanyId())) {
             return new BatchData.UploadingStatus("981.030 Batch can't be created in company #1");
         }

@@ -47,7 +47,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/rest/v1/dispatcher/license")
 @Slf4j
-@Profile("dispatcher & internal-lm")
+@Profile("dispatcher & !aws-lm")
 @CrossOrigin
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class LicenseRestController {

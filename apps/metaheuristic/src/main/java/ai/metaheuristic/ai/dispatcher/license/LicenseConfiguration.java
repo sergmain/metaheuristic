@@ -35,9 +35,16 @@ import java.time.Instant;
  * its own — it supplies where the tokens come from, what time it is, which deployment we are on,
  * and who we are. Everything else lives in {@code ai.metaheuristic.commons.spi.license}.
  *
- * <p><b>{@code aws-lm} is a reserved profile name with NO bean bound to it.</b> The AWS backend is
- * implemented in {@code java/aws} and deliberately unwired; exactly one {@code LicenseSource} is
- * active per dispatcher, so gating code never disambiguates.
+ * <p>❗ <b>The internal backend is the DEFAULT for every dispatcher, not an opt-in.</b> The profile
+ * expression is {@code !aws-lm} rather than {@code internal-lm} on purpose: an opt-in profile makes
+ * the entire licence bypassable by deleting one name from a properties file, which is not a
+ * licensing system. Deleting a profile name now does nothing; the only way to reach a dispatcher
+ * with no {@code LicenseSource} is to activate {@code aws-lm}, which is reserved and unwired, and
+ * such a dispatcher fails to start rather than running unlicensed. That is the honest outcome —
+ * that backend genuinely is not wired.
+ *
+ * <p>{@code !test} excludes this class under the test profile, where the test source set supplies
+ * its own backend with its own key. Nothing that reads a key from configuration ships.
  *
  * <p>The bean is typed {@code SignedFileLicenseSource} rather than {@code LicenseSource} so the
  * admin projection can reach {@code currentResult()} for the per-license breakdown. Gates inject
@@ -47,7 +54,7 @@ import java.time.Instant;
  * @author Serge
  */
 @Configuration
-@Profile("dispatcher & internal-lm")
+@Profile("dispatcher & !aws-lm & !test")
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class LicenseConfiguration {
