@@ -68,10 +68,18 @@ public class LicenseConfigYaml implements BaseParams {
         @Nullable public String installationId;
     }
 
+    /**
+     * How and where to sign. Never enters the token.
+     *
+     * <p>❗ There is deliberately no {@code privateKeyFile}. The signing key is supplied on the
+     * COMMAND LINE (or minted for the run), never named by the recipe: a recipe is a document that
+     * gets copied, mailed and checked into repositories, and a path to the vendor's signing key is
+     * the one thing that must not travel with it. A recipe still carrying the field is rejected
+     * rather than silently ignored, so an old one cannot quietly sign with the wrong key.
+     */
     @Data
     public static class Signing {
         public String algorithm = "ES256";
-        public String privateKeyFile;
         public String kid;
         public String outputFile;
     }

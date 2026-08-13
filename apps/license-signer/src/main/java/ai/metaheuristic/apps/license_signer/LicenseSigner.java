@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.interfaces.ECPrivateKey;
+import org.jspecify.annotations.Nullable;
 import java.time.Instant;
 import java.util.Date;
 
@@ -67,14 +68,29 @@ public class LicenseSigner implements CommandLineRunner {
             return;
         }
         if ("sign".equals(cmd)) {
-            if (args.length<2) {
-                System.out.println("249.010 usage: sign <license-config.yaml>");
+            if (args.length<3) {
+                System.out.println("249.010 usage: sign <license-config.yaml> (--key <private-key-file> | --mint-key)");
                 return;
             }
-            sign(Path.of(args[1]));
+            if ("--mint-key".equals(args[2])) {
+                sign(Path.of(args[1]), null);
+                return;
+            }
+            if ("--key".equals(args[2]) && args.length>3) {
+                sign(Path.of(args[1]), Path.of(args[3]));
+                return;
+            }
+            System.out.println("249.010 usage: sign <license-config.yaml> (--key <private-key-file> | --mint-key)");
             return;
         }
         printUsage();
+    }
+
+    /** {@code ./license.jws} -> {@code ./license}, so the three artifacts share one base name. */
+    private static Path stripSuffix(Path outputFile) {
+        final String name = outputFile.getFileName().toString();
+        final int dot = name.lastIndexOf('.');
+        return dot<1 ? outputFile : outputFile.resolveSibling(name.substring(0, dot));
     }
 
     private static void printUsage() {
@@ -82,9 +98,20 @@ public class LicenseSigner implements CommandLineRunner {
                 license-signer - creates a signed license file (compact JWS, ES256).
 
                 Commands:
-                  gen-key                       generate an EC P-256 signing keypair (base64 PKCS#8 / X.509)
-                  sign <license-config.yaml>    read the YAML recipe and write the .jws license file
+                  gen-key
+                      generate an EC P-256 signing keypair (base64 PKCS#8 / X.509)
 
+                  sign <license-config.yaml> --key <private-key-file>
+                      sign with a key you already hold - the normal vendor path
+
+                  sign <license-config.yaml> --mint-key
+                      mint a fresh keypair, sign with it, and write THREE files beside the output:
+                      the .jws licence, <name>-private.key and <name>-public.key. Refuses to
+                      overwrite an existing key file. What happens to the private half afterwards is
+                      the operator's decision - for a test licence it is used once and destroyed,
+                      since only the public half is needed to verify.
+
+                The signing key is NEVER named by the recipe; it is a command-line concern.
                 The YAML config carries opaque capability keys; no capability closure is computed here.
                 """);
     }
@@ -100,7 +127,7 @@ public class LicenseSigner implements CommandLineRunner {
                 """);
     }
 
-    private static void sign(Path configFile) throws Exception {
+    private static void sign(Path configFile, @Nullable Path keyFileOrNull) throws Exception {
         if (Files.notExists(configFile)) {
             System.out.println("249.020 config file doesn't exist: " + configFile);
             return;
@@ -121,15 +148,6 @@ public class LicenseSigner implements CommandLineRunner {
             System.out.println("249.050 signing.outputFile must be set");
             return;
         }
-        if (signing.privateKeyFile==null || signing.privateKeyFile.isBlank()) {
-            System.out.println("249.060 signing.privateKeyFile must be set");
-            return;
-        }
-        final Path keyFile = Path.of(signing.privateKeyFile);
-        if (Files.notExists(keyFile)) {
-            System.out.println("249.070 private key file doesn't exist: " + keyFile);
-            return;
-        }
 
         // LicenseClaimsBuilder enforces the mandatory-exp rule: there is no timeless license.
         final LicenseClaims claims;
@@ -141,7 +159,34 @@ public class LicenseSigner implements CommandLineRunner {
             return;
         }
 
-        final ECPrivateKey privateKey = EcP256Keys.readPrivateKey(Files.readString(keyFile, StandardCharsets.UTF_8));
+        final ECPrivateKey privateKey;
+        @Nullable Path mintedPrivatePath = null;
+        @Nullable Path mintedPublicPath = null;
+        if (keyFileOrNull==null) {
+            // Both halves are written. Handing back only the public half would make the tool lossy:
+            // whoever misses the console output has lost the signing key with no way to recover it.
+            // Whether the private half survives afterwards is the operator's call, not the tool's.
+            final Path base = stripSuffix(Path.of(signing.outputFile));
+            mintedPrivatePath = base.resolveSibling(base.getFileName() + "-private.key");
+            mintedPublicPath = base.resolveSibling(base.getFileName() + "-public.key");
+            if (Files.exists(mintedPrivatePath) || Files.exists(mintedPublicPath)) {
+                // overwriting a signing key silently would be unrecoverable.
+                System.out.println("249.080 key file already exists, refusing to overwrite: "
+                        + (Files.exists(mintedPrivatePath) ? mintedPrivatePath : mintedPublicPath));
+                return;
+            }
+            final KeyPair kp = EcP256Keys.generate();
+            privateKey = (ECPrivateKey) kp.getPrivate();
+            Files.writeString(mintedPrivatePath, EcP256Keys.encodeBase64(kp.getPrivate()), StandardCharsets.UTF_8);
+            Files.writeString(mintedPublicPath, EcP256Keys.encodeBase64(kp.getPublic()), StandardCharsets.UTF_8);
+        }
+        else {
+            if (Files.notExists(keyFileOrNull)) {
+                System.out.println("249.070 private key file doesn't exist: " + keyFileOrNull);
+                return;
+            }
+            privateKey = EcP256Keys.readPrivateKey(Files.readString(keyFileOrNull, StandardCharsets.UTF_8));
+        }
         final JwsSigner jwsSigner = new LocalEcP256JwsSigner(privateKey);
 
         final String headerJson = new JWSHeader.Builder(JWSAlgorithm.ES256)
@@ -163,6 +208,14 @@ public class LicenseSigner implements CommandLineRunner {
         System.out.println("  databases    : " + claims.databases);
         System.out.println("  storages     : " + claims.storages);
         System.out.println("  exp          : " + claims.exp);
+        if (mintedPrivatePath!=null) {
+            System.out.println("  private key  : " + mintedPrivatePath.toAbsolutePath());
+            System.out.println("  public key   : " + mintedPublicPath.toAbsolutePath());
+            System.out.println();
+            System.out.println("A fresh signing keypair was minted. NEVER commit the private half; the public half is");
+            System.out.println("what the verifier needs. Re-issuing under this key later requires keeping the private");
+            System.out.println("half somewhere safe - destroying it makes this licence permanently un-reissuable.");
+        }
     }
 
     /**

@@ -60,7 +60,6 @@ public class LicenseConfigYamlV1 implements BaseParams {
     @Data
     public static class SigningV1 {
         public String algorithm = "ES256";
-        public String privateKeyFile;
         public String kid;
         public String outputFile;
     }

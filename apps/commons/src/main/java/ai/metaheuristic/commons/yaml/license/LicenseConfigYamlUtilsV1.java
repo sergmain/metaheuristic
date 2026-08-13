@@ -63,7 +63,6 @@ public class LicenseConfigYamlUtilsV1
         trg.license.installationId = src.license.installationId;
 
         trg.signing.algorithm = src.signing.algorithm;
-        trg.signing.privateKeyFile = src.signing.privateKeyFile;
         trg.signing.kid = src.signing.kid;
         trg.signing.outputFile = src.signing.outputFile;
 

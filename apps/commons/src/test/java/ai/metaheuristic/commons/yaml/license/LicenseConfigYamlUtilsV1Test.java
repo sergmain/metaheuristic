@@ -57,7 +57,6 @@ public class LicenseConfigYamlUtilsV1Test {
               validityDuration: "P365D"
             signing:
               algorithm: "ES256"
-              privateKeyFile: "/path/to/vendor-ec-private.key"
               kid: "lic-key-1"
               outputFile: "./license.jws"
             """;
@@ -77,7 +76,6 @@ public class LicenseConfigYamlUtilsV1Test {
               validityDuration: "P30D"
             signing:
               algorithm: "ES256"
-              privateKeyFile: "/path/to/vendor-ec-private.key"
               kid: "lic-key-1"
               outputFile: "./license-trial.jws"
             """;
