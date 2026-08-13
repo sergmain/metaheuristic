@@ -69,12 +69,16 @@ public class SignalKindRegistry {
         TopicBuilder documentExportTopic = (k, id, info) ->
             "document.export." + info.get("projectId") + ".progress";
         TopicBuilder systemNoticeTopic = (k, id, info) -> "system.notice";
+        // installation-wide: a licence is per-installation, not per-entity, so there is exactly one
+        // topic and the signalId carries what happened rather than which object it happened to.
+        TopicBuilder licenseStateTopic = (k, id, info) -> "license.state";
 
         Map<SignalKind, TopicBuilder> topics = new HashMap<>();
         topics.put(SignalKind.BATCH, batchTopic);
         topics.put(SignalKind.EXEC_CONTEXT, execContextTopic);
         topics.put(SignalKind.DOCUMENT_EXPORT, documentExportTopic);
         topics.put(SignalKind.SYSTEM_NOTICE, systemNoticeTopic);
+        topics.put(SignalKind.LICENSE_STATE, licenseStateTopic);
 
         Map<SignalKind, CoalescePolicy> coalesce = new HashMap<>();
         coalesce.put(SignalKind.BATCH, CoalescePolicy.NONE);
@@ -82,6 +86,10 @@ public class SignalKindRegistry {
         coalesce.put(SignalKind.DOCUMENT_EXPORT,
             new CoalescePolicy(java.time.Duration.ofMillis(100)));
         coalesce.put(SignalKind.SYSTEM_NOTICE, CoalescePolicy.NONE);
+        // installing three licences in a row should wake the UI once, not three times; the client
+        // re-reads the whole aggregate anyway, so intermediate publishes carry nothing extra.
+        coalesce.put(SignalKind.LICENSE_STATE,
+            new CoalescePolicy(java.time.Duration.ofMillis(500)));
 
         return new SignalKindRegistry(topics, coalesce);
     }

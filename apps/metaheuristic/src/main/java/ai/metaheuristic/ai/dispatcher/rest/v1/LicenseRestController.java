@@ -20,12 +20,14 @@ import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.license.LicenseArtifactService;
 import ai.metaheuristic.ai.dispatcher.license.LicenseInfoData;
 import ai.metaheuristic.ai.dispatcher.license.LicenseInfoService;
+import ai.metaheuristic.commons.spi.license.SignedFileLicenseSource;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -55,6 +57,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/rest/v1/dispatcher/license")
 @Slf4j
 @Profile("dispatcher")
+@ConditionalOnBean(SignedFileLicenseSource.class)
 @CrossOrigin
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class LicenseRestController {
@@ -68,6 +71,22 @@ public class LicenseRestController {
     @PreAuthorize("hasAnyRole('MAIN_ADMIN')")
     public LicenseInfoData.LicenseStatusResult status() {
         return new LicenseInfoData.LicenseStatusResult(licenseInfoService.info());
+    }
+
+    /**
+     * The effective capability list, for ANY authenticated user.
+     *
+     * <p>Separate from /status on purpose: /status is MainAdmin-only because it names the licensee,
+     * the installation id and every installed licence. This returns only what the UI needs to avoid
+     * offering a user a feature that will be refused — which the UI reveals anyway by which parts
+     * work, so there is nothing to withhold.
+     *
+     * <p>❗ UX, never enforcement. The gates are the boundary; a browser can ask for anything.
+     */
+    @GetMapping("/capabilities")
+    @PreAuthorize("isAuthenticated()")
+    public LicenseInfoData.CapabilitiesResult capabilities() {
+        return new LicenseInfoData.CapabilitiesResult(licenseInfoService.capabilities());
     }
 
     /**

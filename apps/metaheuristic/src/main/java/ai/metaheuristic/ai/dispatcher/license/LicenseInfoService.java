@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -51,7 +52,23 @@ import java.util.Map;
  * @author Serge
  */
 @Service
+/**
+ * ❗ Bound to the presence of an OFFLINE backend, not to a single profile name.
+ *
+ * <p>This is the licence-ADMIN surface: install a signed file, remove one, list what is installed.
+ * None of that exists under an external authority — on {@code aws-lm} the entitlement comes from
+ * AWS and there is nothing to install — and the bean injects the concrete
+ * {@code SignedFileLicenseSource}, which only the offline backends declare. Left on plain
+ * {@code @Profile("dispatcher")} it would fail context startup under {@code aws-lm} with a missing
+ * bean.
+ *
+ * <p>{@code @ConditionalOnBean} is used rather than a profile expression because the set of
+ * offline backends is OPEN — {@code internal-lm} plus each test harness — and a profile expression
+ * would have to be edited every time one is added, which is exactly the negative-list problem that
+ * backend selection was moved away from.
+ */
 @Profile("dispatcher")
+@ConditionalOnBean(SignedFileLicenseSource.class)
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class LicenseInfoService {
@@ -68,6 +85,17 @@ public class LicenseInfoService {
         return new LicenseInfoData.LicenseInfo(
                 effective(aggregate, deployment),
                 LicenseInfoUtils.breakdown(aggregate.licenses(), liveRowsByTokenHash()));
+    }
+
+    /**
+     * The effective capability set alone. Reads the aggregate and nothing else — no per-licence
+     * breakdown, so no MH_LICENSE_ARTIFACT query — because this is called on navigation rather than
+     * on an admin opening a page.
+     */
+    public LicenseInfoData.Capabilities capabilities() {
+        final LicenseAggregate aggregate = licenseSource.currentResult();
+        return new LicenseInfoData.Capabilities(
+                aggregate.entitlements().valid(), sorted(aggregate.capabilities()));
     }
 
     private LicenseInfoData.EffectiveEntitlement effective(LicenseAggregate aggregate, DeploymentValues deployment) {
