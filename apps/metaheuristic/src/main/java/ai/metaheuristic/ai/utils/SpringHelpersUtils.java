@@ -56,6 +56,14 @@ public class SpringHelpersUtils {
             WEBSOCKET_PROFILE, // turn on a notification of Processor by Dispatcher over websockets
             "mcp",
 
+            // licence-manager backends. EXACTLY ONE must be active on a dispatcher: the LicenseSource
+            // bean is selected by these and nothing else provides one, so a dispatcher started without
+            // one has no licence backend at all. They are listed POSITIVELY - adding a backend must
+            // never mean editing a negative @Profile expression somewhere else.
+            "internal-lm",   // offline signed file, authority = us. The production backend.
+            "aws-lm",        // AWS License Manager. Reserved: implemented in java/aws, NOT wired.
+            "mh-test-lm",    // this module's own test harness; its config lives in src/test.
+
             // db's profiles
             "mysql", "mariadb", "postgresql", "h2", "derby", "generic", "custom"
         ));
