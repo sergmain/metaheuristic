@@ -16,7 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher.license;
 
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.signal_bus.ScopeRef;
+import ai.metaheuristic.ai.dispatcher.signal_bus.SignalBus;
+import ai.metaheuristic.ai.dispatcher.signal_bus.SignalKind;
 import ai.metaheuristic.api.EnumsApi;
+
+import java.util.Map;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.spi.license.LicenseTokenCodec;
@@ -58,6 +64,7 @@ import java.time.Instant;
 public class LicenseArtifactService {
 
     private final LicenseArtifactTxService licenseArtifactTxService;
+    private final SignalBus signalBus;
     private final LicenseInstallationService licenseInstallationService;
     private final SignedFileLicenseSource licenseSource;
 
@@ -79,6 +86,7 @@ public class LicenseArtifactService {
 
         final LicenseArtifactUtils.InstallAction action = licenseArtifactTxService.install(trimmed, installedByAccountId);
         licenseSource.invalidate();
+        announce("installed");
 
         return switch (action) {
             // a repeat is an outcome, not a fault — re-installing a license you already hold is
@@ -92,6 +100,24 @@ public class LicenseArtifactService {
         };
     }
 
+    /**
+     * Tell any connected UI that the entitlement changed, so it re-reads instead of showing a user
+     * a licence they already installed as still missing.
+     *
+     * <p>❗ UI-notification only. Nothing server-side listens for this, and nothing should — the
+     * runtime reads the licence itself on every gate.
+     */
+    private void announce(String what) {
+        try {
+            signalBus.put(SignalKind.LICENSE_STATE, what, new ScopeRef(Consts.ID_1),
+                    Map.of("change", what), true);
+        }
+        catch (RuntimeException e) {
+            // a UI notification is not worth failing an install that already succeeded.
+            log.warn("01.262.050 couldn't publish the licence-state signal: {}", e.getMessage());
+        }
+    }
+
     public OperationStatusRest remove(@Nullable Long artifactId) {
         if (artifactId == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "01.262.030 the license id is missing");
@@ -101,6 +127,7 @@ public class LicenseArtifactService {
                     "01.262.040 there is no installed license with id: " + artifactId);
         }
         licenseSource.invalidate();
+        announce("removed");
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 }

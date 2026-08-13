@@ -53,6 +53,15 @@ public record SignalKind(@JsonValue String kind) {
     }
 
     public static final SignalKind BATCH = new SignalKind("BATCH");
+
+    /**
+     * A licence was installed or removed on this dispatcher.
+     *
+     * <p>UI-notification ONLY, which is exactly what this bus is for: the client re-reads its
+     * effective capabilities so a freshly installed licence unlocks the UI without a page reload.
+     * It drives no backend work — nothing server-side listens for it, and nothing should.
+     */
+    public static final SignalKind LICENSE_STATE = new SignalKind("LICENSE_STATE");
     public static final SignalKind EXEC_CONTEXT = new SignalKind("EXEC_CONTEXT");
     public static final SignalKind DOCUMENT_EXPORT = new SignalKind("DOCUMENT_EXPORT");
     public static final SignalKind SYSTEM_NOTICE = new SignalKind("SYSTEM_NOTICE");
