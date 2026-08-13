@@ -60,7 +60,7 @@ public class MultiHttpSecurityConfig {
         return new BCryptPasswordEncoder(10);
     }
 
-    // https://github.com/spring-guides/gs-rest-service-cors/blob/master/complete/src/test/java/hello/GreetingIntegrationTests.java
+    // https://github.com/spring-guides/gs-rest-service-cors/blob/main/complete/src/test/java/com/example/restservicecors/GreetingIntegrationTests.java
     // TODO 2019-10-13 need to investigate how to use CORS with restTemplate
 /*
     @Bean
@@ -83,7 +83,7 @@ public class MultiHttpSecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain restFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain restFilterChain(HttpSecurity http) {
         http
             .httpBasic(withDefaults())
             .cors((r)->	r.configurationSource(corsConfigurationSource(globals.corsAllowedOrigins)))

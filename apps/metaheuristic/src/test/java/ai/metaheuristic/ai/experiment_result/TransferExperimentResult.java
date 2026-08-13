@@ -60,7 +60,8 @@ public class TransferExperimentResult extends MhSharedItTest {
     @Autowired public ExecContextCache execContextCache;
 
     @Test
-    @Disabled("This method is't test actually and is used for transfer an actual result of experiment, that's why it is disabled")
+    @DisplayName("This method isn't test actually and is used for transfer an actual result of experiment, that's why it is disabled")
+    @Disabled
     public void test() {
 
 

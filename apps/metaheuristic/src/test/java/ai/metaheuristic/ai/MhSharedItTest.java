@@ -53,7 +53,7 @@ public abstract class MhSharedItTest {
     static void sharedProps(DynamicPropertyRegistry r) {
         r.add("spring.datasource.url",  () -> SharedItEnv.DB_URL);
         r.add("mh.home",                () -> SharedItEnv.MH_HOME);
-        r.add("spring.profiles.active", () -> "dispatcher,h2,test");
+        r.add("spring.profiles.active", () -> "dispatcher,h2,test,mh-test-lm");
     }
 
     @Autowired(required = false) private ExecContextRepository execContextRepository;

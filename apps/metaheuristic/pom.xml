@@ -203,7 +203,6 @@
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
-<!--            <version>4.23.0</version>-->
             <exclusions>
                 <exclusion>
                     <groupId>org.liquibase</groupId>
