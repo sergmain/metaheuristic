@@ -37,7 +37,7 @@ import java.time.Instant;
  *
  * <p>❗ <b>A licence-manager profile is REQUIRED.</b> Every {@code *-lm} backend declares itself
  * POSITIVELY, exactly as the storage backends do — {@code internal-lm} here, {@code aws-lm} for
- * AWS, {@code mh-test-lm} and {@code rg-test-lm} for the two test harnesses. A dispatcher started
+ * AWS, and {@code mh-test-lm} for this module's test harness. A dispatcher started
  * with none of them has no {@code LicenseSource} and FAILS TO START. That is the point: running
  * unlicensed is not a state this application has, and a licence you can switch off by deleting a
  * profile name is not a licence.
