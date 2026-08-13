@@ -24,7 +24,6 @@ import lombok.SneakyThrows;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -33,13 +32,18 @@ import java.util.Map;
 
 public class Checksum {
 
-    private static ObjectMapper mapper;
+    public Map<EnumsApi.HashAlgo, String> checksums = new HashMap<>();
 
-    static {
-        mapper = JsonMapper.builder()
-                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-                .build();
+    public Checksum(EnumsApi.HashAlgo type, String checksum) {
+        this.checksums.put(type, checksum);
     }
+
+    public Checksum() {
+    }
+
+    private static final ObjectMapper mapper = JsonMapper.builder()
+            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+            .build();
 
     public static String getChecksum(EnumsApi.HashAlgo type, String data)  {
         return getChecksum(type, IOUtils.toInputStream(data, StandardCharsets.UTF_8));
@@ -47,27 +51,14 @@ public class Checksum {
 
     @SneakyThrows
     public static String getChecksum(EnumsApi.HashAlgo type, InputStream inputStream) {
-        switch (type) {
-            case MD5:
-                return DigestUtils.md5Hex(inputStream);
-            case SHA256:
-            case SHA256WithSignature:
-                return DigestUtils.sha256Hex(inputStream);
-//                throw new IllegalStateException("Shouldn't be created here. Use external methods");
-            default:
-                throw new IllegalStateException("Checksum for " + type +"  isn't supported yet");
-        }
+        return switch (type) {
+            case MD5 -> DigestUtils.md5Hex(inputStream);
+            case SHA256, SHA256WithSignature -> DigestUtils.sha256Hex(inputStream);
+            default -> throw new IllegalStateException("Checksum for " + type + "  isn't supported yet");
+        };
     }
 
-    public Map<EnumsApi.HashAlgo, String> checksums = new HashMap<>();
-
-    public Checksum() {
-    }
-
-    public Checksum(EnumsApi.HashAlgo type, String checksum) {
-        this.checksums.put(type, checksum);
-    }
-
+    @SuppressWarnings("unused")
     public String toJson() {
         try {
             return mapper.writeValueAsString(this);
@@ -92,9 +83,7 @@ public class Checksum {
                 '}';
     }
 
-    public static void main(String[] args) {
+    static void main() {
         String c = "{\"checksums\":{\"SHA256\":\"34f55188ece53401987db632429bf5f96758be391a0812d29baad2cb874da974\"}}";
-
-
     }
 }

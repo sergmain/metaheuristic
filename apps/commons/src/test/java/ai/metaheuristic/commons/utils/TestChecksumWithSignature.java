@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.Signature;
-import java.util.Map;
 import java.util.Random;
 
 import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData.ChecksumWithSignature;
@@ -133,8 +132,7 @@ public class TestChecksumWithSignature {
 
 
         is = new ByteArrayInputStream(CONTENT_1.getBytes());
-        Checksum checksum = new Checksum();
-        checksum.checksums = Map.of(EnumsApi.HashAlgo.SHA256WithSignature, checksumWithSignature);
+        Checksum checksum = new Checksum(EnumsApi.HashAlgo.SHA256WithSignature, checksumWithSignature);
         status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "info:", is, keys.getPublicKey());
         assertEquals(EnumsApi.ChecksumState.correct, status.checksum);
         assertEquals(EnumsApi.SignatureState.correct, status.signature);

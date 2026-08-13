@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Serge
  */
 @Execution(ExecutionMode.CONCURRENT)
-public class LicenseConfigYamlUtilsV1Test {
+public class LicenseConfigYamlUtilsTest {
 
     private static final String ENTERPRISE_YAML = """
             version: 1

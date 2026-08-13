@@ -27,7 +27,7 @@ import java.security.*;
 @SpringBootApplication
 public class GenerateKeys implements CommandLineRunner {
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         SpringApplication.run(GenerateKeys.class, args);
     }
 

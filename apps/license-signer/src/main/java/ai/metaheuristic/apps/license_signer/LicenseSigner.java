@@ -52,7 +52,7 @@ import java.util.Date;
 @SpringBootApplication
 public class LicenseSigner implements CommandLineRunner {
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         SpringApplication.run(LicenseSigner.class, args);
     }
 
