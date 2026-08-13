@@ -62,10 +62,11 @@ public class SpringHelpersUtils {
             // never mean editing a negative @Profile expression somewhere else.
             "internal-lm",   // offline signed file, authority = us. The production backend.
             "mh-test-lm",    // this module's own test harness; its config lives in src/test.
-            // NOT listed here: "aws-lm" and "rg-test-lm". A module owns its own profile names and
-            // registers them from its auto-config static initializer, the same way java/aws already
-            // owns "s3-storage". A profile that only means something when a jar is on the classpath
-            // should only be ACCEPTED when that jar is present - and MH must not name RG at all.
+            // Only the backends MH itself owns are listed. Every other module registers its own
+            // profile name from its auto-config static initializer, the way "s3-storage" already
+            // does: a profile that means something only when a jar is on the classpath should be
+            // ACCEPTED only when that jar is present, so activating it against a build that
+            // excludes the module is correctly rejected as unknown instead of failing later.
 
             // db's profiles
             "mysql", "mariadb", "postgresql", "h2", "derby", "generic", "custom"
