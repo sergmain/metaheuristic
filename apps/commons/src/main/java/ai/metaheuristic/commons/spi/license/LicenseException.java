@@ -31,7 +31,7 @@ package ai.metaheuristic.commons.spi.license;
  */
 public class LicenseException extends RuntimeException {
 
-    /** The wire form of the capability that was refused, e.g. {@code Capability:RG}. */
+    /** The wire form of the capability that was refused, e.g. {@code Capability:SOMETHING}. */
     public final String featureKey;
 
     public LicenseException(String message, String featureKey) {
