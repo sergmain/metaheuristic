@@ -61,8 +61,11 @@ public class SpringHelpersUtils {
             // one has no licence backend at all. They are listed POSITIVELY - adding a backend must
             // never mean editing a negative @Profile expression somewhere else.
             "internal-lm",   // offline signed file, authority = us. The production backend.
-            "aws-lm",        // AWS License Manager. Reserved: implemented in java/aws, NOT wired.
             "mh-test-lm",    // this module's own test harness; its config lives in src/test.
+            // NOT listed here: "aws-lm" and "rg-test-lm". A module owns its own profile names and
+            // registers them from its auto-config static initializer, the same way java/aws already
+            // owns "s3-storage". A profile that only means something when a jar is on the classpath
+            // should only be ACCEPTED when that jar is present - and MH must not name RG at all.
 
             // db's profiles
             "mysql", "mariadb", "postgresql", "h2", "derby", "generic", "custom"
