@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.license;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.signal_bus.ScopeRef;
 import ai.metaheuristic.ai.dispatcher.signal_bus.SignalBus;
 import ai.metaheuristic.ai.dispatcher.signal_bus.SignalKind;
@@ -63,6 +64,7 @@ import java.time.Instant;
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class LicenseArtifactService {
 
+    private final Globals globals;
     private final LicenseArtifactTxService licenseArtifactTxService;
     private final SignalBus signalBus;
     private final LicenseInstallationService licenseInstallationService;
@@ -75,7 +77,7 @@ public class LicenseArtifactService {
         final String trimmed = token.strip();
 
         final LicenseVerificationResult verified = LicenseTokenCodec.verify(
-                trimmed, LicenseVerificationKeys::byKid,
+                trimmed, LicenseVerificationKeys.resolver(globals.keyStore.license.publicKey),
                 Instant.now(Clock.systemUTC()), licenseInstallationService.installationId());
 
         if (!LicenseArtifactUtils.isInstallable(verified.state())) {

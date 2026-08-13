@@ -80,17 +80,6 @@ public class SignedFileLicenseSource implements LicenseSource {
         this.cacheTtl = cacheTtl;
     }
 
-    /** Default wiring against the embedded verification key (LicenseVerificationKeys). */
-    public static SignedFileLicenseSource withEmbeddedKey(
-            Supplier<Collection<String>> tokensSupplier,
-            Supplier<Instant> clock,
-            Supplier<DeploymentValues> deployment,
-            Supplier<@Nullable String> installationId,
-            Duration cacheTtl) {
-        return new SignedFileLicenseSource(
-                tokensSupplier, LicenseVerificationKeys::byKid, clock, deployment, installationId, cacheTtl);
-    }
-
     @Override
     public Entitlements current() {
         return currentResult().entitlements();

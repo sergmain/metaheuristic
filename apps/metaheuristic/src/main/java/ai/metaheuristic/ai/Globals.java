@@ -312,6 +312,32 @@ public class Globals {
         public Key[] key = new Key[0];
     }
 
+    /**
+     * Trust anchors, grouped by WHAT they verify. Kept apart from {@link PublicKeyStore} on purpose:
+     * that one holds FUNCTION-signature keys, which a customer legitimately chooses because they are
+     * deciding whose code to run. A licence key answers a different question, and sharing one array
+     * would let a 'code' collision silently promote one kind of anchor into the other.
+     */
+    @Getter
+    @Setter
+    public static class KeyStore {
+        public LicenseKey license = new LicenseKey();
+    }
+
+    @Getter
+    @Setter
+    public static class LicenseKey {
+        /**
+         * Base64 X.509 EC P-256 public half of the vendor licence signing key, matched against the
+         * JWS 'kid'. Configurable rather than compiled in: desktop piracy is not the risk this
+         * product defends against - the business value is S3 compliance mode, which cannot be
+         * forged because it needs a real Object Lock bucket in a real AWS account. Making the key a
+         * property costs little there and buys rotation without a binary release.
+         */
+        @Nullable
+        public String publicKey;
+    }
+
     @Getter
     @Setter
     public static class Dispatcher {
@@ -625,6 +651,7 @@ public class Globals {
     public final State state = new State();
     public final Function function = new Function();
     public final PublicKeyStore publicKeyStore = new PublicKeyStore();
+    public final KeyStore keyStore = new KeyStore();
     public final Security security = new Security();
     public final License license = new License();
 

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.license;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.commons.spi.license.LicenseVerificationKeys;
 import ai.metaheuristic.commons.spi.license.SignedFileLicenseSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,8 +70,17 @@ public class LicenseConfiguration {
     public SignedFileLicenseSource licenseSource() {
         log.info("Initializing the internal (offline signed-file) license manager, dir: {}, cache TTL: {}",
                 licenseTokenSupplier.licenseDir(), globals.license.cacheTtl);
-        return SignedFileLicenseSource.withEmbeddedKey(
+        // ! The verification key comes from mh.key-store.license.public-key, NOT from a compiled-in
+        // constant. Deliberate: this product's value is S3 compliance mode, which is protected
+        // structurally (the S3 beans require the aws-lm profile, so there is no check to remove) and
+        // cannot be forged, since it needs a real Object Lock bucket in a real AWS account. Desktop
+        // piracy is therefore not what this key defends against, and a property buys rotation
+        // without a binary release.
+        // ! It is a SEPARATE property from mh.publicKeyStore, which holds function-signature keys:
+        // one array for both would let a 'code' collision promote one kind of trust anchor to the other.
+        return new SignedFileLicenseSource(
                 licenseTokenSupplier::tokens,
+                LicenseVerificationKeys.resolver(globals.keyStore.license.publicKey),
                 () -> Instant.now(Clock.systemUTC()),
                 deploymentValuesResolverHolder::current,
                 licenseInstallationService::installationId,
