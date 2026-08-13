@@ -125,8 +125,11 @@ public class Config {
         }
     }
 
-    @SuppressWarnings("unused")
-    private final SpringChecker springChecker;
+    // NOTE: Config used to hold a constructor dependency on the profile checker. That dependency
+    // is what made the profile check run during configuration-class processing, before plugin
+    // auto-config classes were loaded and could register their own profile names. The checker is
+    // now a top-level @Component created in ordinary bean order; nothing needs to inject it to
+    // make it run, @PostConstruct does that.
 
 /*
     @Configuration
@@ -166,50 +169,6 @@ public class Config {
             }
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
         };
-    }
-
-    @Component
-    @RequiredArgsConstructor(onConstructor_={@Autowired})
-    public static class SpringChecker {
-
-        private final ApplicationContext appCtx;
-        private final Globals globals;
-
-        @Value("${server.address:#{null}}")
-        public String serverHost;
-
-        @Value("${server.port:#{-1}}")
-        public Integer serverPort;
-
-        @Value("${spring.profiles.active}")
-        private String activeProfiles;
-
-        @Value("${spring.threads.virtual.enabled}")
-        private boolean virtualThreads;
-
-        @PostConstruct
-        public void init() {
-            checkProfiles();
-            logSpring();
-        }
-
-        private void logSpring() {
-            log.warn("Spring properties:");
-            log.warn("'\tserver host:port: {}:{}", serverHost, serverPort);
-            log.warn("'\tvirtual is enabled: {}", virtualThreads);
-        }
-
-        private void checkProfiles() {
-            List<String> profiles = SpringHelpersUtils.getProfiles(activeProfiles);
-
-            if (!profiles.isEmpty()) {
-                globals.state.shutdownInProgress = true;
-                log.error("\nUnknown profile(s) was encountered in property spring.profiles.active.\nNeed to be fixed.\n" +
-                        "Allowed profiles are: " + SpringHelpersUtils.getPossibleProfiles());
-                System.exit(SpringApplication.exit(appCtx, () -> -501));
-            }
-        }
-
     }
 
     @Configuration
