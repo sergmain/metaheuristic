@@ -71,6 +71,22 @@ public class LicenseRestController {
     }
 
     /**
+     * The effective capability list, for ANY authenticated user.
+     *
+     * <p>Separate from /status on purpose: /status is MainAdmin-only because it names the licensee,
+     * the installation id and every installed licence. This returns only what the UI needs to avoid
+     * offering a user a feature that will be refused — which the UI reveals anyway by which parts
+     * work, so there is nothing to withhold.
+     *
+     * <p>❗ UX, never enforcement. The gates are the boundary; a browser can ask for anything.
+     */
+    @GetMapping("/capabilities")
+    @PreAuthorize("isAuthenticated()")
+    public LicenseInfoData.CapabilitiesResult capabilities() {
+        return new LicenseInfoData.CapabilitiesResult(licenseInfoService.capabilities());
+    }
+
+    /**
      * Add ONE license to the set. The token is verified before anything is written, so a rejected
      * upload leaves the existing set untouched.
      */

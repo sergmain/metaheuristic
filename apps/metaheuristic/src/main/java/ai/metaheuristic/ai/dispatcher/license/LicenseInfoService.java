@@ -70,6 +70,17 @@ public class LicenseInfoService {
                 LicenseInfoUtils.breakdown(aggregate.licenses(), liveRowsByTokenHash()));
     }
 
+    /**
+     * The effective capability set alone. Reads the aggregate and nothing else — no per-licence
+     * breakdown, so no MH_LICENSE_ARTIFACT query — because this is called on navigation rather than
+     * on an admin opening a page.
+     */
+    public LicenseInfoData.Capabilities capabilities() {
+        final LicenseAggregate aggregate = licenseSource.currentResult();
+        return new LicenseInfoData.Capabilities(
+                aggregate.entitlements().valid(), sorted(aggregate.capabilities()));
+    }
+
     private LicenseInfoData.EffectiveEntitlement effective(LicenseAggregate aggregate, DeploymentValues deployment) {
         return new LicenseInfoData.EffectiveEntitlement(
                 LicenseType.INTERNAL,

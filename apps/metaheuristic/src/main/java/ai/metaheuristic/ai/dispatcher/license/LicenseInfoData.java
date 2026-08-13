@@ -80,6 +80,34 @@ public class LicenseInfoData {
     }
 
     /**
+     * What the UI needs to stop showing a user features this installation cannot run — and NOTHING
+     * else.
+     *
+     * <p>Deliberately not the full status. That one is MainAdmin-only because it names the licensee,
+     * the installation id and every installed licence; none of that is any of an ordinary user's
+     * business. The effective capability list is different: the UI reveals it anyway by which menu
+     * entries work, so withholding it buys no confidentiality and only forces the UI to guess.
+     *
+     * <p>❗ This is UX, never enforcement. The server-side gates remain the only boundary — a
+     * browser can ask for anything regardless of what this returns.
+     */
+    public record Capabilities(boolean valid, List<String> capabilities) {
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class CapabilitiesResult extends BaseDataClass {
+
+        @Nullable
+        public Capabilities info;
+
+        public CapabilitiesResult(Capabilities info) {
+            this.info = info;
+        }
+    }
+
+    /**
      * The REST envelope. Extends BaseDataClass so a failure carries errorMessages the same way
      * every other MH endpoint does, rather than inventing a second error convention for one page.
      */
