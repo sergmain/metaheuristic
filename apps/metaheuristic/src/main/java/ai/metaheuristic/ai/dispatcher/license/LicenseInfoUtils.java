@@ -25,6 +25,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The per-license projection, as a pure function over verified results and whatever the database
@@ -51,29 +52,61 @@ public class LicenseInfoUtils {
      *
      * <p>A result with no matching row came from the license directory: a file on disk has no row,
      * and that absence is the only evidence of its origin there is.
+     *
+     * <p>UPDATE: "no row means the directory" is no longer the whole rule, because absence was
+     * never evidence of PRESENCE. The same licence can be installed through BOTH channels - a
+     * {@code .jws} lying in the licence directory and the identical token pasted into the UI - and
+     * the token set is de-duplicated before verification, so the aggregate carries ONE result for
+     * the pair. Reading origin off that single result reported only the row and made the copy on
+     * disk vanish from the page: the admin deleted the row, the licence stayed in force, and
+     * nothing on the screen said why.
+     *
+     * <p>So the breakdown is now one entry per INSTALLED ARTIFACT rather than one per verified
+     * token: {@code directoryTokenHashes} names what is actually on disk, and a token found in both
+     * places yields two entries - the file first, then the row. They necessarily carry the same
+     * state and the same grants, because they are the same signed token; what differs is how each
+     * one is retired, which is the only thing the admin needs the two entries for.
      */
     public static List<LicenseInfoData.InstalledLicense> breakdown(
-            List<LicenseVerificationResult> results, Map<String, RowInfo> rowsByTokenHash) {
+            List<LicenseVerificationResult> results, Map<String, RowInfo> rowsByTokenHash,
+            Set<String> directoryTokenHashes) {
 
         final List<LicenseInfoData.InstalledLicense> out = new ArrayList<>();
         for (LicenseVerificationResult r : results) {
-            @Nullable final RowInfo row = rowsByTokenHash.get(LicenseTokenHashUtils.hash(r.token()));
-            @Nullable final LicenseClaims claims = r.claims();
+            final String hash = LicenseTokenHashUtils.hash(r.token());
+            @Nullable final RowInfo row = rowsByTokenHash.get(hash);
 
-            out.add(new LicenseInfoData.InstalledLicense(
-                    row==null ? null : row.artifactId(),
-                    row==null ? LicenseArtifactParams.Origin.DIRECTORY : row.origin(),
-                    r.state(),
-                    claims==null ? null : claims.licensee,
-                    claims==null ? null : claims.edition,
-                    claims==null ? null : toMillis(claims.iat),
-                    claims==null ? null : toMillis(claims.exp),
-                    claims==null ? List.of() : List.copyOf(claims.capabilities),
-                    claims==null ? List.of() : List.copyOf(claims.databases),
-                    claims==null ? List.of() : List.copyOf(claims.storages),
-                    row==null ? null : row.installedOn()));
+            // on disk, or belonging to no row we can name - either way it is the directory copy.
+            // The second case is the original fallback and stays: a result the installation is
+            // holding must be listed even when neither channel claims it.
+            if (directoryTokenHashes.contains(hash) || row==null) {
+                out.add(entry(r, null, LicenseArtifactParams.Origin.DIRECTORY, null));
+            }
+            if (row!=null) {
+                out.add(entry(r, row.artifactId(), row.origin(), row.installedOn()));
+            }
         }
         return out;
+    }
+
+    /** One rendered line. The claims are the token's, the provenance is the channel's. */
+    private static LicenseInfoData.InstalledLicense entry(
+            LicenseVerificationResult r, @Nullable Long artifactId,
+            LicenseArtifactParams.Origin origin, @Nullable Long installedOn) {
+
+        @Nullable final LicenseClaims claims = r.claims();
+        return new LicenseInfoData.InstalledLicense(
+                artifactId,
+                origin,
+                r.state(),
+                claims==null ? null : claims.licensee,
+                claims==null ? null : claims.edition,
+                claims==null ? null : toMillis(claims.iat),
+                claims==null ? null : toMillis(claims.exp),
+                claims==null ? List.of() : List.copyOf(claims.capabilities),
+                claims==null ? List.of() : List.copyOf(claims.databases),
+                claims==null ? List.of() : List.copyOf(claims.storages),
+                installedOn);
     }
 
     @Nullable

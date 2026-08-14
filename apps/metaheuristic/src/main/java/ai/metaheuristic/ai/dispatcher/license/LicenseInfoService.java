@@ -34,8 +34,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Projects the license aggregate into what the admin page renders.
@@ -82,6 +84,7 @@ public class LicenseInfoService {
     private final LicenseArtifactRepository licenseArtifactRepository;
     private final LicenseInstallationService licenseInstallationService;
     private final DeploymentValuesResolverHolder deploymentValuesResolverHolder;
+    private final LicenseTokenSupplier licenseTokenSupplier;
 
     public LicenseInfoData.LicenseInfo info() {
         final LicenseAggregate aggregate = licenseSource.currentResult();
@@ -89,7 +92,8 @@ public class LicenseInfoService {
 
         return new LicenseInfoData.LicenseInfo(
                 effective(aggregate, deployment),
-                LicenseInfoUtils.breakdown(aggregate.licenses(), liveRowsByTokenHash()));
+                LicenseInfoUtils.breakdown(
+                        aggregate.licenses(), liveRowsByTokenHash(), directoryTokenHashes()));
     }
 
     /**
@@ -115,6 +119,22 @@ public class LicenseInfoService {
                 licenseInstallationService.installationId(),
                 deployment.database(),
                 deployment.storage());
+    }
+
+    /**
+     * What the licence DIRECTORY is holding right now, by token hash.
+     *
+     * <p>The disk is re-read rather than inferred from the aggregate: the aggregate carries
+     * de-duplicated tokens and cannot say through which channel any of them arrived. This is a
+     * directory listing of a handful of small files behind an admin page, so reading it per call is
+     * cheaper than any way of keeping a copy of it honest.
+     */
+    private Set<String> directoryTokenHashes() {
+        final Set<String> hashes = new HashSet<>();
+        for (String token : licenseTokenSupplier.directoryTokens()) {
+            hashes.add(LicenseTokenHashUtils.hash(token));
+        }
+        return hashes;
     }
 
     private Map<String, LicenseInfoUtils.RowInfo> liveRowsByTokenHash() {

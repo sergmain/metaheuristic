@@ -63,7 +63,8 @@ public class LicenseInfoUtilsTest {
     @Test
     public void test_licenseWithNoRow_camefromTheDirectory() {
         final List<LicenseInfoData.InstalledLicense> out =
-                LicenseInfoUtils.breakdown(List.of(result("tok-A", LicenseState.VALID, "Cap:A")), Map.of());
+                LicenseInfoUtils.breakdown(
+                        List.of(result("tok-A", LicenseState.VALID, "Cap:A")), Map.of(), Set.of());
 
         assertEquals(1, out.size());
         assertNull(out.getFirst().artifactId());
@@ -75,7 +76,7 @@ public class LicenseInfoUtilsTest {
     public void test_licenseWithARow_carriesItsIdAndInstallDate() {
         final List<LicenseInfoData.InstalledLicense> out = LicenseInfoUtils.breakdown(
                 List.of(result("tok-A", LicenseState.VALID, "Cap:A")),
-                Map.of(LicenseTokenHashUtils.hash("tok-A"), row(7L, 1234L)));
+                Map.of(LicenseTokenHashUtils.hash("tok-A"), row(7L, 1234L)), Set.of());
 
         assertEquals(7L, out.getFirst().artifactId());
         assertEquals(LicenseArtifactParams.Origin.DB, out.getFirst().origin());
@@ -89,7 +90,7 @@ public class LicenseInfoUtilsTest {
         final List<LicenseInfoData.InstalledLicense> out = LicenseInfoUtils.breakdown(
                 List.of(result("from-disk", LicenseState.VALID, "Cap:A"),
                         result("from-row", LicenseState.VALID, "Cap:B")),
-                Map.of(LicenseTokenHashUtils.hash("from-row"), row(9L, 555L)));
+                Map.of(LicenseTokenHashUtils.hash("from-row"), row(9L, 555L)), Set.of());
 
         assertNull(out.get(0).artifactId(), "the directory license must not inherit the row");
         assertEquals(LicenseArtifactParams.Origin.DIRECTORY, out.get(0).origin());
@@ -102,7 +103,7 @@ public class LicenseInfoUtilsTest {
         // a file read with a trailing newline and the same token pasted into the UI are ONE license.
         final List<LicenseInfoData.InstalledLicense> out = LicenseInfoUtils.breakdown(
                 List.of(result("tok-A\n", LicenseState.VALID, "Cap:A")),
-                Map.of(LicenseTokenHashUtils.hash("tok-A"), row(3L, 99L)));
+                Map.of(LicenseTokenHashUtils.hash("tok-A"), row(3L, 99L)), Set.of());
 
         assertEquals(3L, out.getFirst().artifactId());
     }
@@ -113,7 +114,7 @@ public class LicenseInfoUtilsTest {
         final List<LicenseInfoData.InstalledLicense> out = LicenseInfoUtils.breakdown(
                 List.of(result("a", LicenseState.EXPIRED, "Cap:A"),
                         result("b", LicenseState.VALID, "Cap:B"),
-                        result("c", LicenseState.INSTALL_ID_MISMATCH, "Cap:C")), Map.of());
+                        result("c", LicenseState.INSTALL_ID_MISMATCH, "Cap:C")), Map.of(), Set.of());
 
         assertEquals(3, out.size());
         assertEquals(LicenseState.EXPIRED, out.get(0).state());
@@ -125,7 +126,7 @@ public class LicenseInfoUtilsTest {
     public void test_eachLicenseReportsItsOwnGrants_notTheUnion() {
         final List<LicenseInfoData.InstalledLicense> out = LicenseInfoUtils.breakdown(
                 List.of(result("a", LicenseState.VALID, "Cap:A"),
-                        result("b", LicenseState.VALID, "Cap:B")), Map.of());
+                        result("b", LicenseState.VALID, "Cap:B")), Map.of(), Set.of());
 
         assertEquals(List.of("Cap:A"), out.get(0).capabilities());
         assertEquals(List.of("Cap:B"), out.get(1).capabilities());
@@ -137,7 +138,8 @@ public class LicenseInfoUtilsTest {
                 new LicenseVerificationResult("junk", LicenseState.SIGNATURE_INVALID, null,
                         ClaimsEntitlements.invalid(LicenseState.SIGNATURE_INVALID));
 
-        final List<LicenseInfoData.InstalledLicense> out = LicenseInfoUtils.breakdown(List.of(r), Map.of());
+        final List<LicenseInfoData.InstalledLicense> out =
+                LicenseInfoUtils.breakdown(List.of(r), Map.of(), Set.of());
 
         assertEquals(1, out.size());
         assertNull(out.getFirst().licensee());
@@ -149,7 +151,8 @@ public class LicenseInfoUtilsTest {
     @Test
     public void test_timesAreEpochMillis() {
         final List<LicenseInfoData.InstalledLicense> out =
-                LicenseInfoUtils.breakdown(List.of(result("a", LicenseState.VALID, "Cap:A")), Map.of());
+                LicenseInfoUtils.breakdown(
+                        List.of(result("a", LicenseState.VALID, "Cap:A")), Map.of(), Set.of());
 
         assertEquals(IAT.toEpochMilli(), out.getFirst().iat());
         assertEquals(EXP.toEpochMilli(), out.getFirst().exp());
@@ -158,6 +161,29 @@ public class LicenseInfoUtilsTest {
 
     @Test
     public void test_emptyAggregate_isEmptyBreakdown() {
-        assertTrue(LicenseInfoUtils.breakdown(List.of(), Map.of()).isEmpty());
+        assertTrue(LicenseInfoUtils.breakdown(List.of(), Map.of(), Set.of()).isEmpty());
+    }
+
+    @Test
+    public void test_sameTokenFromDirectoryAndDb_isListedOncePerChannel() {
+        // The SAME licence file lying in the licence directory AND uploaded through the UI. That is
+        // TWO installed artifacts, retired two different ways: one by deleting a file, one by the
+        // remove button. The token set is de-duplicated before verification, so the aggregate holds
+        // ONE result for both - which must not cost the admin the directory copy.
+        final List<LicenseInfoData.InstalledLicense> out = LicenseInfoUtils.breakdown(
+                List.of(result("shared", LicenseState.VALID, "Cap:A")),
+                Map.of(LicenseTokenHashUtils.hash("shared"), row(4L, 777L)),
+                Set.of(LicenseTokenHashUtils.hash("shared")));
+
+        assertEquals(2, out.size());
+        assertNull(out.get(0).artifactId(), "the copy on disk has no row to flip");
+        assertEquals(LicenseArtifactParams.Origin.DIRECTORY, out.get(0).origin());
+        assertNull(out.get(0).installedOn());
+        assertEquals(4L, out.get(1).artifactId());
+        assertEquals(LicenseArtifactParams.Origin.DB, out.get(1).origin());
+        assertEquals(777L, out.get(1).installedOn());
+        // one licence, one verdict: both channels report the state the token actually has.
+        assertEquals(LicenseState.VALID, out.get(0).state());
+        assertEquals(LicenseState.VALID, out.get(1).state());
     }
 }

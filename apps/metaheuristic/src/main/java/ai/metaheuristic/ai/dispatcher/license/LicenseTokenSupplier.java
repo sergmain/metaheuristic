@@ -62,7 +62,7 @@ public class LicenseTokenSupplier {
 
     /** Directory first, then rows — a stable order so the admin breakdown does not shuffle. */
     public Collection<String> tokens() {
-        final List<String> tokens = new ArrayList<>(fromDirectory());
+        final List<String> tokens = new ArrayList<>(directoryTokens());
         tokens.addAll(fromDatabase());
         return tokens;
     }
@@ -78,8 +78,13 @@ public class LicenseTokenSupplier {
     /**
      * Delegated to {@link LicenseDirScanUtils} so the directory decisions can be tested without a
      * Spring context: this class needs Globals and a repository, that one needs only a Path.
+     *
+     * <p>Public because the admin breakdown needs to know what is ON DISK, not merely what has no
+     * DB row. The same licence can be installed through both channels, and until this was readable
+     * the page could only infer the directory from the absence of a row - which reported nothing
+     * for a token that had both.
      */
-    private List<String> fromDirectory() {
+    public List<String> directoryTokens() {
         return LicenseDirScanUtils.scanDir(licenseDir());
     }
 
