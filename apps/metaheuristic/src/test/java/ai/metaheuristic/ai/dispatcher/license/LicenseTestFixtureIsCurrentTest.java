@@ -92,6 +92,6 @@ public class LicenseTestFixtureIsCurrentTest {
     public void test_theGrantIsReachableThroughAFeature() throws IOException {
         // the string in the payload and the string a gate builds must be the SAME string; asserting
         // the list alone would pass even if Feature composed its key some other way.
-        assertTrue(verified().entitlements().has(new Feature("MH", "BATCH")));
+        assertTrue(verified().entitlements().has(new Feature("MH.BATCH")));
     }
 }

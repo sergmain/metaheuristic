@@ -17,45 +17,35 @@
 package ai.metaheuristic.commons.spi.license;
 
 /**
- * A capability the vendor gates on. Opaque to the license manager: identity is the pair of strings,
- * and nothing here knows what any of them mean.
+ * A capability the vendor gates on. Opaque to the license manager: identity is the string, and
+ * nothing here knows what it means.
  *
- * A feature is a CATEGORY plus a VALUE, both opaque. The wire form carried inside a token is the
- * composite 'Category.VALUE', so the 'features' claim stays a flat string array and matching stays
- * set membership.
+ * A feature is ONE name. The wire form carried inside a token is that name unchanged, so the
+ * 'capabilities' claim stays a flat string array and matching stays set membership.
  *
- * There is deliberately NO enum of categories or values anywhere in the license manager - an enum
- * would have to name jcons/Legal/RG concepts and would breach the seal. Callers write their own
- * string literals at the gate site, e.g. new Feature("MH", "BATCH").
+ * A name has no parts. Nothing splits it, nothing groups by it, nothing derives meaning from any
+ * span of it. A dot in 'MH.BATCH' is an ordinary character: 'MH.BATCH' and 'BATCH' are two
+ * unrelated names, neither more specific than the other.
  *
- * UPDATE: the separator was ':' and the category was one fixed literal for every feature the vendor
- * issues, so a wire form named the concept twice - once in a category that never varied, and once
- * in the value. A category that is the same word every time carries no information: it said only
- * 'this is a capability', which is the one thing already known from the field it sits in. The category now names the PRODUCT FAMILY the capability belongs
- * to, so 'MH.BATCH' says something the value alone does not, and the pair is again worth being a
- * pair. Nothing in this class knows the vocabulary; only the separator lives here.
+ * There is deliberately NO enum of capability names anywhere in the license manager - an enum would
+ * have to name jcons/Legal/RG concepts and would breach the seal. Callers write their own string
+ * literals at the gate site, e.g. new Feature("MH.BATCH").
+ *
+ * UPDATE: a feature used to be two strings joined by a separator, and the wire form was built from
+ * them. Nothing was gained by it and three things were paid for it: the issuer validated a shape,
+ * this record forbade the separator inside either half, and the UI cut the leading span back off to
+ * display a name it had been handed whole.
  *
  * <p>Error code prefix: {@code 01.250.} (unique to this class).
  *
  * @author Serge
  */
-public record Feature(String category, String value) {   // e.g. new Feature("MH", "BATCH")
-
-    /** Separator between category and value in the wire form. */
-    public static final String SEPARATOR = ".";
+public record Feature(String name) {   // e.g. new Feature("MH.BATCH")
 
     public Feature {
-        if (category == null || category.isBlank() || value == null || value.isBlank()) {
-            throw new IllegalArgumentException("01.250.010 feature category and value must be non-blank");
-        }
-        if (category.contains(SEPARATOR) || value.contains(SEPARATOR)) {
-            throw new IllegalArgumentException(
-                    "01.250.020 feature category and value must not contain '" + SEPARATOR + "': " + category + SEPARATOR + value);
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("01.250.010 feature name must be non-blank");
         }
     }
 
-    /** The wire form stored in a token and compared during gating. */
-    public String key() {
-        return category + SEPARATOR + value;
-    }
 }

@@ -77,7 +77,7 @@ public class LicenseUnionUtilsTest {
                 List.of(valid(List.of("Cap.A"), List.of("H2"), List.of())), ON_H2);
 
         assertEquals(LicenseState.VALID, a.state());
-        assertTrue(a.entitlements().has(new Feature("Cap", "A")));
+        assertTrue(a.entitlements().has(new Feature("Cap.A")));
         assertEquals(Set.of("Cap.A"), a.capabilities());
         assertEquals(Set.of("H2"), a.databases());
         assertEquals(EXP_LATE, a.expiresAt());
@@ -131,7 +131,7 @@ public class LicenseUnionUtilsTest {
 
         assertEquals(LicenseState.VALID, a.state());
         assertEquals(Set.of("Cap.A"), a.capabilities());
-        assertFalse(a.entitlements().has(new Feature("Cap", "GONE")));
+        assertFalse(a.entitlements().has(new Feature("Cap.GONE")));
         assertEquals(3, a.licenses().size(), "the breakdown keeps every installed license");
     }
 
@@ -162,7 +162,7 @@ public class LicenseUnionUtilsTest {
 
         assertEquals(LicenseState.DATABASE_NOT_LICENSED, a.state());
         assertFalse(a.entitlements().valid());
-        assertFalse(a.entitlements().has(new Feature("Cap", "A")));
+        assertFalse(a.entitlements().has(new Feature("Cap.A")));
         assertTrue(a.capabilities().isEmpty());
         assertTrue(a.databases().isEmpty());
     }
@@ -185,7 +185,7 @@ public class LicenseUnionUtilsTest {
                 new DeploymentValues("H2", "S3"));
 
         assertEquals(LicenseState.STORAGE_NOT_LICENSED, a.state());
-        assertFalse(a.entitlements().has(new Feature("Cap", "A")));
+        assertFalse(a.entitlements().has(new Feature("Cap.A")));
     }
 
     @Test

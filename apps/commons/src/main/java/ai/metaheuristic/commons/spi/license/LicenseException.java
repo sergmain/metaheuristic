@@ -23,7 +23,7 @@ package ai.metaheuristic.commons.spi.license;
  * entry point would otherwise have to declare or swallow a condition none of them can do anything
  * about — the only correct handling is at the edge, where it becomes a 4xx or a refusal message.
  *
- * <p>Carries the capability key rather than a licence state. A caller may legitimately want to
+ * <p>Carries the capability name rather than a licence state. A caller may legitimately want to
  * report WHICH capability was refused; why the licence does not grant it is the admin page's
  * business, not the caller's, and putting the state here would invite gates to branch on it.
  *
@@ -31,11 +31,11 @@ package ai.metaheuristic.commons.spi.license;
  */
 public class LicenseException extends RuntimeException {
 
-    /** The wire form of the capability that was refused, e.g. {@code MH.SOMETHING}. */
-    public final String featureKey;
+    /** The name of the capability that was refused, e.g. {@code MH.SOMETHING}. */
+    public final String featureName;
 
-    public LicenseException(String message, String featureKey) {
+    public LicenseException(String message, String featureName) {
         super(message);
-        this.featureKey = featureKey;
+        this.featureName = featureName;
     }
 }

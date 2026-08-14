@@ -97,7 +97,7 @@ public class SignedFileLicenseSourceTest {
         final SignedFileLicenseSource src = source(k, List.of(signEnterprise(k.priv(), NOW.plus(Duration.ofDays(365)))));
 
         assertTrue(src.current().valid());
-        assertTrue(src.current().has(new Feature("Cat", "FEATURE_C")));
+        assertTrue(src.current().has(new Feature("Cat.FEATURE_C")));
         assertEquals(LicenseState.VALID, src.currentResult().state());
         assertEquals(1, src.currentResult().licenses().size());
     }
@@ -129,8 +129,8 @@ public class SignedFileLicenseSourceTest {
         final SignedFileLicenseSource src = source(k, List.of(expired, live));
 
         assertEquals(LicenseState.VALID, src.currentResult().state());
-        assertTrue(src.current().has(new Feature("Cat", "LIVE")));
-        assertFalse(src.current().has(new Feature("Cat", "GONE")));
+        assertTrue(src.current().has(new Feature("Cat.LIVE")));
+        assertFalse(src.current().has(new Feature("Cat.GONE")));
         assertEquals(2, src.currentResult().licenses().size(), "both stay in the breakdown");
     }
 
@@ -142,8 +142,8 @@ public class SignedFileLicenseSourceTest {
 
         final SignedFileLicenseSource src = source(k, List.of(a, b));
 
-        assertTrue(src.current().has(new Feature("Cat", "A")));
-        assertTrue(src.current().has(new Feature("Cat", "B")));
+        assertTrue(src.current().has(new Feature("Cat.A")));
+        assertTrue(src.current().has(new Feature("Cat.B")));
     }
 
     @Test
@@ -177,7 +177,7 @@ public class SignedFileLicenseSourceTest {
         final SignedFileLicenseSource src = source(k, List.of(tok));
 
         assertEquals(LicenseState.DATABASE_NOT_LICENSED, src.currentResult().state());
-        assertFalse(src.current().has(new Feature("Cat", "A")));
+        assertFalse(src.current().has(new Feature("Cat.A")));
     }
 
     @Test

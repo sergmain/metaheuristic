@@ -38,12 +38,12 @@ import java.util.List;
  * A trial that runs out is re-issued - signing is one command - and the deployment axes, not an
  * absent exp, are what keep a trial off a production datastore.
  *
- * Capability strings are checked for the 'Category:VALUE' wire form only - a shape check, not a
- * vocabulary check. Which categories and values exist is proprietary knowledge that never
- * reaches this class; a typo'd category is a valid license granting nothing.
+ * Capability strings are copied verbatim: no shape check and no vocabulary check. Which capability
+ * names exist is proprietary knowledge that never reaches this class; a typo'd name is a valid
+ * license granting nothing.
  *
- * 'databases' and 'storages' are plain values, not composite keys: they name MH's own concepts, so
- * there is no category to qualify them with.
+ * 'databases' and 'storages' are not capabilities: they name MH's own deployment concepts, they are
+ * checked against the running deployment rather than gated, and they live in their own claim fields.
  *
  * <p>Error code prefix: {@code 01.248.} (unique to this class).
  *
@@ -90,7 +90,7 @@ public class LicenseClaimsBuilder {
         final LicenseClaims claims = new LicenseClaims();
         claims.licensee = lic.licensee;
         claims.edition = lic.edition;
-        claims.capabilities = toCapabilityKeys(lic.capabilities);
+        claims.capabilities = toCapabilityNames(lic.capabilities);
         claims.databases = toPlainValues(lic.databases);
         claims.storages = toPlainValues(lic.storages);
         claims.iat = now;
@@ -101,26 +101,25 @@ public class LicenseClaimsBuilder {
     }
 
     /**
-     * Shape check of the 'Category:VALUE' wire form. Rebuilding each entry through Feature reuses the
-     * one definition of a well-formed key instead of duplicating the rule here.
+     * Capabilities are opaque names, copied verbatim.
+     *
+     * <p>UPDATE: this used to check each entry against a wire-form grammar and rebuild it from the
+     * pieces the grammar found. There is no grammar - a capability is one name, and the issuer has
+     * no opinion about what a name may look like. Each entry still goes through Feature, which is
+     * now a single non-blank rule.
      */
-    private static List<String> toCapabilityKeys(@Nullable List<String> capabilities) {
-        final List<String> keys = new ArrayList<>();
+    private static List<String> toCapabilityNames(@Nullable List<String> capabilities) {
+        final List<String> names = new ArrayList<>();
         if (capabilities==null) {
-            return keys;
+            return names;
         }
         for (String f : capabilities) {
             if (S.b(f)) {
                 throw new IllegalStateException("01.248.050 'capabilities' must not contain a blank entry");
             }
-            final int idx = f.indexOf(Feature.SEPARATOR);
-            if (idx<1 || idx==f.length()-1) {
-                throw new IllegalStateException(
-                        "01.248.060 capability must be in the form 'Category" + Feature.SEPARATOR + "VALUE', actual: " + f);
-            }
-            keys.add(new Feature(f.substring(0, idx), f.substring(idx + Feature.SEPARATOR.length())).key());
+            names.add(new Feature(f).name());
         }
-        return keys;
+        return names;
     }
 
     /**

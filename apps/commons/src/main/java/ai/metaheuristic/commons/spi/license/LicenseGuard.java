@@ -49,7 +49,7 @@ public class LicenseGuard {
     public static void require(LicenseSource licenseSource, Feature feature) {
         if (!licenseSource.current().has(feature)) {
             throw new LicenseException(
-                    "01.263.010 capability is not licensed: " + feature.key(), feature.key());
+                    "01.263.010 capability is not licensed: " + feature.name(), feature.name());
         }
     }
 }

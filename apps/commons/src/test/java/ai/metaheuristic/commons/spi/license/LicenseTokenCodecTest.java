@@ -92,8 +92,8 @@ public class LicenseTokenCodecTest {
 
         assertEquals(LicenseState.VALID, r.state());
         assertTrue(r.entitlements().valid());
-        assertTrue(r.entitlements().has(new Feature("Cat", "FEATURE_C")));
-        assertFalse(r.entitlements().has(new Feature("Cat", "NOT_GRANTED")));
+        assertTrue(r.entitlements().has(new Feature("Cat.FEATURE_C")));
+        assertFalse(r.entitlements().has(new Feature("Cat.NOT_GRANTED")));
         assertTrue(r.entitlements().expiresAt().isPresent());
     }
 
@@ -143,7 +143,7 @@ public class LicenseTokenCodecTest {
 
         assertEquals(LicenseState.EXPIRED, r.state());
         assertFalse(r.entitlements().valid());
-        assertFalse(r.entitlements().has(new Feature("Cat", "FEATURE_C")));
+        assertFalse(r.entitlements().has(new Feature("Cat.FEATURE_C")));
     }
 
     @Test

@@ -37,8 +37,8 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 @Execution(CONCURRENT)
 public class LicenseGuardTest {
 
-    private static final Feature ALPHA = new Feature("Cat", "ALPHA");
-    private static final Feature BETA = new Feature("Cat", "BETA");
+    private static final Feature ALPHA = new Feature("Cat.ALPHA");
+    private static final Feature BETA = new Feature("Cat.BETA");
 
     /** Counts how often the gate consults the source, so caching can be ruled out. */
     private record CountingSource(AtomicReference<Entitlements> snapshot, AtomicInteger calls) implements LicenseSource {
@@ -66,7 +66,7 @@ public class LicenseGuardTest {
 
         final LicenseException ex = assertThrows(LicenseException.class, () -> LicenseGuard.require(src, BETA));
         assertTrue(ex.getMessage().startsWith("01.263.010"), ex.getMessage());
-        assertEquals("Cat.BETA", ex.featureKey);
+        assertEquals("Cat.BETA", ex.featureName);
     }
 
     @Test

@@ -165,13 +165,17 @@ public class LicenseClaimsBuilderTest {
     }
 
     @Test
-    public void test_capabilityWithoutCategory_rejected() {
+    public void test_capabilityNeedsNoShape_isTakenVerbatim() {
+        // A capability is ONE opaque name. The issuer does not get to have an opinion on what a
+        // name may look like: whatever shape it demanded would become a rule every future
+        // capability had to obey, enforced in the one place that only ever copies the string.
         final LicenseConfigYaml.License lic = baseLicense();
         lic.expiresAt = "2027-01-01T00:00:00Z";
-        lic.capabilities = List.of("FEATURE_A");
+        lic.capabilities = List.of("FEATURE_A", "MH.BATCH", "a.b.c");
 
-        final IllegalStateException ex = assertThrows(IllegalStateException.class, () -> LicenseClaimsBuilder.build(lic, NOW));
-        assertTrue(ex.getMessage().startsWith("01.248.060"), ex.getMessage());
+        final LicenseClaims claims = LicenseClaimsBuilder.build(lic, NOW);
+
+        assertEquals(List.of("FEATURE_A", "MH.BATCH", "a.b.c"), claims.capabilities);
     }
 
     @Test

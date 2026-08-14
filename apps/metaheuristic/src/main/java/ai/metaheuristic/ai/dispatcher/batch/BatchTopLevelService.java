@@ -258,7 +258,7 @@ public class BatchTopLevelService {
      * <p>Read fresh on every call — never cached — because validity flips as {@code exp} passes.
      */
     public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final UserContext userContext) {
-        LicenseGuard.require(licenseSource, new Feature("MH", "BATCH"));
+        LicenseGuard.require(licenseSource, new Feature("MH.BATCH"));
         if (Consts.ID_1.equals(userContext.getCompanyId())) {
             return new BatchData.UploadingStatus("981.030 Batch can't be created in company #1");
         }

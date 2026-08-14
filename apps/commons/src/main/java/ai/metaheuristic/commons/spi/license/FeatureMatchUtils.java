@@ -27,7 +27,7 @@ import java.util.Set;
  * and there is no wildcard. An unbounded grant reachable from one license would be unbounded
  * again under the union of several, so what is permitted is always enumerated at issuance.
  *
- * Total by construction: never throws, never rejects an unknown category.
+ * Total by construction: never throws, never rejects an unknown name.
  *
  * @author Serge
  */
@@ -36,8 +36,8 @@ public class FeatureMatchUtils {
     private FeatureMatchUtils() {
     }
 
-    /** True when the granted set holds the feature exactly. */
-    public static boolean matches(Set<String> grantedKeys, Feature f) {
-        return grantedKeys.contains(f.key());
+    /** True when the granted set holds the feature's name exactly. */
+    public static boolean matches(Set<String> grantedNames, Feature f) {
+        return grantedNames.contains(f.name());
     }
 }

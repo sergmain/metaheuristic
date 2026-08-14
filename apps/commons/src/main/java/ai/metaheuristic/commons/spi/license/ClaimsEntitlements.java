@@ -33,12 +33,12 @@ public final class ClaimsEntitlements implements Entitlements {
 
     private final LicenseState state;
     @Nullable private final Instant expiresAt;
-    private final Set<String> grantedKeys;
+    private final Set<String> grantedNames;
 
-    public ClaimsEntitlements(LicenseState state, @Nullable Instant expiresAt, Set<String> grantedKeys) {
+    public ClaimsEntitlements(LicenseState state, @Nullable Instant expiresAt, Set<String> grantedNames) {
         this.state = state;
         this.expiresAt = expiresAt;
-        this.grantedKeys = new HashSet<>(grantedKeys);
+        this.grantedNames = new HashSet<>(grantedNames);
     }
 
     public static ClaimsEntitlements invalid(LicenseState state) {
@@ -52,7 +52,7 @@ public final class ClaimsEntitlements implements Entitlements {
 
     @Override
     public boolean has(Feature f) {
-        return valid() && FeatureMatchUtils.matches(grantedKeys, f);
+        return valid() && FeatureMatchUtils.matches(grantedNames, f);
     }
 
     @Override
