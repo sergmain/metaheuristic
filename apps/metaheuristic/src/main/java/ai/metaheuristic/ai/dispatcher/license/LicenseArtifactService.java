@@ -74,9 +74,13 @@ import java.time.Instant;
  * offline backends is OPEN — {@code internal-lm} plus each test harness — and a profile expression
  * would have to be edited every time one is added, which is exactly the negative-list problem that
  * backend selection was moved away from.
+ *
+ * <p>UPDATE: the {@code @ConditionalOnBean} reasoning above is superseded. That annotation is
+ * only ordering-safe inside auto-configuration; on a component-scanned bean it races the
+ * configuration that declares the source. The open-set concern it was chosen for is now met by
+ * naming the backend family once in {@link ai.metaheuristic.ai.Consts#SIGNED_FILE_LM_PROFILE}.
  */
-@Profile("dispatcher")
-@ConditionalOnBean(SignedFileLicenseSource.class)
+@Profile(Consts.SIGNED_FILE_LM_PROFILE)
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class LicenseArtifactService {

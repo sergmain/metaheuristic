@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.license.LicenseArtifactService;
 import ai.metaheuristic.ai.dispatcher.license.LicenseInfoData;
 import ai.metaheuristic.ai.dispatcher.license.LicenseInfoService;
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.commons.spi.license.SignedFileLicenseSource;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.account.UserContext;
@@ -52,12 +53,16 @@ import org.springframework.web.bind.annotation.*;
  * is the only way to retire one.
  *
  * @author Serge
+ *
+ * <p>UPDATE: the {@code @ConditionalOnBean} reasoning above is superseded. That annotation is
+ * only ordering-safe inside auto-configuration; on a component-scanned bean it races the
+ * configuration that declares the source. The open-set concern it was chosen for is now met by
+ * naming the backend family once in {@link ai.metaheuristic.ai.Consts#SIGNED_FILE_LM_PROFILE}.
  */
 @RestController
 @RequestMapping("/rest/v1/dispatcher/license")
 @Slf4j
-@Profile("dispatcher")
-@ConditionalOnBean(SignedFileLicenseSource.class)
+@Profile(Consts.SIGNED_FILE_LM_PROFILE)
 @CrossOrigin
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class LicenseRestController {

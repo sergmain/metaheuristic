@@ -178,6 +178,20 @@ public class Consts {
     public static final String EXPECTED = "expected";
     public static final byte[] STUB_BYTES = "1".getBytes();
     public static final String STANDALONE_PROFILE = "standalone";
+
+    /**
+     * Profile expression for beans that require a signed-file license backend. The family is
+     * OPEN - internal-lm plus each test harness - so it is named ONCE here rather than repeated
+     * at every bean; adding a backend edits this line only.
+     *
+     * A profile expression rather than @ConditionalOnBean(SignedFileLicenseSource.class):
+     * @ConditionalOnBean is only ordering-safe inside auto-configuration. On component-scanned
+     * beans it is evaluated against whatever definitions happen to be registered at that moment,
+     * so two classes carrying the identical condition can disagree - which is exactly what
+     * happened: LicenseRestController loaded while LicenseArtifactService did not, and the
+     * failure surfaced as an unsatisfied dependency instead of a skipped bean.
+     */
+    public static final String SIGNED_FILE_LM_PROFILE = "dispatcher & (internal-lm | mh-test-lm)";
     public static final String WEBSOCKET_PROFILE = "websocket";
     public static final String OPENAI_API_KEY = "OPENAI_API_KEY";
     public static final String ANTHROPIC_API_KEY = "ANTHROPIC_API_KEY";
