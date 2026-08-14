@@ -55,8 +55,6 @@ import java.time.Instant;
  * the interface and stay backend-blind; only the status page, which exists to report which backend
  * is active, knows the difference.
  *
- * <p>Error code prefix: {@code 01.264.} (unique to this class).
- *
  * @author Serge
  */
 @Configuration
@@ -72,10 +70,8 @@ public class LicenseConfiguration {
 
     @Bean
     public SignedFileLicenseSource licenseSource() {
-        final Path dir = licenseTokenSupplier.licenseDir();
         log.info("Initializing the internal (offline signed-file) license manager, dir: {}, cache TTL: {}",
-                dir, globals.license.cacheTtl);
-        reportLicenseDir(dir, globals.license.dir!=null);
+                licenseTokenSupplier.licenseDir(), globals.license.cacheTtl);
         // ! The verification key comes from mh.key-store.license.public-key, NOT from a compiled-in
         // constant. Deliberate: this product's value is S3 compliance mode, which is protected
         // structurally (the S3 beans require the aws-lm profile, so there is no check to remove) and
@@ -93,30 +89,4 @@ public class LicenseConfiguration {
                 globals.license.cacheTtl);
     }
 
-    /**
-     * Says out loud what a missing license dir costs, because the scanner is deliberately silent
-     * about it: {@link LicenseDirScanUtils#scanDir} yields an empty list for a dir that isn't
-     * there, which is right at read time and useless at boot - an admin who mistyped
-     * {@code mh.license.dir} would otherwise see a normal startup and an unlicensed dispatcher,
-     * with nothing connecting the two.
-     *
-     * <p>Never fatal. A dispatcher with no license MUST still boot: that is the state in which the
-     * admin opens the UI and installs one, and the license dir is only one of the two places a
-     * license can live - the other is the database, which this says nothing about.
-     */
-    private static void reportLicenseDir(Path dir, boolean explicitlyConfigured) {
-        final String source = explicitlyConfigured ? "mh.license.dir" : "the default";
-        if (!Files.exists(dir)) {
-            log.warn("01.264.010 the license dir ({}) doesn't exist: {}. No license is read from disk; "
-                    + "any license installed through the UI is stored in the database and still works.", source, dir);
-            return;
-        }
-        if (!Files.isDirectory(dir)) {
-            log.warn("01.264.020 the license dir ({}) isn't a directory: {}. No license is read from disk.", source, dir);
-            return;
-        }
-        if (!Files.isReadable(dir)) {
-            log.warn("01.264.030 the license dir ({}) isn't readable: {}. No license is read from disk.", source, dir);
-        }
-    }
 }

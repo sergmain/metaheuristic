@@ -70,6 +70,9 @@ import static ai.metaheuristic.ai.MetaheuristicStatus.APP_UUID;
 @Slf4j
 public class Globals {
 
+    // Error code prefix: 01.264. (unique to this class).
+
+
     public static final String METAHEURISTIC_PROJECT = "Metaheuristic project";
 
     @Component
@@ -736,6 +739,10 @@ public class Globals {
             dispatcher.asset.mode = EnumsApi.DispatcherAssetMode.local;
         }
 
+        if (dispatcher.enabled) {
+            checkLicenseDir();
+        }
+
         if (processor.enabled) {
             processorResourcesPath = processorPath.resolve(Consts.RESOURCES_DIR);
             Files.createDirectories(processorResourcesPath);
@@ -777,6 +784,38 @@ public class Globals {
         logGarbageCollectors();
 //        logDeprecated();
 
+    }
+
+    /**
+     * Says out loud what an unusable license dir costs. The scanner is deliberately silent about
+     * it - a dir that isn't there simply yields no token, which is right at read time and useless
+     * at boot: an admin who mistyped mh.license.dir would otherwise see a normal startup and an
+     * unlicensed dispatcher with nothing connecting the two.
+     *
+     * Never fatal, unlike its neighbours in postConstruct(). A dispatcher with no license MUST
+     * still boot - that is the state in which the admin opens the UI and installs one - and the
+     * directory is only one of the two places a license can live; the database is the other, and
+     * this says nothing about it.
+     *
+     * The default is resolved here rather than bound as a property default because it is relative
+     * to mh.home, which isn't known at property-binding time.
+     */
+    private void checkLicenseDir() {
+        final boolean explicitlyConfigured = license.dir!=null;
+        final Path dir = explicitlyConfigured ? license.dir : getHome().resolve("config").resolve("license");
+        final String source = explicitlyConfigured ? "mh.license.dir" : "the default";
+        if (!Files.exists(dir)) {
+            log.warn("01.264.010 the license dir ({}) doesn't exist: {}. No license is read from disk; "
+                    + "any license installed through the UI is stored in the database and still works.", source, dir);
+            return;
+        }
+        if (!Files.isDirectory(dir)) {
+            log.warn("01.264.020 the license dir ({}) isn't a directory: {}. No license is read from disk.", source, dir);
+            return;
+        }
+        if (!Files.isReadable(dir)) {
+            log.warn("01.264.030 the license dir ({}) isn't readable: {}. No license is read from disk.", source, dir);
+        }
     }
 
     @Nullable
