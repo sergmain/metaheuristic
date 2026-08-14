@@ -88,10 +88,22 @@ public class LicenseInstallationService {
      * container images), so a failure here is logged and boot continues on the database value —
      * refusing to start because a convenience file could not be written would take out a
      * dispatcher over something that grants nothing.
+     *
+     * <p>❗ It goes under {@code {mh.home}/dispatcher}, NOT under {@code {mh.home}/config}.
+     * {@code config} is CONFIGURATION the operator supplies to the dispatcher, and deployments are
+     * entitled to mount it read-only — which is the same class of deployment the paragraph above
+     * promises to support. Minting an identity into it is the dispatcher writing to its own input:
+     * it fails exactly where the guarantee was supposed to hold, and on a writable box it quietly
+     * puts generated state somewhere an operator may be copying between installations. Anything the
+     * dispatcher generates about ITSELF belongs on the dispatcher's own path.
+     *
+     * <p>The move leaves any {@code config/installation-id.txt} from an earlier version untouched.
+     * Deleting it would be a write into the directory this change exists to stop writing to, and
+     * the value in it is not wrong — the id never changes — merely orphaned.
      */
     private void mirrorToFile(String id) {
         try {
-            final Path dir = globals.getHome().resolve("config");
+            final Path dir = globals.dispatcherPath;
             final Path file = dir.resolve(INSTALLATION_ID_FILE);
             @Nullable final String current = Files.exists(file) ? Files.readString(file, StandardCharsets.UTF_8) : null;
             if (LicenseInstallationUtils.decideMirror(id, current) == LicenseInstallationUtils.MirrorAction.LEAVE) {
