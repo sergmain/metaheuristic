@@ -41,7 +41,8 @@ import java.util.function.Function;
  * is trusted.
  *
  * Enforces the header contract (ES256, typ=license+jws, kid present), signature over the EC public
- * key selected by kid, the mandatory exp, optional installation_id binding, and the exp/nbf window
+ * key selected by kid, each header failure reporting its OWN state so the reader is sent to the
+ * field that actually failed rather than to the signature, the mandatory exp, optional installation_id binding, and the exp/nbf window
  * with +-60s leeway (Appendix F). Pure and Spring-less: the clock, install id and key resolver are
  * all parameters.
  *
@@ -71,22 +72,24 @@ public class LicenseTokenCodec {
             final JWT parsed = JWTParser.parse(token);
             if (!(parsed instanceof SignedJWT jwt)) {
                 // PlainJWT (alg:none) or EncryptedJWT (JWE - not supported yet) -> reject
-                return invalid(token, LicenseState.SIGNATURE_INVALID);
+                return invalid(token, LicenseState.UNSUPPORTED_ALGORITHM);
             }
             if (!JWSAlgorithm.ES256.equals(jwt.getHeader().getAlgorithm())) {
-                return invalid(token, LicenseState.SIGNATURE_INVALID);
+                return invalid(token, LicenseState.UNSUPPORTED_ALGORITHM);
             }
             final JOSEObjectType typ = jwt.getHeader().getType();
             if (typ == null || !EXPECTED_TYP.equals(typ.getType())) {
-                return invalid(token, LicenseState.SIGNATURE_INVALID);
+                return invalid(token, LicenseState.WRONG_TOKEN_TYPE);
             }
             final String kid = jwt.getHeader().getKeyID();
             if (kid == null || kid.isBlank()) {
-                return invalid(token, LicenseState.SIGNATURE_INVALID);
+                return invalid(token, LicenseState.MISSING_KID);
             }
             final ECPublicKey pub = keyByKid.apply(kid);
             if (pub == null) {
-                return invalid(token, LicenseState.SIGNATURE_INVALID);
+                // The signature is NOT examined here. Reporting SIGNATURE_INVALID would name the
+                // wrong artifact: a perfectly good signature under a kid nobody configured.
+                return invalid(token, LicenseState.UNKNOWN_KID);
             }
             if (!jwt.verify(new ECDSAVerifier(pub))) {
                 return invalid(token, LicenseState.SIGNATURE_INVALID);

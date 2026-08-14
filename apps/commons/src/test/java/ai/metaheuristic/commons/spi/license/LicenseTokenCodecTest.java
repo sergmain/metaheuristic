@@ -205,7 +205,10 @@ public class LicenseTokenCodecTest {
 
         final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, _ -> null, NOW, null);
 
-        assertEquals(LicenseState.SIGNATURE_INVALID, r.state());
+        // NOT SIGNATURE_INVALID: the signature here is good and is never examined. The kid selected
+        // no key, and saying "bad signature" would send the reader to inspect key material that was
+        // never in question.
+        assertEquals(LicenseState.UNKNOWN_KID, r.state());
     }
 
     @Test

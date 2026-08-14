@@ -69,6 +69,16 @@ public class LicenseArtifactUtils {
      * only say "invalid".
      */
     public static boolean isInstallable(LicenseState state) {
-        return state != LicenseState.SIGNATURE_INVALID && state != LicenseState.MALFORMED;
+        // The header-contract failures join SIGNATURE_INVALID rather than being installable: a token
+        // this dispatcher cannot even select a key for can never become valid here, so storing it
+        // would only put a permanent dead row in the set. UNKNOWN_KID is the arguable one - a key
+        // could be configured later - but a licence and the key that verifies it arrive together,
+        // and rejecting it at upload names the fault while the admin is still holding the file.
+        return state != LicenseState.SIGNATURE_INVALID
+                && state != LicenseState.MALFORMED
+                && state != LicenseState.UNKNOWN_KID
+                && state != LicenseState.MISSING_KID
+                && state != LicenseState.UNSUPPORTED_ALGORITHM
+                && state != LicenseState.WRONG_TOKEN_TYPE;
     }
 }

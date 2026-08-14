@@ -59,7 +59,14 @@ public class LicenseDirScanUtils {
     private LicenseDirScanUtils() {
     }
 
-    /** Every readable, non-blank {@code *.jws} in {@code dir}, in file-name order. Never throws. */
+    /**
+     * Every readable, non-blank {@code *.jws} in {@code dir}, in file-name order. Never throws.
+     *
+     * <p>Each file taken is named in the log. Downstream a license is identified by its licensee
+     * and its state, never by where it came from - the token set is de-duplicated across the
+     * directory and the database before verification, so no later message can say which FILE a
+     * verdict belongs to. This is the only point at which the mapping still exists.
+     */
     public static List<String> scanDir(Path dir) {
         if (!Files.isDirectory(dir)) {
             return List.of();
@@ -73,6 +80,12 @@ public class LicenseDirScanUtils {
         catch (IOException | RuntimeException e) {
             log.warn("01.258.010 can't list the license dir {}, no license is read from it: {}", dir, e.getMessage());
             return List.of();
+        }
+        if (tokens.isEmpty()) {
+            log.info("No *{} file was read from the license dir {}", JWS_SUFFIX, dir);
+        }
+        else {
+            log.info("Read {} license file(s) from {}", tokens.size(), dir);
         }
         return tokens;
     }
@@ -89,9 +102,12 @@ public class LicenseDirScanUtils {
     private static void readQuietly(Path file, List<String> acc) {
         try {
             final String token = Files.readString(file, StandardCharsets.UTF_8).strip();
-            if (!token.isBlank()) {
-                acc.add(token);
+            if (token.isBlank()) {
+                log.warn("01.258.030 the license file {} is empty, skipping it", file);
+                return;
             }
+            acc.add(token);
+            log.info("License file taken: {}", file);
         }
         catch (IOException | RuntimeException e) {
             log.warn("01.258.020 can't read the license file {}, skipping it: {}", file, e.getMessage());

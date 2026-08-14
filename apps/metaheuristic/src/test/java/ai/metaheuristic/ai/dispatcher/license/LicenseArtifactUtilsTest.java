@@ -17,6 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.license;
 
 import ai.metaheuristic.commons.spi.license.LicenseState;
+
+import java.util.EnumSet;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
@@ -83,11 +86,23 @@ public class LicenseArtifactUtilsTest {
     }
 
     @Test
+    public void test_headerContractFailuresAreNotInstallable() {
+        // a token this dispatcher cannot even select a key for can never become valid here, so
+        // storing it would only put a permanent dead row in the set.
+        assertFalse(LicenseArtifactUtils.isInstallable(LicenseState.UNKNOWN_KID));
+        assertFalse(LicenseArtifactUtils.isInstallable(LicenseState.MISSING_KID));
+        assertFalse(LicenseArtifactUtils.isInstallable(LicenseState.UNSUPPORTED_ALGORITHM));
+        assertFalse(LicenseArtifactUtils.isInstallable(LicenseState.WRONG_TOKEN_TYPE));
+    }
+
+    @Test
     public void test_everyStateIsDecided() {
         // total by construction: a state added later must not silently become un-installable.
+        final Set<LicenseState> refused = EnumSet.of(
+                LicenseState.SIGNATURE_INVALID, LicenseState.MALFORMED, LicenseState.UNKNOWN_KID,
+                LicenseState.MISSING_KID, LicenseState.UNSUPPORTED_ALGORITHM, LicenseState.WRONG_TOKEN_TYPE);
         for (LicenseState state : LicenseState.values()) {
-            final boolean expected = state != LicenseState.SIGNATURE_INVALID && state != LicenseState.MALFORMED;
-            assertEquals(expected, LicenseArtifactUtils.isInstallable(state), state.name());
+            assertEquals(!refused.contains(state), LicenseArtifactUtils.isInstallable(state), state.name());
         }
     }
 }

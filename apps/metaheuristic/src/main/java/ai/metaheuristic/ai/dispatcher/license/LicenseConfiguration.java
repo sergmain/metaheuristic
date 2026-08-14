@@ -18,6 +18,10 @@ package ai.metaheuristic.ai.dispatcher.license;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.commons.spi.license.LicenseVerificationKeys;
+import ai.metaheuristic.api.data.license.LicenseClaims;
+import ai.metaheuristic.commons.spi.license.LicenseAggregate;
+import ai.metaheuristic.commons.spi.license.LicenseState;
+import ai.metaheuristic.commons.spi.license.LicenseVerificationResult;
 import ai.metaheuristic.commons.spi.license.SignedFileLicenseSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import java.nio.file.Files;
+import java.util.List;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
@@ -80,13 +85,61 @@ public class LicenseConfiguration {
         // without a binary release.
         // ! It is a SEPARATE property from mh.publicKeyStore, which holds function-signature keys:
         // one array for both would let a 'code' collision promote one kind of trust anchor to the other.
-        return new SignedFileLicenseSource(
+        final SignedFileLicenseSource source = new SignedFileLicenseSource(
                 licenseTokenSupplier::tokens,
                 LicenseVerificationKeys.resolver(globals.keyStore.license.publicKey),
                 () -> Instant.now(Clock.systemUTC()),
                 deploymentValuesResolverHolder::current,
                 licenseInstallationService::installationId,
                 globals.license.cacheTtl);
+
+        reportLicenses(source);
+        return source;
+    }
+
+    /**
+     * Says at boot what the dispatcher made of the licenses it found.
+     *
+     * <p>The verify core is Spring-less and reports by RETURN VALUE: a refused license is a state
+     * in {@link LicenseVerificationResult}, never an exception and never a log line. Nothing in
+     * {@code ai.metaheuristic.commons.spi.license} owns a logger, deliberately. The consequence was
+     * that a license which reads fine and then fails verification produced no server-side trace at
+     * all - a wrong kid, an expired token, a foreign installation id and a mismatched database all
+     * looked identical from the log, which is to say invisible. The only place the state surfaced
+     * was the admin UI, which is no help to anyone reading a startup log or a support bundle.
+     *
+     * <p>Closed here rather than inside the core: the core stays logger-free, and this is the one
+     * place that both owns the source and runs exactly once at startup.
+     *
+     * <p>One line per license so a SET can be read, plus one for the folded entitlement. Grants are
+     * printed only for a VALID license - listing the claims of a refused token invites reading them
+     * as though they were in force.
+     */
+    private static void reportLicenses(SignedFileLicenseSource source) {
+        final LicenseAggregate aggregate = source.currentResult();
+        final List<LicenseVerificationResult> licenses = aggregate.licenses();
+        if (licenses.isEmpty()) {
+            log.info("No license is installed. Every licensed capability is off until one is.");
+            return;
+        }
+        for (LicenseVerificationResult r : licenses) {
+            final LicenseClaims c = r.claims();
+            if (r.state()==LicenseState.VALID && c!=null) {
+                log.info("License '{}' ({}): {}, exp: {}, capabilities: {}, databases: {}, storages: {}",
+                        c.licensee, c.edition, r.state(), c.exp, c.capabilities, c.databases, c.storages);
+            }
+            else if (c!=null) {
+                log.warn("License '{}' ({}): {} - it grants nothing", c.licensee, c.edition, r.state());
+            }
+            else {
+                // unparseable: no claims to name it by, so a token prefix is the only handle there is.
+                log.warn("License [{}...]: {} - it couldn't be parsed and grants nothing",
+                        r.token().substring(0, Math.min(16, r.token().length())), r.state());
+            }
+        }
+        log.info("Effective entitlement: {}, capabilities: {}, databases: {}, storages: {}, coverage ends: {}",
+                aggregate.state(), aggregate.capabilities(), aggregate.databases(), aggregate.storages(),
+                aggregate.expiresAt());
     }
 
 }
