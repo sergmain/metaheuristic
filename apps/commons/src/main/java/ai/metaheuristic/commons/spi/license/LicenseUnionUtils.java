@@ -85,7 +85,7 @@ public class LicenseUnionUtils {
         final Set<String> storages = union(valid, c -> c.storages);
 
         // the latest exp among currently-valid licenses: the instant the installation loses all coverage.
-        @Nullable final Instant expiresAt = valid.stream()
+        final Instant expiresAt = valid.stream()
                 .map(c -> c.exp).filter(Objects::nonNull)
                 .max(Comparator.naturalOrder()).orElse(null);
 

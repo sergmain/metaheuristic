@@ -74,7 +74,7 @@ public class LicenseInfoUtils {
         final List<LicenseInfoData.InstalledLicense> out = new ArrayList<>();
         for (LicenseVerificationResult r : results) {
             final String hash = LicenseTokenHashUtils.hash(r.token());
-            @Nullable final RowInfo row = rowsByTokenHash.get(hash);
+            final RowInfo row = rowsByTokenHash.get(hash);
 
             // on disk, or belonging to no row we can name - either way it is the directory copy.
             // The second case is the original fallback and stays: a result the installation is
@@ -94,7 +94,7 @@ public class LicenseInfoUtils {
             LicenseVerificationResult r, @Nullable Long artifactId,
             LicenseArtifactParams.Origin origin, @Nullable Long installedOn) {
 
-        @Nullable final LicenseClaims claims = r.claims();
+        final LicenseClaims claims = r.claims();
         return new LicenseInfoData.InstalledLicense(
                 artifactId,
                 origin,

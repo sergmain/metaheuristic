@@ -57,7 +57,7 @@ public class LicenseArtifactTxService {
     @Transactional
     public LicenseArtifactUtils.InstallAction install(String token, @Nullable Long installedByAccountId) {
         final String tokenHash = LicenseTokenHashUtils.hash(token);
-        @Nullable final LicenseArtifact existing = licenseArtifactRepository.findByTokenHash(tokenHash);
+        final LicenseArtifact existing = licenseArtifactRepository.findByTokenHash(tokenHash);
 
         final LicenseArtifactUtils.InstallAction action =
                 LicenseArtifactUtils.decideInstall(existing == null ? null : existing.deleted);
@@ -97,7 +97,7 @@ public class LicenseArtifactTxService {
      */
     @Transactional
     public boolean remove(Long artifactId) {
-        @Nullable final LicenseArtifact row = licenseArtifactRepository.findById(artifactId).orElse(null);
+        final LicenseArtifact row = licenseArtifactRepository.findById(artifactId).orElse(null);
         if (row == null || row.deleted) {
             return false;
         }

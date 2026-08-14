@@ -105,7 +105,7 @@ public class LicenseInstallationService {
         try {
             final Path dir = globals.dispatcherPath;
             final Path file = dir.resolve(INSTALLATION_ID_FILE);
-            @Nullable final String current = Files.exists(file) ? Files.readString(file, StandardCharsets.UTF_8) : null;
+            final String current = Files.exists(file) ? Files.readString(file, StandardCharsets.UTF_8) : null;
             if (LicenseInstallationUtils.decideMirror(id, current) == LicenseInstallationUtils.MirrorAction.LEAVE) {
                 return;
             }

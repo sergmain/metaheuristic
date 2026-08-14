@@ -140,7 +140,7 @@ public class LicenseInfoService {
     private Map<String, LicenseInfoUtils.RowInfo> liveRowsByTokenHash() {
         final Map<String, LicenseInfoUtils.RowInfo> byHash = new HashMap<>();
         for (LicenseArtifact row : licenseArtifactRepository.findAllLive()) {
-            @Nullable final LicenseArtifactParams params = toParams(row);
+            final LicenseArtifactParams params = toParams(row);
             byHash.put(row.tokenHash, new LicenseInfoUtils.RowInfo(
                     row.id,
                     params==null ? LicenseArtifactParams.Origin.DB : params.origin,

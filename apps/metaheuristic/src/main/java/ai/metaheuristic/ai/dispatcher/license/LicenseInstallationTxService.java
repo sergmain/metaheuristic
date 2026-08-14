@@ -53,7 +53,7 @@ public class LicenseInstallationTxService {
     @Transactional
     public String getOrCreateInstallationId() {
         final List<LicenseInstallation> rows = licenseInstallationRepository.findAllOrderByIdAsc();
-        @Nullable final LicenseInstallation existing = LicenseInstallationUtils.pickAuthoritative(rows);
+        final LicenseInstallation existing = LicenseInstallationUtils.pickAuthoritative(rows);
         if (existing != null) {
             if (rows.size() > 1) {
                 log.warn("01.254.010 MH_LICENSE_INSTALLATION holds {} rows, expected 1; using the oldest, id: {}",
