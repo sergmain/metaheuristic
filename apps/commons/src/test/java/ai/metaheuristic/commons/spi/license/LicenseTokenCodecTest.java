@@ -71,7 +71,7 @@ public class LicenseTokenCodecTest {
     private static JWTClaimsSet.Builder enterprise() {
         return new JWTClaimsSet.Builder()
                 .claim("licensee", "ACME").claim("edition", "ENTERPRISE")
-                .claim("capabilities", List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C"))
+                .claim("capabilities", List.of("Cat.FEATURE_A", "Cat.FEATURE_B", "Cat.FEATURE_C"))
                 .claim("databases", List.of("H2", "POSTGRES"))
                 .claim("storages", List.of("S3"))
                 .claim("version", 1)
@@ -126,7 +126,7 @@ public class LicenseTokenCodecTest {
         assertEquals(1, r.claims().version);
         assertEquals("ACME", r.claims().licensee);
         assertEquals("ENTERPRISE", r.claims().edition);
-        assertEquals(List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C"), r.claims().capabilities);
+        assertEquals(List.of("Cat.FEATURE_A", "Cat.FEATURE_B", "Cat.FEATURE_C"), r.claims().capabilities);
         assertEquals(List.of("H2", "POSTGRES"), r.claims().databases);
         assertEquals(List.of("S3"), r.claims().storages);
         assertEquals(NOW, r.claims().iat);

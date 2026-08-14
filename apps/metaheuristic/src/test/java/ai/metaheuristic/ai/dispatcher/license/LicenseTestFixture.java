@@ -40,7 +40,7 @@ import java.util.function.Function;
  * test fixture that could sign its own licence would be able to grant itself capabilities the
  * product does not sell.
  *
- * <p>❗ It grants {@code Capability:BATCH} and nothing else. MH must not name proprietary capabilities even in a test artifact — the string would be a seal breach sitting in {@code java/metaheuristic}.
+ * <p>❗ It grants {@code MH.BATCH} and nothing else. MH must not name proprietary capabilities even in a test artifact — the string would be a seal breach sitting in {@code java/metaheuristic}.
  *
  * @author Serge
  */

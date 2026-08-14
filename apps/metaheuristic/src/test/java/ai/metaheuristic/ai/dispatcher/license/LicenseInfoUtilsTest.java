@@ -64,7 +64,7 @@ public class LicenseInfoUtilsTest {
     public void test_licenseWithNoRow_camefromTheDirectory() {
         final List<LicenseInfoData.InstalledLicense> out =
                 LicenseInfoUtils.breakdown(
-                        List.of(result("tok-A", LicenseState.VALID, "Cap:A")), Map.of(), Set.of());
+                        List.of(result("tok-A", LicenseState.VALID, "Cap.A")), Map.of(), Set.of());
 
         assertEquals(1, out.size());
         assertNull(out.getFirst().artifactId());
@@ -75,7 +75,7 @@ public class LicenseInfoUtilsTest {
     @Test
     public void test_licenseWithARow_carriesItsIdAndInstallDate() {
         final List<LicenseInfoData.InstalledLicense> out = LicenseInfoUtils.breakdown(
-                List.of(result("tok-A", LicenseState.VALID, "Cap:A")),
+                List.of(result("tok-A", LicenseState.VALID, "Cap.A")),
                 Map.of(LicenseTokenHashUtils.hash("tok-A"), row(7L, 1234L)), Set.of());
 
         assertEquals(7L, out.getFirst().artifactId());
@@ -88,8 +88,8 @@ public class LicenseInfoUtilsTest {
         // the aggregate lists a directory license FIRST and a DB license second; a positional join
         // would hand the row to the wrong one. Only the second has a row.
         final List<LicenseInfoData.InstalledLicense> out = LicenseInfoUtils.breakdown(
-                List.of(result("from-disk", LicenseState.VALID, "Cap:A"),
-                        result("from-row", LicenseState.VALID, "Cap:B")),
+                List.of(result("from-disk", LicenseState.VALID, "Cap.A"),
+                        result("from-row", LicenseState.VALID, "Cap.B")),
                 Map.of(LicenseTokenHashUtils.hash("from-row"), row(9L, 555L)), Set.of());
 
         assertNull(out.get(0).artifactId(), "the directory license must not inherit the row");
@@ -102,7 +102,7 @@ public class LicenseInfoUtilsTest {
     public void test_whitespaceDoesNotSplitOneLicenseIntoTwo() {
         // a file read with a trailing newline and the same token pasted into the UI are ONE license.
         final List<LicenseInfoData.InstalledLicense> out = LicenseInfoUtils.breakdown(
-                List.of(result("tok-A\n", LicenseState.VALID, "Cap:A")),
+                List.of(result("tok-A\n", LicenseState.VALID, "Cap.A")),
                 Map.of(LicenseTokenHashUtils.hash("tok-A"), row(3L, 99L)), Set.of());
 
         assertEquals(3L, out.getFirst().artifactId());
@@ -112,9 +112,9 @@ public class LicenseInfoUtilsTest {
     public void test_invalidLicensesStayInTheBreakdown() {
         // this is how an admin finds the expired one; dropping them would hide the problem.
         final List<LicenseInfoData.InstalledLicense> out = LicenseInfoUtils.breakdown(
-                List.of(result("a", LicenseState.EXPIRED, "Cap:A"),
-                        result("b", LicenseState.VALID, "Cap:B"),
-                        result("c", LicenseState.INSTALL_ID_MISMATCH, "Cap:C")), Map.of(), Set.of());
+                List.of(result("a", LicenseState.EXPIRED, "Cap.A"),
+                        result("b", LicenseState.VALID, "Cap.B"),
+                        result("c", LicenseState.INSTALL_ID_MISMATCH, "Cap.C")), Map.of(), Set.of());
 
         assertEquals(3, out.size());
         assertEquals(LicenseState.EXPIRED, out.get(0).state());
@@ -125,11 +125,11 @@ public class LicenseInfoUtilsTest {
     @Test
     public void test_eachLicenseReportsItsOwnGrants_notTheUnion() {
         final List<LicenseInfoData.InstalledLicense> out = LicenseInfoUtils.breakdown(
-                List.of(result("a", LicenseState.VALID, "Cap:A"),
-                        result("b", LicenseState.VALID, "Cap:B")), Map.of(), Set.of());
+                List.of(result("a", LicenseState.VALID, "Cap.A"),
+                        result("b", LicenseState.VALID, "Cap.B")), Map.of(), Set.of());
 
-        assertEquals(List.of("Cap:A"), out.get(0).capabilities());
-        assertEquals(List.of("Cap:B"), out.get(1).capabilities());
+        assertEquals(List.of("Cap.A"), out.get(0).capabilities());
+        assertEquals(List.of("Cap.B"), out.get(1).capabilities());
     }
 
     @Test
@@ -152,7 +152,7 @@ public class LicenseInfoUtilsTest {
     public void test_timesAreEpochMillis() {
         final List<LicenseInfoData.InstalledLicense> out =
                 LicenseInfoUtils.breakdown(
-                        List.of(result("a", LicenseState.VALID, "Cap:A")), Map.of(), Set.of());
+                        List.of(result("a", LicenseState.VALID, "Cap.A")), Map.of(), Set.of());
 
         assertEquals(IAT.toEpochMilli(), out.getFirst().iat());
         assertEquals(EXP.toEpochMilli(), out.getFirst().exp());
@@ -171,7 +171,7 @@ public class LicenseInfoUtilsTest {
         // remove button. The token set is de-duplicated before verification, so the aggregate holds
         // ONE result for both - which must not cost the admin the directory copy.
         final List<LicenseInfoData.InstalledLicense> out = LicenseInfoUtils.breakdown(
-                List.of(result("shared", LicenseState.VALID, "Cap:A")),
+                List.of(result("shared", LicenseState.VALID, "Cap.A")),
                 Map.of(LicenseTokenHashUtils.hash("shared"), row(4L, 777L)),
                 Set.of(LicenseTokenHashUtils.hash("shared")));
 

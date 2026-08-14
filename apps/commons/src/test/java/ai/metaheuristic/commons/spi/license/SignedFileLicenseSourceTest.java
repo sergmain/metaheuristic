@@ -79,7 +79,7 @@ public class SignedFileLicenseSourceTest {
     }
 
     private static String signEnterprise(ECPrivateKey priv, Instant exp) throws Exception {
-        return sign(priv, List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C"), List.of("H2"), exp);
+        return sign(priv, List.of("Cat.FEATURE_A", "Cat.FEATURE_B", "Cat.FEATURE_C"), List.of("H2"), exp);
     }
 
     private static Function<String, ECPublicKey> resolver(ECPublicKey pub) {
@@ -123,8 +123,8 @@ public class SignedFileLicenseSourceTest {
     @Test
     public void test_validBesideExpired_onlyTheValidOneGrants() throws Exception {
         final Keys k = keys();
-        final String expired = sign(k.priv(), List.of("Cat:GONE"), List.of("H2"), NOW.minus(Duration.ofDays(1)));
-        final String live = sign(k.priv(), List.of("Cat:LIVE"), List.of("H2"), NOW.plus(Duration.ofDays(365)));
+        final String expired = sign(k.priv(), List.of("Cat.GONE"), List.of("H2"), NOW.minus(Duration.ofDays(1)));
+        final String live = sign(k.priv(), List.of("Cat.LIVE"), List.of("H2"), NOW.plus(Duration.ofDays(365)));
 
         final SignedFileLicenseSource src = source(k, List.of(expired, live));
 
@@ -137,8 +137,8 @@ public class SignedFileLicenseSourceTest {
     @Test
     public void test_twoValidTokens_grantTheSumOfTheirCapabilities() throws Exception {
         final Keys k = keys();
-        final String a = sign(k.priv(), List.of("Cat:A"), List.of("H2"), NOW.plus(Duration.ofDays(365)));
-        final String b = sign(k.priv(), List.of("Cat:B"), List.of("H2"), NOW.plus(Duration.ofDays(10)));
+        final String a = sign(k.priv(), List.of("Cat.A"), List.of("H2"), NOW.plus(Duration.ofDays(365)));
+        final String b = sign(k.priv(), List.of("Cat.B"), List.of("H2"), NOW.plus(Duration.ofDays(10)));
 
         final SignedFileLicenseSource src = source(k, List.of(a, b));
 
@@ -172,7 +172,7 @@ public class SignedFileLicenseSourceTest {
     @Test
     public void test_runningDatabaseNotGranted_nothingIsLicensed() throws Exception {
         final Keys k = keys();
-        final String tok = sign(k.priv(), List.of("Cat:A"), List.of("POSTGRES"), NOW.plus(Duration.ofDays(365)));
+        final String tok = sign(k.priv(), List.of("Cat.A"), List.of("POSTGRES"), NOW.plus(Duration.ofDays(365)));
 
         final SignedFileLicenseSource src = source(k, List.of(tok));
 

@@ -74,11 +74,11 @@ public class LicenseUnionUtilsTest {
     @Test
     public void test_singleValidLicense_grantsItsOwnAxes() {
         final LicenseAggregate a = LicenseUnionUtils.fold(
-                List.of(valid(List.of("Cap:A"), List.of("H2"), List.of())), ON_H2);
+                List.of(valid(List.of("Cap.A"), List.of("H2"), List.of())), ON_H2);
 
         assertEquals(LicenseState.VALID, a.state());
         assertTrue(a.entitlements().has(new Feature("Cap", "A")));
-        assertEquals(Set.of("Cap:A"), a.capabilities());
+        assertEquals(Set.of("Cap.A"), a.capabilities());
         assertEquals(Set.of("H2"), a.databases());
         assertEquals(EXP_LATE, a.expiresAt());
     }
@@ -86,19 +86,19 @@ public class LicenseUnionUtilsTest {
     @Test
     public void test_unionOfCapabilities() {
         final LicenseAggregate a = LicenseUnionUtils.fold(List.of(
-                valid(List.of("Cap:A", "Cap:B"), List.of("H2"), List.of()),
-                valid(List.of("Cap:C"), List.of("POSTGRES"), List.of("S3"))), ON_H2);
+                valid(List.of("Cap.A", "Cap.B"), List.of("H2"), List.of()),
+                valid(List.of("Cap.C"), List.of("POSTGRES"), List.of("S3"))), ON_H2);
 
         assertEquals(LicenseState.VALID, a.state());
-        assertEquals(Set.of("Cap:A", "Cap:B", "Cap:C"), a.capabilities());
+        assertEquals(Set.of("Cap.A", "Cap.B", "Cap.C"), a.capabilities());
         assertEquals(Set.of("H2", "POSTGRES"), a.databases());
         assertEquals(Set.of("S3"), a.storages());
     }
 
     @Test
     public void test_unionIsOrderIndependent() {
-        final LicenseVerificationResult x = valid(List.of("Cap:A"), List.of("H2"), List.of());
-        final LicenseVerificationResult y = valid(List.of("Cap:B"), List.of("POSTGRES"), List.of("S3"));
+        final LicenseVerificationResult x = valid(List.of("Cap.A"), List.of("H2"), List.of());
+        final LicenseVerificationResult y = valid(List.of("Cap.B"), List.of("POSTGRES"), List.of("S3"));
 
         final LicenseAggregate a = LicenseUnionUtils.fold(List.of(x, y), ON_H2);
         final LicenseAggregate b = LicenseUnionUtils.fold(List.of(y, x), ON_H2);
@@ -111,7 +111,7 @@ public class LicenseUnionUtilsTest {
 
     @Test
     public void test_unionWithItself_equalsItself() {
-        final LicenseVerificationResult x = valid(List.of("Cap:A"), List.of("H2"), List.of());
+        final LicenseVerificationResult x = valid(List.of("Cap.A"), List.of("H2"), List.of());
 
         final LicenseAggregate one = LicenseUnionUtils.fold(List.of(x), ON_H2);
         final LicenseAggregate twice = LicenseUnionUtils.fold(List.of(x, x), ON_H2);
@@ -125,12 +125,12 @@ public class LicenseUnionUtilsTest {
     @Test
     public void test_invalidLicenseIsSkipped_notFatal() {
         final LicenseAggregate a = LicenseUnionUtils.fold(List.of(
-                lic(LicenseState.EXPIRED, List.of("Cap:GONE"), List.of("MYSQL"), List.of("S3"), EXP_SOON),
-                lic(LicenseState.SIGNATURE_INVALID, List.of("Cap:FAKE"), List.of("MYSQL"), List.of(), null),
-                valid(List.of("Cap:A"), List.of("H2"), List.of())), ON_H2);
+                lic(LicenseState.EXPIRED, List.of("Cap.GONE"), List.of("MYSQL"), List.of("S3"), EXP_SOON),
+                lic(LicenseState.SIGNATURE_INVALID, List.of("Cap.FAKE"), List.of("MYSQL"), List.of(), null),
+                valid(List.of("Cap.A"), List.of("H2"), List.of())), ON_H2);
 
         assertEquals(LicenseState.VALID, a.state());
-        assertEquals(Set.of("Cap:A"), a.capabilities());
+        assertEquals(Set.of("Cap.A"), a.capabilities());
         assertFalse(a.entitlements().has(new Feature("Cap", "GONE")));
         assertEquals(3, a.licenses().size(), "the breakdown keeps every installed license");
     }
@@ -138,8 +138,8 @@ public class LicenseUnionUtilsTest {
     @Test
     public void test_expiresAt_isLatestAmongValid() {
         final LicenseAggregate a = LicenseUnionUtils.fold(List.of(
-                lic(LicenseState.VALID, List.of("Cap:A"), List.of("H2"), List.of(), EXP_SOON),
-                lic(LicenseState.VALID, List.of("Cap:B"), List.of("H2"), List.of(), EXP_LATE)), ON_H2);
+                lic(LicenseState.VALID, List.of("Cap.A"), List.of("H2"), List.of(), EXP_SOON),
+                lic(LicenseState.VALID, List.of("Cap.B"), List.of("H2"), List.of(), EXP_LATE)), ON_H2);
 
         assertEquals(EXP_LATE, a.expiresAt(), "the instant the installation loses ALL coverage");
         assertEquals(EXP_LATE, a.entitlements().expiresAt().orElse(null));
@@ -149,7 +149,7 @@ public class LicenseUnionUtilsTest {
     public void test_emptyDatabaseList_grantsNoDatabase() {
         // an empty allow-list is a grant of nothing, not 'unconstrained'.
         final LicenseAggregate a = LicenseUnionUtils.fold(
-                List.of(valid(List.of("Cap:A"), List.of(), List.of())), ON_H2);
+                List.of(valid(List.of("Cap.A"), List.of(), List.of())), ON_H2);
 
         assertEquals(LicenseState.DATABASE_NOT_LICENSED, a.state());
     }
@@ -158,7 +158,7 @@ public class LicenseUnionUtilsTest {
     public void test_databaseNotLicensed_gatesEveryCapabilityOff() {
         // an unlicensed deployment licenses nothing.
         final LicenseAggregate a = LicenseUnionUtils.fold(
-                List.of(valid(List.of("Cap:A"), List.of("POSTGRES"), List.of())), ON_H2);
+                List.of(valid(List.of("Cap.A"), List.of("POSTGRES"), List.of())), ON_H2);
 
         assertEquals(LicenseState.DATABASE_NOT_LICENSED, a.state());
         assertFalse(a.entitlements().valid());
@@ -171,17 +171,17 @@ public class LicenseUnionUtilsTest {
     public void test_databaseCoveredByAnotherLicenseInTheSet() {
         // a license that does not list the running database is not invalid - it just contributes nothing there.
         final LicenseAggregate a = LicenseUnionUtils.fold(List.of(
-                valid(List.of("Cap:A"), List.of("POSTGRES"), List.of()),
-                valid(List.of("Cap:B"), List.of("H2"), List.of())), ON_H2);
+                valid(List.of("Cap.A"), List.of("POSTGRES"), List.of()),
+                valid(List.of("Cap.B"), List.of("H2"), List.of())), ON_H2);
 
         assertEquals(LicenseState.VALID, a.state());
-        assertEquals(Set.of("Cap:A", "Cap:B"), a.capabilities());
+        assertEquals(Set.of("Cap.A", "Cap.B"), a.capabilities());
     }
 
     @Test
     public void test_storageNotLicensed() {
         final LicenseAggregate a = LicenseUnionUtils.fold(
-                List.of(valid(List.of("Cap:A"), List.of("H2"), List.of())),
+                List.of(valid(List.of("Cap.A"), List.of("H2"), List.of())),
                 new DeploymentValues("H2", "S3"));
 
         assertEquals(LicenseState.STORAGE_NOT_LICENSED, a.state());
@@ -191,7 +191,7 @@ public class LicenseUnionUtilsTest {
     @Test
     public void test_storageLicensed() {
         final LicenseAggregate a = LicenseUnionUtils.fold(
-                List.of(valid(List.of("Cap:A"), List.of("H2"), List.of("S3"))),
+                List.of(valid(List.of("Cap.A"), List.of("H2"), List.of("S3"))),
                 new DeploymentValues("H2", "S3"));
 
         assertEquals(LicenseState.VALID, a.state());
@@ -202,7 +202,7 @@ public class LicenseUnionUtilsTest {
     public void test_noStorageBackendActive_storageAxisNotChecked() {
         // nothing is running on a storage backend, so an empty 'storages' grant is not a gap.
         final LicenseAggregate a = LicenseUnionUtils.fold(
-                List.of(valid(List.of("Cap:A"), List.of("H2"), List.of())), ON_H2);
+                List.of(valid(List.of("Cap.A"), List.of("H2"), List.of())), ON_H2);
 
         assertEquals(LicenseState.VALID, a.state());
     }
@@ -211,7 +211,7 @@ public class LicenseUnionUtilsTest {
     public void test_noneValid_reportsHowCoverageWouldBeRegained() {
         final LicenseAggregate a = LicenseUnionUtils.fold(List.of(
                 lic(LicenseState.SIGNATURE_INVALID, List.of(), List.of(), List.of(), null),
-                lic(LicenseState.EXPIRED, List.of("Cap:A"), List.of("H2"), List.of(), EXP_SOON)), ON_H2);
+                lic(LicenseState.EXPIRED, List.of("Cap.A"), List.of("H2"), List.of(), EXP_SOON)), ON_H2);
 
         assertEquals(LicenseState.EXPIRED, a.state(), "renewing the expired one is the way back to coverage");
         assertFalse(a.entitlements().valid());
@@ -222,8 +222,8 @@ public class LicenseUnionUtilsTest {
     public void test_axesAreIndependent() {
         // constraining the database says nothing about storage.
         final LicenseAggregate a = LicenseUnionUtils.fold(List.of(
-                valid(List.of("Cap:A"), List.of("H2"), List.of()),
-                valid(List.of("Cap:B"), List.of(), List.of("S3"))),
+                valid(List.of("Cap.A"), List.of("H2"), List.of()),
+                valid(List.of("Cap.B"), List.of(), List.of("S3"))),
                 new DeploymentValues("H2", "S3"));
 
         assertEquals(LicenseState.VALID, a.state());

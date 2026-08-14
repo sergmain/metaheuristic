@@ -245,7 +245,7 @@ public class BatchTopLevelService {
     }
 
     /**
-     * ❗ THE gate for {@code Capability:BATCH}. There is exactly one, and it is here rather than on
+     * ❗ THE gate for {@code MH.BATCH}. There is exactly one, and it is here rather than on
      * every public method of this class: submitting a batch is what EXERCISES the capability, while
      * listing or deleting existing ones is how an operator cleans up after a licence lapses.
      * Refusing those would strand work an admin can no longer reach without helping anybody.
@@ -258,7 +258,7 @@ public class BatchTopLevelService {
      * <p>Read fresh on every call — never cached — because validity flips as {@code exp} passes.
      */
     public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final UserContext userContext) {
-        LicenseGuard.require(licenseSource, new Feature("Capability", "BATCH"));
+        LicenseGuard.require(licenseSource, new Feature("MH", "BATCH"));
         if (Consts.ID_1.equals(userContext.getCompanyId())) {
             return new BatchData.UploadingStatus("981.030 Batch can't be created in company #1");
         }

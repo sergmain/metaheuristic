@@ -55,24 +55,24 @@ public class LicenseGuardTest {
 
     @Test
     public void test_licensedCapability_passes() {
-        final LicenseSource src = () -> entitlements(LicenseState.VALID, Set.of("Cat:ALPHA"));
+        final LicenseSource src = () -> entitlements(LicenseState.VALID, Set.of("Cat.ALPHA"));
 
         assertDoesNotThrow(() -> LicenseGuard.require(src, ALPHA));
     }
 
     @Test
     public void test_unlicensedCapability_throws() {
-        final LicenseSource src = () -> entitlements(LicenseState.VALID, Set.of("Cat:ALPHA"));
+        final LicenseSource src = () -> entitlements(LicenseState.VALID, Set.of("Cat.ALPHA"));
 
         final LicenseException ex = assertThrows(LicenseException.class, () -> LicenseGuard.require(src, BETA));
         assertTrue(ex.getMessage().startsWith("01.263.010"), ex.getMessage());
-        assertEquals("Cat:BETA", ex.featureKey);
+        assertEquals("Cat.BETA", ex.featureKey);
     }
 
     @Test
     public void test_invalidLicense_refusesEvenAGrantedCapability() {
         // has(f) is false whenever valid() is false, unconditionally.
-        final LicenseSource src = () -> entitlements(LicenseState.EXPIRED, Set.of("Cat:ALPHA"));
+        final LicenseSource src = () -> entitlements(LicenseState.EXPIRED, Set.of("Cat.ALPHA"));
 
         assertThrows(LicenseException.class, () -> LicenseGuard.require(src, ALPHA));
     }
@@ -95,14 +95,14 @@ public class LicenseGuardTest {
     public void test_reReadsEveryTime_andCachesNothing() {
         // the whole reason a gate may not capture a boolean: validity flips as exp passes.
         final AtomicReference<Entitlements> current =
-                new AtomicReference<>(entitlements(LicenseState.VALID, Set.of("Cat:ALPHA")));
+                new AtomicReference<>(entitlements(LicenseState.VALID, Set.of("Cat.ALPHA")));
         final AtomicInteger calls = new AtomicInteger();
         final CountingSource src = new CountingSource(current, calls);
 
         assertDoesNotThrow(() -> LicenseGuard.require(src, ALPHA));
         assertEquals(1, calls.get());
 
-        current.set(entitlements(LicenseState.EXPIRED, Set.of("Cat:ALPHA")));
+        current.set(entitlements(LicenseState.EXPIRED, Set.of("Cat.ALPHA")));
 
         assertThrows(LicenseException.class, () -> LicenseGuard.require(src, ALPHA));
         assertEquals(2, calls.get(), "the gate must consult the source again, not reuse an answer");
@@ -117,7 +117,7 @@ public class LicenseGuardTest {
     @Test
     public void test_expiresAtIsNotConsultedByTheGate() {
         // the gate asks has(f) and nothing else; the horizon is the admin page's business.
-        final LicenseSource src = () -> entitlements(LicenseState.VALID, Set.of("Cat:ALPHA"));
+        final LicenseSource src = () -> entitlements(LicenseState.VALID, Set.of("Cat.ALPHA"));
 
         assertDoesNotThrow(() -> LicenseGuard.require(src, ALPHA));
         assertEquals(Optional.of(Instant.parse("2027-01-01T00:00:00Z")), src.current().expiresAt());

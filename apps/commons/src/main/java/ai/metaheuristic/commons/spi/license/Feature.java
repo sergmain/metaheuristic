@@ -21,21 +21,28 @@ package ai.metaheuristic.commons.spi.license;
  * and nothing here knows what any of them mean.
  *
  * A feature is a CATEGORY plus a VALUE, both opaque. The wire form carried inside a token is the
- * composite 'Category:VALUE', so the 'features' claim stays a flat string array and matching stays
+ * composite 'Category.VALUE', so the 'features' claim stays a flat string array and matching stays
  * set membership.
  *
  * There is deliberately NO enum of categories or values anywhere in the license manager - an enum
  * would have to name jcons/Legal/RG concepts and would breach the seal. Callers write their own
- * string literals at the gate site, e.g. new Feature("Capability", "RG").
+ * string literals at the gate site, e.g. new Feature("MH", "BATCH").
+ *
+ * UPDATE: the separator was ':' and the category was one fixed literal for every feature the vendor
+ * issues, so a wire form named the concept twice - once in a category that never varied, and once
+ * in the value. A category that is the same word every time carries no information: it said only
+ * 'this is a capability', which is the one thing already known from the field it sits in. The category now names the PRODUCT FAMILY the capability belongs
+ * to, so 'MH.BATCH' says something the value alone does not, and the pair is again worth being a
+ * pair. Nothing in this class knows the vocabulary; only the separator lives here.
  *
  * <p>Error code prefix: {@code 01.250.} (unique to this class).
  *
  * @author Serge
  */
-public record Feature(String category, String value) {   // e.g. new Feature("Capability", "RG")
+public record Feature(String category, String value) {   // e.g. new Feature("MH", "BATCH")
 
     /** Separator between category and value in the wire form. */
-    public static final String SEPARATOR = ":";
+    public static final String SEPARATOR = ".";
 
     public Feature {
         if (category == null || category.isBlank() || value == null || value.isBlank()) {

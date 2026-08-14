@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 @Execution(CONCURRENT)
 public class FeatureMatchUtilsTest {
 
-    private static final Set<String> GRANTED = Set.of("Cat:ALPHA", "Cat:BETA", "Other:ALPHA");
+    private static final Set<String> GRANTED = Set.of("Cat.ALPHA", "Cat.BETA", "Other.ALPHA");
 
     @Test
     public void test_exactMatch() {
@@ -66,7 +66,7 @@ public class FeatureMatchUtilsTest {
     @Test
     public void test_noWildcard() {
         // 'ANY' is an ordinary value with no special meaning - grants are always enumerated.
-        final Set<String> granted = Set.of("Cat:ANY");
+        final Set<String> granted = Set.of("Cat.ANY");
         assertFalse(FeatureMatchUtils.matches(granted, new Feature("Cat", "ALPHA")));
         assertFalse(FeatureMatchUtils.matches(granted, new Feature("Cat", "BETA")));
         assertTrue(FeatureMatchUtils.matches(granted, new Feature("Cat", "ANY")));
@@ -79,7 +79,7 @@ public class FeatureMatchUtilsTest {
 
     @Test
     public void test_key_wireForm() {
-        assertEquals("Cat:ALPHA", new Feature("Cat", "ALPHA").key());
+        assertEquals("Cat.ALPHA", new Feature("Cat", "ALPHA").key());
     }
 
     @Test
@@ -90,8 +90,8 @@ public class FeatureMatchUtilsTest {
 
     @Test
     public void test_separatorInComponentsRejected() {
-        // otherwise 'A:B' + 'C' and 'A' + 'B:C' would collide on the same wire form.
-        assertThrows(IllegalArgumentException.class, () -> new Feature("C:at", "ALPHA"));
-        assertThrows(IllegalArgumentException.class, () -> new Feature("Cat", "AL:PHA"));
+        // otherwise 'A.B' + 'C' and 'A' + 'B.C' would collide on the same wire form.
+        assertThrows(IllegalArgumentException.class, () -> new Feature("C.at", "ALPHA"));
+        assertThrows(IllegalArgumentException.class, () -> new Feature("Cat", "AL.PHA"));
     }
 }

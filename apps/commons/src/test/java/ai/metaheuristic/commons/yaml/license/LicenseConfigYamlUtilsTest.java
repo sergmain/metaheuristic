@@ -45,9 +45,9 @@ public class LicenseConfigYamlUtilsTest {
               licensee: "ACME Aerospace, Inc."
               edition: "ENTERPRISE"
               capabilities:
-                - "Cat:FEATURE_A"
-                - "Cat:FEATURE_B"
-                - "Cat:FEATURE_C"
+                - "Cat.FEATURE_A"
+                - "Cat.FEATURE_B"
+                - "Cat.FEATURE_C"
               databases:
                 - "H2"
                 - "POSTGRES"
@@ -67,9 +67,9 @@ public class LicenseConfigYamlUtilsTest {
               licensee: "Evaluation User"
               edition: "TRIAL"
               capabilities:
-                - "Cat:FEATURE_A"
-                - "Cat:FEATURE_B"
-                - "Cat:FEATURE_C"
+                - "Cat.FEATURE_A"
+                - "Cat.FEATURE_B"
+                - "Cat.FEATURE_C"
               databases:
                 - "H2"
               storages: []
@@ -86,7 +86,7 @@ public class LicenseConfigYamlUtilsTest {
         assertEquals(1, c.version);
         assertEquals("ACME Aerospace, Inc.", c.license.licensee);
         assertEquals("ENTERPRISE", c.license.edition);
-        assertEquals(List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C"), c.license.capabilities);
+        assertEquals(List.of("Cat.FEATURE_A", "Cat.FEATURE_B", "Cat.FEATURE_C"), c.license.capabilities);
         assertEquals(List.of("H2", "POSTGRES", "MYSQL"), c.license.databases);
         assertEquals(List.of("S3"), c.license.storages);
         assertEquals("P365D", c.license.validityDuration);
@@ -112,7 +112,7 @@ public class LicenseConfigYamlUtilsTest {
         final LicenseConfigYaml c = LicenseConfigYamlUtils.BASE_YAML_UTILS.to(ENTERPRISE_YAML);
         final LicenseClaims claims = LicenseClaimsBuilder.build(c.license, now);
         assertEquals(now.plus(Duration.parse("P365D")), claims.exp);
-        assertEquals(List.of("Cat:FEATURE_A", "Cat:FEATURE_B", "Cat:FEATURE_C"), claims.capabilities);
+        assertEquals(List.of("Cat.FEATURE_A", "Cat.FEATURE_B", "Cat.FEATURE_C"), claims.capabilities);
         assertEquals(List.of("H2", "POSTGRES", "MYSQL"), claims.databases);
     }
 
