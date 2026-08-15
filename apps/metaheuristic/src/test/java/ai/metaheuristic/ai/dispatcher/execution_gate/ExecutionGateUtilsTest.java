@@ -19,10 +19,14 @@ package ai.metaheuristic.ai.dispatcher.execution_gate;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.GateData;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -151,6 +155,56 @@ public class ExecutionGateUtilsTest {
         assertFalse(ExecutionGateUtils.readinessEntryExpired(NOW, NOW), "just touched");
         assertFalse(ExecutionGateUtils.readinessEntryExpired(NOW, NOW + twoHours), "exactly at the limit is not yet stale");
         assertTrue(ExecutionGateUtils.readinessEntryExpired(NOW, NOW + twoHours + 1), "one millisecond past the limit is stale");
+    }
+
+    @Test
+    public void test_copyAnalyzers_producesNewObjectsNotReferences() {
+        // the point of copying: what goes in the cache must not be the descriptor's own list, or the
+        // whole parsed FunctionConfigYaml stays reachable for as long as the cache lives
+        final List<FunctionConfigYaml.Analyzer> declared = new ArrayList<>();
+        declared.add(new FunctionConfigYaml.Analyzer(
+                "downtime", new ArrayList<>(List.of("rate limit")), "20min", false, EnumsApi.GateScope.api));
+
+        final List<FunctionConfigYaml.Analyzer> copy = ExecutionGateUtils.copyAnalyzers(declared);
+
+        assertNotSame(declared, copy);
+        assertNotSame(declared.get(0), copy.get(0));
+        assertNotSame(declared.get(0).regex, copy.get(0).regex);
+        assertEquals("downtime", copy.get(0).name);
+        assertEquals(List.of("rate limit"), copy.get(0).regex);
+        assertEquals(EnumsApi.GateScope.api, copy.get(0).scope);
+    }
+
+    @Test
+    public void test_copyAnalyzers_isUnaffectedByLaterEditsToTheSource() {
+        final List<FunctionConfigYaml.Analyzer> declared = new ArrayList<>();
+        declared.add(new FunctionConfigYaml.Analyzer(
+                "downtime", new ArrayList<>(List.of("rate limit")), "20min", false, EnumsApi.GateScope.api));
+
+        final List<FunctionConfigYaml.Analyzer> copy = ExecutionGateUtils.copyAnalyzers(declared);
+
+        declared.get(0).name = "changed";
+        declared.get(0).regex.add("another");
+        declared.clear();
+
+        assertEquals(1, copy.size());
+        assertEquals("downtime", copy.get(0).name);
+        assertEquals(List.of("rate limit"), copy.get(0).regex);
+    }
+
+    @Test
+    public void test_copyAnalyzers_isUnmodifiable() {
+        final List<FunctionConfigYaml.Analyzer> copy = ExecutionGateUtils.copyAnalyzers(
+                List.of(new FunctionConfigYaml.Analyzer("d", new ArrayList<>(List.of("x")), "1h", false, EnumsApi.GateScope.api)));
+
+        assertThrows(UnsupportedOperationException.class, () -> copy.add(null));
+    }
+
+    @Test
+    public void test_copyAnalyzers_absentOrEmptyBecomesAnEmptyList() {
+        // one shape for callers to handle, rather than null-or-empty
+        assertTrue(ExecutionGateUtils.copyAnalyzers(null).isEmpty());
+        assertTrue(ExecutionGateUtils.copyAnalyzers(List.of()).isEmpty());
     }
 
     @Test

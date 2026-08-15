@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecutionGateRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -104,6 +105,19 @@ public class ExecutionGateService {
     };
 
     private final ReentrantReadWriteLock readinessLock = new ReentrantReadWriteLock();
+
+    /**
+     * A Function's declared analyzer rules, by Function code.
+     *
+     * <p>Never invalidated, and it does not need to be: a Function's code carries its version, so one
+     * code always names the same content. Correcting a rule means publishing a new version, which is a
+     * new code and therefore a new entry.
+     *
+     * <p>❗ The value is a private deep copy, NOT the list inside the parsed descriptor — see
+     * {@link ExecutionGateUtils#copyAnalyzers}. This is read on the recovery path, once per failed Task
+     * per pass, which is why it is cached at all.
+     */
+    private final Map<String, List<FunctionConfigYaml.Analyzer>> analyzersByFunctionCode = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void loadCommittedRecords() {
@@ -252,6 +266,26 @@ public class ExecutionGateService {
         } finally {
             readinessLock.writeLock().unlock();
         }
+    }
+
+    /**
+     * The analyzer rules declared by a Function, or an empty list when it declares none.
+     *
+     * <p>⚠️ A Function that cannot be found is treated as declaring none rather than as an error. This
+     * runs while handling a failure that has already happened, and a Function deleted since the Task
+     * was created must not turn one failed Task into a failed recovery pass for the whole ExecContext.
+     */
+    public List<FunctionConfigYaml.Analyzer> analyzersOf(String functionCode) {
+        return analyzersByFunctionCode.computeIfAbsent(functionCode, this::loadAnalyzers);
+    }
+
+    private List<FunctionConfigYaml.Analyzer> loadAnalyzers(String functionCode) {
+        final ai.metaheuristic.ai.dispatcher.beans.Function function = functionService.findByCode(functionCode);
+        if (function == null) {
+            log.warn("01.320.120 function {} wasn't found while reading its analyzers", functionCode);
+            return List.of();
+        }
+        return ExecutionGateUtils.copyAnalyzers(function.getFunctionConfigYaml().function.analyzers);
     }
 
     /** Has this Processor reported this Function ready? Consulting an entry also renews its lifetime. */

@@ -27,12 +27,14 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -120,6 +122,29 @@ public class ExecutionGateUtils {
         final int before = records.size();
         records.values().removeIf(r -> !isLive(r.blockedUntil(), now));
         return before - records.size();
+    }
+
+    /**
+     * An independent, immutable copy of a Function's declared analyzer rules.
+     *
+     * <p>❗ Every element is a fresh {@link FunctionConfigYaml.Analyzer}, never the instance inside the
+     * parsed descriptor. Two reasons, both of which bite only later: holding the descriptor's own list
+     * keeps the entire parsed {@code FunctionConfigYaml} — targets, checksums, metas — reachable for as
+     * long as the cache lives, and it leaves the cached rules mutable through anything else holding the
+     * same descriptor.
+     *
+     * <p>Returns an empty list rather than null for "declares none", so callers have one shape to
+     * handle.
+     */
+    public static List<FunctionConfigYaml.Analyzer> copyAnalyzers(@Nullable List<FunctionConfigYaml.Analyzer> declared) {
+        if (declared == null || declared.isEmpty()) {
+            return List.of();
+        }
+        final List<FunctionConfigYaml.Analyzer> copy = new ArrayList<>(declared.size());
+        for (FunctionConfigYaml.Analyzer analyzer : declared) {
+            copy.add(analyzer.clone());
+        }
+        return List.copyOf(copy);
     }
 
     /**
