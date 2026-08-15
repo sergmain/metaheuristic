@@ -404,6 +404,27 @@ public class ExecutionGateService {
                 .toList();
     }
 
+    /**
+     * Drops what has expired, from memory and from the table.
+     *
+     * <p>Correctness does not depend on this running — every read already treats an expired record as
+     * absent — so it is housekeeping, and a failure is logged rather than propagated. What it prevents
+     * is unbounded growth of a table that is read in full at every startup.
+     */
+    public void sweepExpired() {
+        final long now = System.currentTimeMillis();
+        final int droppedFromMemory = ExecutionGateUtils.dropExpired(records, now);
+        try {
+            final int deleted = executionGateTxService.deleteExpired(now);
+            if (droppedFromMemory > 0 || deleted > 0) {
+                log.info("01.320.140 execution gate sweep: {} dropped from memory, {} rows deleted", droppedFromMemory, deleted);
+            }
+        }
+        catch (Throwable th) {
+            log.error("01.320.160 execution gate sweep failed, will retry on the next pass", th);
+        }
+    }
+
     /** How many durable records are held right now, expired ones included. For diagnostics only. */
     public int recordCount() {
         return records.size();

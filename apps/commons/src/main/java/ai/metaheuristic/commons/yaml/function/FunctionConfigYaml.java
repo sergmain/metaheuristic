@@ -22,6 +22,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.FunctionAnalyzerUtils;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.*;
@@ -78,6 +79,40 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
                 }
             }
         }
+        // ❗ Analyzer rules are checked HERE, at parse, rather than at any one upload path. A rule that
+        // names a scope only the dispatcher may set, or a timeout nobody can read, would otherwise load
+        // cleanly and then silently never block anything - and the author would believe it was in force.
+        // Failing at parse is the only point that covers every way a descriptor enters the system.
+        if (function.analyzers!=null) {
+            for (Analyzer analyzer : function.analyzers) {
+                if (S.b(analyzer.name)) {
+                    errors.add(S.f("function %s declares an analyzer with no name", function.code));
+                    continue;
+                }
+                try {
+                    FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer);
+                    FunctionAnalyzerUtils.parseTimeout(analyzer.timeout);
+                }
+                catch (IllegalStateException e) {
+                    errors.add(S.f("function %s, analyzer '%s': %s", function.code, analyzer.name, e.getMessage()));
+                }
+                if (analyzer.regex==null || analyzer.regex.isEmpty()) {
+                    errors.add(S.f("function %s, analyzer '%s' declares no regex, so it can never match",
+                            function.code, analyzer.name));
+                    continue;
+                }
+                for (String regex : analyzer.regex) {
+                    try {
+                        java.util.regex.Pattern.compile(regex);
+                    }
+                    catch (java.util.regex.PatternSyntaxException e) {
+                        errors.add(S.f("function %s, analyzer '%s' declares a regex which doesn't compile: %s",
+                                function.code, analyzer.name, regex));
+                    }
+                }
+            }
+        }
+
         if (!errors.isEmpty()) {
             throw new CheckIntegrityFailedException(errors.toString());
         }

@@ -18,6 +18,7 @@ package ai.metaheuristic.commons.yaml.function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.FunctionAnalyzerUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -192,6 +193,82 @@ public class FunctionConfigYamlAnalyzersTest {
         final FunctionConfigYaml cfg = FunctionConfigYamlUtils.UTILS.to(descriptor);
         assertNotNull(cfg);
         assertNull(cfg.function.analyzers);
+    }
+
+    @Test
+    public void test_aDispatcherOnlyScopeIsRejectedAtParse() {
+        // NB the point of failing HERE: a descriptor naming a scope only the dispatcher may set would
+        // otherwise load cleanly and then silently never block anything, while its author believed the
+        // rule was in force. Parse is the one point every upload path goes through.
+        final String descriptor = """
+            version: 3
+            function:
+              code: some-function:1.1
+              targets:
+                mh-default:
+                  src: src
+                  file: some-function.jar
+              sourcing: dispatcher
+              analyzers:
+                - name: overreaching
+                  regex:
+                    - 'boom'
+                  timeout: 20min
+                  incrementTries: false
+                  scope: global
+            """;
+
+        final CheckIntegrityFailedException e = assertThrows(CheckIntegrityFailedException.class,
+                () -> FunctionConfigYamlUtils.UTILS.to(descriptor));
+        assertTrue(e.getMessage().contains("overreaching"), "the failure must name the offending analyzer");
+    }
+
+    @Test
+    public void test_anUnreadableTimeoutIsRejectedAtParse() {
+        final String descriptor = """
+            version: 3
+            function:
+              code: some-function:1.1
+              targets:
+                mh-default:
+                  src: src
+                  file: some-function.jar
+              sourcing: dispatcher
+              analyzers:
+                - name: bad-timeout
+                  regex:
+                    - 'boom'
+                  timeout: 20 minutes
+                  incrementTries: false
+                  scope: api
+            """;
+
+        assertThrows(CheckIntegrityFailedException.class, () -> FunctionConfigYamlUtils.UTILS.to(descriptor));
+    }
+
+    @Test
+    public void test_anUncompilableRegexAndAnEmptyRegexListAreRejectedAtParse() {
+        // an analyzer with no patterns can never match, so it is a typo rather than a rule
+        final String noRegex = """
+            version: 3
+            function:
+              code: some-function:1.1
+              targets:
+                mh-default:
+                  src: src
+                  file: some-function.jar
+              sourcing: dispatcher
+              analyzers:
+                - name: matches-nothing
+                  regex: []
+                  timeout: 20min
+                  incrementTries: false
+                  scope: api
+            """;
+        assertThrows(CheckIntegrityFailedException.class, () -> FunctionConfigYamlUtils.UTILS.to(noRegex));
+
+        final String badRegex = noRegex.replace("regex: []", "regex:\n                    - '[unclosed'");
+        assertThrows(CheckIntegrityFailedException.class, () -> FunctionConfigYamlUtils.UTILS.to(badRegex));
     }
 
     private static FunctionConfigYaml roundTrip(FunctionConfigYaml cfg) {

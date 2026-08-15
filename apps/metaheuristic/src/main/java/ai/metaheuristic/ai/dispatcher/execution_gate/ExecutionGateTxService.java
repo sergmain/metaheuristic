@@ -30,6 +30,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * The writes behind the admission gate, and nothing else.
  *
@@ -80,6 +82,24 @@ public class ExecutionGateTxService {
                 scope, refKey, saved.blockedUntil, reasonCode);
 
         eventPublisher.publishEvent(new ExecutionGateChangedTxEvent(scope, refKey, saved.blockedUntil, reasonCode, false));
+    }
+
+    /**
+     * Deletes every row whose deadline has passed. Returns how many went.
+     *
+     * <p>Expired records are removed rather than kept as history (D21). Nothing reads them: admission
+     * already treats an expired record as absent, so a retained row is pure table growth in a table on
+     * the startup-load path.
+     */
+    @Transactional
+    public int deleteExpired(long now) {
+        final List<Long> ids = executionGateRepository.findExpiredIds(now);
+        if (ids.isEmpty()) {
+            return 0;
+        }
+        executionGateRepository.deleteAllById(ids);
+        log.info("01.321.060 deleted {} expired execution gate record(s)", ids.size());
+        return ids.size();
     }
 
     /**

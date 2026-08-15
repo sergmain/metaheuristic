@@ -196,6 +196,7 @@ public class Schedulers {
         private final ExecContextStatusService execContextStatusService;
         private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
         private final FunctionRepositoryDispatcherService functionRepositoryDispatcherService;
+        private final ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateService executionGateService;
 
         // Dispatcher schedulers with fixed delay
 
@@ -221,6 +222,17 @@ public class Schedulers {
             kbInitializingService.processEvent();
         }
 */
+
+        // Housekeeping, not correctness: every read already treats an expired record as absent, so a
+        // missed pass changes no decision. Infrequent on purpose - the table is small and the cost of
+        // a stale row is one row.
+        @Scheduled(initialDelay = 73_000, fixedDelay = 300_000 )
+        public void sweepExpiredExecutionGates() {
+            if (globals.testing || !globals.dispatcher.enabled) {
+                return;
+            }
+            executionGateService.sweepExpired();
+        }
 
         @Scheduled(initialDelay = 63_000, fixedDelay = 630_000 )
         public void updateExecContextStatuses() {
