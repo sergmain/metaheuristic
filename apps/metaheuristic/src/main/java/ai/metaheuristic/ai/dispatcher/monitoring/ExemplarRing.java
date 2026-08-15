@@ -33,7 +33,8 @@ import java.util.List;
  * reference would pin the whole object graph behind it, and the offending value is the only part
  * anybody reads.
  *
- * <p>Not thread-safe on its own; the owner synchronises.
+ * <p>Guards ITSELF, per reason. A ring is only written for a non-benign reason, so the contended case
+ * is rare — unlike the counters, which are written for every rejection and must stay lock-free.
  *
  * @author Sergio Lissner
  * Date: 8/14/2026
@@ -57,7 +58,7 @@ public class ExemplarRing {
         this.buffer = new Exemplar[capacity];
     }
 
-    public void add(long atMills, @Nullable Long taskId, @Nullable String functionCode,
+    public synchronized void add(long atMills, @Nullable Long taskId, @Nullable String functionCode,
                     @Nullable Long processorId, @Nullable String offendingValue) {
         buffer[next] = new Exemplar(atMills, taskId, functionCode, processorId, truncate(offendingValue));
         next = (next + 1) % buffer.length;
@@ -67,7 +68,7 @@ public class ExemplarRing {
     }
 
     /** Newest first, so a reader sees what is happening now without scrolling. */
-    public List<Exemplar> newestFirst() {
+    public synchronized List<Exemplar> newestFirst() {
         final List<Exemplar> out = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             final int idx = Math.floorMod(next - 1 - i, buffer.length);
@@ -76,7 +77,7 @@ public class ExemplarRing {
         return out;
     }
 
-    public int size() {
+    public synchronized int size() {
         return size;
     }
 

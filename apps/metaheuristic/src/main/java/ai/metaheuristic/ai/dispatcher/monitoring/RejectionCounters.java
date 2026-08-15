@@ -20,6 +20,8 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
@@ -34,7 +36,7 @@ import java.util.concurrent.atomic.LongAdder;
  * component nobody is watching. Past the cap, counts go to {@code other} — the level stays truthful
  * even though the breakdown stops being complete, which is the right way round.
  *
- * <p>Not thread-safe on its own; the owner synchronises.
+ * <p>Thread-safe by construction, and lock-free on the increment path — see {@link #increment}.
  *
  * @author Sergio Lissner
  * Date: 8/14/2026
@@ -50,8 +52,8 @@ public class RejectionCounters {
     private final int maxKeys;
 
     /** index -> (key -> count). A bucket's start minute, so a stale bucket can be recognised and cleared. */
-    private final Map<String, LongAdder>[] slots;
-    private final long[] slotMinute;
+    private final ConcurrentHashMap<String, LongAdder>[] slots;
+    private final AtomicLongArray slotMinute;
 
     @SuppressWarnings("unchecked")
     public RejectionCounters(int buckets, int maxKeys) {
@@ -60,24 +62,38 @@ public class RejectionCounters {
         }
         this.buckets = buckets;
         this.maxKeys = maxKeys;
-        this.slots = new Map[buckets];
-        this.slotMinute = new long[buckets];
+        this.slots = new ConcurrentHashMap[buckets];
+        this.slotMinute = new AtomicLongArray(buckets);
         for (int i = 0; i < buckets; i++) {
-            slots[i] = new HashMap<>();
-            slotMinute[i] = Long.MIN_VALUE;
+            slots[i] = new ConcurrentHashMap<>();
+            slotMinute.set(i, Long.MIN_VALUE);
         }
     }
 
+    /**
+     * ❗ Lock-free on the common path, and that is the point of the class. This runs once per rejection
+     * evaluation — on the order of 10^4/s — so a lock here would serialise the hottest loop in the
+     * dispatcher behind the instrumentation measuring it. An established key costs one array read, one
+     * volatile read and a {@code LongAdder} increment, which is exactly what {@code LongAdder}'s striped
+     * cells exist for; nothing is allocated.
+     *
+     * <p>⚠️ Two threads crossing a minute boundary together can lose or double a count at the boundary.
+     * Accepted deliberately: this answers "is this reason at a level", and a rate estimate does not
+     * change because one increment of ten thousand landed in the neighbouring bucket. Paying a lock on
+     * every call to remove that would be the wrong trade by three orders of magnitude.
+     */
     public void increment(String key, long nowMillis) {
         final long minute = nowMillis / BUCKET_MILLIS;
         final int idx = (int) Math.floorMod(minute, (long) buckets);
-        final Map<String, LongAdder> slot = slots[idx];
 
-        // reusing this slot for a new minute: whatever it held belonged to a minute a full window ago
-        if (slotMinute[idx] != minute) {
-            slot.clear();
-            slotMinute[idx] = minute;
+        // reusing this slot for a new minute: whatever it held belonged to a minute a full window ago.
+        // One thread wins the CAS and clears; the others simply carry on into the cleared slot.
+        final long stamped = slotMinute.get(idx);
+        if (stamped != minute && slotMinute.compareAndSet(idx, stamped, minute)) {
+            slots[idx].clear();
         }
+        final ConcurrentHashMap<String, LongAdder> slot = slots[idx];
+
         final LongAdder existing = slot.get(key);
         if (existing != null) {
             existing.increment();
@@ -96,7 +112,8 @@ public class RejectionCounters {
         final long oldestMinute = newestMinute - buckets + 1;
         long sum = 0;
         for (int i = 0; i < buckets; i++) {
-            if (slotMinute[i] >= oldestMinute && slotMinute[i] <= newestMinute) {
+            final long stamped = slotMinute.get(i);
+            if (stamped >= oldestMinute && stamped <= newestMinute) {
                 final LongAdder adder = slots[i].get(key);
                 if (adder != null) {
                     sum += adder.sum();
@@ -112,7 +129,8 @@ public class RejectionCounters {
         final long oldestMinute = newestMinute - buckets + 1;
         int present = 0;
         for (int i = 0; i < buckets; i++) {
-            if (slotMinute[i] >= oldestMinute && slotMinute[i] <= newestMinute) {
+            final long stamped = slotMinute.get(i);
+            if (stamped >= oldestMinute && stamped <= newestMinute) {
                 final LongAdder adder = slots[i].get(key);
                 if (adder != null && adder.sum() > 0) {
                     present++;
@@ -128,7 +146,8 @@ public class RejectionCounters {
         final long oldestMinute = newestMinute - buckets + 1;
         final Map<String, Long> out = new HashMap<>();
         for (int i = 0; i < buckets; i++) {
-            if (slotMinute[i] < oldestMinute || slotMinute[i] > newestMinute) {
+            final long stamped = slotMinute.get(i);
+            if (stamped < oldestMinute || stamped > newestMinute) {
                 continue;
             }
             for (Map.Entry<String, LongAdder> e : slots[i].entrySet()) {

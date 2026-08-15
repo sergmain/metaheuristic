@@ -107,7 +107,21 @@ public class GateMonitoring {
     private final Map<Enums.TaskRejectingStatus, ExemplarRing> exemplarsByReason =
             new EnumMap<>(Enums.TaskRejectingStatus.class);
 
-    private final Object lock = new Object();
+    /**
+     * ❗ Both maps are populated for EVERY enum constant at construction and never mutated afterwards,
+     * so the hot path needs no lock and allocates nothing: the reason is a fixed, tiny enum, so there
+     * is no reason to discover one lazily. An earlier version guarded {@code computeIfAbsent} on both
+     * maps with a single monitor, which serialised every rejection in the dispatcher through one lock
+     * and made the {@code LongAdder} striping pointless.
+     */
+    {
+        for (Enums.TaskRejectingStatus reason : Enums.TaskRejectingStatus.values()) {
+            countersByReason.put(reason, new RejectionCounters(WINDOW_BUCKETS, MAX_KEYS_PER_BUCKET));
+            if (classify(reason) != RejectionClass.benign) {
+                exemplarsByReason.put(reason, new ExemplarRing(EXEMPLARS_PER_REASON));
+            }
+        }
+    }
 
     /**
      * Records one rejection. Called per evaluation, so it does no allocation beyond the first sighting
@@ -119,17 +133,13 @@ public class GateMonitoring {
     public void recordRejection(Enums.TaskRejectingStatus reason, @Nullable String functionCode,
                                 @Nullable Long taskId, @Nullable Long processorId,
                                 @Nullable String offendingValue, long nowMillis) {
-        synchronized (lock) {
-            countersByReason
-                    .computeIfAbsent(reason, r -> new RejectionCounters(WINDOW_BUCKETS, MAX_KEYS_PER_BUCKET))
-                    .increment(functionCode == null ? "unknown" : functionCode, nowMillis);
+        countersByReason.get(reason).increment(functionCode == null ? "unknown" : functionCode, nowMillis);
 
-            // benign reasons are counted, but keeping exemplars for them would be pure noise
-            if (classify(reason) != RejectionClass.benign) {
-                exemplarsByReason
-                        .computeIfAbsent(reason, r -> new ExemplarRing(EXEMPLARS_PER_REASON))
-                        .add(nowMillis, taskId, functionCode, processorId, offendingValue);
-            }
+        // benign reasons are counted, but keeping exemplars for them would be pure noise - and their
+        // ring is not even allocated, so this is a null check rather than a classify() call
+        final ExemplarRing ring = exemplarsByReason.get(reason);
+        if (ring != null) {
+            ring.add(nowMillis, taskId, functionCode, processorId, offendingValue);
         }
     }
 
@@ -143,7 +153,7 @@ public class GateMonitoring {
      */
     public List<ReasonLevel> actionableView(long nowMillis) {
         final List<ReasonLevel> out = new ArrayList<>();
-        synchronized (lock) {
+        {
             for (Map.Entry<Enums.TaskRejectingStatus, RejectionCounters> e : countersByReason.entrySet()) {
                 final RejectionClass rejectionClass = classify(e.getKey());
                 if (rejectionClass == RejectionClass.benign) {
@@ -177,12 +187,10 @@ public class GateMonitoring {
 
     /** Total for a reason across the window, benign included — totals must stay honest. */
     public long countOf(Enums.TaskRejectingStatus reason, long nowMillis) {
-        synchronized (lock) {
-            final RejectionCounters counters = countersByReason.get(reason);
-            if (counters == null) {
-                return 0;
-            }
-            return counters.windowTotals(nowMillis).values().stream().mapToLong(Long::longValue).sum();
+        final RejectionCounters counters = countersByReason.get(reason);
+        if (counters == null) {
+            return 0;
         }
+        return counters.windowTotals(nowMillis).values().stream().mapToLong(Long::longValue).sum();
     }
 }
