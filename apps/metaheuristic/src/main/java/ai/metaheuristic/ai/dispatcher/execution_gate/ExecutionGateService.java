@@ -19,8 +19,11 @@ package ai.metaheuristic.ai.dispatcher.execution_gate;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecutionGate;
 import ai.metaheuristic.ai.dispatcher.data.GateData;
+import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.event.events.ExecutionGateChangedEvent;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecutionGateRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYaml;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +73,7 @@ public class ExecutionGateService {
 
     private final ExecutionGateRepository executionGateRepository;
     private final ExecutionGateTxService executionGateTxService;
+    private final FunctionService functionService;
 
     /** Durable decisions, keyed by what they cover. Mutated only by the post-commit listener below. */
     private final Map<GateData.GateKey, GateData.GateRecord> records = new ConcurrentHashMap<>();
@@ -95,6 +99,16 @@ public class ExecutionGateService {
             // dispatcher that refuses to boot because of a table nothing has written to yet
             log.error("01.320.040 can't load execution gate records, continuing with none", th);
         }
+    }
+
+    /**
+     * May this core be given this Task? Stateless checks only for now — the durable blocks this
+     * component already holds are consulted by the caller separately until the assignment loop is
+     * redirected here.
+     */
+    public GateData.Admission admit(ProcessorData.ProcessorAndCoreParams pacp, TaskQueue.QueuedTask queuedTask, boolean isAcceptOnlySigned) {
+        return ExecutionGateUtils.admit(pacp, queuedTask, isAcceptOnlySigned,
+                fc -> functionService.trusted(fc.sourcing, fc.git));
     }
 
     /**

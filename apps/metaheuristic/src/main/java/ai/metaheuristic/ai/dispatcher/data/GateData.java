@@ -17,12 +17,29 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.ai.Enums;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Sergio Lissner
  * Date: 8/14/2026
  */
 public class GateData {
+
+    /**
+     * The verdict on one candidate Task for one core.
+     *
+     * <p>{@code rejectedBy} is a per-Task reason: the caller skips this Task and keeps looking. It is
+     * deliberately NOT the whole-search vocabulary — the two enums are split by LEVEL, not by topic,
+     * and confusing them turns "skip this one" into "stop the search".
+     */
+    public record Admission(boolean admitted, Enums.@Nullable TaskRejectingStatus rejectedBy) {
+
+        public static final Admission ADMITTED = new Admission(true, null);
+
+        public static Admission rejected(Enums.TaskRejectingStatus reason) {
+            return new Admission(false, reason);
+        }
+    }
 
     /**
      * Identity of a blocked thing. A scope alone is not enough and a key alone is not either: one

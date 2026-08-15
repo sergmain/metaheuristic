@@ -18,10 +18,24 @@ package ai.metaheuristic.ai.dispatcher.execution_gate;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.GateData;
+import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
+import ai.metaheuristic.ai.dispatcher.task.TaskUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.ParamsVersion;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
+import ai.metaheuristic.commons.utils.CollectionUtils;
+import ai.metaheuristic.commons.utils.FunctionCoreUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * The decision arithmetic behind the admission gate, as pure functions over a map that is passed in.
@@ -94,5 +108,74 @@ public class ExecutionGateUtils {
         final int before = records.size();
         records.values().removeIf(r -> !isLive(r.blockedUntil(), now));
         return before - records.size();
+    }
+
+    /**
+     * May this core be given this Task, judged only on facts computable right now?
+     *
+     * <p>Every check here is stateless — it compares what the Task declares against what the
+     * Processor reports, and nothing else. ❗ None of them may open a durable block: a Task-scoped
+     * misconfiguration is grounds to skip that Task, never to withhold work from the Processor. That
+     * confusion is the root cause of the silent stalls this component exists to end, so it is worth
+     * stating where the checks live rather than only where they are called from.
+     *
+     * <p>The order matches the existing filter chain exactly, so redirecting the assignment loop onto
+     * this method produces the same reason for the same Task.
+     *
+     * @param trustedFunc supplied by the caller because trust is configuration, not a property of the
+     *                    Task — passing it in is what keeps this method testable without a context
+     */
+    public static GateData.Admission admit(
+            ProcessorData.ProcessorAndCoreParams pacp,
+            TaskQueue.QueuedTask queuedTask,
+            boolean isAcceptOnlySigned,
+            Predicate<TaskParamsYaml.FunctionConfig> trustedFunc) {
+
+        final TaskParamsYaml tpy = queuedTask.taskParamYaml;
+
+        if (TaskUtils.gitUnavailable(tpy.task, pacp.psy().gitStatusInfo.status != EnumsApi.GitStatus.installed)) {
+            return GateData.Admission.rejected(Enums.TaskRejectingStatus.git_required);
+        }
+
+        if (!CollectionUtils.checkTagAllowed(queuedTask.tag, pacp.csy().tags)) {
+            return GateData.Admission.rejected(Enums.TaskRejectingStatus.tags_arent_allowed);
+        }
+
+        if (!S.b(tpy.task.function.env) && pacp.psy().env != null
+                && pacp.psy().env.getEnvs().get(tpy.task.function.env) == null) {
+            return GateData.Admission.rejected(Enums.TaskRejectingStatus.interpreter_is_undefined);
+        }
+
+        final List<EnumsApi.OS> supportedOS = FunctionCoreUtils.getSupportedOS(tpy.task.function.metas);
+        if (pacp.psy().os != null && !supportedOS.isEmpty() && !supportedOS.contains(pacp.psy().os)) {
+            return GateData.Admission.rejected(Enums.TaskRejectingStatus.not_supported_operating_system);
+        }
+
+        if (isAcceptOnlySigned && !trustedFunc.test(tpy.task.function)) {
+            if (tpy.task.function.checksumMap == null
+                    || tpy.task.function.checksumMap.keySet().stream().noneMatch(o -> o.isSigned)) {
+                return GateData.Admission.rejected(Enums.TaskRejectingStatus.accept_only_signed);
+            }
+        }
+
+        // the stored document may be an older version than the one just parsed, so the version to
+        // compare against comes from the raw params rather than from the parsed object, whose version
+        // is always the latest by the time it is in hand
+        if (queuedTask.task != null) {
+            try {
+                final ParamsVersion v = YamlForVersioning.getParamsVersion(queuedTask.task.getParams());
+                if (v.getActualVersion() != pacp.psy().taskParamsVersion) {
+                    //noinspection unused
+                    final String ignored = TaskParamsYamlUtils.UTILS.toStringAsVersion(tpy, pacp.psy().taskParamsVersion);
+                }
+            }
+            catch (DowngradeNotSupportedException e) {
+                log.warn("01.322.020 task #{} can't be given to core #{}, downgrade to taskParams level {} isn't supported",
+                        queuedTask.taskId, pacp.coreId(), pacp.psy().taskParamsVersion);
+                return GateData.Admission.rejected(Enums.TaskRejectingStatus.downgrade_not_supported);
+            }
+        }
+
+        return GateData.Admission.ADMITTED;
     }
 }
