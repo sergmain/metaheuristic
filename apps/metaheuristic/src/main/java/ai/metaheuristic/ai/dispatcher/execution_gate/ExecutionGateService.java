@@ -20,7 +20,10 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecutionGate;
 import ai.metaheuristic.ai.dispatcher.data.GateData;
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.event.events.ExecutionGateChangedEvent;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecutionGateRepository;
@@ -80,6 +83,7 @@ public class ExecutionGateService {
     private final ExecutionGateRepository executionGateRepository;
     private final ExecutionGateTxService executionGateTxService;
     private final FunctionService functionService;
+    private final ExecContextCache execContextCache;
 
     /** Durable decisions, keyed by what they cover. Mutated only by the post-commit listener below. */
     private final Map<GateData.GateKey, GateData.GateRecord> records = new ConcurrentHashMap<>();
@@ -119,6 +123,12 @@ public class ExecutionGateService {
      */
     private final Map<String, List<FunctionConfigYaml.Analyzer>> analyzersByFunctionCode = new ConcurrentHashMap<>();
 
+    /**
+     * The company an ExecContext belongs to. Cached for the same reason as the analyzers above: this is
+     * consulted for every candidate Task on every poll, and an ExecContext's company never changes.
+     */
+    private final Map<Long, Long> companyIdByExecContextId = new ConcurrentHashMap<>();
+
     @PostConstruct
     public void loadCommittedRecords() {
         try {
@@ -150,6 +160,42 @@ public class ExecutionGateService {
     public GateData.Admission admit(ProcessorData.ProcessorAndCoreParams pacp, TaskQueue.QueuedTask queuedTask, boolean isAcceptOnlySigned) {
         return ExecutionGateUtils.admit(pacp, queuedTask, isAcceptOnlySigned,
                 fc -> functionService.trusted(fc.sourcing, fc.git));
+    }
+
+    /**
+     * Is this Task covered by a live block on its Function or on the API key it would spend?
+     *
+     * <p>This is where a block opened from a Function's own console analysis actually withholds work.
+     * The recovery pass opens the block and resets the Task normally; the Task then sits in the queue
+     * and is passed over here until the block clears.
+     *
+     * <p>❗ Both keys are built by {@link ExecutionGateUtils#refKeyFor}, the same function the recovery
+     * pass uses to open the block. A second, hand-rolled key here would be the worst kind of bug —
+     * blocks would be opened under one key and looked up under another, so nothing would ever be
+     * withheld and no test of either side alone would notice.
+     */
+    public GateData.Admission admitQuarantine(Long execContextId, TaskParamsYaml tpy) {
+        final String functionKey = ExecutionGateUtils.refKeyFor(EnumsApi.GateScope.function, null, null, tpy);
+        if (functionKey != null && blockedUntil(EnumsApi.GateScope.function, functionKey) != null) {
+            return GateData.Admission.rejected(Enums.TaskRejectingStatus.function_is_quarantined);
+        }
+        if (tpy.task.function.api != null) {
+            final String apiKey = ExecutionGateUtils.refKeyFor(EnumsApi.GateScope.api, companyIdOf(execContextId), null, tpy);
+            if (apiKey != null && blockedUntil(EnumsApi.GateScope.api, apiKey) != null) {
+                return GateData.Admission.rejected(Enums.TaskRejectingStatus.api_is_quarantined);
+            }
+        }
+        return GateData.Admission.ADMITTED;
+    }
+
+    @Nullable
+    private Long companyIdOf(Long execContextId) {
+        // a null result is not cached - ConcurrentHashMap.computeIfAbsent doesn't store one - which is
+        // the behaviour wanted: a missing ExecContext is abnormal and shouldn't be remembered
+        return companyIdByExecContextId.computeIfAbsent(execContextId, id -> {
+            final ExecContextImpl ec = execContextCache.findById(id, true);
+            return ec == null ? null : ec.companyId;
+        });
     }
 
     /**

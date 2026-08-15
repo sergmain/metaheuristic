@@ -173,6 +173,15 @@ public class TaskProviderUnassignedTaskService {
                     continue;
                 }
 
+                // cheapest check first, and the most useful one to report: two map lookups, and
+                // "this whole Function/API key is down" tells an operator more than a detail of this
+                // one Task would
+                final GateData.Admission quarantine = executionGateService.admitQuarantine(queuedTask.execContextId, queuedTask.taskParamYaml);
+                if (!quarantine.admitted()) {
+                    searching.rejected.put(queuedTask.taskId, Objects.requireNonNull(quarantine.rejectedBy()));
+                    continue;
+                }
+
                 // git, tags, interpreter, OS and signing are all decided in one place now. The order and
                 // the reasons are unchanged; the per-check logging moved with them.
                 final GateData.Admission admission = executionGateService.admitStatelessFacts(processorAndCoreParams, queuedTask, isAcceptOnlySigned);
