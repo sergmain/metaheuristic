@@ -27,6 +27,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.List;
 
 /**
@@ -47,6 +49,13 @@ public interface ProcessorCoreRepository extends CrudRepository<ProcessorCore, L
 
     @Query(value="select distinct p.processorId from ProcessorCore p")
     List<Long> getAllProcessorIds();
+
+    /**
+     * A Task records the CORE it ran on, but a block covers a whole Processor - a core is a virtual
+     * part of one Processor in the same JVM, so it is not a meaningful unit to withhold work from.
+     */
+    @Query(value="select c.processorId from ProcessorCore c where c.id=:coreId")
+    @Nullable Long findProcessorIdByCoreId(Long coreId);
 
     @Query(value="select c.id from ProcessorCore c where c.processorId=:processorId")
     List<Long> findIdsByProcessorId(Pageable pageable, Long processorId);

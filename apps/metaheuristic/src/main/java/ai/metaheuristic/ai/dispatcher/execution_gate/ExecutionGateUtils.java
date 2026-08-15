@@ -148,6 +148,30 @@ public class ExecutionGateUtils {
     }
 
     /**
+     * What a block of this scope is keyed on, for this Task. Null when the key cannot be built, which
+     * is a reason to skip opening the block rather than to fail.
+     *
+     * <p>❗ The {@code api} key joins the COMPANY to the key code. An API key is a per-tenant credential:
+     * keying on the code alone would let one tenant exhausting its quota withhold work from every other
+     * tenant using the same named key. The company id comes from the ExecContext — never from
+     * {@code TaskParamsYaml.companyId}, which nothing writes and which is {@code 0L} on every Task, so
+     * every tenant would collapse onto one key.
+     */
+    @Nullable
+    public static String refKeyFor(EnumsApi.GateScope scope, @Nullable Long companyId, @Nullable Long processorId, TaskParamsYaml tpy) {
+        return switch (scope) {
+            case function -> tpy.task.function.code;
+            case api -> (tpy.task.function.api == null || companyId == null)
+                    ? null
+                    : companyId + ":" + tpy.task.function.api.keyCode;
+            case processor -> processorId == null ? null : String.valueOf(processorId);
+            // dispatcher-only; a descriptor declaring one is rejected at load, so this is unreachable
+            // from an analyzer hit and is here only so the switch stays exhaustive
+            case global, company -> null;
+        };
+    }
+
+    /**
      * May this core be given this Task, judged only on facts computable right now?
      *
      * <p>Every check here is stateless — it compares what the Task declares against what the
