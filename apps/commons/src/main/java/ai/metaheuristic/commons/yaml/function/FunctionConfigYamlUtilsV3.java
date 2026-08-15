@@ -60,7 +60,7 @@ public class FunctionConfigYamlUtilsV3
 
     static FunctionConfigYaml.FunctionConfig to(FunctionConfigYamlV3.FunctionConfigV3 src) {
         FunctionConfigYaml.FunctionConfig trg = new FunctionConfigYaml.FunctionConfig();
-        BeanUtils.copyProperties(src, trg, "metas", "targets", "api");
+        BeanUtils.copyProperties(src, trg, "metas", "targets", "api", "analyzers");
 
         if (src.metas!=null) {
             trg.metas = new ArrayList<>(src.metas);
@@ -73,6 +73,16 @@ public class FunctionConfigYamlUtilsV3
         trg.targets = new LinkedHashMap<>();
         for (Map.Entry<String, FunctionConfigYamlV3.TargetV3> e : src.targets.entrySet()) {
             trg.targets.put(e.getKey(), new FunctionConfigYaml.Target(e.getValue().src, e.getValue().file));
+        }
+
+        // mapped explicitly rather than by copyProperties: the element types differ per version, so a
+        // shallow copy would put V3 objects into a version-less list and only fail once someone read one
+        if (src.analyzers!=null) {
+            trg.analyzers = new ArrayList<>();
+            for (FunctionConfigYamlV3.AnalyzerV3 a : src.analyzers) {
+                trg.analyzers.add(new FunctionConfigYaml.Analyzer(
+                        a.name, new ArrayList<>(a.regex), a.timeout, a.incrementTries, a.scope));
+            }
         }
 
         return trg;

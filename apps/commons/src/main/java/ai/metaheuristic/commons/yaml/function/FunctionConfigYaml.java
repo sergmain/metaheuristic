@@ -140,6 +140,55 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
         }
     }
 
+    /**
+     * A rule that says what a Function's own console output means when the Function fails.
+     *
+     * <p>Declared by the Function author because they are the ones who know what their tool prints
+     * when its API key is exhausted, when the host it runs on is broken, or when the failure is
+     * simply not worth retrying. The dispatcher supplies the identity — which key, which Function,
+     * which Processor — and this only supplies the semantics.
+     *
+     * <p>Named {@code analyzers} rather than after the component that enforces it: at load time
+     * nothing is blocked, these are rules that MIGHT open a block later. ❗ It also ships inside every
+     * signed Function bundle, so renaming it later means re-signing and redeploying the fleet — it must
+     * not be coupled to a dispatcher-internal class name.
+     */
+    @Data
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Analyzer implements Cloneable {
+        /** Free text. Becomes the recorded reason when this rule matches. */
+        public String name;
+
+        /** Any one hit is enough. No implicit flags — an author wanting case-insensitivity writes {@code (?i)}. */
+        public List<String> regex = new ArrayList<>();
+
+        /** How long to withhold work for. {@code ms | s | min | h | d}, e.g. {@code 20min}. */
+        public String timeout;
+
+        /**
+         * Whether the failing Task's retry counter advances. {@code false} gives a free retry, which is
+         * right when the failure was never the Task's fault.
+         */
+        public boolean incrementTries;
+
+        /**
+         * What the block covers: {@code api}, {@code function} or {@code processor}. A String rather
+         * than the dispatcher's enum because this class is read on both sides of the wire and must not
+         * drag a dispatcher type with it. {@code global} and {@code company} are dispatcher-only and
+         * are rejected when they appear here.
+         */
+        public String scope;
+
+        @SneakyThrows
+        public Analyzer clone() {
+            final Analyzer clone = (Analyzer) super.clone();
+            clone.regex = new ArrayList<>(this.regex);
+            return clone;
+        }
+    }
+
     @Data
     @ToString
     @NoArgsConstructor
@@ -156,6 +205,12 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
             clone.targets = new LinkedHashMap<>();
             for (Map.Entry<String, Target> e : this.targets.entrySet()) {
                 clone.targets.put(e.getKey(), e.getValue().clone());
+            }
+            if (this.analyzers!=null) {
+                clone.analyzers = new ArrayList<>();
+                for (Analyzer a : this.analyzers) {
+                    clone.analyzers.add(a.clone());
+                }
             }
             return clone;
         }
@@ -193,6 +248,13 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
         public EnumsApi.@Nullable CleaningPolicy cleaningPolicy;
 
         public FunctionConfigYaml.@Nullable Api api = null;
+
+        /**
+         * Console-output rules for this Function, @Nullable per the @Nullable-exception rule of the
+         * multi-versioning mechanic - no version bump. null means the Function declares none, which is
+         * the normal case.
+         */
+        public @Nullable List<Analyzer> analyzers;
     }
 
     public FunctionConfig function = new FunctionConfig();

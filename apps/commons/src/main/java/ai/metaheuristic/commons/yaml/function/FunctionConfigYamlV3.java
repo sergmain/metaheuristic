@@ -104,6 +104,18 @@ public class FunctionConfigYamlV3 implements BaseParams, Cloneable {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class AnalyzerV3 {
+        public String name;
+        public List<String> regex = new ArrayList<>();
+        public String timeout;
+        public boolean incrementTries;
+        public String scope;
+    }
+
+    @Data
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
     public static class FunctionConfigV3 implements Cloneable {
 
@@ -149,6 +161,12 @@ public class FunctionConfigYamlV3 implements BaseParams, Cloneable {
         public EnumsApi.@Nullable CleaningPolicy cleaningPolicy;
 
         public FunctionConfigYamlV3.@Nullable ApiV3 api = null;
+
+        /**
+         * Console-output rules for this Function, @Nullable per the @Nullable-exception rule of the
+         * multi-versioning mechanic - no version bump.
+         */
+        public @Nullable List<AnalyzerV3> analyzers;
     }
 
     public FunctionConfigV3 function = new FunctionConfigV3();
