@@ -240,34 +240,34 @@ public class ExecutionGateUtils {
         if (TaskUtils.gitUnavailable(tpy.task, pacp.psy().gitStatusInfo.status != EnumsApi.GitStatus.installed)) {
             log.warn("01.322.040 can't give task #{} to core #{}, this processor has no working git, git status info: {}",
                     queuedTask.taskId, pacp.coreId(), pacp.psy().gitStatusInfo);
-            return GateData.Admission.rejected(Enums.TaskRejectingStatus.git_required);
+            return GateData.Admission.rejected(Enums.TaskRejectingStatus.git_required, String.valueOf(pacp.psy().gitStatusInfo.status));
         }
 
         if (!CollectionUtils.checkTagAllowed(queuedTask.tag, pacp.csy().tags)) {
             log.debug("01.322.060 task #{} carries tag '{}', core #{} declares '{}'",
                     queuedTask.taskId, queuedTask.tag, pacp.coreId(), pacp.csy().tags);
-            return GateData.Admission.rejected(Enums.TaskRejectingStatus.tags_arent_allowed);
+            return GateData.Admission.rejected(Enums.TaskRejectingStatus.tags_arent_allowed, queuedTask.tag);
         }
 
         if (!S.b(tpy.task.function.env) && pacp.psy().env != null
                 && pacp.psy().env.getEnvs().get(tpy.task.function.env) == null) {
             log.error("01.322.080 can't give task #{} to core #{}, this processor has no interpreter for the function's env {}",
                     queuedTask.taskId, pacp.coreId(), tpy.task.function.env);
-            return GateData.Admission.rejected(Enums.TaskRejectingStatus.interpreter_is_undefined);
+            return GateData.Admission.rejected(Enums.TaskRejectingStatus.interpreter_is_undefined, tpy.task.function.env);
         }
 
         final List<EnumsApi.OS> supportedOS = FunctionCoreUtils.getSupportedOS(tpy.task.function.metas);
         if (pacp.psy().os != null && !supportedOS.isEmpty() && !supportedOS.contains(pacp.psy().os)) {
             log.info("01.322.100 can't give task #{} to core #{}, this processor doesn't support the required OS. processor: {}, function: {}",
                     queuedTask.taskId, pacp.coreId(), pacp.psy().os, supportedOS);
-            return GateData.Admission.rejected(Enums.TaskRejectingStatus.not_supported_operating_system);
+            return GateData.Admission.rejected(Enums.TaskRejectingStatus.not_supported_operating_system, pacp.psy().os + " vs " + supportedOS);
         }
 
         if (isAcceptOnlySigned && !trustedFunc.test(tpy.task.function)) {
             if (tpy.task.function.checksumMap == null
                     || tpy.task.function.checksumMap.keySet().stream().noneMatch(o -> o.isSigned)) {
                 log.warn("01.322.120 function with code {} wasn't signed", tpy.task.function.getCode());
-                return GateData.Admission.rejected(Enums.TaskRejectingStatus.accept_only_signed);
+                return GateData.Admission.rejected(Enums.TaskRejectingStatus.accept_only_signed, tpy.task.function.getCode());
             }
         }
 
@@ -295,7 +295,7 @@ public class ExecutionGateUtils {
         catch (DowngradeNotSupportedException e) {
             log.warn("01.322.020 task #{} can't be given to core #{}, downgrade to taskParams level {} isn't supported",
                     queuedTask.taskId, pacp.coreId(), pacp.psy().taskParamsVersion);
-            return GateData.Admission.rejected(Enums.TaskRejectingStatus.downgrade_not_supported);
+            return GateData.Admission.rejected(Enums.TaskRejectingStatus.downgrade_not_supported, "taskParams v" + pacp.psy().taskParamsVersion);
         }
         return GateData.Admission.ADMITTED;
     }

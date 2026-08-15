@@ -33,12 +33,23 @@ public class GateData {
      * deliberately NOT the whole-search vocabulary — the two enums are split by LEVEL, not by topic,
      * and confusing them turns "skip this one" into "stop the search".
      */
-    public record Admission(boolean admitted, Enums.@Nullable TaskRejectingStatus rejectedBy) {
+    public record Admission(boolean admitted, Enums.@Nullable TaskRejectingStatus rejectedBy,
+                           @Nullable String offendingValue) {
 
-        public static final Admission ADMITTED = new Admission(true, null);
+        public static final Admission ADMITTED = new Admission(true, null, null);
 
         public static Admission rejected(Enums.TaskRejectingStatus reason) {
-            return new Admission(false, reason);
+            return new Admission(false, reason, null);
+        }
+
+        /**
+         * @param offendingValue the thing a human would have to see to fix this — the env code no
+         *                       Processor declares, the OS the Function demands. A count says a
+         *                       Processor is refusing work; this says why, which is the difference
+         *                       between noticing an outage and ending it.
+         */
+        public static Admission rejected(Enums.TaskRejectingStatus reason, @Nullable String offendingValue) {
+            return new Admission(false, reason, offendingValue);
         }
     }
 

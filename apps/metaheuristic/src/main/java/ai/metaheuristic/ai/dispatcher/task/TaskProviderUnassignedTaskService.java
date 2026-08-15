@@ -26,8 +26,10 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.Enums;
+import org.jspecify.annotations.Nullable;
 import ai.metaheuristic.ai.dispatcher.data.GateData;
 import ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateService;
+import ai.metaheuristic.ai.dispatcher.monitoring.GateMonitoring;
 import ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService;
 import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -73,6 +75,25 @@ public class TaskProviderUnassignedTaskService {
     private final TaskCheckCachingService taskCheckCachingTopLevelService;
     private final FunctionService functionService;
     private final ExecutionGateService executionGateService;
+    private final GateMonitoring gateMonitoring;
+
+    /**
+     * Records one rejection and counts it.
+     *
+     * <p>❗ The count is incremented IN PROCESS, here at the emission site — deliberately not through
+     * an event. This loop evaluates on the order of 10^4 rejections a second, and an event publish
+     * resolves listeners per call and adds a queue hop; the instrumentation would become the
+     * bottleneck it exists to measure.
+     */
+    private void reject(TaskData.TaskSearching searching, TaskQueue.QueuedTask queuedTask,
+                        ProcessorAndCoreParams processorAndCoreParams,
+                        Enums.TaskRejectingStatus reason, @Nullable String offendingValue) {
+        searching.rejected.put(queuedTask.taskId, reason);
+        gateMonitoring.recordRejection(reason,
+                queuedTask.taskParamYaml==null ? null : queuedTask.taskParamYaml.task.function.code,
+                queuedTask.taskId, processorAndCoreParams.processorId(), offendingValue,
+                System.currentTimeMillis());
+    }
 
     public TaskData.TaskSearching findUnassignedTaskAndAssign(ProcessorAndCoreParams processorAndCoreParams, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas currentQuotas) {
         TaskQueueSyncStaticService.checkWriteLockNotPresent();
@@ -119,7 +140,7 @@ public class TaskProviderUnassignedTaskService {
                 // because internal tasks are processed by async events
                 // see ai.metaheuristic.ai.dispatcher.task.TaskProviderTransactionalService#registerInternalTask
                 if (queuedTask.execContext == EnumsApi.FunctionExecContext.internal) {
-                    searching.rejected.put(queuedTask.taskId, internal_task);
+                    reject(searching, queuedTask, processorAndCoreParams, internal_task, null);
                     continue;
                 }
 
@@ -127,7 +148,7 @@ public class TaskProviderUnassignedTaskService {
                 if ((execContextState == EnumsApi.ExecContextState.STOPPED || execContextState == EnumsApi.ExecContextState.FINISHED)) {
                     log.warn("317.036 task #{} in execContext #{} has a status as {}", queuedTask.taskId, queuedTask.execContextId, execContextState);
                     forRemoving.add(queuedTask);
-                    searching.rejected.put(queuedTask.taskId, exec_context_stopped_or_finished);
+                    reject(searching, queuedTask, processorAndCoreParams, exec_context_stopped_or_finished, null);
                     continue;
                 }
 
@@ -140,19 +161,19 @@ public class TaskProviderUnassignedTaskService {
                             queuedTask.task is null: {}
                             queuedTask.taskParamYaml is null: {}""",
                             allocatedTask.assigned, allocatedTask.state, queuedTask.taskId, queuedTask.execContext, queuedTask.task==null, queuedTask.taskParamYaml==null);
-                    searching.rejected.put(queuedTask.taskId, queued_task_or_params_is_null);
+                    reject(searching, queuedTask, processorAndCoreParams, queued_task_or_params_is_null, null);
                     continue;
                 }
 
                 if (!execContextStatusService.isStarted(queuedTask.execContextId)) {
-                    searching.rejected.put(queuedTask.taskId, exec_context_not_started);
+                    reject(searching, queuedTask, processorAndCoreParams, exec_context_not_started, null);
                     continue;
                 }
 
                 if (EnumsApi.TaskExecState.isFinishedState(queuedTask.task.execState)) {
                     log.info("317.040 task #{} already in a finished state as {}", queuedTask.taskId, queuedTask.task.execState);
                     forRemoving.add(queuedTask);
-                    searching.rejected.put(queuedTask.taskId, task_was_finished);
+                    reject(searching, queuedTask, processorAndCoreParams, task_was_finished, null);
                     continue;
                 }
 
@@ -160,7 +181,7 @@ public class TaskProviderUnassignedTaskService {
                     // this can happened because of async call of StartTaskProcessingTxEvent
                     log.info("317.045 task #{} already assigned for processing", queuedTask.taskId);
                     forRemoving.add(queuedTask);
-                    searching.rejected.put(queuedTask.taskId, task_in_progress_already);
+                    reject(searching, queuedTask, processorAndCoreParams, task_in_progress_already, null);
                     continue;
                 }
 
@@ -169,7 +190,7 @@ public class TaskProviderUnassignedTaskService {
                             queuedTask.task.getId(), queuedTask.taskParamYaml.task.function.code);
                     taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(queuedTask.execContextId, queuedTask.taskId));
                     forRemoving.add(queuedTask);
-                    searching.rejected.put(queuedTask.taskId, task_for_cache_checking);
+                    reject(searching, queuedTask, processorAndCoreParams, task_for_cache_checking, null);
                     continue;
                 }
 
@@ -178,7 +199,7 @@ public class TaskProviderUnassignedTaskService {
                 // one Task would
                 final GateData.Admission quarantine = executionGateService.admitQuarantine(queuedTask.execContextId, queuedTask.taskParamYaml);
                 if (!quarantine.admitted()) {
-                    searching.rejected.put(queuedTask.taskId, Objects.requireNonNull(quarantine.rejectedBy()));
+                    reject(searching, queuedTask, processorAndCoreParams, Objects.requireNonNull(quarantine.rejectedBy()), quarantine.offendingValue());
                     continue;
                 }
 
@@ -189,20 +210,20 @@ public class TaskProviderUnassignedTaskService {
                     // ❗ The rejection ends here. It skips THIS Task and says nothing about the
                     // Processor, so the next poll evaluates everything again and the reason is logged
                     // every time instead of once per cool-down window.
-                    searching.rejected.put(queuedTask.taskId, Objects.requireNonNull(admission.rejectedBy()));
+                    reject(searching, queuedTask, processorAndCoreParams, Objects.requireNonNull(admission.rejectedBy()), admission.offendingValue());
                     continue;
                 }
 
                 if (!executionGateService.allFunctionsReady(processorAndCoreParams.processorId(), queuedTask.taskParamYaml)) {
                     log.debug("317.123 Core #{} isn't ready to process task #{}", processorAndCoreParams.coreId(), queuedTask.taskId);
-                    searching.rejected.put(queuedTask.taskId, functions_not_ready);
+                    reject(searching, queuedTask, processorAndCoreParams, functions_not_ready, null);
                     continue;
                 }
 
                 quota = QuotasUtils.getQuotaAmount(processorAndCoreParams.psy().env.quotas, queuedTask.tag);
 
                 if (!QuotasUtils.isEnough(processorAndCoreParams.psy().env.quotas, currentQuotas, quota)) {
-                    searching.rejected.put(queuedTask.taskId, not_enough_quotas);
+                    reject(searching, queuedTask, processorAndCoreParams, not_enough_quotas, null);
                     continue;
                 }
 
@@ -212,12 +233,12 @@ public class TaskProviderUnassignedTaskService {
                 // keep reporting whichever of them it reported before.
                 final GateData.Admission versionAdmission = executionGateService.admitParamsVersion(processorAndCoreParams, queuedTask);
                 if (!versionAdmission.admitted()) {
-                    searching.rejected.put(queuedTask.taskId, downgrade_not_supported);
+                    reject(searching, queuedTask, processorAndCoreParams, downgrade_not_supported, null);
                     resultTask = null;
                 }
 
                 if (queuedTask.task.execState != EnumsApi.TaskExecState.NONE.value) {
-                    searching.rejected.put(queuedTask.taskId, task_must_be_in_none_state);
+                    reject(searching, queuedTask, processorAndCoreParams, task_must_be_in_none_state, null);
                     continue;
                 }
 
