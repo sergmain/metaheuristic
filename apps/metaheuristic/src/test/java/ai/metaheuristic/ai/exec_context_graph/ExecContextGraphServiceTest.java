@@ -228,4 +228,107 @@ class ExecContextGraphServiceTest {
         assertTrue(vertices.contains(new ExecContextData.TaskVertex(203L)),
                 "convergence task #203 after a SKIPPED conditional branch must be assignable (reachable via OK parent #201)");
     }
+
+    @Test
+    public void test_findAllForAssigning_errorWithRecoveryIsNotAssignableButItsNoneSiblingIs() {
+        // Characterization of the structural half of the "recovery runs only when nothing else is
+        // assignable" rule: findAllForAssigning returns ONLY NONE/CHECK_CACHE vertices, so a task in
+        // ERROR_WITH_RECOVERY is not last in the assignable queue - it is not in the queue at all.
+        //   300(root, OK)
+        //   300 -> 301(ERROR_WITH_RECOVERY)
+        //   300 -> 302(NONE)                  [sibling of #301, still assignable]
+        //   301 -> 303(mh.finish, leaf, NONE)
+        //   302 -> 303
+        // NB the root must NOT be NONE: findAllForAssigning short-circuits on a NONE/CHECK_CACHE root
+        // and returns only that vertex, which would make this assertion vacuous.
+        String graphYaml = """
+            graph: |
+              strict digraph G {
+                300 [ ctxid="1" ];
+                301 [ ctxid="1" ];
+                302 [ ctxid="1" ];
+                303 [ ctxid="1" ];
+                300 -> 301;
+                300 -> 302;
+                301 -> 303;
+                302 -> 303;
+              }
+            version: 1
+            """;
+        String stateYaml = """
+            states:
+              300: OK
+              301: ERROR_WITH_RECOVERY
+              302: NONE
+              303: NONE
+            version: 1
+            """;
+
+        ExecContextGraph ecg = new ExecContextGraph();
+        ecg.id = 2910L;
+        ecg.execContextId = 42L;
+        ecg.version = 2;
+        ecg.setParams(graphYaml);
+
+        ExecContextTaskState ects = new ExecContextTaskState();
+        ects.id = 2910L;
+        ects.execContextId = 42L;
+        ects.setParams(stateYaml);
+
+        List<ExecContextData.TaskVertex> vertices = ExecContextGraphService.findAllForAssigning(ecg, ects, true);
+
+        System.out.println(vertices);
+
+        assertFalse(vertices.contains(new ExecContextData.TaskVertex(301L)),
+                "task #301 in ERROR_WITH_RECOVERY must be structurally absent from the assignable set");
+        assertTrue(vertices.contains(new ExecContextData.TaskVertex(302L)),
+                "NONE sibling #302 must still be assignable while #301 awaits recovery");
+    }
+
+    @Test
+    public void test_findAllForAssigning_errorWithRecoveryAloneLeavesNothingAssignable() {
+        // The other side of the same rule: when the only non-finished work in the graph is a task in
+        // ERROR_WITH_RECOVERY, the assignable set is EMPTY. That emptiness is the precondition the
+        // caller tests before it fires recovery, so this pins "recovery becomes reachable only once
+        // there is genuinely nothing else to hand out".
+        //   310(root, OK) -> 311(ERROR_WITH_RECOVERY) -> 312(mh.finish, leaf, NONE)
+        String graphYaml = """
+            graph: |
+              strict digraph G {
+                310 [ ctxid="1" ];
+                311 [ ctxid="1" ];
+                312 [ ctxid="1" ];
+                310 -> 311;
+                311 -> 312;
+              }
+            version: 1
+            """;
+        String stateYaml = """
+            states:
+              310: OK
+              311: ERROR_WITH_RECOVERY
+              312: NONE
+            version: 1
+            """;
+
+        ExecContextGraph ecg = new ExecContextGraph();
+        ecg.id = 2911L;
+        ecg.execContextId = 42L;
+        ecg.version = 2;
+        ecg.setParams(graphYaml);
+
+        ExecContextTaskState ects = new ExecContextTaskState();
+        ects.id = 2911L;
+        ects.execContextId = 42L;
+        ects.setParams(stateYaml);
+
+        List<ExecContextData.TaskVertex> vertices = ExecContextGraphService.findAllForAssigning(ecg, ects, true);
+
+        System.out.println(vertices);
+
+        // #311 is excluded by state; #312 is blocked because ERROR_WITH_RECOVERY is not a finished state
+        // (EnumsApi.TaskExecState.isFinishedState covers only OK | ERROR | SKIPPED).
+        assertTrue(vertices.isEmpty(),
+                "an ExecContext whose only pending task is in ERROR_WITH_RECOVERY must yield an empty assignable set");
+    }
 }

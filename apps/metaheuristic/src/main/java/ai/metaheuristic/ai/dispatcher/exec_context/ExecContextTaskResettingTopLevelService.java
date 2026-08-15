@@ -60,7 +60,7 @@ public class ExecContextTaskResettingTopLevelService {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextCache execContextCache;
 
-    private final MultiTenantedQueue<Long, ResetTasksWithErrorEvent> resetTasksWithErrorEventThreadedPool =
+    public final MultiTenantedQueue<Long, ResetTasksWithErrorEvent> resetTasksWithErrorEventThreadedPool =
             new MultiTenantedQueue<>(100, ConstsApi.SECONDS_10, true, "ExecContextTaskResetting-", this::resetTasksWithErrorForRecovery);
 
     @PreDestroy
