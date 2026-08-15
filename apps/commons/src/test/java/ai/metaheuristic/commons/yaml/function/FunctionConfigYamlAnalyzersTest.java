@@ -18,6 +18,7 @@ package ai.metaheuristic.commons.yaml.function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.utils.FunctionAnalyzerUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
@@ -113,6 +114,84 @@ public class FunctionConfigYamlAnalyzersTest {
         final FunctionConfigYaml cfg = baseConfig();
         final FunctionConfigYaml.FunctionConfig clone = cfg.function.clone();
         assertNull(clone.analyzers);
+    }
+
+    @Test
+    public void test_aHandWrittenDescriptorLoadsItsAnalyzers() {
+        // NB Round-tripping through toString/to does NOT prove this. A descriptor is hand-written YAML,
+        // and hand-written YAML can fail where a serialised document succeeds: the block sitting at the
+        // wrong level, or an enum that only deserialises from the exact constant spelling. This is the
+        // shape a real Function descriptor uses.
+        final String descriptor = """
+            version: 3
+            function:
+              code: some-function:1.1
+              env: java-25
+              targets:
+                mh-default:
+                  src: src
+                  file: some-function.jar
+              sourcing: dispatcher
+              api:
+                keyCode: SOME_API_KEY
+              analyzers:
+                - name: api-quota-exhausted
+                  regex:
+                    - 'call failed with status 429'
+                    - '"type":"rate_limit_error"'
+                  timeout: 20min
+                  incrementTries: false
+                  scope: api
+                - name: api-credentials-rejected
+                  regex:
+                    - 'call failed with status 401'
+                  timeout: 30min
+                  incrementTries: true
+                  scope: api
+            """;
+
+        final FunctionConfigYaml cfg = FunctionConfigYamlUtils.UTILS.to(descriptor);
+        assertNotNull(cfg);
+        assertNotNull(cfg.function.analyzers);
+        assertEquals(2, cfg.function.analyzers.size());
+
+        final FunctionConfigYaml.Analyzer quota = cfg.function.analyzers.get(0);
+        assertEquals("api-quota-exhausted", quota.name);
+        assertEquals(EnumsApi.GateScope.api, quota.scope, "lower-case 'api' must deserialise to the enum constant");
+        assertEquals("20min", quota.timeout);
+        assertFalse(quota.incrementTries);
+        assertEquals(2, quota.regex.size());
+
+        final FunctionConfigYaml.Analyzer creds = cfg.function.analyzers.get(1);
+        assertTrue(creds.incrementTries, "a non-transient failure must be able to charge the retry");
+
+        // every declared timeout must be readable and every pattern must compile - a descriptor that
+        // parses but whose rules cannot be applied is worse than one that fails to parse
+        for (FunctionConfigYaml.Analyzer analyzer : cfg.function.analyzers) {
+            assertNotNull(FunctionAnalyzerUtils.parseTimeout(analyzer.timeout));
+            FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer);
+            for (String regex : analyzer.regex) {
+                java.util.regex.Pattern.compile(regex);
+            }
+        }
+    }
+
+    @Test
+    public void test_aHandWrittenDescriptorWithNoAnalyzersBlockStillLoads() {
+        final String descriptor = """
+            version: 3
+            function:
+              code: some-function:1.1
+              targets:
+                mh-default:
+                  src: src
+                  file: some-function.jar
+              sourcing: dispatcher
+            """;
+
+        final FunctionConfigYaml cfg = FunctionConfigYamlUtils.UTILS.to(descriptor);
+        assertNotNull(cfg);
+        assertNull(cfg.function.analyzers);
     }
 
     private static FunctionConfigYaml roundTrip(FunctionConfigYaml cfg) {
