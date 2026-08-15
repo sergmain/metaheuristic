@@ -19,18 +19,18 @@ package ai.metaheuristic.commons.spi.license;
 /**
  * A capability the vendor gates on. Opaque to the license manager: identity is the string, and
  * nothing here knows what it means.
- *
+ * <br/>
  * A feature is ONE name. The wire form carried inside a token is that name unchanged, so the
  * 'capabilities' claim stays a flat string array and matching stays set membership.
- *
+ * <br/>
  * A name has no parts. Nothing splits it, nothing groups by it, nothing derives meaning from any
  * span of it. A dot in 'MH.BATCH' is an ordinary character: 'MH.BATCH' and 'BATCH' are two
  * unrelated names, neither more specific than the other.
- *
+ * <br/>
  * There is deliberately NO enum of capability names anywhere in the license manager - an enum would
  * have to name jcons/Legal/RG concepts and would breach the seal. Callers write their own string
  * literals at the gate site, e.g. new Feature("MH.BATCH").
- *
+ * <br/>
  * UPDATE: a feature used to be two strings joined by a separator, and the wire form was built from
  * them. Nothing was gained by it and three things were paid for it: the issuer validated a shape,
  * this record forbade the separator inside either half, and the UI cut the leading span back off to

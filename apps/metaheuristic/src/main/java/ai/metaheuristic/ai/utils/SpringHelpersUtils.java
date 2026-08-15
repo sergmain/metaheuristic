@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.utils;
 import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -85,7 +86,7 @@ public class SpringHelpersUtils {
      * Plugin extension point. Call from a plugin auto-config static initializer to
      * make the dispatcher accept the plugin's profile without complaining as "unknown".
      */
-    public static void registerProfile(String profile) {
+    public static void registerProfile(@Nullable String profile) {
         if (profile == null || profile.isBlank()) {
             return;
         }

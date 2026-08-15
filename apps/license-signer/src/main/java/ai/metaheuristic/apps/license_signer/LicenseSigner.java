@@ -40,7 +40,7 @@ import java.util.Date;
 
 /**
  * Generic, proprietary-free license-file creator.
- *
+ * <br/>
  * Reads a YAML recipe ({@link LicenseConfigYaml}), resolves it into {@link LicenseClaims}, and
  * writes a compact JWS license file (ES256). Capability keys are opaque strings taken verbatim from
  * the config - the tool never expands an 'edition' into a capability closure, so no proprietary closure
@@ -160,8 +160,8 @@ public class LicenseSigner implements CommandLineRunner {
         }
 
         final ECPrivateKey privateKey;
-        @Nullable Path mintedPrivatePath = null;
-        @Nullable Path mintedPublicPath = null;
+        Path mintedPrivatePath = null;
+        Path mintedPublicPath = null;
         if (keyFileOrNull==null) {
             // Both halves are written. Handing back only the public half would make the tool lossy:
             // whoever misses the console output has lost the signing key with no way to recover it.
@@ -208,6 +208,7 @@ public class LicenseSigner implements CommandLineRunner {
         System.out.println("  databases    : " + claims.databases);
         System.out.println("  storages     : " + claims.storages);
         System.out.println("  exp          : " + claims.exp);
+        System.out.println("\n\nlicense:\n" + jws+"\n\n");
         if (mintedPrivatePath!=null) {
             System.out.println("  private key  : " + mintedPrivatePath.toAbsolutePath());
             System.out.println("  public key   : " + mintedPublicPath.toAbsolutePath());
