@@ -162,7 +162,7 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
         public String name;
 
         /** Any one hit is enough. No implicit flags — an author wanting case-insensitivity writes {@code (?i)}. */
-        public List<String> regex = new ArrayList<>();
+        public @Nullable List<String> regex = new ArrayList<>();
 
         /** How long to withhold work for. {@code ms | s | min | h | d}, e.g. {@code 20min}. */
         public String timeout;
@@ -184,7 +184,9 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
         @SneakyThrows
         public Analyzer clone() {
             final Analyzer clone = (Analyzer) super.clone();
-            clone.regex = new ArrayList<>(this.regex);
+            if (this.regex!=null) {
+                clone.regex = new ArrayList<>(this.regex);
+            }
             return clone;
         }
     }
@@ -202,9 +204,11 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
             if (this.metas!=null) {
                 clone.metas = new ArrayList<>(this.metas);
             }
-            clone.targets = new LinkedHashMap<>();
-            for (Map.Entry<String, Target> e : this.targets.entrySet()) {
-                clone.targets.put(e.getKey(), e.getValue().clone());
+            if (this.targets!=null) {
+                clone.targets = new LinkedHashMap<>();
+                for (Map.Entry<String, Target> e : this.targets.entrySet()) {
+                    clone.targets.put(e.getKey(), e.getValue().clone());
+                }
             }
             if (this.analyzers!=null) {
                 clone.analyzers = new ArrayList<>();
