@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateService;
 import ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService;
 import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -69,6 +70,7 @@ public class TaskProviderUnassignedTaskService {
     private final ExecContextStatusService execContextStatusService;
     private final TaskCheckCachingService taskCheckCachingTopLevelService;
     private final FunctionService functionService;
+    private final ExecutionGateService executionGateService;
 
     /**
      * this Map contains an AtomicLong which contains millisecond value which is specify how long to not use concrete processor
@@ -317,7 +319,7 @@ public class TaskProviderUnassignedTaskService {
     }
 
 
-    private static boolean notAllFunctionsReady(ProcessorAndCoreParams processorAndCoreParams, TaskParamsYaml taskParamYaml) {
+    private boolean notAllFunctionsReady(ProcessorAndCoreParams processorAndCoreParams, TaskParamsYaml taskParamYaml) {
         AtomicBoolean result = new AtomicBoolean(false);
         notAllFunctionsReadyInternal(processorAndCoreParams, taskParamYaml.task.function, result);
         for (TaskParamsYaml.FunctionConfig preFunction : taskParamYaml.task.preFunctions) {
@@ -329,8 +331,8 @@ public class TaskProviderUnassignedTaskService {
         return result.get();
     }
 
-    private static void notAllFunctionsReadyInternal(ProcessorAndCoreParams processorAndCoreParams, TaskParamsYaml.FunctionConfig functionConfig, AtomicBoolean result) {
-        boolean b = FunctionRepositoryDispatcherService.isProcessorReady(functionConfig.code, processorAndCoreParams.processorId());
+    private void notAllFunctionsReadyInternal(ProcessorAndCoreParams processorAndCoreParams, TaskParamsYaml.FunctionConfig functionConfig, AtomicBoolean result) {
+        boolean b = executionGateService.isProcessorReady(functionConfig.code, processorAndCoreParams.processorId());
 
         if (!b) {
             log.debug("317.240 function {} at processor #{} isn't ready.", functionConfig.code, processorAndCoreParams.processorId());

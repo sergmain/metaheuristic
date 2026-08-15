@@ -45,7 +45,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
-import static ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService.registerReadyFunctionCodesOnProcessor;
 
 /**
  * @author Serge
@@ -66,6 +65,7 @@ public class PreparingCoreInitService {
     private final TxSupportForTestingService txSupportForTestingService;
     private final ProcessorCoreTxService processorCoreService;
     private final TaskWithInternalContextEventService taskWithInternalContextEventService;
+    private final ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateService executionGateService;
 
     @SneakyThrows
     public PreparingData.PreparingCodeData beforePreparingCore() {
@@ -107,14 +107,14 @@ public class PreparingCoreInitService {
         data.processor = processorTxService.createProcessor(description, null, ss);
         log.info("processorRepository.save() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
-        registerReadyFunctionCodesOnProcessor(PreparingConsts.TEST_FIT_FUNCTION, data.processor.id, true);
-        registerReadyFunctionCodesOnProcessor(PreparingConsts.TEST_PREDICT_FUNCTION, data.processor.id, true);
+        executionGateService.recordFunctionReadiness(PreparingConsts.TEST_FIT_FUNCTION, data.processor.id);
+        executionGateService.recordFunctionReadiness(PreparingConsts.TEST_PREDICT_FUNCTION, data.processor.id);
 
-        registerReadyFunctionCodesOnProcessor("function-01:1.1", data.processor.id, true);
-        registerReadyFunctionCodesOnProcessor("function-02:1.1", data.processor.id, true);
-        registerReadyFunctionCodesOnProcessor("function-03:1.1", data.processor.id, true);
-        registerReadyFunctionCodesOnProcessor("function-04:1.1", data.processor.id, true);
-        registerReadyFunctionCodesOnProcessor("function-05:1.1", data.processor.id, true);
+        executionGateService.recordFunctionReadiness("function-01:1.1", data.processor.id);
+        executionGateService.recordFunctionReadiness("function-02:1.1", data.processor.id);
+        executionGateService.recordFunctionReadiness("function-03:1.1", data.processor.id);
+        executionGateService.recordFunctionReadiness("function-04:1.1", data.processor.id);
+        executionGateService.recordFunctionReadiness("function-05:1.1", data.processor.id);
 
 
         // Prepare processor's cores

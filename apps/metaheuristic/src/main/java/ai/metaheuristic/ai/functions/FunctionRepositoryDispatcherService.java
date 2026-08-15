@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.RegisterFunctionCodesForStart
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateService;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParams;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParamsUtils;
@@ -64,23 +65,11 @@ public class FunctionRepositoryDispatcherService {
     private final ExecContextRepository execContextRepository;
     private final FunctionRepository functionRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final ExecutionGateService executionGateService;
 
-    public static class Processors {
-        public long mills = System.currentTimeMillis();
-        public final Set<Long> ids = new HashSet<>();
-
-        public boolean contains(Long processorId) {
-            return ids.contains(processorId);
-        }
-    }
-
-    // key - function code, value - list of processorIds
-    private static final LinkedHashMap<String, Processors> functionReadiness = new LinkedHashMap<>() {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, Processors> eldest) {
-            return System.currentTimeMillis() - eldest.getValue().mills > TimeUnit.HOURS.toMillis(2);
-        }
-    };
+    // which Processor has which function ready is no longer held here - it is an admission input and
+    // lives with the rest of them. What stays is which functions are ACTIVE, which is this class's own
+    // bookkeeping about the source codes it has seen.
     private static final Set<String> activeFunctions = new HashSet<>();
     private static final LinkedHashMap<String, FunctionRepositoryResponseParams.ShortFunctionConfig> shortFunctionConfigCache = new LinkedHashMap<>() {
         @Override
@@ -93,17 +82,16 @@ public class FunctionRepositoryDispatcherService {
     private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
     private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
-    public static Set<String> getActiveFunctionCode(@Nullable Long processorId) {
+    public Set<String> getActiveFunctionCode(@Nullable Long processorId) {
         readLock.lock();
         try {
             if (processorId==null) {
                 return new HashSet<>(activeFunctions);
             }
             else {
-                return activeFunctions.stream().filter(c->{
-                    Processors processors = functionReadiness.get(c);
-                    return processors==null || !processors.contains(processorId);
-                }).collect(Collectors.toSet());
+                return activeFunctions.stream()
+                        .filter(c-> !executionGateService.isProcessorReady(c, processorId))
+                        .collect(Collectors.toSet());
             }
         } finally {
             readLock.unlock();
@@ -154,64 +142,40 @@ public class FunctionRepositoryDispatcherService {
         return new FunctionRepositoryResponseParams.ShortFunctionConfig(functionCode, params.function.sourcing, params.function.git);
     }
 
-    private static boolean registerReadyFunctionCodesOnProcessor(FunctionRepositoryRequestParams p) {
+    private boolean registerReadyFunctionCodesOnProcessor(FunctionRepositoryRequestParams p) {
         if (p.processorId==null || CollectionUtils.isEmpty(p.functionCodes)) {
             return false;
         }
         boolean anyNew = false;
-        writeLock.lock();
-        try {
-            for (String functionCode : p.functionCodes) {
-                if (!activeFunctions.contains(functionCode)) {
-                    continue;
-                }
-                boolean added = functionReadiness.computeIfAbsent(functionCode, (o)-> new Processors()).ids.add(p.processorId);
-                if (added) {
-                    anyNew = true;
-                }
+        for (String functionCode : p.functionCodes) {
+            if (!isActiveFunction(functionCode)) {
+                continue;
             }
-        } finally {
-            writeLock.unlock();
+            if (executionGateService.recordFunctionReadiness(functionCode, p.processorId)) {
+                anyNew = true;
+            }
         }
         return anyNew;
     }
 
-    public static void registerReadyFunctionCodesOnProcessor(String functionCode, Long processorId, boolean force) {
-        writeLock.lock();
+    /**
+     * The {@code force} flag stays HERE rather than moving with the registry, because what it
+     * overrides is the {@code activeFunctions} check, and that set is this class's own bookkeeping.
+     */
+    public void registerReadyFunctionCodesOnProcessor(String functionCode, Long processorId, boolean force) {
+        if (!force && !isActiveFunction(functionCode)) {
+            return;
+        }
+        executionGateService.recordFunctionReadiness(functionCode, processorId);
+    }
+
+    private static boolean isActiveFunction(String functionCode) {
+        readLock.lock();
         try {
-            if (!force && !activeFunctions.contains(functionCode)) {
-                return;
-            }
-            functionReadiness.computeIfAbsent(functionCode, (o)-> new Processors()).ids.add(processorId);
+            return activeFunctions.contains(functionCode);
         } finally {
-            writeLock.unlock();
+            readLock.unlock();
         }
-    }
-
-    public static boolean isProcessorReady(String funcCode, Long processorId) {
-        Processors processors = functionReadiness.get(funcCode);
-        if (processors != null) {
-            processors.mills = System.currentTimeMillis();
-            return processors.contains(processorId);
-        }
-        return false;
-    }
-
-    public static boolean notAllFunctionsReady(Long processorId, TaskParamsYaml taskParamYaml) {
-        if (!isProcessorReady(taskParamYaml.task.function.code, processorId)) {
-            return true;
-        }
-        for (TaskParamsYaml.FunctionConfig preFunction : taskParamYaml.task.preFunctions) {
-            if (!isProcessorReady(preFunction.code, processorId)) {
-                return true;
-            }
-        }
-        for (TaskParamsYaml.FunctionConfig postFunction : taskParamYaml.task.postFunctions) {
-            if (!isProcessorReady(postFunction.code, processorId)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @SuppressWarnings("MethodMayBeStatic")
@@ -222,15 +186,15 @@ public class FunctionRepositoryDispatcherService {
         registerCodes(funcCodes, false);
     }
 
-    private static void registerCodes(Set<String> funcCodes, boolean clean) {
+    private void registerCodes(Set<String> funcCodes, boolean clean) {
         for (String funcCode : funcCodes) {
             writeLock.lock();
             try {
                 activeFunctions.add(funcCode);
-                functionReadiness.computeIfAbsent(funcCode, (o)->new Processors());
             } finally {
                 writeLock.unlock();
             }
+            executionGateService.seedFunctionReadiness(funcCode);
         }
         if (clean) {
             List<String> forDeletion = new ArrayList<>(100);
@@ -249,10 +213,12 @@ public class FunctionRepositoryDispatcherService {
                 try {
                     for (String funcCode : forDeletion) {
                         activeFunctions.remove(funcCode);
-                        functionReadiness.remove(funcCode);
                     }
                 } finally {
                     writeLock.unlock();
+                }
+                for (String funcCode : forDeletion) {
+                    executionGateService.forgetFunctionReadiness(funcCode);
                 }
             }
         }

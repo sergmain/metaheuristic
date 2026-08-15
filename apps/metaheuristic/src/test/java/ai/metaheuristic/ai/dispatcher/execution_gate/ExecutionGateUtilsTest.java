@@ -144,6 +144,15 @@ public class ExecutionGateUtilsTest {
     }
 
     @Test
+    public void test_readinessEntryExpired_afterTwoHours() {
+        final long twoHours = ExecutionGateUtils.READINESS_TTL_MILLIS;
+
+        assertFalse(ExecutionGateUtils.readinessEntryExpired(NOW, NOW), "just touched");
+        assertFalse(ExecutionGateUtils.readinessEntryExpired(NOW, NOW + twoHours), "exactly at the limit is not yet stale");
+        assertTrue(ExecutionGateUtils.readinessEntryExpired(NOW, NOW + twoHours + 1), "one millisecond past the limit is stale");
+    }
+
+    @Test
     public void test_dropExpired_onAnEmptyMapIsANoOp() {
         final Map<GateData.GateKey, GateData.GateRecord> records = new HashMap<>();
         assertEquals(0, ExecutionGateUtils.dropExpired(records, NOW));

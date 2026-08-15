@@ -42,6 +42,22 @@ public class GateData {
     }
 
     /**
+     * Which Processors have reported a given Function ready, and when that was last consulted.
+     *
+     * <p>Mutable, unlike {@link GateRecord}, and deliberately so: this is a REPORTED FACT rather than
+     * a decision. It is rebuilt from the Processors whenever they reconnect and no table stands behind
+     * it, so it is cheap to lose and must not be confused with something durable.
+     */
+    public static class FunctionReadiness {
+        public long mills = System.currentTimeMillis();
+        public final java.util.Set<Long> ids = new java.util.HashSet<>();
+
+        public boolean contains(Long processorId) {
+            return ids.contains(processorId);
+        }
+    }
+
+    /**
      * Identity of a blocked thing. A scope alone is not enough and a key alone is not either: one
      * Function code and one processor id can be the same string without being the same subject.
      */

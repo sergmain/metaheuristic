@@ -35,9 +35,12 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Owns the question "may work be handed out for this key right now?".
@@ -77,6 +80,28 @@ public class ExecutionGateService {
 
     /** Durable decisions, keyed by what they cover. Mutated only by the post-commit listener below. */
     private final Map<GateData.GateKey, GateData.GateRecord> records = new ConcurrentHashMap<>();
+
+    /**
+     * Reported facts: which Processors have said they are ready to run which Function.
+     *
+     * <p>❗ A SEPARATE structure from {@link #records}, and not by accident. Those are decisions this
+     * dispatcher made and committed; these are claims the Processors made about themselves. Mixing
+     * them would put something rebuilt on every reconnect into a map loaded from the database at
+     * startup, where a stale copy could only ever be wrong — the Processor is the authority and
+     * re-reports.
+     *
+     * <p>Entries expire two hours after they were last consulted, which is why this is a
+     * {@code LinkedHashMap} with an eviction rule rather than a plain map: a fleet that churns
+     * Processors would otherwise grow this without bound.
+     */
+    private final LinkedHashMap<String, GateData.FunctionReadiness> functionReadiness = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, GateData.FunctionReadiness> eldest) {
+            return ExecutionGateUtils.readinessEntryExpired(eldest.getValue().mills, System.currentTimeMillis());
+        }
+    };
+
+    private final ReentrantReadWriteLock readinessLock = new ReentrantReadWriteLock();
 
     @PostConstruct
     public void loadCommittedRecords() {
@@ -164,6 +189,67 @@ public class ExecutionGateService {
         }
         records.put(new GateData.GateKey(event.scope, event.refKey),
                 new GateData.GateRecord(event.scope, event.refKey, event.blockedUntil, event.reasonCode));
+    }
+
+    /**
+     * Records that a Processor has this Function ready.
+     *
+     * @return true when the pair was NOT registered before. ❗ The caller uses this to decide whether
+     *         to re-notify Processors, so a {@code void} signature here would silently drop the wake-up
+     *         that lets Tasks waiting on a newly-ready Function get picked up.
+     */
+    public boolean recordFunctionReadiness(String functionCode, Long processorId) {
+        readinessLock.writeLock().lock();
+        try {
+            return functionReadiness.computeIfAbsent(functionCode, o -> new GateData.FunctionReadiness()).ids.add(processorId);
+        } finally {
+            readinessLock.writeLock().unlock();
+        }
+    }
+
+    /** Has this Processor reported this Function ready? Consulting an entry also renews its lifetime. */
+    public boolean isProcessorReady(String functionCode, Long processorId) {
+        readinessLock.readLock().lock();
+        try {
+            final GateData.FunctionReadiness readiness = functionReadiness.get(functionCode);
+            if (readiness == null) {
+                return false;
+            }
+            readiness.mills = System.currentTimeMillis();
+            return readiness.contains(processorId);
+        } finally {
+            readinessLock.readLock().unlock();
+        }
+    }
+
+    /** Creates an empty entry for a Function so its lifetime starts now. No Processor is marked ready. */
+    public void seedFunctionReadiness(String functionCode) {
+        readinessLock.writeLock().lock();
+        try {
+            functionReadiness.computeIfAbsent(functionCode, o -> new GateData.FunctionReadiness());
+        } finally {
+            readinessLock.writeLock().unlock();
+        }
+    }
+
+    /** Drops everything reported about a Function, for when it stops being active. */
+    public void forgetFunctionReadiness(String functionCode) {
+        readinessLock.writeLock().lock();
+        try {
+            functionReadiness.remove(functionCode);
+        } finally {
+            readinessLock.writeLock().unlock();
+        }
+    }
+
+    /** How many Functions have a readiness entry right now. For diagnostics and tests only. */
+    public int functionReadinessCount() {
+        readinessLock.readLock().lock();
+        try {
+            return functionReadiness.size();
+        } finally {
+            readinessLock.readLock().unlock();
+        }
     }
 
     /** How many durable records are held right now, expired ones included. For diagnostics only. */

@@ -86,6 +86,18 @@ public class ExecutionGateUtils {
         return record.blockedUntil();
     }
 
+    /** How long a readiness entry survives after it was last consulted. */
+    public static final long READINESS_TTL_MILLIS = java.util.concurrent.TimeUnit.HOURS.toMillis(2);
+
+    /**
+     * Whether a readiness entry has gone stale. A reported fact has a lifetime because the Processor
+     * that reported it may simply be gone — and unlike a durable block, nothing will ever come along
+     * to retract it.
+     */
+    public static boolean readinessEntryExpired(long lastTouchedMills, long now) {
+        return now - lastTouchedMills > READINESS_TTL_MILLIS;
+    }
+
     /**
      * Records a block in memory, extending an existing live one rather than adding a second.
      * Returns the record now in force.
