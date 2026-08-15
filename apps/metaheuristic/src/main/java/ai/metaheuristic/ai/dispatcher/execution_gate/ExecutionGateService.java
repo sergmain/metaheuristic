@@ -17,10 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.execution_gate;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecutionGate;
 import ai.metaheuristic.ai.dispatcher.data.GateData;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -43,6 +43,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.stream.Stream;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -85,6 +86,7 @@ public class ExecutionGateService {
     private final ExecutionGateTxService executionGateTxService;
     private final FunctionService functionService;
     private final ExecContextCache execContextCache;
+    private final Globals globals;
 
     /** Durable decisions, keyed by what they cover. Mutated only by the post-commit listener below. */
     private final Map<GateData.GateKey, GateData.GateRecord> records = new ConcurrentHashMap<>();
@@ -330,12 +332,30 @@ public class ExecutionGateService {
     }
 
     private List<FunctionConfigYaml.Analyzer> loadAnalyzers(String functionCode) {
+        // ⚠️ CONCATENATED, not merged. Every rule from both sites applies and none is discarded: two
+        // rules opening a block on the same key resolve on the BLOCK, where resolveDeadline already
+        // keeps the longer deadline. An earlier version deduplicated by analyzer name, which threw away
+        // a rule whenever two happened to share a label — and a label is not an identity.
+        final List<FunctionConfigYaml.Analyzer> dispatcherLevel =
+                ExecutionGateUtils.copyAnalyzers(globals.dispatcher.executionGate.analyzers);
+
         final ai.metaheuristic.ai.dispatcher.beans.Function function = functionService.findByCode(functionCode);
         if (function == null) {
             log.warn("01.320.120 function {} wasn't found while reading its analyzers", functionCode);
-            return List.of();
+            return dispatcherLevel;
         }
-        return ExecutionGateUtils.copyAnalyzers(function.getFunctionConfigYaml().function.analyzers);
+        final List<FunctionConfigYaml.Analyzer> functionLevel =
+                ExecutionGateUtils.copyAnalyzers(function.getFunctionConfigYaml().function.analyzers);
+
+        if (dispatcherLevel.isEmpty()) {
+            return functionLevel;
+        }
+        if (functionLevel.isEmpty()) {
+            return dispatcherLevel;
+        }
+        // dispatcher rules first, so an operator's rule is consulted before a Function author's when
+        // both match the same console — first hit wins downstream
+        return Stream.concat(dispatcherLevel.stream(), functionLevel.stream()).toList();
     }
 
     /** Has this Processor reported this Function ready? Consulting an entry also renews its lifetime. */

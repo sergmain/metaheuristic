@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.commons.utils.SecUtils;
@@ -341,12 +342,34 @@ public class Globals {
         public String publicKey;
     }
 
+    /**
+     * Analyzer rules declared by whoever runs this dispatcher, applying across every Function.
+     *
+     * <p>❗ The reason this exists at all: a Function's own rules ship inside a SIGNED bundle, so adding
+     * or correcting one means re-issuing and redeploying that bundle. Rules declared here need no
+     * signature and no redeploy.
+     *
+     * <p>❗ These may use {@code global} and {@code company} scope, which a Function descriptor may NOT
+     * — `FunctionAnalyzerUtils.checkScopeAllowedInDescriptor` rejects those precisely because they are
+     * operator-only, and it must never be applied to this list.
+     *
+     * <p>⚠️ Dispatcher rules and a Function's own rules are CONCATENATED, not merged. Both apply, and
+     * nothing is discarded: two rules that both open a block on the same key resolve on the block
+     * itself, where `resolveDeadline` already keeps the longer deadline.
+     */
+    @Getter
+    @Setter
+    public static class ExecutionGate {
+        public List<FunctionConfigYaml.Analyzer> analyzers = new ArrayList<>();
+    }
+
     @Getter
     @Setter
     public static class Dispatcher {
         public Asset asset = new Asset();
         public RowsLimit rowsLimit = new RowsLimit();
         public DispatcherTimeout timeout = new DispatcherTimeout();
+        public ExecutionGate executionGate = new ExecutionGate();
 
         @PeriodUnit(ChronoUnit.DAYS)
         public Period keepEventsInDb = ConstsApi.DAYS_90;

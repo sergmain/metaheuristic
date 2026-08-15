@@ -44,7 +44,7 @@ public class FunctionRepositoryNewlyReadyEventTest {
         // A fresh gate per test, so readiness starts empty without reaching into a static field.
         // The readiness registry is backed by no table, which is why none of the collaborators below
         // are touched on this path.
-        ExecutionGateService executionGateService = new ExecutionGateService(null, null, null, null);
+        ExecutionGateService executionGateService = new ExecutionGateService(null, null, null, null, null);
 
         FunctionRepositoryDispatcherService svc =
             new FunctionRepositoryDispatcherService(null, null, null, publisher, executionGateService);
@@ -83,7 +83,7 @@ public class FunctionRepositoryNewlyReadyEventTest {
         List<Object> captured = new ArrayList<>();
         ApplicationEventPublisher publisher = captured::add;
 
-        ExecutionGateService executionGateService = new ExecutionGateService(null, null, null, null);
+        ExecutionGateService executionGateService = new ExecutionGateService(null, null, null, null, null);
         FunctionRepositoryDispatcherService svc =
             new FunctionRepositoryDispatcherService(null, null, null, publisher, executionGateService);
 
@@ -101,7 +101,7 @@ public class FunctionRepositoryNewlyReadyEventTest {
 
     @Test
     public void test_forgetFunctionReadinessDropsEverythingAboutAFunction() {
-        ExecutionGateService executionGateService = new ExecutionGateService(null, null, null, null);
+        ExecutionGateService executionGateService = new ExecutionGateService(null, null, null, null, null);
 
         executionGateService.recordFunctionReadiness("fn-z", 1L);
         executionGateService.recordFunctionReadiness("fn-z", 2L);
@@ -115,7 +115,7 @@ public class FunctionRepositoryNewlyReadyEventTest {
 
     @Test
     public void test_seedFunctionReadinessMarksNoProcessorReady() {
-        ExecutionGateService executionGateService = new ExecutionGateService(null, null, null, null);
+        ExecutionGateService executionGateService = new ExecutionGateService(null, null, null, null, null);
 
         executionGateService.seedFunctionReadiness("fn-seeded");
 
