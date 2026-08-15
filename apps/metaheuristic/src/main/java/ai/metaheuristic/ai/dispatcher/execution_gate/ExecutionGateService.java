@@ -154,16 +154,6 @@ public class ExecutionGateService {
     }
 
     /**
-     * May this core be given this Task? Stateless checks only for now — the durable blocks this
-     * component already holds are consulted by the caller separately until the assignment loop is
-     * redirected here.
-     */
-    public GateData.Admission admit(ProcessorData.ProcessorAndCoreParams pacp, TaskQueue.QueuedTask queuedTask, boolean isAcceptOnlySigned) {
-        return ExecutionGateUtils.admit(pacp, queuedTask, isAcceptOnlySigned,
-                fc -> functionService.trusted(fc.sourcing, fc.git));
-    }
-
-    /**
      * Is this Task covered by a live block on its Function or on the API key it would spend?
      *
      * <p>This is where a block opened from a Function's own console analysis actually withholds work.
@@ -200,15 +190,19 @@ public class ExecutionGateService {
     }
 
     /**
-     * The stateless half of {@link #admit}. Called separately by the assignment loop because two
-     * other conditions are evaluated between this half and the params-version half.
+     * The five checks comparing what a Task DECLARES against what a Processor REPORTS.
+     *
+     * <p>❗ Deliberately NOT composed with {@link #admitParamsVersion} into one call. The assignment
+     * loop evaluates readiness and quotas BETWEEN the two, so a Task failing this and one of those must
+     * keep reporting whichever it reported before — and moving the params-version check earlier would
+     * also surface its ClassCastException for Tasks that readiness previously filtered out first.
      */
     public GateData.Admission admitStatelessFacts(ProcessorData.ProcessorAndCoreParams pacp, TaskQueue.QueuedTask queuedTask, boolean isAcceptOnlySigned) {
         return ExecutionGateUtils.admitStatelessFacts(pacp, queuedTask, isAcceptOnlySigned,
                 fc -> functionService.trusted(fc.sourcing, fc.git));
     }
 
-    /** The params-version half of {@link #admit}. */
+    /** Whether the Task's params can be expressed at the version this Processor understands. */
     public GateData.Admission admitParamsVersion(ProcessorData.ProcessorAndCoreParams pacp, TaskQueue.QueuedTask queuedTask) {
         return ExecutionGateUtils.admitParamsVersion(pacp, queuedTask);
     }

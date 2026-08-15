@@ -59,7 +59,7 @@ public class ExecutionGateAdmitTest {
     @Test
     public void test_admitted_whenNothingIsWrong() {
         final GateData.Admission admission =
-                ExecutionGateUtils.admit(processor(), queuedTask(taskParams()), false, ALWAYS_TRUSTED);
+                ExecutionGateUtils.admitStatelessFacts(processor(), queuedTask(taskParams()), false, ALWAYS_TRUSTED);
 
         assertTrue(admission.admitted());
         assertNull(admission.rejectedBy());
@@ -74,7 +74,7 @@ public class ExecutionGateAdmitTest {
         psy.gitStatusInfo = new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.not_found);
 
         assertRejectedBy(Enums.TaskRejectingStatus.git_required,
-                ExecutionGateUtils.admit(processor(psy, coreStatus()), queuedTask(tpy), false, ALWAYS_TRUSTED));
+                ExecutionGateUtils.admitStatelessFacts(processor(psy, coreStatus()), queuedTask(tpy), false, ALWAYS_TRUSTED));
     }
 
     @Test
@@ -84,7 +84,7 @@ public class ExecutionGateAdmitTest {
         final TaskParamsYaml tpy = taskParams();
         tpy.task.function.sourcing = EnumsApi.FunctionSourcing.git;
 
-        assertTrue(ExecutionGateUtils.admit(processor(), queuedTask(tpy), false, ALWAYS_TRUSTED).admitted());
+        assertTrue(ExecutionGateUtils.admitStatelessFacts(processor(), queuedTask(tpy), false, ALWAYS_TRUSTED).admitted());
     }
 
     @Test
@@ -93,7 +93,7 @@ public class ExecutionGateAdmitTest {
         csy.tags = "gpu,bigmem";
 
         assertRejectedBy(Enums.TaskRejectingStatus.tags_arent_allowed,
-                ExecutionGateUtils.admit(processor(processorStatus(), csy), queuedTask(taskParams(), "fpga"), false, ALWAYS_TRUSTED));
+                ExecutionGateUtils.admitStatelessFacts(processor(processorStatus(), csy), queuedTask(taskParams(), "fpga"), false, ALWAYS_TRUSTED));
     }
 
     @Test
@@ -101,7 +101,7 @@ public class ExecutionGateAdmitTest {
         final CoreStatusYaml csy = coreStatus();
         csy.tags = "gpu,bigmem";
 
-        assertTrue(ExecutionGateUtils.admit(processor(processorStatus(), csy), queuedTask(taskParams(), "gpu"), false, ALWAYS_TRUSTED).admitted());
+        assertTrue(ExecutionGateUtils.admitStatelessFacts(processor(processorStatus(), csy), queuedTask(taskParams(), "gpu"), false, ALWAYS_TRUSTED).admitted());
     }
 
     @Test
@@ -110,7 +110,7 @@ public class ExecutionGateAdmitTest {
         tpy.task.function.env = "env-nobody-declares";
 
         assertRejectedBy(Enums.TaskRejectingStatus.interpreter_is_undefined,
-                ExecutionGateUtils.admit(processor(), queuedTask(tpy), false, ALWAYS_TRUSTED));
+                ExecutionGateUtils.admitStatelessFacts(processor(), queuedTask(tpy), false, ALWAYS_TRUSTED));
     }
 
     @Test
@@ -118,7 +118,7 @@ public class ExecutionGateAdmitTest {
         final TaskParamsYaml tpy = taskParams();
         tpy.task.function.env = "python-3";
 
-        assertTrue(ExecutionGateUtils.admit(processor(), queuedTask(tpy), false, ALWAYS_TRUSTED).admitted());
+        assertTrue(ExecutionGateUtils.admitStatelessFacts(processor(), queuedTask(tpy), false, ALWAYS_TRUSTED).admitted());
     }
 
     @Test
@@ -130,7 +130,7 @@ public class ExecutionGateAdmitTest {
         psy.os = EnumsApi.OS.linux;
 
         assertRejectedBy(Enums.TaskRejectingStatus.not_supported_operating_system,
-                ExecutionGateUtils.admit(processor(psy, coreStatus()), queuedTask(tpy), false, ALWAYS_TRUSTED));
+                ExecutionGateUtils.admitStatelessFacts(processor(psy, coreStatus()), queuedTask(tpy), false, ALWAYS_TRUSTED));
     }
 
     @Test
@@ -139,24 +139,24 @@ public class ExecutionGateAdmitTest {
         final ProcessorStatusYaml psy = processorStatus();
         psy.os = EnumsApi.OS.linux;
 
-        assertTrue(ExecutionGateUtils.admit(processor(psy, coreStatus()), queuedTask(taskParams()), false, ALWAYS_TRUSTED).admitted());
+        assertTrue(ExecutionGateUtils.admitStatelessFacts(processor(psy, coreStatus()), queuedTask(taskParams()), false, ALWAYS_TRUSTED).admitted());
     }
 
     @Test
     public void test_acceptOnlySigned_whenTheFunctionIsUntrustedAndUnsigned() {
         assertRejectedBy(Enums.TaskRejectingStatus.accept_only_signed,
-                ExecutionGateUtils.admit(processor(), queuedTask(taskParams()), true, NEVER_TRUSTED));
+                ExecutionGateUtils.admitStatelessFacts(processor(), queuedTask(taskParams()), true, NEVER_TRUSTED));
     }
 
     @Test
     public void test_acceptOnlySigned_isNotAppliedWhenTheCoreDidNotAskForIt() {
         // the same untrusted, unsigned Function is fine when the Processor did not request the check
-        assertTrue(ExecutionGateUtils.admit(processor(), queuedTask(taskParams()), false, NEVER_TRUSTED).admitted());
+        assertTrue(ExecutionGateUtils.admitStatelessFacts(processor(), queuedTask(taskParams()), false, NEVER_TRUSTED).admitted());
     }
 
     @Test
     public void test_acceptOnlySigned_isNotAppliedToATrustedFunction() {
-        assertTrue(ExecutionGateUtils.admit(processor(), queuedTask(taskParams()), true, ALWAYS_TRUSTED).admitted());
+        assertTrue(ExecutionGateUtils.admitStatelessFacts(processor(), queuedTask(taskParams()), true, ALWAYS_TRUSTED).admitted());
     }
 
     @Test
@@ -164,7 +164,7 @@ public class ExecutionGateAdmitTest {
         final TaskParamsYaml tpy = taskParams();
         tpy.task.function.checksumMap = Map.of(EnumsApi.HashAlgo.SHA256WithSignature, "some-signature");
 
-        assertTrue(ExecutionGateUtils.admit(processor(), queuedTask(tpy), true, NEVER_TRUSTED).admitted());
+        assertTrue(ExecutionGateUtils.admitStatelessFacts(processor(), queuedTask(tpy), true, NEVER_TRUSTED).admitted());
     }
 
     @Test
@@ -173,7 +173,7 @@ public class ExecutionGateAdmitTest {
         tpy.task.function.checksumMap = Map.of(EnumsApi.HashAlgo.SHA256, "some-hash");
 
         assertRejectedBy(Enums.TaskRejectingStatus.accept_only_signed,
-                ExecutionGateUtils.admit(processor(), queuedTask(tpy), true, NEVER_TRUSTED));
+                ExecutionGateUtils.admitStatelessFacts(processor(), queuedTask(tpy), true, NEVER_TRUSTED));
     }
 
     @Test
@@ -191,7 +191,7 @@ public class ExecutionGateAdmitTest {
         psy.taskParamsVersion = 1;
 
         assertThrows(ClassCastException.class,
-                () -> ExecutionGateUtils.admit(processor(psy, coreStatus()), queuedTask(taskParams()), false, ALWAYS_TRUSTED));
+                () -> ExecutionGateUtils.admitParamsVersion(processor(psy, coreStatus()), queuedTask(taskParams())));
     }
 
     @Test
@@ -199,7 +199,7 @@ public class ExecutionGateAdmitTest {
         final ProcessorStatusYaml psy = processorStatus();
         psy.taskParamsVersion = CURRENT_TASK_PARAMS_VERSION;
 
-        assertTrue(ExecutionGateUtils.admit(processor(psy, coreStatus()), queuedTask(taskParams()), false, ALWAYS_TRUSTED).admitted());
+        assertTrue(ExecutionGateUtils.admitParamsVersion(processor(psy, coreStatus()), queuedTask(taskParams())).admitted());
     }
 
     @Test
@@ -216,7 +216,7 @@ public class ExecutionGateAdmitTest {
         csy.tags = "gpu";
 
         assertRejectedBy(Enums.TaskRejectingStatus.git_required,
-                ExecutionGateUtils.admit(processor(psy, csy), queuedTask(tpy, "fpga"), false, ALWAYS_TRUSTED));
+                ExecutionGateUtils.admitStatelessFacts(processor(psy, csy), queuedTask(tpy, "fpga"), false, ALWAYS_TRUSTED));
     }
 
     @Test
@@ -229,7 +229,7 @@ public class ExecutionGateAdmitTest {
         final TaskQueue.QueuedTask queuedTask = new TaskQueue.QueuedTask(
                 EnumsApi.FunctionExecContext.external, 42L, 43L, null, taskParams(), null, 1);
 
-        assertTrue(ExecutionGateUtils.admit(processor(psy, coreStatus()), queuedTask, false, ALWAYS_TRUSTED).admitted());
+        assertTrue(ExecutionGateUtils.admitParamsVersion(processor(psy, coreStatus()), queuedTask).admitted());
     }
 
     private static void assertRejectedBy(Enums.TaskRejectingStatus expected, GateData.Admission actual) {

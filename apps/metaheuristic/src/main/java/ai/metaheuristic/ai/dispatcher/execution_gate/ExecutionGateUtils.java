@@ -195,34 +195,6 @@ public class ExecutionGateUtils {
     }
 
     /**
-     * May this core be given this Task, judged only on facts computable right now?
-     *
-     * <p>Every check here is stateless — it compares what the Task declares against what the
-     * Processor reports, and nothing else. ❗ None of them may open a durable block: a Task-scoped
-     * misconfiguration is grounds to skip that Task, never to withhold work from the Processor. That
-     * confusion is the root cause of the silent stalls this component exists to end, so it is worth
-     * stating where the checks live rather than only where they are called from.
-     *
-     * <p>The order matches the existing filter chain exactly, so redirecting the assignment loop onto
-     * this method produces the same reason for the same Task.
-     *
-     * @param trustedFunc supplied by the caller because trust is configuration, not a property of the
-     *                    Task — passing it in is what keeps this method testable without a context
-     */
-    public static GateData.Admission admit(
-            ProcessorData.ProcessorAndCoreParams pacp,
-            TaskQueue.QueuedTask queuedTask,
-            boolean isAcceptOnlySigned,
-            Predicate<TaskParamsYaml.FunctionConfig> trustedFunc) {
-
-        final GateData.Admission statelessFacts = admitStatelessFacts(pacp, queuedTask, isAcceptOnlySigned, trustedFunc);
-        if (!statelessFacts.admitted()) {
-            return statelessFacts;
-        }
-        return admitParamsVersion(pacp, queuedTask);
-    }
-
-    /**
      * The five checks that compare what the Task DECLARES against what the Processor REPORTS.
      *
      * <p>Split from the params-version check below because the existing filter chain evaluates two
