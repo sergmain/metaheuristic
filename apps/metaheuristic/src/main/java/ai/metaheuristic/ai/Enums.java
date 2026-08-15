@@ -37,11 +37,10 @@ public final class Enums {
         queued_task_or_params_is_null, task_was_finished, task_in_progress_already, task_for_cache_checking,
         git_required, tags_arent_allowed, interpreter_is_undefined, not_supported_operating_system,
         accept_only_signed, functions_not_ready, not_enough_quotas, downgrade_not_supported,
-        task_must_be_in_none_state
-    }
+        task_must_be_in_none_state, function_is_quarantined, api_is_quarantined}
 
     public enum TaskSearchingStatus {found, queue_is_empty, environment_is_empty, core_is_banned, task_not_found,
-        illegal_state, task_doesnt_exist, task_isnt_in_none_state, iterator_over_queue_is_empty, task_assigning_was_failed}
+        illegal_state, task_doesnt_exist, task_isnt_in_none_state, iterator_over_queue_is_empty, task_assigning_was_failed, processor_is_quarantined}
 
     /**
      * What a durable admission block covers.

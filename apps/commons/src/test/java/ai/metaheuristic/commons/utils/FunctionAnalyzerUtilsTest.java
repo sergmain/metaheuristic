@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.utils;
 
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -148,6 +149,74 @@ public class FunctionAnalyzerUtilsTest {
         final FunctionConfigYaml.Analyzer good = analyzer("good", "api", "20min", "rate limit reached");
 
         assertSame(good, FunctionAnalyzerUtils.firstHit(List.of(broken, good), SAMPLE_CONSOLE));
+    }
+
+    // ---- consolesInOrder / firstHitInExecResults ----------------------------------------------
+
+    @Test
+    public void test_consolesInOrder_execThenGeneralThenPreThenPost() {
+        final FunctionApiData.FunctionExec fe = new FunctionApiData.FunctionExec();
+        fe.exec = result("main output");
+        fe.generalExec = result("general output");
+        fe.preExecs = List.of(result("pre output"));
+        fe.postExecs = List.of(result("post output"));
+
+        assertEquals(List.of("main output", "general output", "pre output", "post output"),
+                FunctionAnalyzerUtils.consolesInOrder(fe));
+    }
+
+    @Test
+    public void test_consolesInOrder_skipsWhatIsAbsentOrBlank() {
+        final FunctionApiData.FunctionExec fe = new FunctionApiData.FunctionExec();
+        fe.exec = result("");
+        fe.generalExec = null;
+        fe.preExecs = null;
+        fe.postExecs = List.of(result("post output"));
+
+        assertEquals(List.of("post output"), FunctionAnalyzerUtils.consolesInOrder(fe));
+    }
+
+    @Test
+    public void test_consolesInOrder_toleratesNoExecResultsAtAll() {
+        assertTrue(FunctionAnalyzerUtils.consolesInOrder(null).isEmpty());
+        assertTrue(FunctionAnalyzerUtils.consolesInOrder(new FunctionApiData.FunctionExec(null, null, null, null)).isEmpty());
+    }
+
+    @Test
+    public void test_firstHitInExecResults_findsAMatchInAPreFunctionConsole() {
+        final FunctionApiData.FunctionExec fe = new FunctionApiData.FunctionExec();
+        fe.exec = result("nothing interesting");
+        fe.preExecs = List.of(result("error: rate limit reached"));
+
+        final FunctionConfigYaml.Analyzer a = analyzer("downtime", "api", "20min", "rate limit reached");
+        assertSame(a, FunctionAnalyzerUtils.firstHitInExecResults(List.of(a), fe));
+    }
+
+    @Test
+    public void test_firstHitInExecResults_ordersByConsoleNotByAnalyzer() {
+        // both analyzers match SOMETHING; the one matching the earlier console wins, so the outcome
+        // doesn't depend on which failing step happens to be looked at first
+        final FunctionApiData.FunctionExec fe = new FunctionApiData.FunctionExec();
+        fe.exec = result("main: disk full");
+        fe.postExecs = List.of(result("post: rate limit reached"));
+
+        final FunctionConfigYaml.Analyzer rateLimit = analyzer("downtime", "api", "20min", "rate limit reached");
+        final FunctionConfigYaml.Analyzer diskFull = analyzer("host-broken", "processor", "1h", "disk full");
+
+        assertSame(diskFull, FunctionAnalyzerUtils.firstHitInExecResults(List.of(rateLimit, diskFull), fe));
+    }
+
+    @Test
+    public void test_firstHitInExecResults_noMatchReturnsNull() {
+        final FunctionApiData.FunctionExec fe = new FunctionApiData.FunctionExec();
+        fe.exec = result("all good");
+
+        assertNull(FunctionAnalyzerUtils.firstHitInExecResults(List.of(analyzer("d", "api", "1h", "rate limit")), fe));
+        assertNull(FunctionAnalyzerUtils.firstHitInExecResults(null, fe));
+    }
+
+    private static FunctionApiData.SystemExecResult result(String console) {
+        return new FunctionApiData.SystemExecResult("fn:1.0", false, 1, console);
     }
 
     // ---- merge -------------------------------------------------------------------------------

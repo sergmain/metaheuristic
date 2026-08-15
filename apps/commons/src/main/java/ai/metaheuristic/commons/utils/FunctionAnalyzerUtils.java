@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.utils;
 
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import lombok.extern.slf4j.Slf4j;
@@ -113,6 +114,58 @@ public class FunctionAnalyzerUtils {
                 catch (PatternSyntaxException e) {
                     log.error("01.323.080 analyzer '{}' declares a regex which doesn't compile: {}", analyzer.name, regex);
                 }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Every console this Task produced, in the order they are consulted: the Function's own output
+     * first, then the general one, then pre-functions, then post-functions.
+     *
+     * <p>❗ Read from the PARSED structure, never by matching the serialised column. Regexing the
+     * stored text would match escaped characters and yaml keys as readily as real output, and it could
+     * not tell a pre-function's failure from the main Function's — which is exactly the distinction
+     * that decides what gets blocked.
+     */
+    public static List<String> consolesInOrder(FunctionApiData.@Nullable FunctionExec functionExec) {
+        if (functionExec == null) {
+            return List.of();
+        }
+        final List<String> consoles = new ArrayList<>();
+        addConsole(consoles, functionExec.exec);
+        addConsole(consoles, functionExec.generalExec);
+        if (functionExec.preExecs != null) {
+            for (FunctionApiData.SystemExecResult preExec : functionExec.preExecs) {
+                addConsole(consoles, preExec);
+            }
+        }
+        if (functionExec.postExecs != null) {
+            for (FunctionApiData.SystemExecResult postExec : functionExec.postExecs) {
+                addConsole(consoles, postExec);
+            }
+        }
+        return consoles;
+    }
+
+    private static void addConsole(List<String> consoles, FunctionApiData.@Nullable SystemExecResult result) {
+        if (result != null && !S.b(result.console)) {
+            consoles.add(result.console);
+        }
+    }
+
+    /**
+     * The first analyzer that matches anything this Task printed. First hit wins, and the consoles are
+     * walked in {@link #consolesInOrder} order, so the outcome does not depend on which of several
+     * failing steps happens to be examined first.
+     */
+    public static FunctionConfigYaml.@Nullable Analyzer firstHitInExecResults(
+            @Nullable List<FunctionConfigYaml.Analyzer> analyzers, FunctionApiData.@Nullable FunctionExec functionExec) {
+
+        for (String console : consolesInOrder(functionExec)) {
+            final FunctionConfigYaml.Analyzer hit = firstHit(analyzers, console);
+            if (hit != null) {
+                return hit;
             }
         }
         return null;
