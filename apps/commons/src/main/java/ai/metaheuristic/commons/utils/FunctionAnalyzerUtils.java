@@ -171,31 +171,6 @@ public class FunctionAnalyzerUtils {
     }
 
     /**
-     * Combines the two places analyzers can be declared. Both apply; where the same {@code name} is
-     * declared in both, the LONGER timeout wins.
-     *
-     * <p>Longest-wins rather than function-overrides-dispatcher because these rules withhold work, and
-     * the safer mistake is to withhold it for too long. A Function author shortening a limit the
-     * installation set would otherwise be able to opt out of it entirely.
-     */
-    public static List<FunctionConfigYaml.Analyzer> merge(
-            List<FunctionConfigYaml.Analyzer> dispatcherLevel, List<FunctionConfigYaml.Analyzer> functionLevel) {
-
-        final Map<String, FunctionConfigYaml.Analyzer> byName = new LinkedHashMap<>();
-        for (FunctionConfigYaml.Analyzer analyzer : dispatcherLevel) {
-            byName.put(analyzer.name, analyzer);
-        }
-        for (FunctionConfigYaml.Analyzer analyzer : functionLevel) {
-            byName.merge(analyzer.name, analyzer, FunctionAnalyzerUtils::longerTimeoutOf);
-        }
-        return new ArrayList<>(byName.values());
-    }
-
-    private static FunctionConfigYaml.Analyzer longerTimeoutOf(FunctionConfigYaml.Analyzer a, FunctionConfigYaml.Analyzer b) {
-        return parseTimeout(b.timeout).compareTo(parseTimeout(a.timeout)) > 0 ? b : a;
-    }
-
-    /**
      * Rejects a descriptor-declared analyzer whose scope only the dispatcher may set.
      *
      * <p>❗ Throws at load time rather than downgrading to something legal. A silent downgrade would

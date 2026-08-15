@@ -221,48 +221,6 @@ public class FunctionAnalyzerUtilsTest {
         return new FunctionApiData.SystemExecResult("fn:1.0", false, 1, console);
     }
 
-    // ---- merge -------------------------------------------------------------------------------
-
-    @Test
-    public void test_merge_bothSitesApply() {
-        final List<FunctionConfigYaml.Analyzer> merged = FunctionAnalyzerUtils.merge(
-                List.of(analyzer("from-dispatcher", EnumsApi.GateScope.api, "1h", "a")),
-                List.of(analyzer("from-function", EnumsApi.GateScope.function, "30s", "b")));
-
-        assertEquals(2, merged.size());
-        assertEquals(List.of("from-dispatcher", "from-function"), merged.stream().map(a -> a.name).toList());
-    }
-
-    @Test
-    public void test_merge_sameNameKeepsTheLongerTimeout_functionSideLonger() {
-        final FunctionConfigYaml.Analyzer longer = analyzer("downtime", EnumsApi.GateScope.api, "1h", "b");
-
-        final List<FunctionConfigYaml.Analyzer> merged = FunctionAnalyzerUtils.merge(
-                List.of(analyzer("downtime", EnumsApi.GateScope.api, "30s", "a")), List.of(longer));
-
-        assertEquals(1, merged.size());
-        assertSame(longer, merged.get(0));
-    }
-
-    @Test
-    public void test_merge_sameNameKeepsTheLongerTimeout_dispatcherSideLonger() {
-        // the direction that matters: a Function author must not be able to shorten an installation's limit
-        final FunctionConfigYaml.Analyzer longer = analyzer("downtime", EnumsApi.GateScope.api, "1d", "a");
-
-        final List<FunctionConfigYaml.Analyzer> merged = FunctionAnalyzerUtils.merge(
-                List.of(longer), List.of(analyzer("downtime", EnumsApi.GateScope.api, "30s", "b")));
-
-        assertEquals(1, merged.size());
-        assertSame(longer, merged.get(0));
-    }
-
-    @Test
-    public void test_merge_toleratesEitherSideBeingEmpty() {
-        assertEquals(1, FunctionAnalyzerUtils.merge(List.of(), List.of(analyzer("x", EnumsApi.GateScope.api, "1h", "a"))).size());
-        assertEquals(1, FunctionAnalyzerUtils.merge(List.of(analyzer("x", EnumsApi.GateScope.api, "1h", "a")), List.of()).size());
-        assertTrue(FunctionAnalyzerUtils.merge(List.of(), List.of()).isEmpty());
-    }
-
     // ---- checkScopeAllowedInDescriptor -------------------------------------------------------
 
     @Test
