@@ -74,19 +74,6 @@ public class TaskProviderUnassignedTaskService {
     private final FunctionService functionService;
     private final ExecutionGateService executionGateService;
 
-    /**
-     * this Map contains an AtomicLong which contains millisecond value which is specify how long to not use concrete processor
-     * if there is any problem with such Processor. After cool-down period of time this processor can be used in processing.
-     *
-     * key - processorId
-     * value - milliseconds when a processor was banned;
-     */
-    private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
-
-    public Map<Long, AtomicLong> getBannedSince() {
-        return bannedSince;
-    }
-
     public TaskData.TaskSearching findUnassignedTaskAndAssign(ProcessorAndCoreParams processorAndCoreParams, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas currentQuotas) {
         TaskQueueSyncStaticService.checkWriteLockNotPresent();
         TxUtils.checkTxNotExists();
@@ -101,8 +88,9 @@ public class TaskProviderUnassignedTaskService {
             return new TaskData.TaskSearching(environment_is_empty);
         }
 
-        AtomicLong longHolder = getBannedSince().computeIfAbsent(processorAndCoreParams.processorId(), o -> new AtomicLong(0));
-        if (longHolder.get() != 0 && System.currentTimeMillis() - longHolder.get() < TimeUnit.MINUTES.toMillis(30)) {
+        // A Processor is withheld from only when something said the PROCESSOR is at fault. Nothing in
+        // the loop below can put it here: a Task the Processor cannot run is a fact about that Task.
+        if (executionGateService.blockedUntil(Enums.GateScope.processor, String.valueOf(processorAndCoreParams.processorId())) != null) {
             return new TaskData.TaskSearching(core_is_banned);
         }
 
@@ -189,13 +177,10 @@ public class TaskProviderUnassignedTaskService {
                 // the reasons are unchanged; the per-check logging moved with them.
                 final GateData.Admission admission = executionGateService.admitStatelessFacts(processorAndCoreParams, queuedTask, isAcceptOnlySigned);
                 if (!admission.admitted()) {
-                    final Enums.TaskRejectingStatus reason = Objects.requireNonNull(admission.rejectedBy());
-                    // these two reasons still write the durable ban they always wrote. Removing that is
-                    // a deliberate behaviour change and is not part of moving the checks.
-                    if (reason==interpreter_is_undefined || reason==not_supported_operating_system) {
-                        longHolder.set(System.currentTimeMillis());
-                    }
-                    searching.rejected.put(queuedTask.taskId, reason);
+                    // ❗ The rejection ends here. It skips THIS Task and says nothing about the
+                    // Processor, so the next poll evaluates everything again and the reason is logged
+                    // every time instead of once per cool-down window.
+                    searching.rejected.put(queuedTask.taskId, Objects.requireNonNull(admission.rejectedBy()));
                     continue;
                 }
 
@@ -218,7 +203,6 @@ public class TaskProviderUnassignedTaskService {
                 // keep reporting whichever of them it reported before.
                 final GateData.Admission versionAdmission = executionGateService.admitParamsVersion(processorAndCoreParams, queuedTask);
                 if (!versionAdmission.admitted()) {
-                    longHolder.set(System.currentTimeMillis());
                     searching.rejected.put(queuedTask.taskId, downgrade_not_supported);
                     resultTask = null;
                 }

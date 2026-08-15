@@ -48,8 +48,7 @@ import org.springframework.test.context.ActiveProfiles;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Characterization of the 30-minute Processor ban that a Task-scoped misconfiguration currently
- * triggers.
+ * A Task-scoped misconfiguration rejects that Task and nothing else.
  *
  * <p>A Task whose Function declares an {@code env} code the Processor does not have is rejected with
  * {@code interpreter_is_undefined} — which is correct — and the same line ALSO stamps
@@ -59,18 +58,17 @@ import static org.junit.jupiter.api.Assertions.*;
  * cluster goes quiet and nothing in the logs repeats, because the rejection is recorded once per ban
  * window rather than once per poll.
  *
- * <p>This test documents that behaviour as it stands today. It does NOT assert that the behaviour is
- * right — it exists so the change that removes it is provably a change, and nothing else moves with
- * it. The assertions here are flipped later, when evaluated conditions stop writing durable bans.
+ * <p>This test began as a characterization of that behaviour, so that removing it would provably be a
+ * change and nothing else would move with it. Its assertions are now flipped: they describe what the
+ * code does after the fix, and they fail against the version that wrote the ban.
  *
  * <p>❗ The second assertion is the load-bearing one. Asserting only that the rejecting core is
  * subsequently banned would be satisfied by a per-core ban too, and would therefore document a
  * narrower fault than the one that exists. Asking a DIFFERENT core of the SAME Processor is what
  * pins the real blast radius.
  *
- * <p>⚠️ {@code bannedSince} is instance state on a singleton, and this harness shares one Spring
- * context across the whole run — so a ban this test writes would otherwise leak into every class that
- * runs after it. It is cleared in {@code @AfterEach}, along with the task queue this test seeds.
+ * <p>⚠️ The task queue this test seeds is global and the harness shares one Spring context across the
+ * whole run, so it is reset in {@code @AfterEach}. There is no longer any ban state to clear.
  *
  * @author Sergio Lissner
  * Date: 8/14/2026
@@ -91,6 +89,7 @@ public class TaskProviderProcessorBanCharacterizationTest extends PreparingSourc
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private TaskProviderUnassignedTaskService taskProviderUnassignedTaskService;
     @Autowired private ExecContextStatusService execContextStatusService;
+    @Autowired private ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateService executionGateService;
 
     @Override
     public SourceCodeUriAndLang getSourceCodeAndLang() {
@@ -98,13 +97,12 @@ public class TaskProviderProcessorBanCharacterizationTest extends PreparingSourc
     }
 
     @AfterEach
-    public void clearBanAndQueue() {
-        taskProviderUnassignedTaskService.getBannedSince().clear();
+    public void clearQueue() {
         TaskQueueService.resetQueue();
     }
 
     @Test
-    public void test_interpreterIsUndefined_bansTheWholeProcessor_notOnlyTheRejectingCore() {
+    public void test_interpreterIsUndefined_rejectsOnlyThatTask_andNeverBansTheProcessor() {
         // ---- a started ExecContext, so the admission loop gets past its ExecContext checks -------
         DispatcherContext context = new DispatcherContext(getAccount(), getCompany());
         ExecContextCreatorService.ExecContextCreationResult result =
@@ -152,28 +150,28 @@ public class TaskProviderProcessorBanCharacterizationTest extends PreparingSourc
         assertEquals(Enums.TaskSearchingStatus.task_not_found, first.status,
                 "no Task was assignable, so the search as a whole ends with task_not_found");
 
-        // the side effect under characterization: an evaluated condition wrote a durable ban
-        assertTrue(taskProviderUnassignedTaskService.getBannedSince().containsKey(PROCESSOR_ID),
-                "today the rejection stamps a ban keyed by processorId");
-        assertNotEquals(0L, taskProviderUnassignedTaskService.getBannedSince().get(PROCESSOR_ID).get());
+        // no durable block may exist for this Processor: nothing about a misconfigured Task is a
+        // statement about the Processor's health
+        assertNull(executionGateService.blockedUntil(Enums.GateScope.processor, String.valueOf(PROCESSOR_ID)),
+                "a Task-scoped misconfiguration must not withhold work from the Processor");
 
-        // ---- 2nd call on the SAME core: the queue is never even walked ---------------------------
+        // ---- 2nd call on the SAME core: the queue is walked again, normally ----------------------
         final TaskData.TaskSearching second = taskProviderUnassignedTaskService.findUnassignedTaskAndAssign(coreA, false, quotas);
 
-        assertEquals(Enums.TaskSearchingStatus.core_is_banned, second.status,
-                "the second call must short-circuit on the ban");
-        assertTrue(second.rejected.isEmpty(),
-                "the ban short-circuits BEFORE the queue is walked, so no Task is evaluated and none is reported rejected");
+        assertEquals(Enums.TaskSearchingStatus.task_not_found, second.status,
+                "the second call must evaluate Tasks normally rather than short-circuiting");
+        assertEquals(Enums.TaskRejectingStatus.interpreter_is_undefined, second.rejected.get(taskId),
+                "the Task is rejected again, and the reason is reported again - once per poll, not once per 30 minutes");
 
         // ---- 3rd call on a DIFFERENT core of the SAME Processor ---------------------------------
-        // ❗ This is the assertion that pins the real scope. bannedSince is keyed by processorId, so a
-        // core that never saw the misconfigured Task is refused service too.
+        // ❗ The assertion that pins the fix. A core that never saw the misconfigured Task was
+        // previously refused service because the ban was keyed by processorId.
         final TaskData.TaskSearching third = taskProviderUnassignedTaskService.findUnassignedTaskAndAssign(coreB, false, quotas);
 
-        assertEquals(Enums.TaskSearchingStatus.core_is_banned, third.status,
-                "a different core of the same Processor is banned as well - the ban covers the Processor, not the core");
-        assertTrue(third.rejected.isEmpty(),
-                "core B never evaluated the Task either");
+        assertEquals(Enums.TaskSearchingStatus.task_not_found, third.status,
+                "a different core of the same Processor keeps working - the Processor was never at fault");
+        assertEquals(Enums.TaskRejectingStatus.interpreter_is_undefined, third.rejected.get(taskId),
+                "core B evaluates the Task too, and reports the same reason");
     }
 
     private static ProcessorData.ProcessorAndCoreParams processorAndCore(Long coreId) {
