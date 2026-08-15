@@ -41,6 +41,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -386,6 +387,21 @@ public class ExecutionGateService {
         } finally {
             readinessLock.readLock().unlock();
         }
+    }
+
+    /**
+     * Every block in force right now, newest deadline last.
+     *
+     * <p>Reads the in-memory copy, not the table: this answers an admin screen, and the memory is a
+     * cache of committed truth anyway, so a database round trip would buy nothing but latency.
+     * Expired entries are filtered rather than removed — a read must not mutate.
+     */
+    public List<GateData.GateRecord> liveRecords() {
+        final long now = System.currentTimeMillis();
+        return records.values().stream()
+                .filter(r -> ExecutionGateUtils.isLive(r.blockedUntil(), now))
+                .sorted(Comparator.comparingLong(GateData.GateRecord::blockedUntil))
+                .toList();
     }
 
     /** How many durable records are held right now, expired ones included. For diagnostics only. */
