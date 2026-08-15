@@ -25,6 +25,8 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.data.GateData;
 import ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateService;
 import ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService;
 import ai.metaheuristic.commons.utils.CollectionUtils;
@@ -183,56 +185,21 @@ public class TaskProviderUnassignedTaskService {
                     continue;
                 }
 
-                // check of git availability
-                if (TaskUtils.gitUnavailable(queuedTask.taskParamYaml.task, processorAndCoreParams.psy().gitStatusInfo.status != EnumsApi.GitStatus.installed)) {
-                    log.warn("317.060 Can't assign task #{} to core #{} because this processor doesn't correctly installed git, git status info: {}",
-                        processorAndCoreParams.coreId(), queuedTask.task.getId(), processorAndCoreParams.psy().gitStatusInfo
-                    );
-                    searching.rejected.put(queuedTask.taskId, git_required);
-                    continue;
-                }
-
-                // check of tag
-                if (!CollectionUtils.checkTagAllowed(queuedTask.tag, processorAndCoreParams.csy().tags)) {
-                    log.debug("317.077 Check of !CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env.tags) was failed");
-                    searching.rejected.put(queuedTask.taskId, tags_arent_allowed);
-                    continue;
-                }
-
-                if (!S.b(queuedTask.taskParamYaml.task.function.env)) {
-                    String interpreter = processorAndCoreParams.psy().env.getEnvs().get(queuedTask.taskParamYaml.task.function.env);
-                    if (interpreter == null) {
-                        log.error("317.080 Can't assign task #{} to core #{} because this processor doesn't have defined interpreter for function's env {}",
-                                queuedTask.task.getId(), processorAndCoreParams.coreId(), queuedTask.taskParamYaml.task.function.env
-                        );
+                // git, tags, interpreter, OS and signing are all decided in one place now. The order and
+                // the reasons are unchanged; the per-check logging moved with them.
+                final GateData.Admission admission = executionGateService.admitStatelessFacts(processorAndCoreParams, queuedTask, isAcceptOnlySigned);
+                if (!admission.admitted()) {
+                    final Enums.TaskRejectingStatus reason = Objects.requireNonNull(admission.rejectedBy());
+                    // these two reasons still write the durable ban they always wrote. Removing that is
+                    // a deliberate behaviour change and is not part of moving the checks.
+                    if (reason==interpreter_is_undefined || reason==not_supported_operating_system) {
                         longHolder.set(System.currentTimeMillis());
-                        searching.rejected.put(queuedTask.taskId, interpreter_is_undefined);
-                        continue;
                     }
-                }
-
-                final List<EnumsApi.OS> supportedOS = FunctionCoreUtils.getSupportedOS(queuedTask.taskParamYaml.task.function.metas);
-                if (processorAndCoreParams.psy().os != null && !supportedOS.isEmpty() && !supportedOS.contains(processorAndCoreParams.psy().os)) {
-                    log.info("317.100 Can't assign task #{} to core #{}, " +
-                                    "because this processor doesn't support required OS version. processor: {}, function: {}",
-                        processorAndCoreParams.coreId(), queuedTask.task.getId(), processorAndCoreParams.psy().os, supportedOS
-                    );
-                    longHolder.set(System.currentTimeMillis());
-                    searching.rejected.put(queuedTask.taskId, not_supported_operating_system);
+                    searching.rejected.put(queuedTask.taskId, reason);
                     continue;
                 }
 
-                if (isAcceptOnlySigned) {
-                    boolean trusted = functionService.trusted(queuedTask.taskParamYaml.task.function.sourcing, queuedTask.taskParamYaml.task.function.git);
-                    if (!trusted) {
-                        if (queuedTask.taskParamYaml.task.function.checksumMap == null || queuedTask.taskParamYaml.task.function.checksumMap.keySet().stream().noneMatch(o -> o.isSigned)) {
-                            log.warn("317.120 Function with code {} wasn't signed", queuedTask.taskParamYaml.task.function.getCode());
-                            searching.rejected.put(queuedTask.taskId, accept_only_signed);
-                            continue;
-                        }
-                    }
-                }
-                if (notAllFunctionsReady(processorAndCoreParams, queuedTask.taskParamYaml)) {
+                if (!executionGateService.allFunctionsReady(processorAndCoreParams.processorId(), queuedTask.taskParamYaml)) {
                     log.debug("317.123 Core #{} isn't ready to process task #{}", processorAndCoreParams.coreId(), queuedTask.taskId);
                     searching.rejected.put(queuedTask.taskId, functions_not_ready);
                     continue;
@@ -246,18 +213,11 @@ public class TaskProviderUnassignedTaskService {
                 }
 
                 resultTask = allocatedTask;
-                // check that downgrading is being supported
-                try {
-                    ParamsVersion v = YamlForVersioning.getParamsVersion(queuedTask.task.getParams());
-                    if (v.getActualVersion()!=processorAndCoreParams.psy().taskParamsVersion) {
-                        log.info("317.138 check downgrading is possible, actual version: {}, required version: {}", v.getActualVersion(), processorAndCoreParams.psy().taskParamsVersion);
-                        TaskParamsYaml tpy = queuedTask.task.getTaskParamsYaml();
-                        //noinspection unused
-                        String params = TaskParamsYamlUtils.UTILS.toStringAsVersion(tpy, processorAndCoreParams.psy().taskParamsVersion);
-                    }
-                } catch (DowngradeNotSupportedException e) {
-                    log.warn("317.140 Task #{} can't be assigned to core #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                            queuedTask.task.id, processorAndCoreParams.coreId(), processorAndCoreParams.psy().taskParamsVersion);
+                // ❗ still evaluated HERE, not with the checks above, and deliberately. Two conditions
+                // are tested in between - readiness and quotas - and a Task failing this as well must
+                // keep reporting whichever of them it reported before.
+                final GateData.Admission versionAdmission = executionGateService.admitParamsVersion(processorAndCoreParams, queuedTask);
+                if (!versionAdmission.admitted()) {
                     longHolder.set(System.currentTimeMillis());
                     searching.rejected.put(queuedTask.taskId, downgrade_not_supported);
                     resultTask = null;
@@ -319,35 +279,4 @@ public class TaskProviderUnassignedTaskService {
     }
 
 
-    private boolean notAllFunctionsReady(ProcessorAndCoreParams processorAndCoreParams, TaskParamsYaml taskParamYaml) {
-        AtomicBoolean result = new AtomicBoolean(false);
-        notAllFunctionsReadyInternal(processorAndCoreParams, taskParamYaml.task.function, result);
-        for (TaskParamsYaml.FunctionConfig preFunction : taskParamYaml.task.preFunctions) {
-            notAllFunctionsReadyInternal(processorAndCoreParams, preFunction, result);
-        }
-        for (TaskParamsYaml.FunctionConfig postFunction : taskParamYaml.task.postFunctions) {
-            notAllFunctionsReadyInternal(processorAndCoreParams, postFunction, result);
-        }
-        return result.get();
-    }
-
-    private void notAllFunctionsReadyInternal(ProcessorAndCoreParams processorAndCoreParams, TaskParamsYaml.FunctionConfig functionConfig, AtomicBoolean result) {
-        boolean b = executionGateService.isProcessorReady(functionConfig.code, processorAndCoreParams.processorId());
-
-        if (!b) {
-            log.debug("317.240 function {} at processor #{} isn't ready.", functionConfig.code, processorAndCoreParams.processorId());
-            result.set(true);
-        }
-    }
-
-    private static void notAllFunctionsReadyInternal_old(Long processorId, ProcessorStatusYaml status, TaskParamsYaml.FunctionConfig functionConfig, AtomicBoolean result) {
-/*
-        EnumsApi.FunctionState state = status.functions.get(functionConfig.code);
-
-        if (state != EnumsApi.FunctionState.ready) {
-            log.debug("317.240 function {} at processor #{} isn't ready, state: {}", functionConfig.code, processorId, state==null ? "'not prepared yet'" : state);
-            result.set(true);
-        }
-*/
-    }
 }

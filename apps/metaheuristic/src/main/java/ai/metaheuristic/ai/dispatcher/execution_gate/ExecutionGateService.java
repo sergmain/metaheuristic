@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecutionGateRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -134,6 +135,51 @@ public class ExecutionGateService {
     public GateData.Admission admit(ProcessorData.ProcessorAndCoreParams pacp, TaskQueue.QueuedTask queuedTask, boolean isAcceptOnlySigned) {
         return ExecutionGateUtils.admit(pacp, queuedTask, isAcceptOnlySigned,
                 fc -> functionService.trusted(fc.sourcing, fc.git));
+    }
+
+    /**
+     * The stateless half of {@link #admit}. Called separately by the assignment loop because two
+     * other conditions are evaluated between this half and the params-version half.
+     */
+    public GateData.Admission admitStatelessFacts(ProcessorData.ProcessorAndCoreParams pacp, TaskQueue.QueuedTask queuedTask, boolean isAcceptOnlySigned) {
+        return ExecutionGateUtils.admitStatelessFacts(pacp, queuedTask, isAcceptOnlySigned,
+                fc -> functionService.trusted(fc.sourcing, fc.git));
+    }
+
+    /** The params-version half of {@link #admit}. */
+    public GateData.Admission admitParamsVersion(ProcessorData.ProcessorAndCoreParams pacp, TaskQueue.QueuedTask queuedTask) {
+        return ExecutionGateUtils.admitParamsVersion(pacp, queuedTask);
+    }
+
+    /**
+     * Has this Processor reported every Function this Task needs — main, pre and post — as ready?
+     *
+     * <p>A REPORTED FACT, deliberately not part of {@link #admit}: a Processor lacking a Function is
+     * grounds to skip this Task for this Processor, never to withhold work from it more broadly.
+     */
+    public boolean allFunctionsReady(Long processorId, TaskParamsYaml tpy) {
+        if (!isProcessorReadyLogged(tpy.task.function.code, processorId)) {
+            return false;
+        }
+        for (TaskParamsYaml.FunctionConfig preFunction : tpy.task.preFunctions) {
+            if (!isProcessorReadyLogged(preFunction.code, processorId)) {
+                return false;
+            }
+        }
+        for (TaskParamsYaml.FunctionConfig postFunction : tpy.task.postFunctions) {
+            if (!isProcessorReadyLogged(postFunction.code, processorId)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isProcessorReadyLogged(String functionCode, Long processorId) {
+        final boolean ready = isProcessorReady(functionCode, processorId);
+        if (!ready) {
+            log.debug("01.320.100 function {} at processor #{} isn't ready.", functionCode, processorId);
+        }
+        return ready;
     }
 
     /**

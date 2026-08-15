@@ -143,51 +143,88 @@ public class ExecutionGateUtils {
             boolean isAcceptOnlySigned,
             Predicate<TaskParamsYaml.FunctionConfig> trustedFunc) {
 
+        final GateData.Admission statelessFacts = admitStatelessFacts(pacp, queuedTask, isAcceptOnlySigned, trustedFunc);
+        if (!statelessFacts.admitted()) {
+            return statelessFacts;
+        }
+        return admitParamsVersion(pacp, queuedTask);
+    }
+
+    /**
+     * The five checks that compare what the Task DECLARES against what the Processor REPORTS.
+     *
+     * <p>Split from the params-version check below because the existing filter chain evaluates two
+     * other conditions between the two — whether the Processor has the Functions ready, and whether it
+     * has quota left — and a Task failing both must still report the reason it reported before.
+     */
+    public static GateData.Admission admitStatelessFacts(
+            ProcessorData.ProcessorAndCoreParams pacp,
+            TaskQueue.QueuedTask queuedTask,
+            boolean isAcceptOnlySigned,
+            Predicate<TaskParamsYaml.FunctionConfig> trustedFunc) {
+
         final TaskParamsYaml tpy = queuedTask.taskParamYaml;
 
         if (TaskUtils.gitUnavailable(tpy.task, pacp.psy().gitStatusInfo.status != EnumsApi.GitStatus.installed)) {
+            log.warn("01.322.040 can't give task #{} to core #{}, this processor has no working git, git status info: {}",
+                    queuedTask.taskId, pacp.coreId(), pacp.psy().gitStatusInfo);
             return GateData.Admission.rejected(Enums.TaskRejectingStatus.git_required);
         }
 
         if (!CollectionUtils.checkTagAllowed(queuedTask.tag, pacp.csy().tags)) {
+            log.debug("01.322.060 task #{} carries tag '{}', core #{} declares '{}'",
+                    queuedTask.taskId, queuedTask.tag, pacp.coreId(), pacp.csy().tags);
             return GateData.Admission.rejected(Enums.TaskRejectingStatus.tags_arent_allowed);
         }
 
         if (!S.b(tpy.task.function.env) && pacp.psy().env != null
                 && pacp.psy().env.getEnvs().get(tpy.task.function.env) == null) {
+            log.error("01.322.080 can't give task #{} to core #{}, this processor has no interpreter for the function's env {}",
+                    queuedTask.taskId, pacp.coreId(), tpy.task.function.env);
             return GateData.Admission.rejected(Enums.TaskRejectingStatus.interpreter_is_undefined);
         }
 
         final List<EnumsApi.OS> supportedOS = FunctionCoreUtils.getSupportedOS(tpy.task.function.metas);
         if (pacp.psy().os != null && !supportedOS.isEmpty() && !supportedOS.contains(pacp.psy().os)) {
+            log.info("01.322.100 can't give task #{} to core #{}, this processor doesn't support the required OS. processor: {}, function: {}",
+                    queuedTask.taskId, pacp.coreId(), pacp.psy().os, supportedOS);
             return GateData.Admission.rejected(Enums.TaskRejectingStatus.not_supported_operating_system);
         }
 
         if (isAcceptOnlySigned && !trustedFunc.test(tpy.task.function)) {
             if (tpy.task.function.checksumMap == null
                     || tpy.task.function.checksumMap.keySet().stream().noneMatch(o -> o.isSigned)) {
+                log.warn("01.322.120 function with code {} wasn't signed", tpy.task.function.getCode());
                 return GateData.Admission.rejected(Enums.TaskRejectingStatus.accept_only_signed);
             }
         }
 
-        // the stored document may be an older version than the one just parsed, so the version to
-        // compare against comes from the raw params rather than from the parsed object, whose version
-        // is always the latest by the time it is in hand
-        if (queuedTask.task != null) {
-            try {
-                final ParamsVersion v = YamlForVersioning.getParamsVersion(queuedTask.task.getParams());
-                if (v.getActualVersion() != pacp.psy().taskParamsVersion) {
-                    //noinspection unused
-                    final String ignored = TaskParamsYamlUtils.UTILS.toStringAsVersion(tpy, pacp.psy().taskParamsVersion);
-                }
-            }
-            catch (DowngradeNotSupportedException e) {
-                log.warn("01.322.020 task #{} can't be given to core #{}, downgrade to taskParams level {} isn't supported",
-                        queuedTask.taskId, pacp.coreId(), pacp.psy().taskParamsVersion);
-                return GateData.Admission.rejected(Enums.TaskRejectingStatus.downgrade_not_supported);
+        return GateData.Admission.ADMITTED;
+    }
+
+    /**
+     * Whether the Task's params can be expressed at the version this Processor understands.
+     *
+     * <p>The stored document may be an older version than the one just parsed, so the version to
+     * compare against comes from the RAW params rather than from the parsed object, whose version is
+     * always the latest by the time it is in hand.
+     */
+    public static GateData.Admission admitParamsVersion(ProcessorData.ProcessorAndCoreParams pacp, TaskQueue.QueuedTask queuedTask) {
+        if (queuedTask.task == null) {
+            return GateData.Admission.ADMITTED;
+        }
+        try {
+            final ParamsVersion v = YamlForVersioning.getParamsVersion(queuedTask.task.getParams());
+            if (v.getActualVersion() != pacp.psy().taskParamsVersion) {
+                //noinspection unused
+                final String ignored = TaskParamsYamlUtils.UTILS.toStringAsVersion(queuedTask.taskParamYaml, pacp.psy().taskParamsVersion);
             }
         }
-
+        catch (DowngradeNotSupportedException e) {
+            log.warn("01.322.020 task #{} can't be given to core #{}, downgrade to taskParams level {} isn't supported",
+                    queuedTask.taskId, pacp.coreId(), pacp.psy().taskParamsVersion);
+            return GateData.Admission.rejected(Enums.TaskRejectingStatus.downgrade_not_supported);
+        }
         return GateData.Admission.ADMITTED;
     }
 }
