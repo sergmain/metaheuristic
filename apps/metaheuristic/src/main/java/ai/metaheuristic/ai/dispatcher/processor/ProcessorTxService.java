@@ -253,6 +253,12 @@ public class ProcessorTxService {
             // Do not include updating of sessionCreatedOn!
             // psy.sessionCreatedOn = command.status.sessionCreatedOn;
 
+            // Do not include updating of log.logRequested either. It is a DISPATCHER-owned
+            // instruction to the Processor, not something the Processor reports about itself, so
+            // copying it from an inbound keep-alive would let the Processor cancel a log request
+            // the dispatcher had just made.
+            // psy.log = status.log;
+
             psy.ip = status.ip;
             psy.host = status.host;
             psy.errors = status.errors;

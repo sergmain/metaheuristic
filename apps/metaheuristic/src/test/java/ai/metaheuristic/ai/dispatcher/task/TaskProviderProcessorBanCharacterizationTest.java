@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -45,6 +46,9 @@ import org.springframework.boot.cache.test.autoconfigure.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.Duration;
+
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -172,6 +176,60 @@ public class TaskProviderProcessorBanCharacterizationTest extends PreparingSourc
                 "a different core of the same Processor keeps working - the Processor was never at fault");
         assertEquals(Enums.TaskRejectingStatus.interpreter_is_undefined, third.rejected.get(taskId),
                 "core B evaluates the Task too, and reports the same reason");
+    }
+
+    @Test
+    public void test_aProcessorScopeBlockShortCircuitsTheSearchUntilItIsReleased() {
+        // The other side of the same coin. A Task-scoped misconfiguration must NOT withhold work from
+        // the Processor (the test above), but something that genuinely says the PROCESSOR is at fault
+        // must - and that is now the only thing which can.
+        final String refKey = String.valueOf(PROCESSOR_ID);
+        final DispatcherData.TaskQuotas quotas = new DispatcherData.TaskQuotas(0);
+        final ProcessorData.ProcessorAndCoreParams coreA = processorAndCore(CORE_A_ID);
+
+        // the queue-empty check correctly comes BEFORE the block check - there is no point asking who
+        // may be given work when there is none - so the queue has to hold something for the search to
+        // reach the branch under test. The ExecContext needn't be started: the block short-circuits
+        // before any ExecContext or Task is looked at.
+        final Long queuedExecContextId = 777_301L;
+        final Long queuedTaskId = 777_302L;
+        TaskQueueService.resetQueue();
+        final TaskParamsYaml tpy = taskParams(queuedExecContextId);
+        final TaskImpl task = new TaskImpl();
+        task.id = queuedTaskId;
+        task.execContextId = queuedExecContextId;
+        task.execState = EnumsApi.TaskExecState.NONE.value;
+        task.setParams(TaskParamsYamlUtils.UTILS.toString(tpy));
+        TaskQueueSyncStaticService.getWithSyncVoid(() -> TaskQueueService.addNewTask(new TaskQueue.QueuedTask(
+                EnumsApi.FunctionExecContext.external, queuedExecContextId, queuedTaskId, task, tpy, null, 1)));
+        TaskProviderTopLevelService.lock(queuedExecContextId);
+        assertFalse(TaskProviderTopLevelService.isQueueEmpty(),
+                "setup failed: the queue must be non-empty or the search stops before the block check");
+
+        try {
+            executionGateService.quarantine(EnumsApi.GateScope.processor, refKey,
+                    System.currentTimeMillis() + 600_000L, "host-broken", new ExecutionGateParamsYaml());
+
+            await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+                    .until(() -> executionGateService.blockedUntil(EnumsApi.GateScope.processor, refKey) != null);
+
+            final TaskData.TaskSearching searching = taskProviderUnassignedTaskService.findUnassignedTaskAndAssign(coreA, false, quotas);
+
+            assertEquals(Enums.TaskSearchingStatus.processor_is_quarantined, searching.status,
+                    "a live processor-scope block must end the search for that Processor");
+            assertTrue(searching.rejected.isEmpty(),
+                    "the block short-circuits BEFORE the queue is walked, so no Task is evaluated");
+        }
+        finally {
+            executionGateService.release(EnumsApi.GateScope.processor, refKey);
+        }
+
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+                .until(() -> executionGateService.blockedUntil(EnumsApi.GateScope.processor, refKey) == null);
+
+        // released: the search runs normally again rather than staying stuck
+        final TaskData.TaskSearching afterRelease = taskProviderUnassignedTaskService.findUnassignedTaskAndAssign(coreA, false, quotas);
+        assertNotEquals(Enums.TaskSearchingStatus.processor_is_quarantined, afterRelease.status);
     }
 
     private static ProcessorData.ProcessorAndCoreParams processorAndCore(Long coreId) {
