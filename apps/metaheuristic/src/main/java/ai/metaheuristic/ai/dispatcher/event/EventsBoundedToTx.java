@@ -165,6 +165,12 @@ public class EventsBoundedToTx {
         eventPublisher.publishEvent(event.to());
     }
 
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleExecutionGateChangedTxEvent(ExecutionGateChangedTxEvent event) {
+        eventPublisher.publishEvent(event.to());
+    }
+
     // TransactionPhase.AFTER_ROLLBACK
 
     @Async
