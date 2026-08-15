@@ -177,8 +177,12 @@ public class ExecutionGateAdmitTest {
     }
 
     @Test
-    public void test_downgradeToAnOlderTaskParamsVersion_throwsClassCastExceptionRatherThanRejecting() {
-        // ❗ Characterization of a PRE-EXISTING defect, not of intended behaviour.
+    public void test_downgradeNotSupported_whenTheCoreWantsAnOlderTaskParamsVersion() {
+        // Was a characterization of a defect: the downgrade escaped as an unchecked ClassCastException,
+        // so this reason could never be produced and every catch around it was dead code. Fixed in
+        // BaseYamlUtils.toStringAsVersion, which now reports it as the DowngradeNotSupportedException
+        // the call sites were already written to expect. Kept as the regression test for that.
+        // Original defect, for reference:
         // TaskParamsYamlUtilsV3 declares its downgrade type as Void, so the compiler generates a
         // bridge downgradeTo(Object) that casts to Void before the body runs. BaseYamlUtils calls it
         // through a raw reference with a TaskParamsYaml, so the cast fails and the
@@ -190,8 +194,8 @@ public class ExecutionGateAdmitTest {
         final ProcessorStatusYaml psy = processorStatus();
         psy.taskParamsVersion = 1;
 
-        assertThrows(ClassCastException.class,
-                () -> ExecutionGateUtils.admitParamsVersion(processor(psy, coreStatus()), queuedTask(taskParams())));
+        assertRejectedBy(Enums.TaskRejectingStatus.downgrade_not_supported,
+                ExecutionGateUtils.admitParamsVersion(processor(psy, coreStatus()), queuedTask(taskParams())));
     }
 
     @Test

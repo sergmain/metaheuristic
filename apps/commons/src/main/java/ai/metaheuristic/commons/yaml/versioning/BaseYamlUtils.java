@@ -17,6 +17,7 @@
 package ai.metaheuristic.commons.yaml.versioning;
 
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.api.data.ParamsVersion;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import lombok.extern.slf4j.Slf4j;
@@ -79,8 +80,25 @@ public class BaseYamlUtils<T extends BaseParams> {
                 if (yamlUtils.getVersion()==version) {
                     break;
                 }
-                //noinspection unchecked
-                currBaseParamsYaml = yamlUtils.downgradeTo(currBaseParamsYaml);
+                try {
+                    //noinspection unchecked
+                    currBaseParamsYaml = yamlUtils.downgradeTo(currBaseParamsYaml);
+                }
+                catch (ClassCastException e) {
+                    // ❗ A util that does not support downgrading declares its downgrade type as Void, so
+                    // the compiler generates a bridge downgradeTo(Object) that casts to Void BEFORE the
+                    // method body runs. Called through this raw reference the cast fails, and the
+                    // DowngradeNotSupportedException written inside the method is never reached.
+                    //
+                    // The failure is therefore reported here instead. Without this, an unsupported
+                    // downgrade escapes as an unchecked ClassCastException, every `catch
+                    // (DowngradeNotSupportedException)` around this call is dead code, and one Task that
+                    // cannot be expressed at a Processor's version ends that Processor's whole poll
+                    // rather than being skipped with a reason.
+                    throw new DowngradeNotSupportedException(
+                            "Can't downgrade to version " + version + " from " + yamlUtils.getVersion()
+                            + ", " + yamlUtils.getClass().getSimpleName() + " doesn't support downgrading");
+                }
             } while ((yamlUtils=(AbstractParamsYamlUtils)yamlUtils.prevUtil())!=null);
 
             //noinspection unchecked
