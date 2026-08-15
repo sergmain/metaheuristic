@@ -60,8 +60,17 @@ public class ExecContextTaskResettingTopLevelService {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextCache execContextCache;
 
-    public final MultiTenantedQueue<Long, ResetTasksWithErrorEvent> resetTasksWithErrorEventThreadedPool =
+    private final MultiTenantedQueue<Long, ResetTasksWithErrorEvent> resetTasksWithErrorEventThreadedPool =
             new MultiTenantedQueue<>(100, ConstsApi.SECONDS_10, true, "ExecContextTaskResetting-", this::resetTasksWithErrorForRecovery);
+
+    /**
+     * Exposed through an accessor rather than as a public field: this bean carries {@code @Async}
+     * methods and is therefore proxied, and a field read on the proxy sees the subclass's own
+     * uninitialized field instead of the target's. A method call is delegated to the target.
+     */
+    public MultiTenantedQueue<Long, ResetTasksWithErrorEvent> getResetTasksWithErrorEventThreadedPool() {
+        return resetTasksWithErrorEventThreadedPool;
+    }
 
     @PreDestroy
     public void onExit() {
