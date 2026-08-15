@@ -871,3 +871,18 @@ CREATE TABLE mh_license_installation
     CREATED_ON  bigint        NOT NULL,
     PARAMS      TEXT          NOT NULL
 );
+
+CREATE TABLE MH_EXECUTION_GATE
+(
+    ID              SERIAL PRIMARY KEY,
+    VERSION         NUMERIC(10, 0) NOT NULL,
+    SCOPE           VARCHAR(20)    NOT NULL,
+    REF_KEY         VARCHAR(500)   NOT NULL,
+    BLOCKED_UNTIL   bigint         NOT NULL,
+    CREATED_ON      bigint         NOT NULL,
+    REASON_CODE     VARCHAR(50)    NOT NULL,
+    PARAMS          TEXT           NOT NULL
+);
+
+CREATE UNIQUE INDEX MH_EXECUTION_GATE_SCOPE_REF_KEY_UNQ_IDX
+    ON MH_EXECUTION_GATE (SCOPE, REF_KEY);
