@@ -70,9 +70,11 @@ public class FunctionConfigYamlUtilsV3
             trg.api = new FunctionConfigYaml.Api(src.api.keyCode);
         }
 
-        trg.targets = new LinkedHashMap<>();
-        for (Map.Entry<String, FunctionConfigYamlV3.TargetV3> e : src.targets.entrySet()) {
-            trg.targets.put(e.getKey(), new FunctionConfigYaml.Target(e.getValue().src, e.getValue().file));
+        if (src.targets!=null) {
+            trg.targets = new LinkedHashMap<>();
+            for (Map.Entry<String, FunctionConfigYamlV3.TargetV3> e : src.targets.entrySet()) {
+                trg.targets.put(e.getKey(), new FunctionConfigYaml.Target(e.getValue().src, e.getValue().file));
+            }
         }
 
         // mapped explicitly rather than by copyProperties: the element types differ per version, so a
@@ -80,8 +82,9 @@ public class FunctionConfigYamlUtilsV3
         if (src.analyzers!=null) {
             trg.analyzers = new ArrayList<>();
             for (FunctionConfigYamlV3.AnalyzerV3 a : src.analyzers) {
+                ArrayList<String> regex = a.regex!=null ? new ArrayList<>(a.regex) : new ArrayList<>();
                 trg.analyzers.add(new FunctionConfigYaml.Analyzer(
-                        a.name, new ArrayList<>(a.regex), a.timeout, a.incrementTries, a.scope));
+                        a.name, regex, a.timeout, a.incrementTries, a.scope));
             }
         }
 

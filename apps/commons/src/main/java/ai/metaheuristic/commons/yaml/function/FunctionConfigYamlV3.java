@@ -59,7 +59,9 @@ public class FunctionConfigYamlV3 implements BaseParams, Cloneable {
     public FunctionConfigYamlV3 clone() {
         FunctionConfigYamlV3 clone = (FunctionConfigYamlV3) super.clone();
         clone.function = this.function.clone();
-        clone.system = this.system.clone();
+        if (this.system!=null) {
+            clone.system = this.system.clone();
+        }
         return clone;
     }
 
@@ -106,7 +108,7 @@ public class FunctionConfigYamlV3 implements BaseParams, Cloneable {
     @AllArgsConstructor
     public static class AnalyzerV3 {
         public String name;
-        public List<String> regex = new ArrayList<>();
+        public @Nullable List<String> regex = new ArrayList<>();
         public String timeout;
         public boolean incrementTries;
         public String scope;
@@ -125,9 +127,11 @@ public class FunctionConfigYamlV3 implements BaseParams, Cloneable {
             if (this.metas!=null) {
                 clone.metas = new ArrayList<>(this.metas);
             }
-            clone.targets = new LinkedHashMap<>();
-            for (Map.Entry<String, TargetV3> e : this.targets.entrySet()) {
-                clone.targets.put(e.getKey(), e.getValue().clone());
+            if (this.targets!=null) {
+                clone.targets = new LinkedHashMap<>();
+                for (Map.Entry<String, TargetV3> e : this.targets.entrySet()) {
+                    clone.targets.put(e.getKey(), e.getValue().clone());
+                }
             }
             return clone;
         }
