@@ -59,6 +59,15 @@ public class GateData {
     }
 
     /**
+     * Why a Processor is being refused work, and for how long.
+     *
+     * <p>{@code remainingMills} is 0 for a condition no deadline will fix — a version mismatch is not
+     * something to wait out — which is a different thing from "expires imminently". Callers render the
+     * reason either way and only show a countdown when there is one.
+     */
+    public record Blacklist(String reason, long remainingMills) {}
+
+    /**
      * Identity of a blocked thing. A scope alone is not enough and a key alone is not either: one
      * Function code and one processor id can be the same string without being the same subject.
      */

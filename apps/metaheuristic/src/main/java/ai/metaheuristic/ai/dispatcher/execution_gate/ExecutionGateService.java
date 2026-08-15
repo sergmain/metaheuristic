@@ -252,6 +252,15 @@ public class ExecutionGateService {
     }
 
     /**
+     * The live record covering a key, or null. Where {@link #blockedUntil} answers "for how long",
+     * this answers "and why" — which is what a human looking at a stalled Processor actually needs.
+     */
+    public GateData.@Nullable GateRecord liveRecord(EnumsApi.GateScope scope, String refKey) {
+        final GateData.GateRecord record = records.get(new GateData.GateKey(scope, refKey));
+        return (record != null && ExecutionGateUtils.isLive(record.blockedUntil(), System.currentTimeMillis())) ? record : null;
+    }
+
+    /**
      * Blocks a key until a deadline, extending an existing block rather than stacking a second.
      *
      * <p>The decision of whether there is anything to do happens here, before a transaction is

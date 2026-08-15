@@ -208,6 +208,47 @@ public class ExecutionGateUtilsTest {
     }
 
     @Test
+    public void test_blacklistOf_nothingWrongIsNotBlacklisted() {
+        assertNull(ExecutionGateUtils.blacklistOf(3, 3, null, NOW));
+    }
+
+    @Test
+    public void test_blacklistOf_aLiveBlockReportsItsReasonAndRemainingTime() {
+        final GateData.GateRecord record =
+                new GateData.GateRecord(EnumsApi.GateScope.processor, "42", NOW + 90_000L, "host-broken");
+
+        final GateData.Blacklist blacklist = ExecutionGateUtils.blacklistOf(3, 3, record, NOW);
+
+        assertNotNull(blacklist);
+        assertTrue(blacklist.reason().contains("host-broken"), "the recorded reason must reach the operator");
+        assertEquals(90_000L, blacklist.remainingMills());
+    }
+
+    @Test
+    public void test_blacklistOf_aTooOldDispatcherReportsWithNoCountdown() {
+        final GateData.Blacklist blacklist = ExecutionGateUtils.blacklistOf(9, 3, null, NOW);
+
+        assertNotNull(blacklist);
+        assertTrue(blacklist.reason().startsWith("809.400"));
+        assertEquals(0L, blacklist.remainingMills(), "nothing will clear a version mismatch by waiting");
+    }
+
+    @Test
+    public void test_blacklistOf_theVersionMismatchWinsWhenBothApply() {
+        // ❗ the expiring condition must NOT be the one reported: a quarantine clears on its own, a
+        // version mismatch never does, so showing the countdown would send an operator to wait for a
+        // deadline that fixes nothing
+        final GateData.GateRecord record =
+                new GateData.GateRecord(EnumsApi.GateScope.processor, "42", NOW + 90_000L, "host-broken");
+
+        final GateData.Blacklist blacklist = ExecutionGateUtils.blacklistOf(9, 3, record, NOW);
+
+        assertNotNull(blacklist);
+        assertTrue(blacklist.reason().startsWith("809.400"));
+        assertEquals(0L, blacklist.remainingMills());
+    }
+
+    @Test
     public void test_dropExpired_onAnEmptyMapIsANoOp() {
         final Map<GateData.GateKey, GateData.GateRecord> records = new HashMap<>();
         assertEquals(0, ExecutionGateUtils.dropExpired(records, NOW));

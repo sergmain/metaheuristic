@@ -148,6 +148,29 @@ public class ExecutionGateUtils {
     }
 
     /**
+     * Why a Processor should be shown as blacklisted, or null when it should not.
+     *
+     * <p>❗ A dispatcher too old to talk to this Processor WINS over a quarantine when both apply. A
+     * quarantine expires on its own; a version mismatch never does, so reporting the expiring one would
+     * send an operator to wait for a deadline that fixes nothing.
+     */
+    public static GateData.@Nullable Blacklist blacklistOf(
+            int processorTaskParamsVersion, int dispatcherTaskParamsVersion,
+            GateData.@Nullable GateRecord liveRecord, long now) {
+
+        if (processorTaskParamsVersion > dispatcherTaskParamsVersion) {
+            return new GateData.Blacklist(
+                    "809.400 Dispatcher is too old and can't communicate to this processor, needs to be upgraded", 0L);
+        }
+        if (liveRecord != null) {
+            return new GateData.Blacklist(
+                    "809.420 Processor is quarantined, reason: " + liveRecord.reasonCode(),
+                    liveRecord.blockedUntil() - now);
+        }
+        return null;
+    }
+
+    /**
      * What a block of this scope is keyed on, for this Task. Null when the key cannot be built, which
      * is a reason to skip opening the block rather than to fail.
      *

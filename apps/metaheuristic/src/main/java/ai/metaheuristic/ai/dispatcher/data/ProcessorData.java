@@ -90,6 +90,8 @@ public class ProcessorData {
         public boolean functionProblem;
         public boolean blacklisted;
         public String blacklistReason;
+        /** Millis until the block clears. 0 when nothing will clear it - e.g. a version mismatch. */
+        public long blacklistedForMills;
         public long lastSeen;
         public String ip;
         public String host;

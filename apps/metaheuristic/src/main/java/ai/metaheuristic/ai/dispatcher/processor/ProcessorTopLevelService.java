@@ -20,7 +20,11 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.ai.dispatcher.data.GateData;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
+import ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateService;
+import ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateUtils;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
@@ -64,6 +68,7 @@ import static ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils.isProcesso
 public class ProcessorTopLevelService {
 
     private final ProcessorTxService processorTransactionService;
+    private final ExecutionGateService executionGateService;
     private final TaskRepository taskRepository;
     private final Globals globals;
     private final ProcessorRepository processorRepository;
@@ -197,7 +202,7 @@ public class ProcessorTopLevelService {
             }
             ProcessorStatusYaml status = processor.getProcessorStatusYaml();
 
-            String blacklistReason = processorBlacklisted(status);
+            final GateData.Blacklist blacklist = processorBlacklisted(processorId, status);
 
             boolean isFunctionProblem = false;
             // TODO p5  2023-11-26 need to re-write
@@ -212,7 +217,8 @@ public class ProcessorTopLevelService {
             final ProcessorData.ProcessorStatus processorStatus = new ProcessorData.ProcessorStatus(
                     processor, isActive(processor),
                     isFunctionProblem,
-                    blacklistReason != null, blacklistReason,
+                    blacklist != null, blacklist==null ? null : blacklist.reason(),
+                    blacklist==null ? 0L : blacklist.remainingMills(),
                     processor.updatedOn,
                     (StringUtils.isNotBlank(status.ip) ? status.ip : Consts.UNKNOWN_INFO),
                     (StringUtils.isNotBlank(status.host) ? status.host : Consts.UNKNOWN_INFO)
@@ -232,12 +238,19 @@ public class ProcessorTopLevelService {
         return result;
     }
 
-    @Nullable
-    private static String processorBlacklisted(ProcessorStatusYaml status) {
-        if (status.taskParamsVersion > TaskParamsYamlUtils.UTILS.getDefault().getVersion()) {
-            return "809.400 Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
-        }
-        return null;
+    /**
+     * Why this Processor is being refused work, or null.
+     *
+     * <p>An instance method rather than static because it now has to ask the admission gate, and it
+     * takes the {@code processorId} its caller already holds — a Processor-scope block is keyed on the
+     * Processor, which a {@code ProcessorStatusYaml} alone cannot identify.
+     */
+    private GateData.@Nullable Blacklist processorBlacklisted(Long processorId, ProcessorStatusYaml status) {
+        return ExecutionGateUtils.blacklistOf(
+                status.taskParamsVersion,
+                TaskParamsYamlUtils.UTILS.getDefault().getVersion(),
+                executionGateService.liveRecord(EnumsApi.GateScope.processor, String.valueOf(processorId)),
+                System.currentTimeMillis());
     }
 
     private void reconcileProcessorTasks(final Long processorId, List<Long> taskIds) {
