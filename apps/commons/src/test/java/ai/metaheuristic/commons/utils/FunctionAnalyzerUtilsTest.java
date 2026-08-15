@@ -16,7 +16,9 @@
 
 package ai.metaheuristic.commons.utils;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import org.jspecify.annotations.Nullable;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -98,43 +100,43 @@ public class FunctionAnalyzerUtilsTest {
 
     @Test
     public void test_firstHit_matchesSomewhereInsideTheOutput() {
-        final FunctionConfigYaml.Analyzer a = analyzer("downtime", "api", "20min", "rate limit reached");
+        final FunctionConfigYaml.Analyzer a = analyzer("downtime", EnumsApi.GateScope.api, "20min", "rate limit reached");
 
         assertSame(a, FunctionAnalyzerUtils.firstHit(List.of(a), SAMPLE_CONSOLE));
     }
 
     @Test
     public void test_firstHit_missReturnsNull() {
-        final FunctionConfigYaml.Analyzer a = analyzer("downtime", "api", "20min", "no space left on device");
+        final FunctionConfigYaml.Analyzer a = analyzer("downtime", EnumsApi.GateScope.api, "20min", "no space left on device");
 
         assertNull(FunctionAnalyzerUtils.firstHit(List.of(a), SAMPLE_CONSOLE));
     }
 
     @Test
     public void test_firstHit_isCaseSensitiveUnlessTheAuthorAsksOtherwise() {
-        assertNull(FunctionAnalyzerUtils.firstHit(List.of(analyzer("d", "api", "1h", "RATE LIMIT REACHED")), SAMPLE_CONSOLE),
+        assertNull(FunctionAnalyzerUtils.firstHit(List.of(analyzer("d", EnumsApi.GateScope.api, "1h", "RATE LIMIT REACHED")), SAMPLE_CONSOLE),
                 "no implicit flags - a hidden CASE_INSENSITIVE would silently widen every pattern already written");
-        assertNotNull(FunctionAnalyzerUtils.firstHit(List.of(analyzer("d", "api", "1h", "(?i)RATE LIMIT REACHED")), SAMPLE_CONSOLE));
+        assertNotNull(FunctionAnalyzerUtils.firstHit(List.of(analyzer("d", EnumsApi.GateScope.api, "1h", "(?i)RATE LIMIT REACHED")), SAMPLE_CONSOLE));
     }
 
     @Test
     public void test_firstHit_anyOneOfTheDeclaredPatternsIsEnough() {
-        final FunctionConfigYaml.Analyzer a = analyzer("downtime", "api", "20min", "never appears", "rate limit reached");
+        final FunctionConfigYaml.Analyzer a = analyzer("downtime", EnumsApi.GateScope.api, "20min", "never appears", "rate limit reached");
 
         assertSame(a, FunctionAnalyzerUtils.firstHit(List.of(a), SAMPLE_CONSOLE));
     }
 
     @Test
     public void test_firstHit_returnsTheFirstDeclaredAnalyzerThatMatches() {
-        final FunctionConfigYaml.Analyzer first = analyzer("first", "api", "20min", "error:");
-        final FunctionConfigYaml.Analyzer second = analyzer("second", "api", "1h", "rate limit reached");
+        final FunctionConfigYaml.Analyzer first = analyzer("first", EnumsApi.GateScope.api, "20min", "error:");
+        final FunctionConfigYaml.Analyzer second = analyzer("second", EnumsApi.GateScope.api, "1h", "rate limit reached");
 
         assertSame(first, FunctionAnalyzerUtils.firstHit(List.of(first, second), SAMPLE_CONSOLE));
     }
 
     @Test
     public void test_firstHit_toleratesNothingToLookAt() {
-        final FunctionConfigYaml.Analyzer a = analyzer("downtime", "api", "20min", "rate limit reached");
+        final FunctionConfigYaml.Analyzer a = analyzer("downtime", EnumsApi.GateScope.api, "20min", "rate limit reached");
 
         assertNull(FunctionAnalyzerUtils.firstHit(null, SAMPLE_CONSOLE));
         assertNull(FunctionAnalyzerUtils.firstHit(List.of(), SAMPLE_CONSOLE));
@@ -145,8 +147,8 @@ public class FunctionAnalyzerUtilsTest {
     @Test
     public void test_firstHit_skipsAnUncompilableRegexRatherThanThrowing() {
         // this runs while handling a failure that already happened; one bad rule must not stop the rest
-        final FunctionConfigYaml.Analyzer broken = analyzer("broken", "api", "20min", "[unclosed");
-        final FunctionConfigYaml.Analyzer good = analyzer("good", "api", "20min", "rate limit reached");
+        final FunctionConfigYaml.Analyzer broken = analyzer("broken", EnumsApi.GateScope.api, "20min", "[unclosed");
+        final FunctionConfigYaml.Analyzer good = analyzer("good", EnumsApi.GateScope.api, "20min", "rate limit reached");
 
         assertSame(good, FunctionAnalyzerUtils.firstHit(List.of(broken, good), SAMPLE_CONSOLE));
     }
@@ -188,7 +190,7 @@ public class FunctionAnalyzerUtilsTest {
         fe.exec = result("nothing interesting");
         fe.preExecs = List.of(result("error: rate limit reached"));
 
-        final FunctionConfigYaml.Analyzer a = analyzer("downtime", "api", "20min", "rate limit reached");
+        final FunctionConfigYaml.Analyzer a = analyzer("downtime", EnumsApi.GateScope.api, "20min", "rate limit reached");
         assertSame(a, FunctionAnalyzerUtils.firstHitInExecResults(List.of(a), fe));
     }
 
@@ -200,8 +202,8 @@ public class FunctionAnalyzerUtilsTest {
         fe.exec = result("main: disk full");
         fe.postExecs = List.of(result("post: rate limit reached"));
 
-        final FunctionConfigYaml.Analyzer rateLimit = analyzer("downtime", "api", "20min", "rate limit reached");
-        final FunctionConfigYaml.Analyzer diskFull = analyzer("host-broken", "processor", "1h", "disk full");
+        final FunctionConfigYaml.Analyzer rateLimit = analyzer("downtime", EnumsApi.GateScope.api, "20min", "rate limit reached");
+        final FunctionConfigYaml.Analyzer diskFull = analyzer("host-broken", EnumsApi.GateScope.processor, "1h", "disk full");
 
         assertSame(diskFull, FunctionAnalyzerUtils.firstHitInExecResults(List.of(rateLimit, diskFull), fe));
     }
@@ -211,7 +213,7 @@ public class FunctionAnalyzerUtilsTest {
         final FunctionApiData.FunctionExec fe = new FunctionApiData.FunctionExec();
         fe.exec = result("all good");
 
-        assertNull(FunctionAnalyzerUtils.firstHitInExecResults(List.of(analyzer("d", "api", "1h", "rate limit")), fe));
+        assertNull(FunctionAnalyzerUtils.firstHitInExecResults(List.of(analyzer("d", EnumsApi.GateScope.api, "1h", "rate limit")), fe));
         assertNull(FunctionAnalyzerUtils.firstHitInExecResults(null, fe));
     }
 
@@ -224,8 +226,8 @@ public class FunctionAnalyzerUtilsTest {
     @Test
     public void test_merge_bothSitesApply() {
         final List<FunctionConfigYaml.Analyzer> merged = FunctionAnalyzerUtils.merge(
-                List.of(analyzer("from-dispatcher", "api", "1h", "a")),
-                List.of(analyzer("from-function", "function", "30s", "b")));
+                List.of(analyzer("from-dispatcher", EnumsApi.GateScope.api, "1h", "a")),
+                List.of(analyzer("from-function", EnumsApi.GateScope.function, "30s", "b")));
 
         assertEquals(2, merged.size());
         assertEquals(List.of("from-dispatcher", "from-function"), merged.stream().map(a -> a.name).toList());
@@ -233,10 +235,10 @@ public class FunctionAnalyzerUtilsTest {
 
     @Test
     public void test_merge_sameNameKeepsTheLongerTimeout_functionSideLonger() {
-        final FunctionConfigYaml.Analyzer longer = analyzer("downtime", "api", "1h", "b");
+        final FunctionConfigYaml.Analyzer longer = analyzer("downtime", EnumsApi.GateScope.api, "1h", "b");
 
         final List<FunctionConfigYaml.Analyzer> merged = FunctionAnalyzerUtils.merge(
-                List.of(analyzer("downtime", "api", "30s", "a")), List.of(longer));
+                List.of(analyzer("downtime", EnumsApi.GateScope.api, "30s", "a")), List.of(longer));
 
         assertEquals(1, merged.size());
         assertSame(longer, merged.get(0));
@@ -245,10 +247,10 @@ public class FunctionAnalyzerUtilsTest {
     @Test
     public void test_merge_sameNameKeepsTheLongerTimeout_dispatcherSideLonger() {
         // the direction that matters: a Function author must not be able to shorten an installation's limit
-        final FunctionConfigYaml.Analyzer longer = analyzer("downtime", "api", "1d", "a");
+        final FunctionConfigYaml.Analyzer longer = analyzer("downtime", EnumsApi.GateScope.api, "1d", "a");
 
         final List<FunctionConfigYaml.Analyzer> merged = FunctionAnalyzerUtils.merge(
-                List.of(longer), List.of(analyzer("downtime", "api", "30s", "b")));
+                List.of(longer), List.of(analyzer("downtime", EnumsApi.GateScope.api, "30s", "b")));
 
         assertEquals(1, merged.size());
         assertSame(longer, merged.get(0));
@@ -256,8 +258,8 @@ public class FunctionAnalyzerUtilsTest {
 
     @Test
     public void test_merge_toleratesEitherSideBeingEmpty() {
-        assertEquals(1, FunctionAnalyzerUtils.merge(List.of(), List.of(analyzer("x", "api", "1h", "a"))).size());
-        assertEquals(1, FunctionAnalyzerUtils.merge(List.of(analyzer("x", "api", "1h", "a")), List.of()).size());
+        assertEquals(1, FunctionAnalyzerUtils.merge(List.of(), List.of(analyzer("x", EnumsApi.GateScope.api, "1h", "a"))).size());
+        assertEquals(1, FunctionAnalyzerUtils.merge(List.of(analyzer("x", EnumsApi.GateScope.api, "1h", "a")), List.of()).size());
         assertTrue(FunctionAnalyzerUtils.merge(List.of(), List.of()).isEmpty());
     }
 
@@ -267,30 +269,28 @@ public class FunctionAnalyzerUtilsTest {
     public void test_checkScope_acceptsWhatAFunctionMayDeclare() {
         // processor IS declarable: in this security model the owner of the installation is the owner of
         // the Functions, so a descriptor setting processor scope is setting policy over its own fleet
-        FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer("a", "api", "20min", "x"));
-        FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer("b", "function", "20min", "x"));
-        FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer("c", "processor", "20min", "x"));
+        FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer("a", EnumsApi.GateScope.api, "20min", "x"));
+        FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer("b", EnumsApi.GateScope.function, "20min", "x"));
+        FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer("c", EnumsApi.GateScope.processor, "20min", "x"));
     }
 
     @Test
     public void test_checkScope_rejectsDispatcherOnlyScopes() {
         assertThrows(IllegalStateException.class,
-                () -> FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer("a", "global", "20min", "x")));
+                () -> FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer("a", EnumsApi.GateScope.global, "20min", "x")));
         assertThrows(IllegalStateException.class,
-                () -> FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer("b", "company", "20min", "x")));
+                () -> FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer("b", EnumsApi.GateScope.company, "20min", "x")));
     }
 
     @Test
-    public void test_checkScope_rejectsAnUnknownOrMissingScope() {
-        // an unknown scope throws rather than being ignored: a silent downgrade leaves the author
-        // believing a rule is in force when it is not
+    public void test_checkScope_rejectsAMissingScope() {
+        // an UNKNOWN scope needs no test any more: the field is an enum, so 'core' or a typo cannot be
+        // constructed at all. Only the absent case is still reachable.
         assertThrows(IllegalStateException.class,
-                () -> FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer("a", "core", "20min", "x")));
-        assertThrows(IllegalStateException.class,
-                () -> FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer("b", "", "20min", "x")));
+                () -> FunctionAnalyzerUtils.checkScopeAllowedInDescriptor(analyzer("b", null, "20min", "x")));
     }
 
-    private static FunctionConfigYaml.Analyzer analyzer(String name, String scope, String timeout, String... regex) {
+    private static FunctionConfigYaml.Analyzer analyzer(String name, EnumsApi.@Nullable GateScope scope, String timeout, String... regex) {
         return new FunctionConfigYaml.Analyzer(name, new ArrayList<>(List.of(regex)), timeout, false, scope);
     }
 }

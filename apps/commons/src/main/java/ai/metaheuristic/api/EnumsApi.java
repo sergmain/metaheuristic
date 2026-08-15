@@ -268,6 +268,20 @@ public class EnumsApi {
      * ASSETS - only the 'asset' sub-dir of Task's dir is deleted. It exists only when
      *          FunctionConfigYaml.function.assetDir isn't null, the rest of Task's dir is left as is.
      */
+    /**
+     * What a durable admission block covers.
+     *
+     * <p>Lives here rather than with the dispatcher's own enums because a Function descriptor declares
+     * it, and descriptors are read on both sides.
+     *
+     * <p>There is deliberately no {@code core}: cores are virtual parts of one Processor running inside
+     * the same JVM, so blocking a single core is not a meaningful unit — the Processor is.
+     *
+     * <p>{@code global} and {@code company} are dispatcher-only; {@code api}, {@code function} and
+     * {@code processor} may also be declared by a Function descriptor.
+     */
+    public enum GateScope { global, company, api, function, processor }
+
     public enum CleaningPolicy { ALL, ASSETS }
 
     public enum SourceCodeValidateStatus { OK, NOT_VERIFIED_YET,

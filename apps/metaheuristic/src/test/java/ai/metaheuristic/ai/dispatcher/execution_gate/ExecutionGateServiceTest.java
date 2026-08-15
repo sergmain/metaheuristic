@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.execution_gate;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.MhSharedItTest;
@@ -63,8 +64,8 @@ public class ExecutionGateServiceTest extends MhSharedItTest {
         // the context and the DB are shared for the whole run, so a block left in force here would
         // withhold work from every class that follows
         for (String refKey : blockedRefKeys) {
-            executionGateService.release(Enums.GateScope.api, refKey);
-            final ExecutionGate leftover = executionGateRepository.findByScopeAndRefKey(Enums.GateScope.api.name(), refKey);
+            executionGateService.release(EnumsApi.GateScope.api, refKey);
+            final ExecutionGate leftover = executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.api.name(), refKey);
             if (leftover != null) {
                 executionGateRepository.delete(leftover);
             }
@@ -77,20 +78,20 @@ public class ExecutionGateServiceTest extends MhSharedItTest {
         final String refKey = SharedItEnv.uniqueCode("gate-svc-commit");
         blockedRefKeys.add(refKey);
 
-        assertNull(executionGateService.blockedUntil(Enums.GateScope.api, refKey),
+        assertNull(executionGateService.blockedUntil(EnumsApi.GateScope.api, refKey),
                 "nothing may be blocked before the test blocks it");
 
         final long blockedUntil = System.currentTimeMillis() + 600_000L;
-        executionGateService.quarantine(Enums.GateScope.api, refKey, blockedUntil, "downtime", params());
+        executionGateService.quarantine(EnumsApi.GateScope.api, refKey, blockedUntil, "downtime", params());
 
         // the row is committed synchronously; only the memory update takes the async hop
-        assertNotNull(executionGateRepository.findByScopeAndRefKey(Enums.GateScope.api.name(), refKey),
+        assertNotNull(executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.api.name(), refKey),
                 "the row must be committed before memory is asked about it");
 
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
-                .until(() -> executionGateService.blockedUntil(Enums.GateScope.api, refKey) != null);
+                .until(() -> executionGateService.blockedUntil(EnumsApi.GateScope.api, refKey) != null);
 
-        assertEquals(blockedUntil, executionGateService.blockedUntil(Enums.GateScope.api, refKey));
+        assertEquals(blockedUntil, executionGateService.blockedUntil(EnumsApi.GateScope.api, refKey));
     }
 
     @Test
@@ -99,15 +100,15 @@ public class ExecutionGateServiceTest extends MhSharedItTest {
         blockedRefKeys.add(refKey);
 
         final long first = System.currentTimeMillis() + 60_000L;
-        executionGateService.quarantine(Enums.GateScope.api, refKey, first, "downtime", params());
+        executionGateService.quarantine(EnumsApi.GateScope.api, refKey, first, "downtime", params());
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
-                .until(() -> executionGateService.blockedUntil(Enums.GateScope.api, refKey) != null);
+                .until(() -> executionGateService.blockedUntil(EnumsApi.GateScope.api, refKey) != null);
 
         final long second = System.currentTimeMillis() + 900_000L;
-        executionGateService.quarantine(Enums.GateScope.api, refKey, second, "downtime", params());
+        executionGateService.quarantine(EnumsApi.GateScope.api, refKey, second, "downtime", params());
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
                 .until(() -> {
-                    final Long until = executionGateService.blockedUntil(Enums.GateScope.api, refKey);
+                    final Long until = executionGateService.blockedUntil(EnumsApi.GateScope.api, refKey);
                     return until != null && until == second;
                 });
 
@@ -122,13 +123,13 @@ public class ExecutionGateServiceTest extends MhSharedItTest {
         blockedRefKeys.add(refKey);
 
         final long longDeadline = System.currentTimeMillis() + 900_000L;
-        executionGateService.quarantine(Enums.GateScope.api, refKey, longDeadline, "manual", params());
+        executionGateService.quarantine(EnumsApi.GateScope.api, refKey, longDeadline, "manual", params());
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
-                .until(() -> executionGateService.blockedUntil(Enums.GateScope.api, refKey) != null);
+                .until(() -> executionGateService.blockedUntil(EnumsApi.GateScope.api, refKey) != null);
 
-        executionGateService.quarantine(Enums.GateScope.api, refKey, System.currentTimeMillis() + 1_000L, "downtime", params());
+        executionGateService.quarantine(EnumsApi.GateScope.api, refKey, System.currentTimeMillis() + 1_000L, "downtime", params());
 
-        assertEquals(longDeadline, executionGateService.blockedUntil(Enums.GateScope.api, refKey));
+        assertEquals(longDeadline, executionGateService.blockedUntil(EnumsApi.GateScope.api, refKey));
     }
 
     @Test
@@ -136,15 +137,15 @@ public class ExecutionGateServiceTest extends MhSharedItTest {
         final String refKey = SharedItEnv.uniqueCode("gate-svc-release");
         blockedRefKeys.add(refKey);
 
-        executionGateService.quarantine(Enums.GateScope.api, refKey, System.currentTimeMillis() + 600_000L, "downtime", params());
+        executionGateService.quarantine(EnumsApi.GateScope.api, refKey, System.currentTimeMillis() + 600_000L, "downtime", params());
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
-                .until(() -> executionGateService.blockedUntil(Enums.GateScope.api, refKey) != null);
+                .until(() -> executionGateService.blockedUntil(EnumsApi.GateScope.api, refKey) != null);
 
-        executionGateService.release(Enums.GateScope.api, refKey);
+        executionGateService.release(EnumsApi.GateScope.api, refKey);
 
-        assertNull(executionGateRepository.findByScopeAndRefKey(Enums.GateScope.api.name(), refKey));
+        assertNull(executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.api.name(), refKey));
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
-                .until(() -> executionGateService.blockedUntil(Enums.GateScope.api, refKey) == null);
+                .until(() -> executionGateService.blockedUntil(EnumsApi.GateScope.api, refKey) == null);
     }
 
     @Test
@@ -153,15 +154,15 @@ public class ExecutionGateServiceTest extends MhSharedItTest {
         // rather than a simulated one - no test-only hook in the production path
         final String refKey = "x".repeat(600);
 
-        assertNull(executionGateService.blockedUntil(Enums.GateScope.api, refKey));
+        assertNull(executionGateService.blockedUntil(EnumsApi.GateScope.api, refKey));
 
         assertThrows(Exception.class,
-                () -> executionGateService.quarantine(Enums.GateScope.api, refKey, System.currentTimeMillis() + 600_000L, "downtime", params()),
+                () -> executionGateService.quarantine(EnumsApi.GateScope.api, refKey, System.currentTimeMillis() + 600_000L, "downtime", params()),
                 "the insert must fail, otherwise this test proves nothing");
 
-        assertNull(executionGateService.blockedUntil(Enums.GateScope.api, refKey),
+        assertNull(executionGateService.blockedUntil(EnumsApi.GateScope.api, refKey),
                 "a transaction that never committed must leave no block behind");
-        assertNull(executionGateRepository.findByScopeAndRefKey(Enums.GateScope.api.name(), refKey));
+        assertNull(executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.api.name(), refKey));
     }
 
     @Test
@@ -169,15 +170,15 @@ public class ExecutionGateServiceTest extends MhSharedItTest {
         final String refKey = SharedItEnv.uniqueCode("gate-svc-expired");
         blockedRefKeys.add(refKey);
 
-        executionGateService.quarantine(Enums.GateScope.api, refKey, System.currentTimeMillis() - 1_000L, "downtime", params());
+        executionGateService.quarantine(EnumsApi.GateScope.api, refKey, System.currentTimeMillis() - 1_000L, "downtime", params());
 
-        assertNull(executionGateService.blockedUntil(Enums.GateScope.api, refKey));
-        assertNull(executionGateRepository.findByScopeAndRefKey(Enums.GateScope.api.name(), refKey),
+        assertNull(executionGateService.blockedUntil(EnumsApi.GateScope.api, refKey));
+        assertNull(executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.api.name(), refKey),
                 "an already-expired request must not create a row that the sweep then has to remove");
     }
 
     private long countRows(String refKey) {
-        return executionGateRepository.findByScopeAndRefKey(Enums.GateScope.api.name(), refKey) == null ? 0 : 1;
+        return executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.api.name(), refKey) == null ? 0 : 1;
     }
 
     private static ExecutionGateParamsYaml params() {

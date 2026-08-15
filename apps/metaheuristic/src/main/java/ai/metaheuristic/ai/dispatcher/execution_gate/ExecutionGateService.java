@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.execution_gate;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecutionGate;
 import ai.metaheuristic.ai.dispatcher.data.GateData;
@@ -110,7 +111,7 @@ public class ExecutionGateService {
             final long now = System.currentTimeMillis();
             final List<ExecutionGate> live = executionGateRepository.findAllLive(now);
             for (ExecutionGate gate : live) {
-                final Enums.GateScope scope = toScope(gate.scope);
+                final EnumsApi.GateScope scope = toScope(gate.scope);
                 if (scope == null) {
                     continue;
                 }
@@ -186,7 +187,7 @@ public class ExecutionGateService {
      * The deadline covering a key, or null when nothing does. In-memory, no database access.
      */
     @Nullable
-    public Long blockedUntil(Enums.GateScope scope, String refKey) {
+    public Long blockedUntil(EnumsApi.GateScope scope, String refKey) {
         return ExecutionGateUtils.blockedUntil(records, scope, refKey, System.currentTimeMillis());
     }
 
@@ -197,7 +198,7 @@ public class ExecutionGateService {
      * opened: re-blocking a key that is already blocked for longer is common — every failing sibling
      * Task of a quarantined Function asks for it — and it must not cost a write each time.
      */
-    public void quarantine(Enums.GateScope scope, String refKey, long blockedUntil, String reasonCode, ExecutionGateParamsYaml params) {
+    public void quarantine(EnumsApi.GateScope scope, String refKey, long blockedUntil, String reasonCode, ExecutionGateParamsYaml params) {
         final long now = System.currentTimeMillis();
         if (!ExecutionGateUtils.isLive(blockedUntil, now)) {
             log.warn("01.320.060 refusing to open an already-expired execution gate, scope: {}, refKey: {}, blockedUntil: {}",
@@ -215,7 +216,7 @@ public class ExecutionGateService {
     /**
      * Clears a block ahead of its deadline. A key that is not blocked costs nothing.
      */
-    public void release(Enums.GateScope scope, String refKey) {
+    public void release(EnumsApi.GateScope scope, String refKey) {
         if (!records.containsKey(new GateData.GateKey(scope, refKey))) {
             return;
         }
@@ -303,9 +304,9 @@ public class ExecutionGateService {
         return records.size();
     }
 
-    private static Enums.@Nullable GateScope toScope(String scope) {
+    private static EnumsApi.@Nullable GateScope toScope(String scope) {
         try {
-            return Enums.GateScope.valueOf(scope);
+            return EnumsApi.GateScope.valueOf(scope);
         }
         catch (IllegalArgumentException e) {
             log.error("01.320.080 unknown execution gate scope in db: {}", scope);

@@ -45,9 +45,9 @@ public class FunctionConfigYamlAnalyzersTest {
         final FunctionConfigYaml cfg = baseConfig();
         cfg.function.analyzers = new ArrayList<>();
         cfg.function.analyzers.add(new FunctionConfigYaml.Analyzer(
-                "downtime", new ArrayList<>(List.of("(?i)rate.?limit", "quota exhausted")), "20min", false, "api"));
+                "downtime", new ArrayList<>(List.of("(?i)rate.?limit", "quota exhausted")), "20min", false, EnumsApi.GateScope.api));
         cfg.function.analyzers.add(new FunctionConfigYaml.Analyzer(
-                "host-broken", new ArrayList<>(List.of("no space left on device")), "1h", true, "processor"));
+                "host-broken", new ArrayList<>(List.of("no space left on device")), "1h", true, EnumsApi.GateScope.processor));
 
         final FunctionConfigYaml reRead = roundTrip(cfg);
 
@@ -59,14 +59,14 @@ public class FunctionConfigYamlAnalyzersTest {
         assertEquals(List.of("(?i)rate.?limit", "quota exhausted"), first.regex);
         assertEquals("20min", first.timeout);
         assertFalse(first.incrementTries);
-        assertEquals("api", first.scope);
+        assertEquals(EnumsApi.GateScope.api, first.scope);
 
         final FunctionConfigYaml.Analyzer second = reRead.function.analyzers.get(1);
         assertEquals("host-broken", second.name);
         assertEquals(List.of("no space left on device"), second.regex);
         assertEquals("1h", second.timeout);
         assertTrue(second.incrementTries);
-        assertEquals("processor", second.scope);
+        assertEquals(EnumsApi.GateScope.processor, second.scope);
     }
 
     @Test
@@ -96,7 +96,7 @@ public class FunctionConfigYamlAnalyzersTest {
         final FunctionConfigYaml cfg = baseConfig();
         cfg.function.analyzers = new ArrayList<>();
         cfg.function.analyzers.add(new FunctionConfigYaml.Analyzer(
-                "downtime", new ArrayList<>(List.of("a")), "30s", false, "function"));
+                "downtime", new ArrayList<>(List.of("a")), "30s", false, EnumsApi.GateScope.function));
 
         final FunctionConfigYaml.FunctionConfig clone = cfg.function.clone();
         assertNotNull(clone.analyzers);

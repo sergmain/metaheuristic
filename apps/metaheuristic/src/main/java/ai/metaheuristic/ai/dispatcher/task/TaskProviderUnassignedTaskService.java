@@ -90,7 +90,7 @@ public class TaskProviderUnassignedTaskService {
 
         // A Processor is withheld from only when something said the PROCESSOR is at fault. Nothing in
         // the loop below can put it here: a Task the Processor cannot run is a fact about that Task.
-        if (executionGateService.blockedUntil(Enums.GateScope.processor, String.valueOf(processorAndCoreParams.processorId())) != null) {
+        if (executionGateService.blockedUntil(EnumsApi.GateScope.processor, String.valueOf(processorAndCoreParams.processorId())) != null) {
             return new TaskData.TaskSearching(core_is_banned);
         }
 

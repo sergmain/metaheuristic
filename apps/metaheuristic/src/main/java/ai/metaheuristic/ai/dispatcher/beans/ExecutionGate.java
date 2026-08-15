@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYaml;
 import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYamlUtils;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
@@ -64,7 +65,7 @@ public class ExecutionGate implements Serializable {
     @Version
     public Integer version;
 
-    /** Name of an {@code Enums.GateScope} constant. */
+    /** Name of an {@code EnumsApi.GateScope} constant. */
     @Column(name = "SCOPE", nullable = false)
     public String scope;
 

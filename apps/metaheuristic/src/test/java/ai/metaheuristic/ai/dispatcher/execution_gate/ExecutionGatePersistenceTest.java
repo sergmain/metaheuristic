@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.execution_gate;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.MhSharedItTest;
@@ -71,7 +72,7 @@ public class ExecutionGatePersistenceTest extends MhSharedItTest {
         final String refKey = SharedItEnv.uniqueCode("gate-round-trip");
         final long blockedUntil = System.currentTimeMillis() + 20 * 60 * 1_000L;
 
-        final ExecutionGate saved = save(Enums.GateScope.function, refKey, blockedUntil, "downtime", egpy -> {
+        final ExecutionGate saved = save(EnumsApi.GateScope.function, refKey, blockedUntil, "downtime", egpy -> {
             egpy.triggeredByTaskId = 424_242L;
             egpy.functionCode = "some-function:1.1";
             egpy.processorId = 17L;
@@ -83,7 +84,7 @@ public class ExecutionGatePersistenceTest extends MhSharedItTest {
         final ExecutionGate reRead = executionGateRepository.findById(saved.id).orElse(null);
         assertNotNull(reRead);
 
-        assertEquals(Enums.GateScope.function.name(), reRead.scope);
+        assertEquals(EnumsApi.GateScope.function.name(), reRead.scope);
         assertEquals(refKey, reRead.refKey);
         assertEquals(blockedUntil, reRead.blockedUntil);
         assertEquals("downtime", reRead.reasonCode);
@@ -102,10 +103,10 @@ public class ExecutionGatePersistenceTest extends MhSharedItTest {
     public void test_secondRowOnTheSameScopeAndRefKeyIsRejectedByTheUniqueIndex() {
         final String refKey = SharedItEnv.uniqueCode("gate-duplicate");
 
-        save(Enums.GateScope.api, refKey, System.currentTimeMillis() + 60_000L, "downtime", egpy -> {});
+        save(EnumsApi.GateScope.api, refKey, System.currentTimeMillis() + 60_000L, "downtime", egpy -> {});
 
         assertThrows(DataIntegrityViolationException.class,
-                () -> save(Enums.GateScope.api, refKey, System.currentTimeMillis() + 120_000L, "downtime", egpy -> {}),
+                () -> save(EnumsApi.GateScope.api, refKey, System.currentTimeMillis() + 120_000L, "downtime", egpy -> {}),
                 "a second row on the same (SCOPE, REF_KEY) must be refused - the unique index is what makes re-blocking extend rather than stack");
     }
 
@@ -115,12 +116,12 @@ public class ExecutionGatePersistenceTest extends MhSharedItTest {
         // without meaning the same thing
         final String refKey = SharedItEnv.uniqueCode("gate-cross-scope");
 
-        final ExecutionGate asFunction = save(Enums.GateScope.function, refKey, System.currentTimeMillis() + 60_000L, "downtime", egpy -> {});
-        final ExecutionGate asProcessor = save(Enums.GateScope.processor, refKey, System.currentTimeMillis() + 60_000L, "downtime", egpy -> {});
+        final ExecutionGate asFunction = save(EnumsApi.GateScope.function, refKey, System.currentTimeMillis() + 60_000L, "downtime", egpy -> {});
+        final ExecutionGate asProcessor = save(EnumsApi.GateScope.processor, refKey, System.currentTimeMillis() + 60_000L, "downtime", egpy -> {});
 
         assertNotEquals(asFunction.id, asProcessor.id);
-        assertNotNull(executionGateRepository.findByScopeAndRefKey(Enums.GateScope.function.name(), refKey));
-        assertNotNull(executionGateRepository.findByScopeAndRefKey(Enums.GateScope.processor.name(), refKey));
+        assertNotNull(executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.function.name(), refKey));
+        assertNotNull(executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.processor.name(), refKey));
     }
 
     @Test
@@ -129,8 +130,8 @@ public class ExecutionGatePersistenceTest extends MhSharedItTest {
         final String liveKey = SharedItEnv.uniqueCode("gate-live");
         final String expiredKey = SharedItEnv.uniqueCode("gate-expired");
 
-        final ExecutionGate live = save(Enums.GateScope.company, liveKey, now + 600_000L, "manual", egpy -> {});
-        final ExecutionGate expired = save(Enums.GateScope.company, expiredKey, now - 600_000L, "manual", egpy -> {});
+        final ExecutionGate live = save(EnumsApi.GateScope.company, liveKey, now + 600_000L, "manual", egpy -> {});
+        final ExecutionGate expired = save(EnumsApi.GateScope.company, expiredKey, now - 600_000L, "manual", egpy -> {});
 
         final List<Long> liveIds = executionGateRepository.findAllLive(now).stream().map(g -> g.id).toList();
         final List<Long> expiredIds = executionGateRepository.findExpiredIds(now);
@@ -142,7 +143,7 @@ public class ExecutionGatePersistenceTest extends MhSharedItTest {
         assertFalse(expiredIds.contains(live.id));
     }
 
-    private ExecutionGate save(Enums.GateScope scope, String refKey, long blockedUntil, String reasonCode,
+    private ExecutionGate save(EnumsApi.GateScope scope, String refKey, long blockedUntil, String reasonCode,
                                java.util.function.Consumer<ExecutionGateParamsYaml> paramsFiller) {
         final ExecutionGate gate = new ExecutionGate();
         gate.scope = scope.name();

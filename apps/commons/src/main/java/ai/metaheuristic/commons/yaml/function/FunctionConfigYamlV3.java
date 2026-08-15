@@ -111,7 +111,7 @@ public class FunctionConfigYamlV3 implements BaseParams, Cloneable {
         public @Nullable List<String> regex = new ArrayList<>();
         public String timeout;
         public boolean incrementTries;
-        public String scope;
+        public EnumsApi.GateScope scope;
     }
 
     @Data

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.execution_gate;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.GateData;
 import org.junit.jupiter.api.Test;
@@ -59,7 +60,7 @@ public class ExecutionGateUtilsTest {
 
     @Test
     public void test_resolveDeadline_aLongerRequestWins() {
-        final GateData.GateRecord existing = new GateData.GateRecord(Enums.GateScope.api, "k", NOW + 1_000L, "downtime");
+        final GateData.GateRecord existing = new GateData.GateRecord(EnumsApi.GateScope.api, "k", NOW + 1_000L, "downtime");
         assertEquals(NOW + 9_000L, ExecutionGateUtils.resolveDeadline(existing, NOW + 9_000L, NOW));
     }
 
@@ -67,80 +68,80 @@ public class ExecutionGateUtilsTest {
     public void test_resolveDeadline_aShorterRequestCannotShortenALiveBlock() {
         // the case that matters: an analyzer asking for 30s must not release a key someone blocked
         // for an hour
-        final GateData.GateRecord existing = new GateData.GateRecord(Enums.GateScope.api, "k", NOW + 3_600_000L, "manual");
+        final GateData.GateRecord existing = new GateData.GateRecord(EnumsApi.GateScope.api, "k", NOW + 3_600_000L, "manual");
         assertEquals(NOW + 3_600_000L, ExecutionGateUtils.resolveDeadline(existing, NOW + 30_000L, NOW));
     }
 
     @Test
     public void test_resolveDeadline_anExpiredRecordDoesNotExtendAnything() {
-        final GateData.GateRecord expired = new GateData.GateRecord(Enums.GateScope.api, "k", NOW - 1L, "downtime");
+        final GateData.GateRecord expired = new GateData.GateRecord(EnumsApi.GateScope.api, "k", NOW - 1L, "downtime");
         assertEquals(NOW + 10L, ExecutionGateUtils.resolveDeadline(expired, NOW + 10L, NOW));
     }
 
     @Test
     public void test_blockedUntil_reportsALiveBlockAndIgnoresAnExpiredOne() {
         final Map<GateData.GateKey, GateData.GateRecord> records = new HashMap<>();
-        ExecutionGateUtils.putOrExtend(records, Enums.GateScope.function, "live", NOW + 5_000L, "downtime", NOW);
-        ExecutionGateUtils.putOrExtend(records, Enums.GateScope.function, "gone", NOW + 1L, "downtime", NOW);
+        ExecutionGateUtils.putOrExtend(records, EnumsApi.GateScope.function, "live", NOW + 5_000L, "downtime", NOW);
+        ExecutionGateUtils.putOrExtend(records, EnumsApi.GateScope.function, "gone", NOW + 1L, "downtime", NOW);
 
-        assertEquals(NOW + 5_000L, ExecutionGateUtils.blockedUntil(records, Enums.GateScope.function, "live", NOW));
+        assertEquals(NOW + 5_000L, ExecutionGateUtils.blockedUntil(records, EnumsApi.GateScope.function, "live", NOW));
         // at NOW + 5000 the second one has long expired
-        assertNull(ExecutionGateUtils.blockedUntil(records, Enums.GateScope.function, "gone", NOW + 5_000L));
+        assertNull(ExecutionGateUtils.blockedUntil(records, EnumsApi.GateScope.function, "gone", NOW + 5_000L));
     }
 
     @Test
     public void test_blockedUntil_isNullForAnUnknownKey() {
-        assertNull(ExecutionGateUtils.blockedUntil(new HashMap<>(), Enums.GateScope.processor, "never-blocked", NOW));
+        assertNull(ExecutionGateUtils.blockedUntil(new HashMap<>(), EnumsApi.GateScope.processor, "never-blocked", NOW));
     }
 
     @Test
     public void test_blockedUntil_isScopedNotJustKeyed() {
         // one Function code and one processor id can be the same string without being the same subject
         final Map<GateData.GateKey, GateData.GateRecord> records = new HashMap<>();
-        ExecutionGateUtils.putOrExtend(records, Enums.GateScope.function, "17", NOW + 5_000L, "downtime", NOW);
+        ExecutionGateUtils.putOrExtend(records, EnumsApi.GateScope.function, "17", NOW + 5_000L, "downtime", NOW);
 
-        assertNotNull(ExecutionGateUtils.blockedUntil(records, Enums.GateScope.function, "17", NOW));
-        assertNull(ExecutionGateUtils.blockedUntil(records, Enums.GateScope.processor, "17", NOW));
+        assertNotNull(ExecutionGateUtils.blockedUntil(records, EnumsApi.GateScope.function, "17", NOW));
+        assertNull(ExecutionGateUtils.blockedUntil(records, EnumsApi.GateScope.processor, "17", NOW));
     }
 
     @Test
     public void test_putOrExtend_isIdempotent_secondCallExtendsAndDoesNotStack() {
         final Map<GateData.GateKey, GateData.GateRecord> records = new HashMap<>();
 
-        ExecutionGateUtils.putOrExtend(records, Enums.GateScope.api, "key", NOW + 1_000L, "downtime", NOW);
+        ExecutionGateUtils.putOrExtend(records, EnumsApi.GateScope.api, "key", NOW + 1_000L, "downtime", NOW);
         assertEquals(1, records.size());
 
         final GateData.GateRecord second =
-                ExecutionGateUtils.putOrExtend(records, Enums.GateScope.api, "key", NOW + 8_000L, "downtime", NOW);
+                ExecutionGateUtils.putOrExtend(records, EnumsApi.GateScope.api, "key", NOW + 8_000L, "downtime", NOW);
 
         assertEquals(1, records.size(), "re-blocking a key must extend the one record, never add a second");
         assertEquals(NOW + 8_000L, second.blockedUntil());
-        assertEquals(NOW + 8_000L, ExecutionGateUtils.blockedUntil(records, Enums.GateScope.api, "key", NOW));
+        assertEquals(NOW + 8_000L, ExecutionGateUtils.blockedUntil(records, EnumsApi.GateScope.api, "key", NOW));
     }
 
     @Test
     public void test_putOrExtend_aShorterSecondCallLeavesTheLongerDeadlineInPlace() {
         final Map<GateData.GateKey, GateData.GateRecord> records = new HashMap<>();
 
-        ExecutionGateUtils.putOrExtend(records, Enums.GateScope.api, "key", NOW + 8_000L, "manual", NOW);
-        ExecutionGateUtils.putOrExtend(records, Enums.GateScope.api, "key", NOW + 1_000L, "downtime", NOW);
+        ExecutionGateUtils.putOrExtend(records, EnumsApi.GateScope.api, "key", NOW + 8_000L, "manual", NOW);
+        ExecutionGateUtils.putOrExtend(records, EnumsApi.GateScope.api, "key", NOW + 1_000L, "downtime", NOW);
 
         assertEquals(1, records.size());
-        assertEquals(NOW + 8_000L, ExecutionGateUtils.blockedUntil(records, Enums.GateScope.api, "key", NOW));
+        assertEquals(NOW + 8_000L, ExecutionGateUtils.blockedUntil(records, EnumsApi.GateScope.api, "key", NOW));
     }
 
     @Test
     public void test_dropExpired_removesOnlyWhatHasPassed() {
         final Map<GateData.GateKey, GateData.GateRecord> records = new HashMap<>();
-        ExecutionGateUtils.putOrExtend(records, Enums.GateScope.api, "a", NOW + 10_000L, "downtime", NOW);
-        ExecutionGateUtils.putOrExtend(records, Enums.GateScope.api, "b", NOW + 20_000L, "downtime", NOW);
-        ExecutionGateUtils.putOrExtend(records, Enums.GateScope.api, "c", NOW + 30_000L, "downtime", NOW);
+        ExecutionGateUtils.putOrExtend(records, EnumsApi.GateScope.api, "a", NOW + 10_000L, "downtime", NOW);
+        ExecutionGateUtils.putOrExtend(records, EnumsApi.GateScope.api, "b", NOW + 20_000L, "downtime", NOW);
+        ExecutionGateUtils.putOrExtend(records, EnumsApi.GateScope.api, "c", NOW + 30_000L, "downtime", NOW);
 
         final int dropped = ExecutionGateUtils.dropExpired(records, NOW + 25_000L);
 
         assertEquals(2, dropped);
         assertEquals(1, records.size());
-        assertNotNull(ExecutionGateUtils.blockedUntil(records, Enums.GateScope.api, "c", NOW + 25_000L));
+        assertNotNull(ExecutionGateUtils.blockedUntil(records, EnumsApi.GateScope.api, "c", NOW + 25_000L));
     }
 
     @Test

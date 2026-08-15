@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.execution_gate;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecutionGate;
 import ai.metaheuristic.ai.dispatcher.event.events.ExecutionGateChangedTxEvent;
@@ -58,7 +59,7 @@ public class ExecutionGateTxService {
      * not the primary mechanism — the normal path finds the row and extends it.
      */
     @Transactional
-    public void createOrExtend(Enums.GateScope scope, String refKey, long blockedUntil, String reasonCode, ExecutionGateParamsYaml params) {
+    public void createOrExtend(EnumsApi.GateScope scope, String refKey, long blockedUntil, String reasonCode, ExecutionGateParamsYaml params) {
         ExecutionGate gate = executionGateRepository.findByScopeAndRefKey(scope.name(), refKey);
         if (gate == null) {
             gate = new ExecutionGate();
@@ -86,7 +87,7 @@ public class ExecutionGateTxService {
      * history later is easy, removing it once the table is a performance problem is not.
      */
     @Transactional
-    public void delete(Enums.GateScope scope, String refKey) {
+    public void delete(EnumsApi.GateScope scope, String refKey) {
         final ExecutionGate gate = executionGateRepository.findByScopeAndRefKey(scope.name(), refKey);
         if (gate == null) {
             return;

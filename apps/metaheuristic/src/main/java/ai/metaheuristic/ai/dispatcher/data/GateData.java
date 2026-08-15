@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.Enums;
 import org.jspecify.annotations.Nullable;
 
@@ -61,13 +62,13 @@ public class GateData {
      * Identity of a blocked thing. A scope alone is not enough and a key alone is not either: one
      * Function code and one processor id can be the same string without being the same subject.
      */
-    public record GateKey(Enums.GateScope scope, String refKey) {}
+    public record GateKey(EnumsApi.GateScope scope, String refKey) {}
 
     /**
      * The in-memory copy of one committed row. Immutable on purpose — it is read on the hot path
      * from many threads and replaced wholesale rather than mutated in place.
      */
-    public record GateRecord(Enums.GateScope scope, String refKey, long blockedUntil, String reasonCode) {
+    public record GateRecord(EnumsApi.GateScope scope, String refKey, long blockedUntil, String reasonCode) {
 
         public GateKey key() {
             return new GateKey(scope, refKey);

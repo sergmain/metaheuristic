@@ -174,12 +174,10 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
         public boolean incrementTries;
 
         /**
-         * What the block covers: {@code api}, {@code function} or {@code processor}. A String rather
-         * than the dispatcher's enum because this class is read on both sides of the wire and must not
-         * drag a dispatcher type with it. {@code global} and {@code company} are dispatcher-only and
-         * are rejected when they appear here.
+         * What the block covers. Only {@code api}, {@code function} and {@code processor} may be
+         * declared here — {@code global} and {@code company} are dispatcher-only and are rejected.
          */
-        public String scope;
+        public EnumsApi.GateScope scope;
 
         @SneakyThrows
         public Analyzer clone() {

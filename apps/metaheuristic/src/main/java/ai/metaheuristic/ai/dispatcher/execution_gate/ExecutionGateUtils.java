@@ -78,7 +78,7 @@ public class ExecutionGateUtils {
      * passed is treated as absent; it is not removed here, because a read must not mutate.
      */
     @Nullable
-    public static Long blockedUntil(Map<GateData.GateKey, GateData.GateRecord> records, Enums.GateScope scope, String refKey, long now) {
+    public static Long blockedUntil(Map<GateData.GateKey, GateData.GateRecord> records, EnumsApi.GateScope scope, String refKey, long now) {
         final GateData.GateRecord record = records.get(new GateData.GateKey(scope, refKey));
         if (record == null || !isLive(record.blockedUntil(), now)) {
             return null;
@@ -104,7 +104,7 @@ public class ExecutionGateUtils {
      */
     public static GateData.GateRecord putOrExtend(
             Map<GateData.GateKey, GateData.GateRecord> records,
-            Enums.GateScope scope, String refKey, long blockedUntil, String reasonCode, long now) {
+            EnumsApi.GateScope scope, String refKey, long blockedUntil, String reasonCode, long now) {
 
         final GateData.GateKey key = new GateData.GateKey(scope, refKey);
         final long deadline = resolveDeadline(records.get(key), blockedUntil, now);

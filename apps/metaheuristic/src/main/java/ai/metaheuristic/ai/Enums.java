@@ -42,16 +42,6 @@ public final class Enums {
     public enum TaskSearchingStatus {found, queue_is_empty, environment_is_empty, core_is_banned, task_not_found,
         illegal_state, task_doesnt_exist, task_isnt_in_none_state, iterator_over_queue_is_empty, task_assigning_was_failed, processor_is_quarantined}
 
-    /**
-     * What a durable admission block covers.
-     *
-     * <p>There is deliberately no {@code core}: cores are virtual parts of one Processor running
-     * inside the same JVM, so blocking a single core is not a meaningful unit — the Processor is.
-     *
-     * <p>{@code global} and {@code company} are dispatcher-only; {@code api}, {@code function} and
-     * {@code processor} may also be declared by a Function descriptor.
-     */
-    public enum GateScope { global, company, api, function, processor }
 
     public enum ApiKeySourceDefinedBy { none, server, user }
 

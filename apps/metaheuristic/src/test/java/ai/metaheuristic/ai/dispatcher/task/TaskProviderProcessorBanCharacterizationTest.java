@@ -152,7 +152,7 @@ public class TaskProviderProcessorBanCharacterizationTest extends PreparingSourc
 
         // no durable block may exist for this Processor: nothing about a misconfigured Task is a
         // statement about the Processor's health
-        assertNull(executionGateService.blockedUntil(Enums.GateScope.processor, String.valueOf(PROCESSOR_ID)),
+        assertNull(executionGateService.blockedUntil(EnumsApi.GateScope.processor, String.valueOf(PROCESSOR_ID)),
                 "a Task-scoped misconfiguration must not withhold work from the Processor");
 
         // ---- 2nd call on the SAME core: the queue is walked again, normally ----------------------

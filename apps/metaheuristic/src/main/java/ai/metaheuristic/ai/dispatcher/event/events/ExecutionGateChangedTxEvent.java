@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event.events;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.Enums;
 import lombok.AllArgsConstructor;
 
@@ -29,7 +30,7 @@ import lombok.AllArgsConstructor;
  */
 @AllArgsConstructor
 public class ExecutionGateChangedTxEvent {
-    public final Enums.GateScope scope;
+    public final EnumsApi.GateScope scope;
     public final String refKey;
     /** The committed deadline. Meaningless when {@link #removed} is true. */
     public final long blockedUntil;

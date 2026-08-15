@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.utils;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
@@ -48,11 +49,9 @@ public class FunctionAnalyzerUtils {
 
     private static final Pattern TIMEOUT_PATTERN = Pattern.compile("^(\\d+)(ms|s|min|h|d)$");
 
-    /** Scopes only the dispatcher may set. A Function descriptor declaring one of these is rejected. */
-    private static final Set<String> DISPATCHER_ONLY_SCOPES = Set.of("global", "company");
-
-    /** Scopes a Function descriptor may legitimately declare. */
-    private static final Set<String> DESCRIPTOR_SCOPES = Set.of("api", "function", "processor");
+    /** Scopes a Function descriptor may legitimately declare. Everything else is dispatcher-only. */
+    private static final Set<EnumsApi.GateScope> DESCRIPTOR_SCOPES =
+            Set.of(EnumsApi.GateScope.api, EnumsApi.GateScope.function, EnumsApi.GateScope.processor);
 
     /**
      * Reads a declared timeout: {@code 500ms}, {@code 30s}, {@code 20min}, {@code 1h}, {@code 1d}.
@@ -204,17 +203,12 @@ public class FunctionAnalyzerUtils {
      * as work that was never withheld.
      */
     public static void checkScopeAllowedInDescriptor(FunctionConfigYaml.Analyzer analyzer) {
-        if (S.b(analyzer.scope)) {
+        if (analyzer.scope == null) {
             throw new IllegalStateException("01.323.100 analyzer '" + analyzer.name + "' declares no scope");
         }
-        final String scope = analyzer.scope.strip();
-        if (DISPATCHER_ONLY_SCOPES.contains(scope)) {
+        if (!DESCRIPTOR_SCOPES.contains(analyzer.scope)) {
             throw new IllegalStateException(
-                    "01.323.120 analyzer '" + analyzer.name + "' declares scope '" + scope + "', which only the dispatcher may set");
-        }
-        if (!DESCRIPTOR_SCOPES.contains(scope)) {
-            throw new IllegalStateException(
-                    "01.323.140 analyzer '" + analyzer.name + "' declares an unknown scope '" + scope + "'");
+                    "01.323.120 analyzer '" + analyzer.name + "' declares scope '" + analyzer.scope + "', which only the dispatcher may set");
         }
     }
 }
