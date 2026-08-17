@@ -691,20 +691,6 @@ public class Globals {
     public boolean testing = false;
     public boolean eventEnabled = false;
 
-    @DeprecatedConfigurationProperty(replacement = "mh.security.ssl-required")
-    @Deprecated
-    @Nullable
-    public Boolean isSslRequired() {
-        return sslRequired;
-    }
-
-    public void setSslRequired(boolean sslRequired) {
-        this.sslRequired = sslRequired;
-    }
-
-    @Nullable
-    private Boolean sslRequired = true;
-
     public Path home;
 
     public Path getHome() {
@@ -853,12 +839,6 @@ public class Globals {
     private void processOldParameters() {
         if (Boolean.TRUE.equals(dispatcher.functionSignatureRequired)) {
             function.securityCheck = Enums.FunctionSecurityCheck.always;
-        }
-        if (sslRequired != null) {
-            if (security.sslRequired!=sslRequired) {
-                log.warn("mh.security.ssl-required doesn't equal to mh.ssl-required, value of mh.ssl-required will be used. Usage of mh.ssl-required is deprecated.");
-            }
-            security.sslRequired = sslRequired;
         }
         if (dispatcher.publicKey!=null) {
             if (publicKeyStore.key==null || publicKeyStore.key.length==0) {
@@ -1030,7 +1010,7 @@ public class Globals {
         log.info("'\tcorsAllowedOrigins: {}", corsAllowedOrigins);
         log.info("'\tbranding: {}", branding);
         log.info("'\ttesting: {}", testing);
-        log.info("'\tsslRequired: {}", sslRequired);
+        log.info("'\tsecurity.sslRequired: {}", security.sslRequired);
         log.info("'\tdispatcher.enabled: {}", dispatcher.enabled);
         log.info("'\tdispatcher.dir: {}", dispatcherPath.toAbsolutePath().normalize());
         log.info("'\tdispatcher.functionSignatureRequired: {}", dispatcher.functionSignatureRequired);
