@@ -47,7 +47,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
  */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class MultiHttpSecurityConfig {
 
@@ -107,7 +107,6 @@ public class MultiHttpSecurityConfig {
                 .frameOptions(withDefaults()));
 
         if (globals.security.sslRequired) {
-//            http.requiresChannel((requiresChannel) -> requiresChannel.anyRequest().requiresSecure());
             http.redirectToHttps(withDefaults());
         }
         return http.build();
