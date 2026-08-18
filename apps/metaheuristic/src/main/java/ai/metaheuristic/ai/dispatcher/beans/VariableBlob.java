@@ -45,6 +45,15 @@ public class VariableBlob implements Serializable {
     @Lob
     private Blob data;
 
+    // WORM: recorded materialization state. false = the row carries only Consts.STUB_BYTES from a
+    // pre-create; true = DATA holds real content and the record is closed to further writes. This is a
+    // fact ON the blob row, so it works for EVERY caller regardless of which table holds the pointer to
+    // this blob - MH_VARIABLE.VARIABLE_BLOB_ID or a caller-owned column. It replaces the old inference
+    // that compared DATA's length against the stub length, which could not tell a stub from real
+    // content of the same size.
+    @Column(name = "IS_MATERIALIZED")
+    private boolean materialized;
+
     // TODO 2020-12-21 need to add a way to check the length of variable with length of stored on disk variable
     //  maybe even with checksum
 }

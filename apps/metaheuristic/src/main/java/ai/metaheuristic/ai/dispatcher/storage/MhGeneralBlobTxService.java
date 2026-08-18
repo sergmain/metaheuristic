@@ -65,6 +65,9 @@ public class MhGeneralBlobTxService implements GeneralBlobTxService {
         ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(bais, Consts.STUB_BYTES.length);
         data.setData(blob);
+        // WORM: a pre-created record is a stub, not content. The first real store flips this in
+        // DatabaseBlobPersistService.storeVariable and closes the record to any further write.
+        data.setMaterialized(false);
         VariableBlob r = variableBlobRepository.save(data);
         return r.id;
     }

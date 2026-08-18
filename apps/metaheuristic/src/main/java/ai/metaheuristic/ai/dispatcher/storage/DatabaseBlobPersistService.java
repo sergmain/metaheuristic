@@ -70,27 +70,26 @@ public class DatabaseBlobPersistService {
         }
 
         // Immutability: a VariableBlob record is write-once. A freshly created record carries only
-        // Consts.STUB_BYTES; the first (and only) real store replaces that stub. If the record already
-        // holds real data (more than the stub) some path is trying to over-write a materialized blob,
-        // which is forbidden - re-execution must allocate a NEW VariableBlob (the Variable re-points to
-        // it) rather than mutate this one. Enforced in the default DB backend so the whole default-context
-        // test suite exercises it; external (disk/S3) backends inherit the same invariant.
-        final Blob existing = variableBlob.getData();
-        if (existing!=null) {
-            final long existingLen;
-            try {
-                existingLen = existing.length();
-            }
-            catch (java.sql.SQLException e) {
-                throw new IllegalStateException("174.043 can't read existing VariableBlob #"+variableBlobId+" length", e);
-            }
-            if (existingLen > Consts.STUB_BYTES.length) {
-                throw new IllegalStateException("174.045 VariableBlob #"+variableBlobId+" already has data; record is immutable (write-once)");
-            }
+        // Consts.STUB_BYTES; the first (and only) real store replaces that stub. If the record is already
+        // materialized some path is trying to over-write a real blob, which is forbidden - re-execution
+        // must allocate a NEW VariableBlob (the referrer re-points to it) rather than mutate this one.
+        // Enforced in the default DB backend so the whole default-context test suite exercises it;
+        // external (disk/S3) backends inherit the same invariant.
+        //
+        // The decision reads IS_MATERIALIZED, a fact recorded ON this row, never the length of DATA. The
+        // former length-vs-STUB_BYTES comparison could not tell a stub from real content of the same
+        // size, so a legal 1-byte blob slipped through and was silently over-written. It also must not
+        // be replaced by anything outside MH_VARIABLE_BLOB: a caller that allocates a stub via
+        // createEmptyVariable() and keeps the returned variableBlobId in its OWN table never creates an
+        // MH_VARIABLE row, so a guard reading MH_VARIABLE would be unconditionally empty and protect
+        // nothing for that caller.
+        if (variableBlob.isMaterialized()) {
+            throw new IllegalStateException("174.045 VariableBlob #"+variableBlobId+" already has data; record is immutable (write-once)");
         }
 
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         variableBlob.setData(blob);
+        variableBlob.setMaterialized(true);
         VariableBlob result = variableBlobRepository.save(variableBlob);
     }
 
@@ -102,6 +101,7 @@ public class DatabaseBlobPersistService {
         VariableBlob variableBlob = new VariableBlob();
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         variableBlob.setData(blob);
+        variableBlob.setMaterialized(true);
         VariableBlob result = variableBlobRepository.save(variableBlob);
         return result.id;
     }

@@ -323,7 +323,8 @@ CREATE TABLE mh_variable_blob
 (
     ID                SERIAL PRIMARY KEY,
     VERSION           NUMERIC(5, 0) NOT NULL,
-    DATA              OID        not null
+    DATA              OID        not null,
+    IS_MATERIALIZED   BOOLEAN    not null default false
 );
 
 --  its name is VARIABLE_GLOBAL, not GLOBAL_VARIABLE because I want these tables to be in the same spot in scheme
