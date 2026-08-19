@@ -103,7 +103,7 @@ public class LicenseInstallationService {
      */
     private void mirrorToFile(String id) {
         try {
-            final Path dir = globals.dispatcherPath;
+            final Path dir = globals.getHome();
             final Path file = dir.resolve(INSTALLATION_ID_FILE);
             final String current = Files.exists(file) ? Files.readString(file, StandardCharsets.UTF_8) : null;
             if (LicenseInstallationUtils.decideMirror(id, current) == LicenseInstallationUtils.MirrorAction.LEAVE) {

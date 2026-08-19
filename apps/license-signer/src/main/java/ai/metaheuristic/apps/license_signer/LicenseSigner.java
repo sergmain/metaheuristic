@@ -132,7 +132,9 @@ public class LicenseSigner implements CommandLineRunner {
             System.out.println("249.020 config file doesn't exist: " + configFile);
             return;
         }
+        System.out.println("License config: " + configFile.toAbsolutePath());
         final String yaml = Files.readString(configFile, StandardCharsets.UTF_8);
+        System.out.println("License config content:\n" + yaml);
         final LicenseConfigYaml config = LicenseConfigYamlUtils.BASE_YAML_UTILS.to(yaml);
 
         final LicenseConfigYaml.Signing signing = config.signing;
