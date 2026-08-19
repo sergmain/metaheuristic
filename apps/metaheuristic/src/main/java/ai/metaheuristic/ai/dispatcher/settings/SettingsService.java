@@ -109,8 +109,12 @@ public class SettingsService {
      * the dispatcher-wide list of supported languages (locales). the returned list always includes English.
      */
     public SettingsData.Languages getLanguages() {
+        return new SettingsData.Languages(SupportedLanguagesCache.get(this::loadLocales));
+    }
+
+    private List<String> loadLocales() {
         String json = dispatcherParamsTopLevelService.getMeta(MH_LANGUAGES);
-        return new SettingsData.Languages(normalizeLocales(parseLocales(json)));
+        return normalizeLocales(parseLocales(json));
     }
 
     /**
@@ -121,6 +125,9 @@ public class SettingsService {
         List<String> normalized = normalizeLocales(parseLocales(locales));
         // JsonUtils uses jackson 3 whose write is unchecked; serializing a List<String> can't fail here
         dispatcherParamsTopLevelService.putMeta(MH_LANGUAGES, JsonUtils.getMapper().writeValueAsString(normalized));
+        // AFTER the store, never before: resetting first leaves a window in which a concurrent
+        // anonymous read reloads the outgoing value and re-caches it, with nothing left to reset it
+        SupportedLanguagesCache.reset();
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
