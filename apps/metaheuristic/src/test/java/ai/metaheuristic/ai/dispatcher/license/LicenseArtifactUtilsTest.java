@@ -93,6 +93,14 @@ public class LicenseArtifactUtilsTest {
         assertFalse(LicenseArtifactUtils.isInstallable(LicenseState.MISSING_KID));
         assertFalse(LicenseArtifactUtils.isInstallable(LicenseState.UNSUPPORTED_ALGORITHM));
         assertFalse(LicenseArtifactUtils.isInstallable(LicenseState.WRONG_TOKEN_TYPE));
+        // with no key configured on this installation nothing can ever verify, so the row would
+        // be dead from the moment it was written.
+        assertFalse(LicenseArtifactUtils.isInstallable(LicenseState.NO_VERIFICATION_KEY));
+        // the three causes that used to hide inside UNSUPPORTED_ALGORITHM / SIGNATURE_INVALID:
+        // naming them changed what the admin is told, not what may be stored.
+        assertFalse(LicenseArtifactUtils.isInstallable(LicenseState.UNSIGNED_TOKEN));
+        assertFalse(LicenseArtifactUtils.isInstallable(LicenseState.ENCRYPTED_TOKEN));
+        assertFalse(LicenseArtifactUtils.isInstallable(LicenseState.UNPARSEABLE));
     }
 
     @Test
@@ -100,7 +108,9 @@ public class LicenseArtifactUtilsTest {
         // total by construction: a state added later must not silently become un-installable.
         final Set<LicenseState> refused = EnumSet.of(
                 LicenseState.SIGNATURE_INVALID, LicenseState.MALFORMED, LicenseState.UNKNOWN_KID,
-                LicenseState.MISSING_KID, LicenseState.UNSUPPORTED_ALGORITHM, LicenseState.WRONG_TOKEN_TYPE);
+                LicenseState.MISSING_KID, LicenseState.UNSUPPORTED_ALGORITHM, LicenseState.WRONG_TOKEN_TYPE,
+                LicenseState.NO_VERIFICATION_KEY, LicenseState.UNSIGNED_TOKEN,
+                LicenseState.ENCRYPTED_TOKEN, LicenseState.UNPARSEABLE);
         for (LicenseState state : LicenseState.values()) {
             assertEquals(!refused.contains(state), LicenseArtifactUtils.isInstallable(state), state.name());
         }

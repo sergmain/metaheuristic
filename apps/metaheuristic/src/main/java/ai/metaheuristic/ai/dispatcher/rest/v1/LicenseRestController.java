@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.license.LicenseInfoData;
 import ai.metaheuristic.ai.dispatcher.license.LicenseInfoService;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.commons.spi.license.SignedFileLicenseSource;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
@@ -58,6 +59,14 @@ import org.springframework.web.bind.annotation.*;
  * only ordering-safe inside auto-configuration; on a component-scanned bean it races the
  * configuration that declares the source. The open-set concern it was chosen for is now met by
  * naming the backend family once in {@link ai.metaheuristic.ai.Consts#SIGNED_FILE_LM_PROFILE}.
+ *
+ * <p>Error code prefix: {@code 01.265.} (unique to this class).
+ *
+ * <p>❗ Every endpoint here is wrapped in try/catch. Two reasons, both learned the hard way on the
+ * licence page: what the business service RETURNED was invisible - a refusal was a value, not an
+ * exception, so it reached the browser and left nothing in the log to grep for - and an exception
+ * thrown below reached the client as a bare 500 with no code to look up. The try logs the returned
+ * value; the catch turns a throw into the same error envelope every other endpoint uses.
  */
 @RestController
 @RequestMapping("/rest/v1/dispatcher/license")
@@ -75,7 +84,20 @@ public class LicenseRestController {
     @GetMapping("/status")
     @PreAuthorize("hasAnyRole('MAIN_ADMIN')")
     public LicenseInfoData.LicenseStatusResult status() {
-        return new LicenseInfoData.LicenseStatusResult(licenseInfoService.info());
+        try {
+            final LicenseInfoData.LicenseInfo info = licenseInfoService.info();
+            log.info("01.265.010 licenseInfoService.info() returned: {}", info);
+            return new LicenseInfoData.LicenseStatusResult(info);
+        }
+        catch (Throwable th) {
+            log.error("01.265.015 error while reading the license status", th);
+            // LicenseStatusResult extends BaseDataClass, so a failure travels in errorMessages
+            // exactly as OperationStatusRest carries one; the endpoint's return type is fixed by
+            // its contract and cannot become OperationStatusRest without breaking the caller.
+            final LicenseInfoData.LicenseStatusResult result = new LicenseInfoData.LicenseStatusResult();
+            result.addErrorMessage("01.265.020 error while reading the license status: " + th.getMessage());
+            return result;
+        }
     }
 
     /**
@@ -91,7 +113,17 @@ public class LicenseRestController {
     @GetMapping("/capabilities")
     @PreAuthorize("isAuthenticated()")
     public LicenseInfoData.CapabilitiesResult capabilities() {
-        return new LicenseInfoData.CapabilitiesResult(licenseInfoService.capabilities());
+        try {
+            final LicenseInfoData.Capabilities capabilities = licenseInfoService.capabilities();
+            log.info("01.265.030 licenseInfoService.capabilities() returned: {}", capabilities);
+            return new LicenseInfoData.CapabilitiesResult(capabilities);
+        }
+        catch (Throwable th) {
+            log.error("01.265.035 error while reading the license capabilities", th);
+            final LicenseInfoData.CapabilitiesResult result = new LicenseInfoData.CapabilitiesResult();
+            result.addErrorMessage("01.265.040 error while reading the license capabilities: " + th.getMessage());
+            return result;
+        }
     }
 
     /**
@@ -101,14 +133,37 @@ public class LicenseRestController {
     @PostMapping("/install")
     @PreAuthorize("hasAnyRole('MAIN_ADMIN')")
     public OperationStatusRest install(@RequestParam("token") @Nullable String token, Authentication authentication) {
-        final UserContext ctx = userContextService.getContext(authentication);
-        return licenseArtifactService.install(token, ctx.getAccountId());
+        try {
+            final UserContext ctx = userContextService.getContext(authentication);
+            final OperationStatusRest status = licenseArtifactService.install(token, ctx.getAccountId());
+            // ❗ The token itself is never logged. A refusal is the interesting part and it is a
+            // RETURN VALUE, which used to reach the browser and leave the server log silent - the
+            // admin was shown a code that appeared nowhere in mh.log.
+            log.info("01.265.050 licenseArtifactService.install() returned: {}, infoMessages: {}, errorMessages: {}",
+                    status.status, status.infoMessages, status.errorMessages);
+            return status;
+        }
+        catch (Throwable th) {
+            log.error("01.265.055 error while installing a license", th);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "01.265.060 error while installing a license: " + th.getMessage());
+        }
     }
 
     /** Remove ONE license from the set. Flips IS_DELETED; the row and its audit trail survive. */
     @DeleteMapping("/{artifactId}")
     @PreAuthorize("hasAnyRole('MAIN_ADMIN')")
     public OperationStatusRest remove(@PathVariable Long artifactId) {
-        return licenseArtifactService.remove(artifactId);
+        try {
+            final OperationStatusRest status = licenseArtifactService.remove(artifactId);
+            log.info("01.265.070 licenseArtifactService.remove({}) returned: {}, infoMessages: {}, errorMessages: {}",
+                    artifactId, status.status, status.infoMessages, status.errorMessages);
+            return status;
+        }
+        catch (Throwable th) {
+            log.error("01.265.075 error while removing the license with artifactId: " + artifactId, th);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "01.265.080 error while removing the license with artifactId " + artifactId + ": " + th.getMessage());
+        }
     }
 }

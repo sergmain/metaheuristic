@@ -82,8 +82,8 @@ public class SignedFileLicenseSourceTest {
         return sign(priv, List.of("Cat.FEATURE_A", "Cat.FEATURE_B", "Cat.FEATURE_C"), List.of("H2"), exp);
     }
 
-    private static Function<String, ECPublicKey> resolver(ECPublicKey pub) {
-        return kid -> KID.equals(kid) ? pub : null;
+    private static LicenseKeyResolver resolver(ECPublicKey pub) {
+        return LicenseKeyResolver.of(kid -> KID.equals(kid) ? pub : null);
     }
 
     private static SignedFileLicenseSource source(Keys k, Collection<String> tokens) {
@@ -105,7 +105,7 @@ public class SignedFileLicenseSourceTest {
     @Test
     public void test_noToken_isNoLicense() {
         final SignedFileLicenseSource src = new SignedFileLicenseSource(
-                List::of, kid -> null, () -> NOW, () -> ON_H2, () -> null, Duration.ofSeconds(60));
+                List::of, LicenseKeyResolver.of(kid -> null), () -> NOW, () -> ON_H2, () -> null, Duration.ofSeconds(60));
 
         assertFalse(src.current().valid());
         assertEquals(LicenseState.NO_LICENSE, src.currentResult().state());
@@ -202,7 +202,7 @@ public class SignedFileLicenseSourceTest {
     @Test
     public void test_invalidate_onAnEmptyCacheIsHarmless() {
         final SignedFileLicenseSource src = new SignedFileLicenseSource(
-                List::of, kid -> null, () -> NOW, () -> ON_H2, () -> null, Duration.ofSeconds(60));
+                List::of, LicenseKeyResolver.of(kid -> null), () -> NOW, () -> ON_H2, () -> null, Duration.ofSeconds(60));
 
         src.invalidate();
 

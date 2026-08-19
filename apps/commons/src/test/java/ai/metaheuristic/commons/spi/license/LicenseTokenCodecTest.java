@@ -16,11 +16,17 @@
 
 package ai.metaheuristic.commons.spi.license;
 
+import com.nimbusds.jose.EncryptionMethod;
 import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWEAlgorithm;
+import com.nimbusds.jose.JWEHeader;
+import com.nimbusds.jose.crypto.DirectEncrypter;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -28,6 +34,7 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.security.KeyPair;
+import java.security.SecureRandom;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
@@ -78,8 +85,8 @@ public class LicenseTokenCodecTest {
                 .issueTime(Date.from(NOW));
     }
 
-    private static Function<String, @Nullable ECPublicKey> resolver(ECPublicKey pub) {
-        return kid -> KID.equals(kid) ? pub : null;
+    private static LicenseKeyResolver resolver(ECPublicKey pub) {
+        return LicenseKeyResolver.of(kid -> KID.equals(kid) ? pub : null);
     }
 
     @Test
@@ -203,7 +210,7 @@ public class LicenseTokenCodecTest {
         final String tok = sign((ECPrivateKey) kp.getPrivate(),
                 enterprise().expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
 
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, _ -> null, NOW, null);
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, LicenseKeyResolver.of(_ -> null), NOW, null);
 
         // NOT SIGNATURE_INVALID: the signature here is good and is never examined. The kid selected
         // no key, and saying "bad signature" would send the reader to inspect key material that was
@@ -270,5 +277,72 @@ public class LicenseTokenCodecTest {
         final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, resolver((ECPublicKey) kp.getPublic()), NOW, "uuid-A");
 
         assertEquals(LicenseState.VALID, r.state());
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // Characterization: what the codec reports TODAY for four causes it cannot currently tell
+    // apart from something else. Each of these is a refusal that names the wrong artifact, which
+    // is the same class of defect UNKNOWN_KID was introduced to fix for the kid case.
+    // ------------------------------------------------------------------------------------------
+
+    /**
+     * No verification key is configured at all (mh.key-store.license.public-key unset), so the
+     * resolver answers null for EVERY kid. The token below is correctly signed and its kid is the
+     * one the fixture uses - nothing about the token is at fault, the dispatcher simply holds no
+     * trust anchor.
+     */
+    @Test
+    public void test_noVerificationKeyConfigured() throws Exception {
+        final KeyPair kp = ecKeyPair();
+        final String tok = sign((ECPrivateKey) kp.getPrivate(),
+                enterprise().expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
+
+        final LicenseVerificationResult r =
+                LicenseTokenCodec.verify(tok, LicenseVerificationKeys.resolver(null), NOW, null);
+
+        assertEquals(LicenseState.NO_VERIFICATION_KEY, r.state());
+    }
+
+    /**
+     * An UNSIGNED token (PlainJWT, alg:none). It carries no signature at all, which is a forgery
+     * attempt rather than a licence signed with an algorithm this build does not implement.
+     */
+    @Test
+    public void test_plainJwtCarriesNoSignature() throws Exception {
+        final PlainJWT plain = new PlainJWT(
+                enterprise().expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
+
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(plain.serialize(), LicenseKeyResolver.of(_ -> null), NOW, null);
+
+        assertEquals(LicenseState.UNSIGNED_TOKEN, r.state());
+    }
+
+    /**
+     * An ENCRYPTED token (JWE). JWE is not supported yet - a deliberate gap in this build, not a
+     * defect in the token, and not the same thing as a bad 'alg' on a signed token.
+     */
+    @Test
+    public void test_encryptedJwtIsNotSupportedYet() throws Exception {
+        final byte[] secret = new byte[16];
+        new SecureRandom().nextBytes(secret);
+        final EncryptedJWT jwe = new EncryptedJWT(
+                new JWEHeader(JWEAlgorithm.DIR, EncryptionMethod.A128GCM),
+                enterprise().expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
+        jwe.encrypt(new DirectEncrypter(secret));
+
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(jwe.serialize(), LicenseKeyResolver.of(_ -> null), NOW, null);
+
+        assertEquals(LicenseState.ENCRYPTED_TOKEN, r.state());
+    }
+
+    /**
+     * A string that is not a JOSE token at all - a half-copied paste, a file path, a PEM body.
+     * There is no signature here to be invalid: parsing never got far enough to find one.
+     */
+    @Test
+    public void test_gibberishIsNotAToken() {
+        final LicenseVerificationResult r = LicenseTokenCodec.verify("this-is-not-a-jose-token", LicenseKeyResolver.of(_ -> null), NOW, null);
+
+        assertEquals(LicenseState.UNPARSEABLE, r.state());
     }
 }

@@ -21,9 +21,11 @@ import ai.metaheuristic.commons.json.license.LicenseClaimsUtils;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.crypto.ECDSAVerifier;
+import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
+import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import org.jspecify.annotations.Nullable;
 
@@ -63,41 +65,78 @@ public class LicenseTokenCodec {
 
     public static LicenseVerificationResult verify(
             String token,
-            Function<String, @Nullable ECPublicKey> keyByKid,
+            LicenseKeyResolver keys,
             Instant now,
             @Nullable String localInstallationId) {
 
+        // ❗ Each failure below reports its OWN state, and the try blocks are scoped so that a
+        // throw is attributed to the step that threw. One try around the whole read used to make
+        // every failure SIGNATURE_INVALID, including a string that was never a token: the reader
+        // was sent to inspect a signature that had not been reached, let alone examined.
+        final JWT parsed;
+        try {
+            parsed = JWTParser.parse(token);
+        }
+        catch (Exception e) {
+            // Not a JOSE token at all - a truncated paste, a path, the body of a PEM.
+            return invalid(token, LicenseState.UNPARSEABLE);
+        }
+        if (parsed instanceof PlainJWT) {
+            // alg:none. There is no signature to support, which is not the same thing as a
+            // signature made with an algorithm this build does not implement.
+            return invalid(token, LicenseState.UNSIGNED_TOKEN);
+        }
+        if (parsed instanceof EncryptedJWT) {
+            // JWE - a deliberate gap in this build, and nothing is wrong with the token.
+            return invalid(token, LicenseState.ENCRYPTED_TOKEN);
+        }
+        if (!(parsed instanceof SignedJWT jwt)) {
+            // a JWT container this build has never heard of: nothing here can be read.
+            return invalid(token, LicenseState.UNPARSEABLE);
+        }
+        if (!JWSAlgorithm.ES256.equals(jwt.getHeader().getAlgorithm())) {
+            return invalid(token, LicenseState.UNSUPPORTED_ALGORITHM);
+        }
+        final JOSEObjectType typ = jwt.getHeader().getType();
+        if (typ == null || !EXPECTED_TYP.equals(typ.getType())) {
+            return invalid(token, LicenseState.WRONG_TOKEN_TYPE);
+        }
+        final String kid = jwt.getHeader().getKeyID();
+        if (kid == null || kid.isBlank()) {
+            return invalid(token, LicenseState.MISSING_KID);
+        }
+        final ECPublicKey pub = keys.keyFor(kid);
+        if (pub == null) {
+            // The signature is NOT examined here. Reporting SIGNATURE_INVALID would name the
+            // wrong artifact: a perfectly good signature under a kid nobody configured.
+            //
+            // ❗ And which of the two refusals it is depends on whether this installation holds
+            // any key material. With none configured NOTHING can resolve, so naming the kid would
+            // accuse the one part of the token that is beyond reproach; the fault is the missing
+            // mh.key-store.license.public-key and the state has to say so.
+            return invalid(token, keys.configured()
+                    ? LicenseState.UNKNOWN_KID
+                    : LicenseState.NO_VERIFICATION_KEY);
+        }
+        final boolean signatureOk;
+        try {
+            signatureOk = jwt.verify(new ECDSAVerifier(pub));
+        }
+        catch (Exception e) {
+            // the verifier itself refused the key or the signature bytes: still about the signature.
+            return invalid(token, LicenseState.SIGNATURE_INVALID);
+        }
+        if (!signatureOk) {
+            return invalid(token, LicenseState.SIGNATURE_INVALID);
+        }
         final JWTClaimsSet claimsSet;
         try {
-            final JWT parsed = JWTParser.parse(token);
-            if (!(parsed instanceof SignedJWT jwt)) {
-                // PlainJWT (alg:none) or EncryptedJWT (JWE - not supported yet) -> reject
-                return invalid(token, LicenseState.UNSUPPORTED_ALGORITHM);
-            }
-            if (!JWSAlgorithm.ES256.equals(jwt.getHeader().getAlgorithm())) {
-                return invalid(token, LicenseState.UNSUPPORTED_ALGORITHM);
-            }
-            final JOSEObjectType typ = jwt.getHeader().getType();
-            if (typ == null || !EXPECTED_TYP.equals(typ.getType())) {
-                return invalid(token, LicenseState.WRONG_TOKEN_TYPE);
-            }
-            final String kid = jwt.getHeader().getKeyID();
-            if (kid == null || kid.isBlank()) {
-                return invalid(token, LicenseState.MISSING_KID);
-            }
-            final ECPublicKey pub = keyByKid.apply(kid);
-            if (pub == null) {
-                // The signature is NOT examined here. Reporting SIGNATURE_INVALID would name the
-                // wrong artifact: a perfectly good signature under a kid nobody configured.
-                return invalid(token, LicenseState.UNKNOWN_KID);
-            }
-            if (!jwt.verify(new ECDSAVerifier(pub))) {
-                return invalid(token, LicenseState.SIGNATURE_INVALID);
-            }
             claimsSet = jwt.getJWTClaimsSet();
         }
         catch (Exception e) {
-            return invalid(token, LicenseState.SIGNATURE_INVALID);
+            // the signature checked out and the body did not read: that is MALFORMED, and the
+            // same rule the toClaims block below already follows.
+            return invalid(token, LicenseState.MALFORMED);
         }
 
         // A well-signed token whose body we cannot read is MALFORMED, not SIGNATURE_INVALID: the

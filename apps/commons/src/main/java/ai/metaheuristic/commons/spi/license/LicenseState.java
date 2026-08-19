@@ -42,10 +42,35 @@ public enum LicenseState {
 
     /** The header names a kid no configured key answers to. The signature is never examined. */
     UNKNOWN_KID,
+    /**
+     * NO key material is configured on this installation, so no kid can resolve and no license can
+     * ever verify here. Distinct from UNKNOWN_KID, which says the token names a kid the CONFIGURED
+     * key does not answer to: there the fault is in the token or in which key was deployed, here
+     * there is no key at all and the token is beside the point. Reporting UNKNOWN_KID for this sent
+     * every reader to inspect a kid that was never compared against anything.
+     */
+    NO_VERIFICATION_KEY,
     /** The header carries no kid at all, so no key can be selected. */
     MISSING_KID,
-    /** alg is not ES256, or the token is a PlainJWT (alg:none) or a JWE. */
+    /** alg is not ES256 on a token that IS signed. */
     UNSUPPORTED_ALGORITHM,
+    /**
+     * A PlainJWT: alg:none, no signature present at all. Not an unsupported algorithm - there is
+     * nothing to verify, which is a forgery attempt rather than a build limitation, and the two
+     * deserve different words.
+     */
+    UNSIGNED_TOKEN,
+    /**
+     * A JWE. Encrypted tokens are a deliberate gap in this build, not a defect in the token: the
+     * holder has done nothing wrong and nothing about the file needs correcting.
+     */
+    ENCRYPTED_TOKEN,
+    /**
+     * The string is not a JOSE token at all - a truncated paste, a file path, the body of a PEM.
+     * Parsing never reached a signature, so SIGNATURE_INVALID would name an artifact that was
+     * never read.
+     */
+    UNPARSEABLE,
     /** typ is absent or is not license+jws - a signed token that isn't claiming to be a license. */
     WRONG_TOKEN_TYPE,
 

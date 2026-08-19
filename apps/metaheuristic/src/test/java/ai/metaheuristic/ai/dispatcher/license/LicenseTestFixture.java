@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.license;
 
 import org.jspecify.annotations.Nullable;
+import ai.metaheuristic.commons.spi.license.LicenseKeyResolver;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,8 +69,8 @@ public class LicenseTestFixture {
      * to accept a production-signed licence by accident, and the production verifier must never
      * learn this key.
      */
-    public static Function<String, @Nullable ECPublicKey> keyResolver(ECPublicKey pub) {
-        return kid -> "test-key-1".equals(kid) ? pub : null;
+    public static LicenseKeyResolver keyResolver(ECPublicKey pub) {
+        return LicenseKeyResolver.of(kid -> "test-key-1".equals(kid) ? pub : null);
     }
 
     /** The checked-in compact JWS. */

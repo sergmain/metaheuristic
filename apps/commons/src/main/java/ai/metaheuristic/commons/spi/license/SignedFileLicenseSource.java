@@ -57,7 +57,7 @@ public class SignedFileLicenseSource implements LicenseSource {
     }
 
     private final Supplier<Collection<String>> tokensSupplier;
-    private final Function<String, @Nullable ECPublicKey> keyByKid;
+    private final LicenseKeyResolver keys;
     private final Supplier<Instant> clock;
     private final Supplier<DeploymentValues> deployment;
     private final Supplier<@Nullable String> installationId;
@@ -67,13 +67,13 @@ public class SignedFileLicenseSource implements LicenseSource {
 
     public SignedFileLicenseSource(
             Supplier<Collection<String>> tokensSupplier,
-            Function<String, @Nullable ECPublicKey> keyByKid,
+            LicenseKeyResolver keys,
             Supplier<Instant> clock,
             Supplier<DeploymentValues> deployment,
             Supplier<@Nullable String> installationId,
             Duration cacheTtl) {
         this.tokensSupplier = tokensSupplier;
-        this.keyByKid = keyByKid;
+        this.keys = keys;
         this.clock = clock;
         this.deployment = deployment;
         this.installationId = installationId;
@@ -114,7 +114,7 @@ public class SignedFileLicenseSource implements LicenseSource {
         final String localId = installationId.get();
         final List<LicenseVerificationResult> results = new ArrayList<>();
         for (String token : distinctTokens()) {
-            results.add(LicenseTokenCodec.verify(token, keyByKid, now, localId));
+            results.add(LicenseTokenCodec.verify(token, keys, now, localId));
         }
         return LicenseUnionUtils.fold(results, deployment.get());
     }

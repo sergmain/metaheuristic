@@ -51,18 +51,24 @@ public final class LicenseVerificationKeys {
 
     /**
      * A resolver that accepts exactly one kid. Returns null for anything else, which the codec
-     * reports as SIGNATURE_INVALID.
+     * reports as UNKNOWN_KID — the signature is never examined, because the fault is in the header
+     * or in which key was deployed, not in the signature bytes.
+     *
+     * <p>❗ With NOTHING configured the answer is a different state, not the same one: the returned
+     * resolver reports itself as unconfigured and the codec refuses every licence with
+     * NO_VERIFICATION_KEY. Both used to be UNKNOWN_KID, which named the token's kid for a fault
+     * that was entirely on this side of the wire.
      *
      * @param base64X509 the configured public half, or null/blank when none is configured — in
      *                   which case nothing verifies and every licence is refused, which is the
      *                   correct answer for a dispatcher that was never given a key
      */
-    public static Function<String, @Nullable ECPublicKey> resolver(@Nullable String base64X509) {
+    public static LicenseKeyResolver resolver(@Nullable String base64X509) {
         if (base64X509 == null || base64X509.isBlank()) {
-            return kid -> null;
+            return LicenseKeyResolver.none();
         }
         final ECPublicKey key = parse(base64X509);
-        return kid -> KID_V1.equals(kid) ? key : null;
+        return LicenseKeyResolver.of(kid -> KID_V1.equals(kid) ? key : null);
     }
 
     public static ECPublicKey parse(String base64X509) {

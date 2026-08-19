@@ -74,11 +74,20 @@ public class LicenseArtifactUtils {
         // would only put a permanent dead row in the set. UNKNOWN_KID is the arguable one - a key
         // could be configured later - but a licence and the key that verifies it arrive together,
         // and rejecting it at upload names the fault while the admin is still holding the file.
+        // NO_VERIFICATION_KEY joins them for the same reason and more strongly: with no key
+        // configured nothing on this installation can ever verify, so the row would be dead the
+        // moment it was written. UNSIGNED_TOKEN, ENCRYPTED_TOKEN and UNPARSEABLE are the three
+        // causes that used to hide inside UNSUPPORTED_ALGORITHM and SIGNATURE_INVALID; splitting
+        // them out changed what the admin is TOLD, never what is stored, so all three stay refused.
         return state != LicenseState.SIGNATURE_INVALID
                 && state != LicenseState.MALFORMED
                 && state != LicenseState.UNKNOWN_KID
+                && state != LicenseState.NO_VERIFICATION_KEY
                 && state != LicenseState.MISSING_KID
                 && state != LicenseState.UNSUPPORTED_ALGORITHM
+                && state != LicenseState.UNSIGNED_TOKEN
+                && state != LicenseState.ENCRYPTED_TOKEN
+                && state != LicenseState.UNPARSEABLE
                 && state != LicenseState.WRONG_TOKEN_TYPE;
     }
 }
