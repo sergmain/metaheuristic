@@ -86,7 +86,9 @@ public class LicenseRestController {
     public LicenseInfoData.LicenseStatusResult status() {
         try {
             final LicenseInfoData.LicenseInfo info = licenseInfoService.info();
-            log.info("01.265.010 licenseInfoService.info() returned: {}", info);
+            if (log.isInfoEnabled()) {
+                log.info("01.265.010 licenseInfoService.info() returned: {}", info);
+            }
             return new LicenseInfoData.LicenseStatusResult(info);
         }
         catch (Throwable th) {
@@ -115,7 +117,9 @@ public class LicenseRestController {
     public LicenseInfoData.CapabilitiesResult capabilities() {
         try {
             final LicenseInfoData.Capabilities capabilities = licenseInfoService.capabilities();
-            log.info("01.265.030 licenseInfoService.capabilities() returned: {}", capabilities);
+            if (log.isInfoEnabled()) {
+                log.info("01.265.030 licenseInfoService.capabilities() returned: {}", capabilities);
+            }
             return new LicenseInfoData.CapabilitiesResult(capabilities);
         }
         catch (Throwable th) {
@@ -162,8 +166,14 @@ public class LicenseRestController {
     public OperationStatusRest remove(@PathVariable Long artifactId) {
         try {
             final OperationStatusRest status = licenseArtifactService.remove(artifactId);
-            log.info("01.265.070 licenseArtifactService.remove({}) returned: {}, infoMessages: {}, errorMessages: {}",
-                    artifactId, status.status, status.infoMessages, status.errorMessages);
+            if (log.isInfoEnabled() && status.infoMessages!=null) {
+                log.info("01.265.070 licenseArtifactService.remove({}) returned: {}, infoMessages: {}",
+                        artifactId, status.status, status.infoMessages);
+            }
+            if (log.isErrorEnabled() && status.errorMessages!=null) {
+                log.error("01.265.072 licenseArtifactService.remove({}) returned: {}, errorMessages: {}",
+                        artifactId, status.status, status.errorMessages);
+            }
             return status;
         }
         catch (Throwable th) {
