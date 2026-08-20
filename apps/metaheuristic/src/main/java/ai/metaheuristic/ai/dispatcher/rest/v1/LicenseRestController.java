@@ -139,8 +139,14 @@ public class LicenseRestController {
             // ❗ The token itself is never logged. A refusal is the interesting part and it is a
             // RETURN VALUE, which used to reach the browser and leave the server log silent - the
             // admin was shown a code that appeared nowhere in mh.log.
-            log.info("01.265.050 licenseArtifactService.install() returned: {}, infoMessages: {}, errorMessages: {}",
-                    status.status, status.infoMessages, status.errorMessages);
+            if (log.isInfoEnabled() && status.infoMessages!=null) {
+                log.info("01.265.050 licenseArtifactService.install() returned: {}, infoMessages: {}",
+                        status.status, status.infoMessages);
+            }
+            if (log.isErrorEnabled() && status.errorMessages!=null) {
+                log.error("01.265.052 licenseArtifactService.install() returned: {}, errorMessages: {}",
+                        status.status, status.errorMessages);
+            }
             return status;
         }
         catch (Throwable th) {
