@@ -104,7 +104,7 @@ public class LicenseArtifactService {
         if (!LicenseArtifactUtils.isInstallable(verified.state())) {
             // nothing is written: the set is left exactly as it was.
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "01.262.020 this is not a valid license, state: " + verified.state());
+                    LicenseArtifactUtils.refusalMessage(verified.state()));
         }
 
         final LicenseArtifactUtils.InstallAction action = licenseArtifactTxService.install(trimmed, installedByAccountId);

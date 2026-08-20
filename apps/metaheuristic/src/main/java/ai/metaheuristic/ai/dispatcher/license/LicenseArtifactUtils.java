@@ -23,6 +23,8 @@ import org.jspecify.annotations.Nullable;
  * The two decisions behind installing a license. Static and Spring-free: neither needs a database
  * to be made, so neither needs one to be tested.
  *
+ * <p>Error code prefix: {@code 01.267.} (unique to this class).
+ *
  * @author Serge
  */
 public class LicenseArtifactUtils {
@@ -89,5 +91,25 @@ public class LicenseArtifactUtils {
                 && state != LicenseState.ENCRYPTED_TOKEN
                 && state != LicenseState.UNPARSEABLE
                 && state != LicenseState.WRONG_TOKEN_TYPE;
+    }
+
+    /**
+     * The message a refused install is reported with.
+     *
+     * <p>Lives here rather than at the call site so that WHICH refusal earns WHICH words is a
+     * decision testable without a Spring context, the same way {@link #isInstallable} already is.
+     */
+    public static String refusalMessage(LicenseState state) {
+        // ❗ NO_VERIFICATION_KEY is not a verdict about the token. With no key material on this
+        // dispatcher nothing was verified and nothing CAN be: the token was never examined, so
+        // "this is not a valid license" asserts something that was never established, and sends
+        // the admin to re-check a file that may be perfectly good. The fault, and the fix, are
+        // entirely on this side - hence a code of its own.
+        if (state==LicenseState.NO_VERIFICATION_KEY) {
+            return "01.267.010 no license verification key is configured on this dispatcher "
+                    + "(mh.key-store.license.public-key), so no license can be verified here - the "
+                    + "license itself was never examined, state: " + state;
+        }
+        return "01.267.020 this is not a valid license, state: " + state;
     }
 }

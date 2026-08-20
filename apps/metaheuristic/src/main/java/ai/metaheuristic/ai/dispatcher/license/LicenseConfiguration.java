@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.license;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.spi.license.LicenseVerificationKeys;
 import ai.metaheuristic.api.data.license.LicenseClaims;
 import ai.metaheuristic.commons.spi.license.LicenseAggregate;
@@ -58,6 +59,8 @@ import java.time.Instant;
  * the interface and stay backend-blind; only the status page, which exists to report which backend
  * is active, knows the difference.
  *
+ * <p>Error code prefix: {@code 01.266.} (unique to this class).
+ *
  * @author Serge
  */
 @Configuration
@@ -83,6 +86,19 @@ public class LicenseConfiguration {
         // without a binary release.
         // ! It is a SEPARATE property from mh.publicKeyStore, which holds function-signature keys:
         // one array for both would let a 'code' collision promote one kind of trust anchor to the other.
+        // ❗ An installation with no key material CANNOT verify anything: LicenseVerificationKeys
+        // builds a resolver that answers to no kid, and every licence - correctly signed or not -
+        // is refused NO_VERIFICATION_KEY. Said at startup because the alternative is finding out
+        // by installing a licence and being told the licence is at fault. Nothing else here
+        // reports it: the dispatcher starts, serves, and looks entirely healthy.
+        if (S.b(globals.keyStore.license.publicKey)) {
+            log.error("01.266.010 mh.key-store.license.public-key isn't configured. NO license can "
+                    + "be verified on this installation - every licence, however it was signed, is "
+                    + "refused with the state NO_VERIFICATION_KEY and every licensed capability "
+                    + "stays off. Configure the base64 X.509 EC P-256 public half of the vendor "
+                    + "signing key.");
+        }
+
         final SignedFileLicenseSource source = new SignedFileLicenseSource(
                 licenseTokenSupplier::tokens,
                 LicenseVerificationKeys.resolver(globals.keyStore.license.publicKey),

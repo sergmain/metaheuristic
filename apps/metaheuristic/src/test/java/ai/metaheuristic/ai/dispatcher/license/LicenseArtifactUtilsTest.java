@@ -115,4 +115,37 @@ public class LicenseArtifactUtilsTest {
             assertEquals(!refused.contains(state), LicenseArtifactUtils.isInstallable(state), state.name());
         }
     }
+
+    /**
+     * NO_VERIFICATION_KEY means this dispatcher holds no key material at all, so the token was
+     * never examined - nothing whatsoever is known about whether it is a valid license.
+     */
+    @Test
+    public void test_noVerificationKeyRefusalNamesTheFault() {
+        final String message = LicenseArtifactUtils.refusalMessage(LicenseState.NO_VERIFICATION_KEY);
+
+        assertEquals("01.267.010 no license verification key is configured on this dispatcher "
+                + "(mh.key-store.license.public-key), so no license can be verified here - the "
+                + "license itself was never examined, state: NO_VERIFICATION_KEY", message);
+    }
+
+    /** A refusal that IS about the token keeps the generic wording. */
+    @Test
+    public void test_tokenFaultRefusalsKeepTheGenericMessage() {
+        assertEquals("01.267.020 this is not a valid license, state: SIGNATURE_INVALID",
+                LicenseArtifactUtils.refusalMessage(LicenseState.SIGNATURE_INVALID));
+        assertEquals("01.267.020 this is not a valid license, state: UNKNOWN_KID",
+                LicenseArtifactUtils.refusalMessage(LicenseState.UNKNOWN_KID));
+    }
+
+    @Test
+    public void test_everyStateGetsAMessageCarryingACode() {
+        // total by construction: a state added later must not produce a message with no code to
+        // grep for, which is the one thing an error message exists to provide.
+        for (LicenseState state : LicenseState.values()) {
+            final String message = LicenseArtifactUtils.refusalMessage(state);
+            assertTrue(message.startsWith("01.267."), state.name() + " -> " + message);
+            assertTrue(message.contains(state.name()), state.name() + " -> " + message);
+        }
+    }
 }
