@@ -87,7 +87,7 @@ public class CompanyTopLevelService {
     public Long getUniqueId() {
         Long maxUniqueId = companyRepository.getMaxUniqueIdValue();
         if (maxUniqueId==null) {
-            // 2L because 1 is reserved for 'main company'
+            // 2L because 1 is reserved for the management company
             maxUniqueId = 2L;
         }
         int compare;

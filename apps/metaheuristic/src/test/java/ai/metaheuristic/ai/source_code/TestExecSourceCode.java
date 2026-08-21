@@ -86,7 +86,7 @@ class TestExecSourceCode extends MhSharedItTest {
         assertNotNull(company.id);
         assertNotNull(company.uniqueId);
 
-        // id==1L must be assigned only to master company
+        // id==1L must be assigned only to the management company
         assertNotEquals(Consts.ID_1, company.id);
     }
 

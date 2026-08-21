@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -95,7 +96,11 @@ public class CompanyRevision implements Serializable {
             new ThreadUtils.CommonThreadLocker<>(this::parseParams);
 
     private CompanyParamsYaml parseParams() {
-        if (params == null) {
+        // Blank is handled exactly as null: the initial-revision DDL seeds PARAMS='' for both
+        // 'Management company' and 'Company #1', and editFormCommit() treats a blank head PARAMS
+        // as a legitimate state too. Passing '' down to BaseYamlUtils.to() parses to null and then
+        // NPEs inside CompanyParamsYamlUtilsV1.upgradeTo(), which is never reachable as an error.
+        if (S.b(params)) {
             return new CompanyParamsYaml();
         }
         CompanyParamsYaml temp = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(params);

@@ -84,9 +84,9 @@ CREATE UNIQUE INDEX MH_COMPANY_UNIQUE_ID_UNQ_IDX
 insert into MH_COMPANY
 (id, version, UNIQUE_ID, name, params)
 VALUES
-(nextval('mh_company_id_seq'), 0, 1, 'Main company', '');
+(nextval('mh_company_id_seq'), 0, 1, 'Management company', '');
 
--- !!! this insert must be after creating 'master company'
+-- !!! this insert must be after creating the management company
 insert into MH_GEN_IDS
 (SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)
 select 'mh_ids', max(UNIQUE_ID) from mh_company;
