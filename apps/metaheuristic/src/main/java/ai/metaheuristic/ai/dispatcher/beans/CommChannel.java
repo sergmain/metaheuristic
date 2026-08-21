@@ -58,7 +58,7 @@ import java.io.Serializable;
 public class CommChannel implements Serializable {
 
     @Serial
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -6817696086861383359L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
