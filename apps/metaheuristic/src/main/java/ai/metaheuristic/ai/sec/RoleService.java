@@ -114,7 +114,7 @@ public class RoleService {
     }
 
     /**
-     * Returns all possible roles for company with ID 1 (master company).
+     * Returns all possible roles for company with ID 1 (the management company).
      */
     public List<String> getCompany1PossibleRoles() {
         return company1PossibleRoles;

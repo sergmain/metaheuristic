@@ -100,14 +100,14 @@ CREATE UNIQUE INDEX mh_company_unique_id_unq_idx
 insert into mh_company
 (version, UNIQUE_ID, name, params)
 VALUES
-(0, 1, 'Main company', '');
+(0, 1, 'Management company', '');
 
 insert into mh_company
 (version, UNIQUE_ID, name, params)
 VALUES
 (0, 2, 'Company #1', '');
 
--- !!! this insert must be executed after creating 'master company' immediately;
+-- !!! this insert must be executed after creating the management company immediately;
 
 insert into mh_gen_ids
 (SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)

@@ -154,7 +154,7 @@ public class PreparingSourceCodeInitService {
         assertNotNull(data.company.id);
         assertNotNull(data.company.uniqueId);
 
-        // id==1L must be assigned only to master company
+        // id==1L must be assigned only to the management company
         assertNotEquals(Consts.ID_1, data.company.id);
 
         data.f1 = createFunction("function-01:1.1");

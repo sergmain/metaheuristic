@@ -120,10 +120,10 @@ CREATE UNIQUE INDEX mh_company_revision_company_id_revision_unq_idx
 CREATE INDEX mh_company_revision_company_id_idx
     ON mh_company_revision (COMPANY_ID);
 
--- Seed: 'Main company' (UNIQUE_ID=1) — envelope + first revision
+-- Seed: 'Management company' (UNIQUE_ID=1) — envelope + first revision
 insert into mh_company (version, UNIQUE_ID, IS_DELETED, HEAD_REVISION_ID) VALUES (0, 1, false, null);
 insert into mh_company_revision (version, COMPANY_ID, REVISION, NAME, PARAMS, IS_DELETED, CREATED_ON)
-    VALUES (0, (select ID from mh_company where UNIQUE_ID=1), 1, 'Main company', '', false, 1696034005027);
+    VALUES (0, (select ID from mh_company where UNIQUE_ID=1), 1, 'Management company', '', false, 1696034005027);
 update mh_company set HEAD_REVISION_ID = (select ID from mh_company_revision where COMPANY_ID = (select ID from mh_company where UNIQUE_ID=1) and REVISION=1) where UNIQUE_ID=1;
 
 -- Seed: 'Company #1' (UNIQUE_ID=2) — envelope + first revision
@@ -132,7 +132,7 @@ insert into mh_company_revision (version, COMPANY_ID, REVISION, NAME, PARAMS, IS
     VALUES (0, (select ID from mh_company where UNIQUE_ID=2), 1, 'Company #1', '', false, 1696034005027);
 update mh_company set HEAD_REVISION_ID = (select ID from mh_company_revision where COMPANY_ID = (select ID from mh_company where UNIQUE_ID=2) and REVISION=1) where UNIQUE_ID=2;
 
--- !!! this insert must be executed after creating 'master company' immediately;
+-- !!! this insert must be executed after creating the management company immediately;
 
 insert into mh_gen_ids
 (SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)

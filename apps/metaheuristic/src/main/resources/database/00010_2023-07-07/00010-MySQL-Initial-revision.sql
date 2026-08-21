@@ -122,7 +122,7 @@ CREATE UNIQUE INDEX mh_company_revision_company_id_revision_unq_idx
 CREATE INDEX mh_company_revision_company_id_idx
     ON mh_company_revision (COMPANY_ID);
 
--- Seed: 'Main company' — envelope + first revision
+-- Seed: 'Management company' — envelope + first revision
 insert into mh_company
 (id, version, UNIQUE_ID, IS_DELETED, HEAD_REVISION_ID)
 VALUES
@@ -131,7 +131,7 @@ VALUES
 insert into mh_company_revision
 (id, version, COMPANY_ID, REVISION, NAME, PARAMS, IS_DELETED, CREATED_ON)
 VALUES
-(1, 0, 1, 1, 'Main company', '', false, UNIX_TIMESTAMP() * 1000);
+(1, 0, 1, 1, 'Management company', '', false, UNIX_TIMESTAMP() * 1000);
 
 update mh_company set HEAD_REVISION_ID = 1 where ID = 1;
 
@@ -148,7 +148,7 @@ VALUES
 
 update mh_company set HEAD_REVISION_ID = 2 where ID = 2;
 
--- !!! this insert must be executed after creating 'master company' immediately;
+-- !!! this insert must be executed after creating the management company immediately;
 
 insert mh_gen_ids
 (SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)
