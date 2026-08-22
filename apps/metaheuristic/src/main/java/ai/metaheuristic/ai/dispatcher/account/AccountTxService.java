@@ -276,7 +276,7 @@ public class AccountTxService {
      * <p>Separate from {@link #storeRolesForUserById} rather than a parameterisation of it,
      * because the two differ in the one place that matters. That method serves a MAIN_ADMIN,
      * who sees the account's whole role universe, and it strips any held role missing from
-     * that universe. An ADMIN sees only the regular universe, which for a company-1 account
+     * that universe. An ADMIN sees only the regular universe, which for a management-company account
      * omits every {@code ROLE_MAIN_*} the account legitimately holds — running the same strip
      * loop would turn a toggle of {@code ROLE_OPERATOR} into a silent demotion of roles the
      * ADMIN was never shown. Here the named role is the only one touched.
@@ -312,7 +312,7 @@ public class AccountTxService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.120 account wasn't found, accountId: " + accountId);
         }
 
-        List<String> possibleRoles = Consts.ID_1.equals(companyUniqueId) ? roleService.getCompany1PossibleRoles() : roleService.getPossibleRoles();
+        List<String> possibleRoles = Consts.ID_1.equals(companyUniqueId) ? roleService.getManagementCompanyPossibleRoles() : roleService.getPossibleRoles();
         if (!possibleRoles.contains(role)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.130 account wasn't found, accountId: " + accountId);
         }

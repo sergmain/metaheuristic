@@ -82,7 +82,7 @@ public class CommChannelServiceRegistry {
                                 + "' names a role that isn't ROLE_*: " + svc.role());
                         continue;
                     }
-                    if (!roleService.isValidRole(svc.role()) && !roleService.isValidCompany1Role(svc.role())) {
+                    if (!roleService.isValidRole(svc.role()) && !roleService.isValidManagementCompanyRole(svc.role())) {
                         errors.add("01.239.080 service '" + svc.tag()
                                 + "' names an unknown role: " + svc.role());
                         continue;

@@ -77,8 +77,8 @@ public class AccountService {
      * The account plus the roles an ADMIN of the CALLER's company may hand out.
      *
      * <p>Always {@code RoleService#getPossibleRoles()} — the regular universe — even when the
-     * caller's own company is company 1, and filtered down to the roles a human may actually
-     * grant. The company-1 universe carries {@code ROLE_MAIN_*} and
+     * caller's own company is the management company, and filtered down to the roles a human may actually
+     * grant. The management-company universe carries {@code ROLE_MAIN_*} and
      * the REST-access roles, which reach beyond a single company; offering them here would let
      * an ADMIN of the management company escalate out of the scope this endpoint exists to
      * confine them to. Contrast {@code CompanyAccountTopLevelService#getAccountWithRole}, which

@@ -87,12 +87,12 @@ public class AccountRoleEditUtilsTest {
     }
 
     /**
-     * Company 1 is the management company, so its own ADMIN is the account most worth
+     * The management company is company uniqueId 1, so its own ADMIN is the account most worth
      * pinning down: a MAIN_* role must not be reachable from this path in ANY company.
      */
     @Test
-    public void test_adminOfCompany1_cannotGrantAMainRole() {
-        for (String mainRole : SecConsts.COMPANY_1_POSSIBLE_ROLES) {
+    public void test_adminOfManagementCompany_cannotGrantAMainRole() {
+        for (String mainRole : SecConsts.MANAGEMENT_COMPANY_POSSIBLE_ROLES) {
             AccountRoleEditUtils.Verdict v = validate(1L, 1L, null, mainRole);
 
             assertFalse(v.allowed(), mainRole);
@@ -103,9 +103,9 @@ public class AccountRoleEditUtilsTest {
         assertTrue(v.error().startsWith("01.242.050"), v.error());
     }
 
-    /** Inside company 1 the regular roles are still ordinary business. */
+    /** Inside the management company the regular roles are still ordinary business. */
     @Test
-    public void test_adminOfCompany1_canStillGrantARegularRole() {
+    public void test_adminOfManagementCompany_canStillGrantARegularRole() {
         assertTrue(validate(1L, 1L, null, "ROLE_OPERATOR").allowed());
     }
 
