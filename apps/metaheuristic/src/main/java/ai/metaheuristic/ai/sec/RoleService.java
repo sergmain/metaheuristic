@@ -25,8 +25,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Service that aggregates possible roles from SecConsts and any RoleProvider beans.
@@ -50,6 +52,14 @@ public class RoleService {
      */
     private final Map<String, EnumsApi.RoleManager> roleManagers;
 
+    /**
+     * Mechanism-minted roles an administrator may nonetheless grant. Separate from
+     * {@link #roleManagers} because the two answer different questions: that map says
+     * which mechanism MINTS a role, this set says whether a human may ALSO hand it out.
+     * Collapsing them would break minting, since the mint paths key off the manager.
+     */
+    private final Set<String> handAssignableRoles;
+
     public RoleService(@Autowired(required = false) List<RoleProvider> roleProviders) {
         List<RoleProvider.RoleDescriptor> descriptors = new ArrayList<>();
         if (roleProviders != null) {
@@ -67,6 +77,7 @@ public class RoleService {
         List<String> allPossibleRoles = new ArrayList<>(SecConsts.POSSIBLE_ROLES);
         List<String> allManagementCompanyRoles = new ArrayList<>(SecConsts.MANAGEMENT_COMPANY_POSSIBLE_ROLES);
         Map<String, EnumsApi.RoleManager> managers = new HashMap<>();
+        Set<String> handAssignable = new HashSet<>();
 
         for (RoleProvider.RoleDescriptor d : descriptors) {
             if (d.scope().regularUniverse) {
@@ -77,16 +88,21 @@ public class RoleService {
             }
             if (d.managedBy()!=EnumsApi.RoleManager.admin) {
                 managers.put(d.role(), d.managedBy());
+                if (d.handAssignable()) {
+                    handAssignable.add(d.role());
+                }
             }
         }
 
         this.possibleRoles = List.copyOf(allPossibleRoles);
         this.managementCompanyPossibleRoles = List.copyOf(allManagementCompanyRoles);
         this.roleManagers = Map.copyOf(managers);
+        this.handAssignableRoles = Set.copyOf(handAssignable);
 
         log.info("Total possible roles: {}", this.possibleRoles);
         log.info("Total management-company possible roles: {}", this.managementCompanyPossibleRoles);
         log.info("Mechanism-managed roles: {}", this.roleManagers);
+        log.info("Mechanism-managed roles an admin may also grant: {}", this.handAssignableRoles);
     }
 
     /** Who may grant this role. Never null — an unlisted role is admin-managed. */
@@ -101,9 +117,13 @@ public class RoleService {
      * is still a valid, listed role — it must be, or the role-toggle path would
      * silently strip it from every account that legitimately holds it. What
      * changes is who may hand it out.
+     *
+     * <p>Also separate from {@link #getRoleManager(String)}. A mechanism-minted role
+     * that declared {@code handAssignable} is grantable by an administrator AND still
+     * minted by its mechanism; the mint paths read the manager, so they are unaffected.
      */
     public boolean isAssignableByAdmin(String role) {
-        return getRoleManager(role)==EnumsApi.RoleManager.admin;
+        return getRoleManager(role)==EnumsApi.RoleManager.admin || handAssignableRoles.contains(role);
     }
 
     /**

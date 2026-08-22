@@ -38,15 +38,30 @@ public interface RoleProvider {
     List<String> getAdditionalRoles();
 
     /**
-     * One role plus the two things the installation needs to know about it:
-     * who may grant it, and in which companies it means anything.
+     * One role plus the three things the installation needs to know about it:
+     * which mechanism mints it, in which companies it means anything, and whether an
+     * administrator may also hand it out.
      *
      * @param role         Spring Security role name, e.g. {@code ROLE_XXX}
-     * @param managedBy    who may GRANT this role; {@link EnumsApi.RoleManager#admin} is
-     *                     ordinary human administration
+     * @param managedBy    which mechanism MINTS this role; {@link EnumsApi.RoleManager#admin}
+     *                     is ordinary human administration
      * @param scope        which company universes offer it
+     * @param handAssignable whether an administrator may grant and revoke this role in
+     *                     addition to the mechanism that mints it. Meaningful only when
+     *                     {@code managedBy} is not {@code admin} — an admin-managed role is
+     *                     hand-assignable by definition. Set it where a role is normally
+     *                     minted by a mechanism but the installation still wants an operator
+     *                     able to grant it directly; the mechanism keeps working unchanged,
+     *                     because every path that MINTS a role reads {@code managedBy} and
+     *                     not this flag.
      */
-    record RoleDescriptor(String role, EnumsApi.RoleManager managedBy, EnumsApi.RoleScope scope) {}
+    record RoleDescriptor(String role, EnumsApi.RoleManager managedBy, EnumsApi.RoleScope scope, boolean handAssignable) {
+
+        /** A role only its own mechanism may grant — the posture before this flag existed. */
+        public RoleDescriptor(String role, EnumsApi.RoleManager managedBy, EnumsApi.RoleScope scope) {
+            this(role, managedBy, scope, false);
+        }
+    }
 
     /**
      * Richer form of {@link #getAdditionalRoles()}.
