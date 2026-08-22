@@ -96,7 +96,7 @@ public class AccountTxService {
     @Transactional
     public OperationStatusRest addAccountManagedBy(
             AccountData.NewAccount acc, Long companyUniqueId, String roles, EnumsApi.RoleManager manager) {
-        if (manager==EnumsApi.RoleManager.admin) {
+        if (!manager.server) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "235.180 addAccountManagedBy requires a mechanism, not 'admin'");
         }
@@ -141,7 +141,7 @@ public class AccountTxService {
         // same gate. Without it an admin could create a fresh account carrying the
         // managed role — indistinguishable from a real one afterwards, with no
         // record of where it came from.
-        if (manager==EnumsApi.RoleManager.admin) {
+        if (!manager.server) {
             for (String r : StringUtils.split(roles==null ? "" : roles, ',')) {
                 final String trimmed = r.trim();
                 if (!trimmed.isEmpty() && !roleService.isAssignableByAdmin(trimmed)) {
@@ -154,9 +154,12 @@ public class AccountTxService {
         else {
             // Every role granted this way must belong to THIS mechanism; a mechanism
             // may not use its own entry point to hand out somebody else's role.
+            // Asking for the server flag rather than manager identity so a role that is
+            // BOTH minted here and grantable by hand still passes; with one mechanism in
+            // existence the two readings coincide, and a second would need the owner named.
             for (String r : StringUtils.split(roles==null ? "" : roles, ',')) {
                 final String trimmed = r.trim();
-                if (!trimmed.isEmpty() && roleService.getRoleManager(trimmed)!=manager) {
+                if (!trimmed.isEmpty() && !roleService.getRoleManager(trimmed).server) {
                     return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                             "235.190 Role " + trimmed + " isn't managed by '" + manager + "'");
                 }

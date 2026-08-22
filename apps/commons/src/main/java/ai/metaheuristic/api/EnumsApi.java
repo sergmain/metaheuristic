@@ -647,15 +647,41 @@ public class EnumsApi {
      *
      * <p>Mechanisms are infrastructure, so this enum is closed to plugins. A
      * plugin contributes ROLES; it does not invent ways of managing them.
+     *
+     * <p>The two flags are independent, exactly as {@link RoleScope}'s two
+     * universes are. Callers ask the question they actually have — may a person
+     * grant this, may a mechanism mint it — instead of comparing the constant
+     * against {@code admin}, which silently means "not a mechanism" and stops
+     * being true the moment a role is both.
      */
     public enum RoleManager {
         /** Ordinary human administration. The default. */
-        admin,
+        admin(true, false),
         /**
          * Owned by the communication-channel mechanism: granted only when a
          * channel token is activated, and not editable by hand afterwards.
          */
-        commChannel
+        commChannel(false, true),
+        /**
+         * Minted by the communication-channel mechanism AND grantable by hand.
+         *
+         * <p>For a role an operator must be able to hand out directly while the
+         * channel mechanism still mints it on token activation. ❗ Holding such a
+         * role therefore no longer implies an issuance record exists — the
+         * provenance the mechanism provides becomes one source among two.
+         */
+        commChannelAndAdmin(true, true);
+
+        /** A person — an administrator on a Roles page — may grant and revoke this role. */
+        public final boolean user;
+
+        /** A mechanism mints this role; system code grants it without a person acting. */
+        public final boolean server;
+
+        RoleManager(boolean user, boolean server) {
+            this.user = user;
+            this.server = server;
+        }
     }
 
     /**
