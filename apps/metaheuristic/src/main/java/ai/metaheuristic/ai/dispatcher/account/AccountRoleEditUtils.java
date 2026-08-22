@@ -72,7 +72,7 @@ public final class AccountRoleEditUtils {
      * it as junk. See {@code RoleService#isAssignableByAdmin}.
      *
      * @param adminUniverse roles an ADMIN may hand out. Always the regular universe,
-     *   never the company-1 one — an ADMIN of the management company must not be able
+     *   never the management-company one — an ADMIN of the management company must not be able
      *   to grant themselves a {@code ROLE_MAIN_*} role, which would be an escalation out
      *   of their own company rather than an edit inside it.
      */
@@ -106,7 +106,7 @@ public final class AccountRoleEditUtils {
      *
      * <p>Deliberately NOT the strip-everything-unlisted loop that
      * {@code AccountTxService#storeRolesForUserById} runs for a MAIN_ADMIN. An ADMIN
-     * sees a narrower universe than the account may legitimately hold — a company-1
+     * sees a narrower universe than the account may legitimately hold — a management-company
      * account carries {@code ROLE_MAIN_*} roles that are absent from the ADMIN's
      * universe — so stripping the unlisted ones would turn a toggle of
      * {@code ROLE_OPERATOR} into a silent demotion of everything the ADMIN cannot see.

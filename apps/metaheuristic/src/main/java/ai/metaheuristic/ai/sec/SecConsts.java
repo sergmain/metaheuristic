@@ -34,7 +34,7 @@ public class SecConsts {
     public static final String ROLE_ADMIN = "ROLE_ADMIN";
 
     public static final List<String> POSSIBLE_ROLES = List.of(ROLE_ADMIN,"ROLE_MANAGER","ROLE_OPERATOR", "ROLE_DATA");
-    public static final List<String> COMPANY_1_POSSIBLE_ROLES =
+    public static final List<String> MANAGEMENT_COMPANY_POSSIBLE_ROLES =
             List.of(ROLE_SERVER_REST_ACCESS, ROLE_ASSET_REST_ACCESS, ROLE_MAIN_OPERATOR,
                     ROLE_MAIN_SUPPORT, ROLE_BILLING, "ROLE_MAIN_ASSET_MANAGER");
 }

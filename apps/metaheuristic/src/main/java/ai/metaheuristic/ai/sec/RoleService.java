@@ -41,7 +41,7 @@ import java.util.Map;
 public class RoleService {
 
     private final List<String> possibleRoles;
-    private final List<String> company1PossibleRoles;
+    private final List<String> managementCompanyPossibleRoles;
 
     /**
      * Who may grant each role. A role absent from this map is
@@ -65,15 +65,15 @@ public class RoleService {
         // Base roles are admin-managed and keep their existing universes; a provider
         // role now chooses its universe rather than landing in both unconditionally.
         List<String> allPossibleRoles = new ArrayList<>(SecConsts.POSSIBLE_ROLES);
-        List<String> allCompany1Roles = new ArrayList<>(SecConsts.COMPANY_1_POSSIBLE_ROLES);
+        List<String> allManagementCompanyRoles = new ArrayList<>(SecConsts.MANAGEMENT_COMPANY_POSSIBLE_ROLES);
         Map<String, EnumsApi.RoleManager> managers = new HashMap<>();
 
         for (RoleProvider.RoleDescriptor d : descriptors) {
             if (d.scope().regularUniverse) {
                 allPossibleRoles.add(d.role());
             }
-            if (d.scope().company1Universe) {
-                allCompany1Roles.add(d.role());
+            if (d.scope().managementCompanyUniverse) {
+                allManagementCompanyRoles.add(d.role());
             }
             if (d.managedBy()!=EnumsApi.RoleManager.admin) {
                 managers.put(d.role(), d.managedBy());
@@ -81,11 +81,11 @@ public class RoleService {
         }
 
         this.possibleRoles = List.copyOf(allPossibleRoles);
-        this.company1PossibleRoles = List.copyOf(allCompany1Roles);
+        this.managementCompanyPossibleRoles = List.copyOf(allManagementCompanyRoles);
         this.roleManagers = Map.copyOf(managers);
 
         log.info("Total possible roles: {}", this.possibleRoles);
-        log.info("Total company-1 possible roles: {}", this.company1PossibleRoles);
+        log.info("Total management-company possible roles: {}", this.managementCompanyPossibleRoles);
         log.info("Mechanism-managed roles: {}", this.roleManagers);
     }
 
@@ -114,10 +114,27 @@ public class RoleService {
     }
 
     /**
+     * The subset of {@link #getPossibleRoles()} a human administrator may actually grant.
+     *
+     * <p>Narrower than the universe on purpose, and used only where roles are OFFERED for
+     * editing — never where a held role is validated. A mechanism-managed role such as
+     * {@code ROLE_RG_ENSEMBLE} remains a fully valid member of the universe, because the
+     * toggle path treats an unlisted role as junk; what it must not be is a checkbox, since
+     * ticking it can only ever end in a refusal from the manager gate.
+     *
+     * <p>This is an offer, not a guard. The manager gate in
+     * {@code AccountRoleEditUtils#validateToggle} still runs on every commit, so a request
+     * that names a managed role directly is still refused rather than merely un-offered.
+     */
+    public List<String> getAdminAssignableRoles() {
+        return possibleRoles.stream().filter(this::isAssignableByAdmin).toList();
+    }
+
+    /**
      * Returns all possible roles for company with ID 1 (the management company).
      */
-    public List<String> getCompany1PossibleRoles() {
-        return company1PossibleRoles;
+    public List<String> getManagementCompanyPossibleRoles() {
+        return managementCompanyPossibleRoles;
     }
 
     /**
@@ -128,9 +145,9 @@ public class RoleService {
     }
 
     /**
-     * Checks if a role is valid for company 1.
+     * Checks if a role is valid for the management company.
      */
-    public boolean isValidCompany1Role(String role) {
-        return company1PossibleRoles.contains(role);
+    public boolean isValidManagementCompanyRole(String role) {
+        return managementCompanyPossibleRoles.contains(role);
     }
 }

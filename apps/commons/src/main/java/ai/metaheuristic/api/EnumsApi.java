@@ -670,21 +670,21 @@ public class EnumsApi {
     @ToString
     public enum RoleScope {
         /** Management company only. */
-        company1(true, false),
+        managementCompany(true, false),
         /**
          * Every company EXCEPT the management one. The right scope for any role
          * that presupposes owning projects or data, since the management company
          * owns neither.
          */
-        notCompany1(false, true),
+        notManagementCompany(false, true),
         /** Both universes — the default. */
         all(true, true);
 
-        public final boolean company1Universe;
+        public final boolean managementCompanyUniverse;
         public final boolean regularUniverse;
 
-        RoleScope(boolean company1Universe, boolean regularUniverse) {
-            this.company1Universe = company1Universe;
+        RoleScope(boolean managementCompanyUniverse, boolean regularUniverse) {
+            this.managementCompanyUniverse = managementCompanyUniverse;
             this.regularUniverse = regularUniverse;
         }
     }

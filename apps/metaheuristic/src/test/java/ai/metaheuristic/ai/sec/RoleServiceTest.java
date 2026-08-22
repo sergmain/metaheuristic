@@ -39,7 +39,7 @@ public class RoleServiceTest {
     private static final String LEGACY = "ROLE_LEGACY_PROVIDER";
     private static final String MANAGED = "ROLE_MANAGED_BY_MECHANISM";
     private static final String REGULAR_ONLY = "ROLE_REGULAR_ONLY";
-    private static final String COMPANY1_ONLY = "ROLE_COMPANY1_ONLY";
+    private static final String MANAGEMENT_COMPANY_ONLY = "ROLE_MANAGEMENT_COMPANY_ONLY";
 
     /** Implements only the old method — exactly what an untouched provider looks like. */
     private static final RoleProvider LEGACY_PROVIDER = () -> List.of(LEGACY);
@@ -47,16 +47,63 @@ public class RoleServiceTest {
     private static final RoleProvider RICH_PROVIDER = new RoleProvider() {
         @Override
         public List<String> getAdditionalRoles() {
-            return List.of(MANAGED, REGULAR_ONLY, COMPANY1_ONLY);
+            return List.of(MANAGED, REGULAR_ONLY, MANAGEMENT_COMPANY_ONLY);
         }
         @Override
         public List<RoleDescriptor> getAdditionalRoleDescriptors() {
             return List.of(
-                new RoleDescriptor(MANAGED, EnumsApi.RoleManager.commChannel, EnumsApi.RoleScope.notCompany1),
-                new RoleDescriptor(REGULAR_ONLY, EnumsApi.RoleManager.admin, EnumsApi.RoleScope.notCompany1),
-                new RoleDescriptor(COMPANY1_ONLY, EnumsApi.RoleManager.admin, EnumsApi.RoleScope.company1));
+                new RoleDescriptor(MANAGED, EnumsApi.RoleManager.commChannel, EnumsApi.RoleScope.notManagementCompany),
+                new RoleDescriptor(REGULAR_ONLY, EnumsApi.RoleManager.admin, EnumsApi.RoleScope.notManagementCompany),
+                new RoleDescriptor(MANAGEMENT_COMPANY_ONLY, EnumsApi.RoleManager.admin, EnumsApi.RoleScope.managementCompany));
         }
     };
+
+    // ---------- what an ADMIN is OFFERED ----------
+
+    /**
+     * A mechanism-managed role stays in getPossibleRoles() — the toggle path must keep
+     * seeing it as valid or it would strip it from accounts that legitimately hold it —
+     * but it must not be OFFERED to an admin, who can never successfully grant it.
+     * ROLE_RG_ENSEMBLE is the live instance of this shape.
+     */
+    @Test
+    public void test_adminAssignableRoles_excludeAMechanismManagedRole() {
+        RoleService s = new RoleService(List.of(RICH_PROVIDER));
+
+        assertTrue(s.getPossibleRoles().contains(MANAGED));
+        assertFalse(s.isAssignableByAdmin(MANAGED));
+
+        assertFalse(s.getAdminAssignableRoles().contains(MANAGED));
+    }
+
+    @Test
+    public void test_adminAssignableRoles_keepEveryAdminManagedRole() {
+        RoleService s = new RoleService(List.of(RICH_PROVIDER));
+
+        List<String> offered = s.getAdminAssignableRoles();
+
+        assertTrue(offered.contains(REGULAR_ONLY));
+        SecConsts.POSSIBLE_ROLES.forEach(r -> assertTrue(offered.contains(r), r));
+        assertEquals(s.getPossibleRoles().size() - 1, offered.size());
+    }
+
+    /** Order is the admin's reading order; filtering must not reshuffle it. */
+    @Test
+    public void test_adminAssignableRoles_preserveTheUniverseOrder() {
+        RoleService s = new RoleService(List.of(RICH_PROVIDER));
+
+        List<String> expected = s.getPossibleRoles().stream().filter(s::isAssignableByAdmin).toList();
+
+        assertEquals(expected, s.getAdminAssignableRoles());
+    }
+
+    /** With nothing mechanism-managed there is nothing to filter. */
+    @Test
+    public void test_adminAssignableRoles_equalTheUniverseWhenNothingIsManaged() {
+        RoleService s = new RoleService(List.of(LEGACY_PROVIDER));
+
+        assertEquals(s.getPossibleRoles(), s.getAdminAssignableRoles());
+    }
 
     // ---------- backward compatibility ----------
 
@@ -69,9 +116,9 @@ public class RoleServiceTest {
         RoleService s = new RoleService(List.of(LEGACY_PROVIDER));
 
         assertTrue(s.getPossibleRoles().contains(LEGACY));
-        assertTrue(s.getCompany1PossibleRoles().contains(LEGACY));
+        assertTrue(s.getManagementCompanyPossibleRoles().contains(LEGACY));
         assertTrue(s.isValidRole(LEGACY));
-        assertTrue(s.isValidCompany1Role(LEGACY));
+        assertTrue(s.isValidManagementCompanyRole(LEGACY));
         assertTrue(s.isAssignableByAdmin(LEGACY));
         assertEquals(EnumsApi.RoleManager.admin, s.getRoleManager(LEGACY));
     }
@@ -84,8 +131,8 @@ public class RoleServiceTest {
             assertTrue(s.getPossibleRoles().contains(r), r);
             assertTrue(s.isAssignableByAdmin(r), r);
         }
-        for (String r : SecConsts.COMPANY_1_POSSIBLE_ROLES) {
-            assertTrue(s.getCompany1PossibleRoles().contains(r), r);
+        for (String r : SecConsts.MANAGEMENT_COMPANY_POSSIBLE_ROLES) {
+            assertTrue(s.getManagementCompanyPossibleRoles().contains(r), r);
             assertTrue(s.isAssignableByAdmin(r), r);
         }
     }
@@ -95,27 +142,27 @@ public class RoleServiceTest {
         RoleService s = new RoleService(null);
 
         assertEquals(SecConsts.POSSIBLE_ROLES, s.getPossibleRoles());
-        assertEquals(SecConsts.COMPANY_1_POSSIBLE_ROLES, s.getCompany1PossibleRoles());
+        assertEquals(SecConsts.MANAGEMENT_COMPANY_POSSIBLE_ROLES, s.getManagementCompanyPossibleRoles());
     }
 
     // ---------- scope ----------
 
     @Test
-    public void test_notCompany1Scope_keepsTheRoleOutOfTheManagementUniverse() {
+    public void test_notManagementCompanyScope_keepsTheRoleOutOfTheManagementUniverse() {
         RoleService s = new RoleService(List.of(RICH_PROVIDER));
 
         assertTrue(s.getPossibleRoles().contains(REGULAR_ONLY));
-        assertFalse(s.getCompany1PossibleRoles().contains(REGULAR_ONLY));
+        assertFalse(s.getManagementCompanyPossibleRoles().contains(REGULAR_ONLY));
         assertTrue(s.isValidRole(REGULAR_ONLY));
-        assertFalse(s.isValidCompany1Role(REGULAR_ONLY));
+        assertFalse(s.isValidManagementCompanyRole(REGULAR_ONLY));
     }
 
     @Test
-    public void test_company1Scope_isTheMirrorImage() {
+    public void test_managementCompanyScope_isTheMirrorImage() {
         RoleService s = new RoleService(List.of(RICH_PROVIDER));
 
-        assertFalse(s.getPossibleRoles().contains(COMPANY1_ONLY));
-        assertTrue(s.getCompany1PossibleRoles().contains(COMPANY1_ONLY));
+        assertFalse(s.getPossibleRoles().contains(MANAGEMENT_COMPANY_ONLY));
+        assertTrue(s.getManagementCompanyPossibleRoles().contains(MANAGEMENT_COMPANY_ONLY));
     }
 
     // ---------- the trap ----------
@@ -149,8 +196,8 @@ public class RoleServiceTest {
         // valid + NOT assignable
         assertTrue(s.isValidRole(MANAGED) && !s.isAssignableByAdmin(MANAGED));
         // not valid for regular companies, still admin-assignable where it is valid
-        assertFalse(s.isValidRole(COMPANY1_ONLY));
-        assertTrue(s.isAssignableByAdmin(COMPANY1_ONLY));
+        assertFalse(s.isValidRole(MANAGEMENT_COMPANY_ONLY));
+        assertTrue(s.isAssignableByAdmin(MANAGEMENT_COMPANY_ONLY));
     }
 
     /** An unknown role is admin-managed rather than throwing. */
@@ -166,13 +213,13 @@ public class RoleServiceTest {
 
     @Test
     public void test_roleScopePredicates() {
-        assertTrue(EnumsApi.RoleScope.all.company1Universe);
+        assertTrue(EnumsApi.RoleScope.all.managementCompanyUniverse);
         assertTrue(EnumsApi.RoleScope.all.regularUniverse);
 
-        assertTrue(EnumsApi.RoleScope.company1.company1Universe);
-        assertFalse(EnumsApi.RoleScope.company1.regularUniverse);
+        assertTrue(EnumsApi.RoleScope.managementCompany.managementCompanyUniverse);
+        assertFalse(EnumsApi.RoleScope.managementCompany.regularUniverse);
 
-        assertFalse(EnumsApi.RoleScope.notCompany1.company1Universe);
-        assertTrue(EnumsApi.RoleScope.notCompany1.regularUniverse);
+        assertFalse(EnumsApi.RoleScope.notManagementCompany.managementCompanyUniverse);
+        assertTrue(EnumsApi.RoleScope.notManagementCompany.regularUniverse);
     }
 }
