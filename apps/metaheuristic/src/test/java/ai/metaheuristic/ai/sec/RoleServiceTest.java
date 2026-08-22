@@ -58,6 +58,53 @@ public class RoleServiceTest {
         }
     };
 
+    // ---------- what an ADMIN is OFFERED ----------
+
+    /**
+     * A mechanism-managed role stays in getPossibleRoles() — the toggle path must keep
+     * seeing it as valid or it would strip it from accounts that legitimately hold it —
+     * but it must not be OFFERED to an admin, who can never successfully grant it.
+     * ROLE_RG_ENSEMBLE is the live instance of this shape.
+     */
+    @Test
+    public void test_adminAssignableRoles_excludeAMechanismManagedRole() {
+        RoleService s = new RoleService(List.of(RICH_PROVIDER));
+
+        assertTrue(s.getPossibleRoles().contains(MANAGED));
+        assertFalse(s.isAssignableByAdmin(MANAGED));
+
+        assertFalse(s.getAdminAssignableRoles().contains(MANAGED));
+    }
+
+    @Test
+    public void test_adminAssignableRoles_keepEveryAdminManagedRole() {
+        RoleService s = new RoleService(List.of(RICH_PROVIDER));
+
+        List<String> offered = s.getAdminAssignableRoles();
+
+        assertTrue(offered.contains(REGULAR_ONLY));
+        SecConsts.POSSIBLE_ROLES.forEach(r -> assertTrue(offered.contains(r), r));
+        assertEquals(s.getPossibleRoles().size() - 1, offered.size());
+    }
+
+    /** Order is the admin's reading order; filtering must not reshuffle it. */
+    @Test
+    public void test_adminAssignableRoles_preserveTheUniverseOrder() {
+        RoleService s = new RoleService(List.of(RICH_PROVIDER));
+
+        List<String> expected = s.getPossibleRoles().stream().filter(s::isAssignableByAdmin).toList();
+
+        assertEquals(expected, s.getAdminAssignableRoles());
+    }
+
+    /** With nothing mechanism-managed there is nothing to filter. */
+    @Test
+    public void test_adminAssignableRoles_equalTheUniverseWhenNothingIsManaged() {
+        RoleService s = new RoleService(List.of(LEGACY_PROVIDER));
+
+        assertEquals(s.getPossibleRoles(), s.getAdminAssignableRoles());
+    }
+
     // ---------- backward compatibility ----------
 
     /**

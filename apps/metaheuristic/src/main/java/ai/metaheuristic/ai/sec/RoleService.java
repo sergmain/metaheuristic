@@ -114,6 +114,23 @@ public class RoleService {
     }
 
     /**
+     * The subset of {@link #getPossibleRoles()} a human administrator may actually grant.
+     *
+     * <p>Narrower than the universe on purpose, and used only where roles are OFFERED for
+     * editing — never where a held role is validated. A mechanism-managed role such as
+     * {@code ROLE_RG_ENSEMBLE} remains a fully valid member of the universe, because the
+     * toggle path treats an unlisted role as junk; what it must not be is a checkbox, since
+     * ticking it can only ever end in a refusal from the manager gate.
+     *
+     * <p>This is an offer, not a guard. The manager gate in
+     * {@code AccountRoleEditUtils#validateToggle} still runs on every commit, so a request
+     * that names a managed role directly is still refused rather than merely un-offered.
+     */
+    public List<String> getAdminAssignableRoles() {
+        return possibleRoles.stream().filter(this::isAssignableByAdmin).toList();
+    }
+
+    /**
      * Returns all possible roles for company with ID 1 (the management company).
      */
     public List<String> getCompany1PossibleRoles() {
