@@ -84,6 +84,36 @@ public class AccountRestController {
         return accountTopLevelService.roleFormCommit(accountId, roles, context);
     }
 
+    /**
+     * The account plus the roles the CALLER may hand out, for the role-editing page.
+     *
+     * <p>No companyUniqueId in the signature, by design. The company is taken from the
+     * authentication principal, so an ADMIN can only ever read an account of their own
+     * company — {@code AccountTxService#getAccount} returns an error result for anything
+     * else. The MAIN_ADMIN twin of this endpoint lives on CompanyRestController and DOES
+     * take a company in the path, which is exactly the difference between the two roles.
+     */
+    @GetMapping(value = "/account-edit-roles/{id}")
+    public AccountData.AccountWithRoleResult editRoles(@PathVariable Long id, Authentication authentication) {
+        UserContext context = userContextService.getContext(authentication);
+        return accountTopLevelService.getAccountWithRole(id, context);
+    }
+
+    /**
+     * Set or clear ONE role on an account of the caller's own company.
+     *
+     * @param accountId Account.id, which must belong to the caller's company
+     * @param role name of the role to set or remove
+     * @param checkbox true to grant the role, false to revoke it
+     */
+    @PostMapping("/account-edit-roles-commit")
+    public OperationStatusRest rolesEditFormCommit(
+            Long accountId, String role, @RequestParam(required = false, defaultValue = "false") boolean checkbox,
+            Authentication authentication) {
+        UserContext context = userContextService.getContext(authentication);
+        return accountTopLevelService.storeRoleForUserById(accountId, role, checkbox, context);
+    }
+
     @PostMapping("/account-password-edit-commit")
     public OperationStatusRest passwordEditFormCommit(Long id, String password, String password2, Authentication authentication) {
         UserContext context = userContextService.getContext(authentication);
