@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.account;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * The decision half of an ADMIN-initiated role edit, kept free of Spring, JPA and
@@ -27,9 +26,10 @@ import java.util.function.Predicate;
  *
  * <p>An ADMIN edits roles WITHIN ONE COMPANY — their own. That company never arrives
  * from the request; the caller resolves it from the authentication principal and hands
- * it in here as {@code callerCompanyId}. This class only decides whether the edit is
- * permitted and what the resulting role set is; persistence stays in
- * {@link AccountTxService}.
+ * it in here as {@code callerCompanyId}. Company scope is the whole of the restriction:
+ * inside it, every account and every role of that company's universe is the
+ * administrator's to change. This class only decides whether the edit is permitted and
+ * what the resulting role set is; persistence stays in {@link AccountTxService}.
  *
  * <p>Error code prefix: {@code 01.242.} (unique to this class).
  *
@@ -55,30 +55,36 @@ public final class AccountRoleEditUtils {
 
     /**
      * Whether an ADMIN may toggle {@code role} on the account described by the first
-     * three parameters.
+     * two parameters.
      *
-     * <p>Four independent refusals, in the order a reader needs them:
+     * <p>COMPANY SCOPE IS THE ONLY RESTRICTION ON WHO MAY BE EDITED. Within their own
+     * company an administrator administers every account and every role their company's
+     * universe contains — including an account minted by a mechanism, and including a
+     * role a mechanism normally grants. {@code ROLE_RG_ENSEMBLE} is the live case: it is
+     * an ordinary role of a regular company, so it is an ordinary admin action.
+     *
+     * <p>{@code EnumsApi.RoleManager} therefore describes PROVENANCE — which mechanism
+     * mints a role when one is minted — and is not consulted here. The one place it still
+     * decides anything is {@code CommChannelServiceRegistry}, where a service declaration
+     * must name a role that mechanism owns; that is a statement about the declaration, not
+     * about what a human may do afterwards.
+     *
+     * <p>Three refusals remain, in the order a reader needs them:
      * <ol>
+     *   <li>the caller has no company — a system error, not a policy decision;</li>
      *   <li>the target account belongs to another company — the scope rule the whole
      *       feature exists to enforce;</li>
-     *   <li>the account's role set is owned by a mechanism ({@code managedBy}), so no
-     *       hand-editing of it in either direction;</li>
-     *   <li>the role is outside the universe an ADMIN may hand out;</li>
-     *   <li>the role is in that universe but is granted by a mechanism.</li>
+     *   <li>the role is outside the universe of the caller's company.</li>
      * </ol>
      *
-     * <p>(3) and (4) are separate on purpose: a mechanism-managed role must REMAIN a
-     * listed, valid role, or every path that reasons about list membership would treat
-     * it as junk. See {@code RoleService#isAssignableByAdmin}.
-     *
-     * @param adminUniverse roles an ADMIN may hand out. Always the regular universe,
-     *   never the management-company one — an ADMIN of the management company must not be able
-     *   to grant themselves a {@code ROLE_MAIN_*} role, which would be an escalation out
-     *   of their own company rather than an edit inside it.
+     * @param companyUniverse roles assignable in the CALLER's own company — the
+     *   management-company list for the management company, the regular list otherwise.
+     *   Which company a role belongs in is a property of the role
+     *   ({@code EnumsApi.RoleScope}), and it is the only thing that narrows the offer.
      */
     public static Verdict validateToggle(
-            @Nullable Long targetAccountCompanyId, @Nullable Long callerCompanyId, @Nullable String managedBy,
-            @Nullable String role, List<String> adminUniverse, Predicate<String> assignableByAdmin) {
+            @Nullable Long targetAccountCompanyId, @Nullable Long callerCompanyId,
+            @Nullable String role, List<String> companyUniverse) {
 
         if (callerCompanyId == null) {
             return new Verdict("01.242.010 System error, companyId of the current user is null");
@@ -86,17 +92,11 @@ public final class AccountRoleEditUtils {
         if (targetAccountCompanyId == null || !targetAccountCompanyId.equals(callerCompanyId)) {
             return new Verdict("01.242.020 Account doesn't belong to the current company and can't be edited");
         }
-        if (managedBy != null) {
-            return new Verdict("01.242.030 Account's roles are managed by '" + managedBy + "' and can't be edited by hand");
-        }
         if (role == null || role.isBlank()) {
             return new Verdict("01.242.040 System error, role is blank");
         }
-        if (!adminUniverse.contains(role)) {
+        if (!companyUniverse.contains(role)) {
             return new Verdict("01.242.050 Role " + role + " can't be assigned within a company");
-        }
-        if (!assignableByAdmin.test(role)) {
-            return new Verdict("01.242.060 Role " + role + " is granted by a mechanism and can't be assigned by hand");
         }
         return Verdict.ALLOWED;
     }
@@ -105,12 +105,10 @@ public final class AccountRoleEditUtils {
      * The role set after toggling exactly one role, leaving every other role untouched.
      *
      * <p>Deliberately NOT the strip-everything-unlisted loop that
-     * {@code AccountTxService#storeRolesForUserById} runs for a MAIN_ADMIN. An ADMIN
-     * sees a narrower universe than the account may legitimately hold — a management-company
-     * account carries {@code ROLE_MAIN_*} roles that are absent from the ADMIN's
-     * universe — so stripping the unlisted ones would turn a toggle of
-     * {@code ROLE_OPERATOR} into a silent demotion of everything the ADMIN cannot see.
-     * Touch the named role, nothing else.
+     * {@code AccountTxService#storeRolesForUserById} runs for a MAIN_ADMIN. An account may
+     * legitimately hold a role absent from the universe currently being offered, so
+     * stripping the unlisted ones would turn a toggle of {@code ROLE_OPERATOR} into a
+     * silent demotion of everything not on screen. Touch the named role, nothing else.
      *
      * @return the resulting roles, in their original order, with the toggled role
      *   appended when it is being granted

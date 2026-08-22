@@ -76,18 +76,20 @@ public class AccountService {
     /**
      * The account plus the roles an ADMIN of the CALLER's company may hand out.
      *
-     * <p>Always {@code RoleService#getPossibleRoles()} — the regular universe — even when the
-     * caller's own company is the management company, and filtered down to the roles a human may actually
-     * grant. The management-company universe carries {@code ROLE_MAIN_*} and
-     * the REST-access roles, which reach beyond a single company; offering them here would let
-     * an ADMIN of the management company escalate out of the scope this endpoint exists to
-     * confine them to. Contrast {@code CompanyAccountTopLevelService#getAccountWithRole}, which
-     * serves a MAIN_ADMIN and therefore does switch on the target company.
+     * <p>The universe of the CALLER's own company — the management-company list when the
+     * caller belongs to the management company, the regular list otherwise — and nothing
+     * further removed from it. An administrator administers their company: every account in
+     * it, and every role that company's universe contains, including a role a mechanism
+     * would normally mint such as {@code ROLE_RG_ENSEMBLE}.
+     *
+     * <p>Same rule the MAIN_ADMIN page applies, differing only in WHICH company is resolved:
+     * there it comes from the path, here from the authentication principal, which is what
+     * confines an ADMIN to one company.
      */
     public AccountData.AccountWithRoleResult getAccountWithRole(Long accountId, UserContext context) {
         AccountData.AccountResult account = accountService.getAccount(accountId, context.getCompanyId());
         return new AccountData.AccountWithRoleResult(
-                account.account, roleService.getAdminAssignableRoles(), account.getErrorMessages());
+                account.account, roleService.rolesOfCompany(context.getCompanyId()), account.getErrorMessages());
     }
 
     /**
