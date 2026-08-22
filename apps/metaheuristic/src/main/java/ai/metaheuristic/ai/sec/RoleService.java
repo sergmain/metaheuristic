@@ -17,8 +17,6 @@
 package ai.metaheuristic.ai.sec;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.ai.Consts;
-import org.jspecify.annotations.Nullable;
 import ai.metaheuristic.commons.account.RoleProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,13 +44,9 @@ public class RoleService {
     private final List<String> managementCompanyPossibleRoles;
 
     /**
-     * Which mechanism MINTS each role. A role absent from this map is
-     * {@link EnumsApi.RoleManager#admin}, which is every base role and every
+     * Who may grant each role. A role absent from this map is
+     * {@link EnumsApi.RoleManager#admin}-managed, which is every base role and every
      * provider role that did not say otherwise.
-     *
-     * <p>Provenance, not permission. This does not restrict what an administrator may
-     * assign — it is read by {@code CommChannelServiceRegistry} so a service declaration
-     * cannot name a role some other mechanism owns.
      */
     private final Map<String, EnumsApi.RoleManager> roleManagers;
 
@@ -101,6 +95,18 @@ public class RoleService {
     }
 
     /**
+     * Whether a human administrator may grant or revoke this role.
+     *
+     * <p>Deliberately SEPARATE from {@link #isValidRole(String)}. A managed role
+     * is still a valid, listed role — it must be, or the role-toggle path would
+     * silently strip it from every account that legitimately holds it. What
+     * changes is who may hand it out.
+     */
+    public boolean isAssignableByAdmin(String role) {
+        return getRoleManager(role)==EnumsApi.RoleManager.admin;
+    }
+
+    /**
      * Returns all possible roles for regular companies.
      */
     public List<String> getPossibleRoles() {
@@ -108,24 +114,27 @@ public class RoleService {
     }
 
     /**
+     * The subset of {@link #getPossibleRoles()} a human administrator may actually grant.
+     *
+     * <p>Narrower than the universe on purpose, and used only where roles are OFFERED for
+     * editing — never where a held role is validated. A mechanism-managed role such as
+     * {@code ROLE_RG_ENSEMBLE} remains a fully valid member of the universe, because the
+     * toggle path treats an unlisted role as junk; what it must not be is a checkbox, since
+     * ticking it can only ever end in a refusal from the manager gate.
+     *
+     * <p>This is an offer, not a guard. The manager gate in
+     * {@code AccountRoleEditUtils#validateToggle} still runs on every commit, so a request
+     * that names a managed role directly is still refused rather than merely un-offered.
+     */
+    public List<String> getAdminAssignableRoles() {
+        return possibleRoles.stream().filter(this::isAssignableByAdmin).toList();
+    }
+
+    /**
      * Returns all possible roles for company with ID 1 (the management company).
      */
     public List<String> getManagementCompanyPossibleRoles() {
         return managementCompanyPossibleRoles;
-    }
-
-    /**
-     * Every role assignable in the given company — the one universe an administrator of
-     * that company both sees and may act on.
-     *
-     * <p>The split is by {@code EnumsApi.RoleScope}, and that is the ONLY thing narrowing
-     * what an administrator may hand out. {@code EnumsApi.RoleManager} is not consulted: it
-     * records which mechanism MINTS a role, not who may assign one. So
-     * {@code ROLE_RG_ENSEMBLE}, scoped {@code notManagementCompany}, is an ordinary
-     * assignable role of every regular company.
-     */
-    public List<String> rolesOfCompany(@Nullable Long companyUniqueId) {
-        return Consts.ID_1.equals(companyUniqueId) ? managementCompanyPossibleRoles : possibleRoles;
     }
 
     /**
