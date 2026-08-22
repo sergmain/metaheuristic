@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,16 +37,17 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 @Execution(CONCURRENT)
 public class AccountRoleEditUtilsTest {
 
-    private static final String MANAGED = "ROLE_RG_ENSEMBLE";
+    private static final String MANAGED = "ROLE_MANAGED_BY_MECHANISM";
 
     /** The universe an ADMIN is offered: the regular roles plus one mechanism-managed role. */
     private static final List<String> ADMIN_UNIVERSE =
             Stream.concat(SecConsts.POSSIBLE_ROLES.stream(), Stream.of(MANAGED)).toList();
 
-    /** managedBy is kept in this helper's signature purely to document that it no longer matters. */
+    private static final Predicate<String> ASSIGNABLE = r -> !MANAGED.equals(r);
+
     private static AccountRoleEditUtils.Verdict validate(
             Long targetCompanyId, Long callerCompanyId, String managedBy, String role) {
-        return AccountRoleEditUtils.validateToggle(targetCompanyId, callerCompanyId, role, ADMIN_UNIVERSE);
+        return AccountRoleEditUtils.validateToggle(targetCompanyId, callerCompanyId, managedBy, role, ADMIN_UNIVERSE, ASSIGNABLE);
     }
 
     // ---------- company scope: the rule this whole path exists for ----------
@@ -85,47 +87,37 @@ public class AccountRoleEditUtilsTest {
     }
 
     /**
-     * An administrator of the management company is handed that company's universe, so its
-     * own roles are ordinary business there — the same relationship a regular company's
-     * administrator has with the regular universe.
+     * The management company is company uniqueId 1, so its own ADMIN is the account most worth
+     * pinning down: a MAIN_* role must not be reachable from this path in ANY company.
      */
     @Test
-    public void test_adminOfManagementCompany_canGrantItsOwnRoles() {
-        for (String r : SecConsts.MANAGEMENT_COMPANY_POSSIBLE_ROLES) {
-            AccountRoleEditUtils.Verdict v = AccountRoleEditUtils.validateToggle(
-                    1L, 1L, r, SecConsts.MANAGEMENT_COMPANY_POSSIBLE_ROLES);
+    public void test_adminOfManagementCompany_cannotGrantAMainRole() {
+        for (String mainRole : SecConsts.MANAGEMENT_COMPANY_POSSIBLE_ROLES) {
+            AccountRoleEditUtils.Verdict v = validate(1L, 1L, null, mainRole);
 
-            assertTrue(v.allowed(), r + " -> " + v.error());
+            assertFalse(v.allowed(), mainRole);
+            assertTrue(v.error().startsWith("01.242.050"), mainRole + " -> " + v.error());
         }
+        AccountRoleEditUtils.Verdict v = validate(1L, 1L, null, SecConsts.ROLE_MAIN_ADMIN);
+        assertFalse(v.allowed());
+        assertTrue(v.error().startsWith("01.242.050"), v.error());
     }
 
-    /**
-     * Scope still bites in both directions — a role of the other universe is not assignable,
-     * whichever side you stand on. ROLE_MAIN_ADMIN is in NEITHER list, so it stays out of
-     * reach of this path entirely.
-     */
+    /** Inside the management company the regular roles are still ordinary business. */
     @Test
-    public void test_theTwoUniversesDoNotLeakIntoEachOther() {
-        AccountRoleEditUtils.Verdict intoManagement = AccountRoleEditUtils.validateToggle(
-                1L, 1L, "ROLE_OPERATOR", SecConsts.MANAGEMENT_COMPANY_POSSIBLE_ROLES);
-        assertFalse(intoManagement.allowed());
-        assertTrue(intoManagement.error().startsWith("01.242.050"), intoManagement.error());
-
-        AccountRoleEditUtils.Verdict intoRegular = validate(7L, 7L, null, SecConsts.ROLE_MAIN_OPERATOR);
-        assertFalse(intoRegular.allowed());
-        assertTrue(intoRegular.error().startsWith("01.242.050"), intoRegular.error());
-
-        assertFalse(SecConsts.POSSIBLE_ROLES.contains(SecConsts.ROLE_MAIN_ADMIN));
-        assertFalse(SecConsts.MANAGEMENT_COMPANY_POSSIBLE_ROLES.contains(SecConsts.ROLE_MAIN_ADMIN));
+    public void test_adminOfManagementCompany_canStillGrantARegularRole() {
+        assertTrue(validate(1L, 1L, null, "ROLE_OPERATOR").allowed());
     }
 
-    // ---------- what used to be the mechanism gates ----------
+    // ---------- mechanism gates ----------
 
     @Test
-    public void test_mechanismManagedAccount_isEditable() {
+    public void test_mechanismManagedAccount_isRefusedEvenForAnOrdinaryRole() {
         AccountRoleEditUtils.Verdict v = validate(7L, 7L, "commChannel", "ROLE_OPERATOR");
 
-        assertTrue(v.allowed(), String.valueOf(v.error()));
+        assertFalse(v.allowed());
+        assertTrue(v.error().startsWith("01.242.030"), v.error());
+        assertTrue(v.error().contains("commChannel"), v.error());
     }
 
     /**
@@ -133,12 +125,13 @@ public class AccountRoleEditUtilsTest {
      * through — assignability is the separate gate that stops it.
      */
     @Test
-    public void test_mechanismManagedRole_isAssignable() {
+    public void test_managedRole_isListedYetRefused() {
         assertTrue(ADMIN_UNIVERSE.contains(MANAGED));
 
         AccountRoleEditUtils.Verdict v = validate(7L, 7L, null, MANAGED);
 
-        assertTrue(v.allowed(), String.valueOf(v.error()));
+        assertFalse(v.allowed());
+        assertTrue(v.error().startsWith("01.242.060"), v.error());
     }
 
     @Test
@@ -162,14 +155,6 @@ public class AccountRoleEditUtilsTest {
         AccountRoleEditUtils.Verdict v = validate(8L, 7L, "commChannel", "ROLE_NEVER_HEARD_OF");
 
         assertTrue(v.error().startsWith("01.242.020"), v.error());
-    }
-
-    /** The whole point of the change: the ensembling role is an ordinary admin action now. */
-    @Test
-    public void test_ensembleRole_isAssignableInARegularCompany() {
-        AccountRoleEditUtils.Verdict v = validate(7L, 7L, null, "ROLE_RG_ENSEMBLE");
-
-        assertTrue(v.allowed(), String.valueOf(v.error()));
     }
 
     // ---------- the toggle ----------
@@ -199,9 +184,9 @@ public class AccountRoleEditUtilsTest {
     }
 
     /**
-     * The reason this is a toggle and not a rewrite. An account may hold a role outside the
-     * universe currently on screen, so toggling a role that IS on screen must leave it exactly
-     * where it was. A strip-the-unlisted loop here would be a silent demotion.
+     * The reason this is a toggle and not a rewrite. An ADMIN never sees ROLE_MAIN_ADMIN, so
+     * toggling a role they DO see must leave it exactly where it was. A strip-the-unlisted loop
+     * here would be a silent demotion.
      */
     @Test
     public void test_rolesOutsideTheAdminUniverseSurviveAToggle() {
