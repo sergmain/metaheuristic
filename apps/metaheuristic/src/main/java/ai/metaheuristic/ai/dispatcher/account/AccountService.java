@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.AccountRevision;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRevisionRepository;
+import ai.metaheuristic.ai.sec.RoleService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.PageUtils;
@@ -42,6 +43,7 @@ public class AccountService {
     private final AccountTxService accountService;
     private final AccountRepository accountRepository;
     private final AccountRevisionRepository accountRevisionRepository;
+    private final RoleService roleService;
     private final Globals globals;
 
     public AccountData.AccountsResult getAccounts(Pageable pageable, UserContext context) {
@@ -69,6 +71,30 @@ public class AccountService {
 
     public OperationStatusRest roleFormCommit(Long accountId, String roles, UserContext context) {
         return accountService.roleFormCommit(accountId, roles, context.getCompanyId());
+    }
+
+    /**
+     * The account plus the roles an ADMIN of the CALLER's company may hand out.
+     *
+     * <p>Always {@code RoleService#getPossibleRoles()} — the regular universe — even when the
+     * caller's own company is company 1. The company-1 universe carries {@code ROLE_MAIN_*} and
+     * the REST-access roles, which reach beyond a single company; offering them here would let
+     * an ADMIN of the management company escalate out of the scope this endpoint exists to
+     * confine them to. Contrast {@code CompanyAccountTopLevelService#getAccountWithRole}, which
+     * serves a MAIN_ADMIN and therefore does switch on the target company.
+     */
+    public AccountData.AccountWithRoleResult getAccountWithRole(Long accountId, UserContext context) {
+        AccountData.AccountResult account = accountService.getAccount(accountId, context.getCompanyId());
+        return new AccountData.AccountWithRoleResult(
+                account.account, roleService.getPossibleRoles(), account.getErrorMessages());
+    }
+
+    /**
+     * Toggle one role on an account of the CALLER's own company. The company comes from the
+     * authentication principal via {@code context}, never from the request.
+     */
+    public OperationStatusRest storeRoleForUserById(Long accountId, String role, boolean checkbox, UserContext context) {
+        return accountService.storeRoleForUserByIdWithinCompany(accountId, role, checkbox, context.getCompanyId());
     }
 
     /**

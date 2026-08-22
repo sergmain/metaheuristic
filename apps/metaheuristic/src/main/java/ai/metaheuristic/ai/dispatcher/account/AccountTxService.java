@@ -270,6 +270,40 @@ public class AccountTxService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", "");
     }
 
+    /**
+     * Toggle ONE role on an account, on behalf of an ADMIN of {@code callerCompanyId}.
+     *
+     * <p>Separate from {@link #storeRolesForUserById} rather than a parameterisation of it,
+     * because the two differ in the one place that matters. That method serves a MAIN_ADMIN,
+     * who sees the account's whole role universe, and it strips any held role missing from
+     * that universe. An ADMIN sees only the regular universe, which for a company-1 account
+     * omits every {@code ROLE_MAIN_*} the account legitimately holds — running the same strip
+     * loop would turn a toggle of {@code ROLE_OPERATOR} into a silent demotion of roles the
+     * ADMIN was never shown. Here the named role is the only one touched.
+     *
+     * <p>The company is the CALLER's, resolved upstream from the authentication principal and
+     * never accepted from the request, so an ADMIN cannot aim this at another company's account.
+     */
+    @Transactional
+    public OperationStatusRest storeRoleForUserByIdWithinCompany(Long accountId, String role, boolean checkbox, @Nullable Long callerCompanyId) {
+        Account account = accountRepository.findByIdForUpdate(accountId);
+        if (account == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "235.200 account wasn't found, accountId: " + accountId);
+        }
+        AccountRoleEditUtils.Verdict verdict = AccountRoleEditUtils.validateToggle(
+                account.companyId, callerCompanyId, account.managedBy, role,
+                roleService.getPossibleRoles(), roleService::isAssignableByAdmin);
+        if (!verdict.allowed()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, verdict.error());
+        }
+
+        List<String> newRoles = AccountRoleEditUtils.toggle(account.accountRoles.getRolesAsList(), role, checkbox);
+
+        // ROLES lives on the envelope.
+        accountRevisionWriter.updateRoles(accountId, String.join(", ", newRoles));
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Role " + role + " was changed successfully", "");
+    }
+
     // this method is for using with company-accounts
     @Transactional
     public OperationStatusRest storeRolesForUserById(Long accountId, String role, boolean checkbox, Long companyUniqueId) {

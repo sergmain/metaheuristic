@@ -90,7 +90,9 @@ public class TestAccessForAllEndPoints extends MhSharedItTest {
             new AccessUrl("/rest/v1/dispatcher/account/account-add-commit", AccessMethod.POST),
             new AccessUrl("/rest/v1/dispatcher/account/account-edit-commit", AccessMethod.POST),
             new AccessUrl("/rest/v1/dispatcher/account/account-password-edit-commit", AccessMethod.POST),
-            new AccessUrl("/rest/v1/dispatcher/account/account-account-role-commit", AccessMethod.POST)
+            new AccessUrl("/rest/v1/dispatcher/account/account-account-role-commit", AccessMethod.POST),
+            new AccessUrl("/rest/v1/dispatcher/account/account-edit-roles/1", AccessMethod.GET),
+            new AccessUrl("/rest/v1/dispatcher/account/account-edit-roles-commit", AccessMethod.POST)
     };
 
     private static final AccessUrl[] EXPERIMENT_RESULT_REST_URLS = new AccessUrl[]{
