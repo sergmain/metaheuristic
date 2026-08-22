@@ -75,6 +75,7 @@ public class RoleService {
             if (d.scope().managementCompanyUniverse) {
                 allManagementCompanyRoles.add(d.role());
             }
+            // Only a non-default manager is stored; getRoleManager falls back to admin.
             if (d.managedBy()!=EnumsApi.RoleManager.admin) {
                 managers.put(d.role(), d.managedBy());
             }
@@ -103,7 +104,7 @@ public class RoleService {
      * changes is who may hand it out.
      */
     public boolean isAssignableByAdmin(String role) {
-        return getRoleManager(role)==EnumsApi.RoleManager.admin;
+        return getRoleManager(role).user;
     }
 
     /**
