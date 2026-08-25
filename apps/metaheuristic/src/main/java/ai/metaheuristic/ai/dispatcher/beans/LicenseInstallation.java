@@ -44,7 +44,7 @@ import java.io.Serializable;
 public class LicenseInstallation implements Serializable {
 
     @Serial
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 648230566337180990L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

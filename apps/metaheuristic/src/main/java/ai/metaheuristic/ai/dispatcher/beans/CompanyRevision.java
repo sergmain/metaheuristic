@@ -52,7 +52,7 @@ import java.io.Serializable;
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class CompanyRevision implements Serializable {
     @Serial
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -3552206429113497586L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
