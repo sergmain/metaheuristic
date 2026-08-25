@@ -40,14 +40,18 @@ import ai.metaheuristic.api.dispatcher.Task;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("WeakerAccess")
@@ -255,21 +259,71 @@ public abstract class PreparingSourceCode extends PreparingCore {
         });
     }
 
+    /**
+     * The db and the graph CONVERGE; they are not equal at every instant.
+     *
+     * <p>A task's row and its graph vertex are written by separate transactions on separate
+     * threads. TaskVariableInitTxService commits the task state (305.040) and publishes
+     * UpdateTaskExecStatesInExecContextTxEvent; that reaches the graph (999.080) only after the
+     * commit, through two @Async hops and the "UpdateTaskExecStatesInGraph-" MultiTenantedQueue in
+     * ExecContextTaskStateService. A read taken inside that window legitimately sees
+     * "db: NONE, graph: INIT" - the same split ExecContextTaskStateService.persistSkippedTasksInDb
+     * describes as "the transient graph/DB split is absorbed by reconciliation".
+     *
+     * <p>Asserting instantaneous equality therefore pinned scheduling, not an invariant: it passed
+     * when a class ran alone and failed under batch load, where the queue worker is descheduled for
+     * a few extra ms. Neither of the two @Async hops can be suspended or driven from the test, so
+     * the hop is awaited (RULE-NO-MOCKITO 3.2) rather than raced.
+     *
+     * <p>The assertion is not weakened: a graph that never catches up still fails, and the timeout
+     * reports the LAST observed divergence rather than only the fact that it timed out.
+     */
     public void verifyGraphIntegrity() {
+        final AtomicReference<String> mismatch = new AtomicReference<>("no comparison has run yet");
+        try {
+            await().atMost(Duration.ofSeconds(30))
+                    .pollDelay(Duration.ZERO)
+                    .pollInterval(Duration.ofMillis(100))
+                    .until(()->graphAgreesWithDb(mismatch));
+        }
+        catch (ConditionTimeoutException e) {
+            fail("db and graph didn't converge within 30s, last mismatch: " + mismatch.get());
+        }
+    }
+
+    /**
+     * One snapshot comparison, reporting WHY it disagreed instead of throwing.
+     *
+     * <p>Both sides are re-read on every poll deliberately: a snapshot carried over from an earlier
+     * poll would be compared against a graph that has since moved, which is the very skew this
+     * method exists to tolerate.
+     */
+    private boolean graphAgreesWithDb(AtomicReference<String> mismatch) {
         List<TaskImpl> tasks = taskRepositoryForTest.findByExecContextIdAsList(getExecContextForTest().id);
 
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(this.getExecContextForTest().id, true)));
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphService.findAll(getExecContextForTest().execContextGraphId);
-        assertEquals(tasks.size(), taskVertices.size());
+        if (tasks.size()!=taskVertices.size()) {
+            mismatch.set("different number of tasks in db and graph, db: " + tasks.size() + ", graph: " + taskVertices.size());
+            return false;
+        }
 
         for (ExecContextData.TaskVertex taskVertex : taskVertices) {
             Task t = tasks.stream().filter(o->o.id.equals(taskVertex.taskId)).findFirst().orElse(null);
-            assertNotNull(t, "task with id #"+ taskVertex.taskId+" wasn't found");
+            if (t==null) {
+                mismatch.set("task with id #"+ taskVertex.taskId+" wasn't found");
+                return false;
+            }
             final EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(t.getExecState());
             final EnumsApi.TaskExecState graphTaskState = preparingSourceCodeService.findTaskState(getExecContextForTest(), taskVertex.taskId);
-            assertEquals(taskExecState, graphTaskState, "task has a different states in db and graph, " +
-                    "db: " + taskExecState +", graph: " + graphTaskState);
+            if (taskExecState!=graphTaskState) {
+                mismatch.set("task #" + taskVertex.taskId + " has a different states in db and graph, " +
+                        "db: " + taskExecState +", graph: " + graphTaskState);
+                return false;
+            }
         }
+        mismatch.set(null);
+        return true;
     }
 
     public List<Long> getUnfinishedTaskVertices(ExecContextImpl execContext) {

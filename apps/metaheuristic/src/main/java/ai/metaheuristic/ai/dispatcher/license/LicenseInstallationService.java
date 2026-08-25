@@ -89,13 +89,14 @@ public class LicenseInstallationService {
      * refusing to start because a convenience file could not be written would take out a
      * dispatcher over something that grants nothing.
      *
-     * <p>❗ It goes under {@code {mh.home}/dispatcher}, NOT under {@code {mh.home}/config}.
+     * <p>❗ It goes at the {@code {mh.home}} root, NOT under {@code {mh.home}/config}.
      * {@code config} is CONFIGURATION the operator supplies to the dispatcher, and deployments are
      * entitled to mount it read-only — which is the same class of deployment the paragraph above
      * promises to support. Minting an identity into it is the dispatcher writing to its own input:
      * it fails exactly where the guarantee was supposed to hold, and on a writable box it quietly
-     * puts generated state somewhere an operator may be copying between installations. Anything the
-     * dispatcher generates about ITSELF belongs on the dispatcher's own path.
+     * puts generated state somewhere an operator may be copying between installations. The root of
+     * {@code mh.home} is where an operator looks first, and reading it off the box by hand is the
+     * whole reason the file exists.
      *
      * <p>The move leaves any {@code config/installation-id.txt} from an earlier version untouched.
      * Deleting it would be a write into the directory this change exists to stop writing to, and

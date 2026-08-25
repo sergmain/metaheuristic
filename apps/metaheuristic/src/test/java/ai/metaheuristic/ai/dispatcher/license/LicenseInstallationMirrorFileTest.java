@@ -44,6 +44,10 @@ public class LicenseInstallationMirrorFileTest {
 
     private record Home(Path home, Path config, Path dispatcher) {
 
+        Path homeFile() {
+            return home.resolve(LicenseInstallationService.INSTALLATION_ID_FILE);
+        }
+
         Path configFile() {
             return config.resolve(LicenseInstallationService.INSTALLATION_ID_FILE);
         }
@@ -75,16 +79,17 @@ public class LicenseInstallationMirrorFileTest {
     }
 
     @Test
-    public void test_mirrorFile_landsUnderTheDispatcherDir_neverUnderConfig() throws IOException {
+    public void test_mirrorFile_landsAtTheHomeRoot_neverUnderConfig() throws IOException {
         // config/ is READ-ONLY configuration - an air-gapped or container deployment may mount it
         // that way, and a dispatcher that mints its identity into it writes where it was told not
-        // to. Everything the dispatcher generates about itself belongs under {mh.home}/dispatcher.
+        // to. The mirror belongs at the {mh.home} root, where an operator reads it off the box.
         final Home h = tempHome();
 
         assertEquals(ID, serviceOn(h).installationId());
 
-        assertTrue(Files.exists(h.dispatcherFile()));
+        assertTrue(Files.exists(h.homeFile()));
         assertFalse(Files.exists(h.configFile()));
+        assertFalse(Files.exists(h.dispatcherFile()));
     }
 
     @Test
@@ -93,7 +98,7 @@ public class LicenseInstallationMirrorFileTest {
 
         serviceOn(h).installationId();
 
-        final Path written = Files.exists(h.dispatcherFile()) ? h.dispatcherFile() : h.configFile();
+        final Path written = h.homeFile();
         assertEquals(ID, Files.readString(written, StandardCharsets.UTF_8).strip());
     }
 
@@ -101,23 +106,23 @@ public class LicenseInstallationMirrorFileTest {
     public void test_agreeingMirrorFile_isNotRewritten() throws IOException {
         // decideMirror says LEAVE, so an unwritable dir on a later boot is not a failure path.
         final Home h = tempHome();
-        Files.writeString(h.dispatcherFile(), ID, StandardCharsets.UTF_8);
-        final long before = Files.getLastModifiedTime(h.dispatcherFile()).toMillis();
+        Files.writeString(h.homeFile(), ID, StandardCharsets.UTF_8);
+        final long before = Files.getLastModifiedTime(h.homeFile()).toMillis();
 
         serviceOn(h).installationId();
 
-        assertEquals(before, Files.getLastModifiedTime(h.dispatcherFile()).toMillis());
+        assertEquals(before, Files.getLastModifiedTime(h.homeFile()).toMillis());
     }
 
     @Test
     public void test_unwritableMirrorDir_doesNotFailTheCall() throws IOException {
         // a read-only filesystem is a supported deployment: the id still comes back, from the
         // database value, and the failure is a log line rather than a dead dispatcher.
-        final Path home = Files.createTempDirectory("mh-home-");
+        final Path parent = Files.createTempDirectory("mh-home-");
         final Globals globals = new Globals();
-        globals.home = home;
         // a FILE where the directory should be: creating anything under it must fail.
-        globals.dispatcherPath = Files.createFile(home.resolve("dispatcher"));
+        globals.home = Files.createFile(parent.resolve("home"));
+        globals.dispatcherPath = globals.home.resolve("dispatcher");
 
         final LicenseInstallationService service =
                 new LicenseInstallationService(globals, new LicenseInstallationTxService(null) {
