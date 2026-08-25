@@ -8,9 +8,18 @@
 
 package ai.metaheuristic.ai.processor.secret;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.parallel.Execution;
 
+import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -54,6 +63,11 @@ public class PeerPidVerifierTest {
     }
 
     @Test
+    @Disabled("extractFd() reflects into java.base (Socket.impl -> SocketImpl.fd -> FileDescriptor.fd) "
+            + "and needs --add-opens=java.base/java.net and --add-opens=java.base/java.io. That argLine was "
+            + "removed from apps/metaheuristic/pom.xml DELIBERATELY: strongly-encapsulated internals are being "
+            + "closed off, so the reflection has an expiry date and restoring the flags is not the fix. "
+            + "test_peerPid_returnsOwnPid_forAfUnixSocketPair covers the same capability without add-opens.")
     public void test_extractFd_returnsPositiveDescriptor_forRealConnectedSocket() throws Exception {
         try (ServerSocket server = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
             server.setSoTimeout(2_000);
@@ -100,5 +114,61 @@ public class PeerPidVerifierTest {
                         "peerPid must return something (0/-1/positive); got " + pid);
             }
         }
+    }
+
+    private static final int AF_UNIX     = 1;
+    private static final int SOCK_STREAM = 1;
+
+    /**
+     * The AF_UNIX case this class is retained for, tested without reflecting into java.base.
+     *
+     * <p>The fd does not have to come from a {@link Socket} at all: PeerPidVerifierLinux.peerPid
+     * already takes a raw descriptor, and socketpair(2) hands out two real AF_UNIX descriptors this
+     * JVM owns. That removes the only reason extractFd - and therefore --add-opens - was involved.
+     *
+     * <p>It is also a stronger assertion than the reflection test could make. SO_PEERCRED fills the
+     * ucred only for AF_UNIX, both ends of a socketpair belong to this process, so the expected peer
+     * pid is an EXACT known value - our own - rather than "some positive int". It pins the downcall,
+     * the ucred size and the pid offset in one go.
+     */
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    public void test_peerPid_returnsOwnPid_forAfUnixSocketPair() throws Throwable {
+        final long self = ProcessHandle.current().pid();
+        try (Arena arena = Arena.ofConfined()) {
+            final int[] sv = afUnixSocketPair(arena);
+            try {
+                assertEquals(self, PeerPidVerifierLinux.peerPid(sv[0]), "peer pid on end 0 of the socketpair");
+                assertEquals(self, PeerPidVerifierLinux.peerPid(sv[1]), "peer pid on end 1 of the socketpair");
+            }
+            finally {
+                closeFd(sv[0]);
+                closeFd(sv[1]);
+            }
+        }
+    }
+
+    /** socketpair(AF_UNIX, SOCK_STREAM, 0, sv) - two connected AF_UNIX descriptors owned by this JVM. */
+    private static int[] afUnixSocketPair(Arena arena) throws Throwable {
+        final Linker linker = Linker.nativeLinker();
+        final MethodHandle socketpair = linker.downcallHandle(
+                linker.defaultLookup().find("socketpair").orElseThrow(
+                        ()->new IllegalStateException("libc 'socketpair' symbol not found")),
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT,
+                        ValueLayout.JAVA_INT, ValueLayout.ADDRESS));
+
+        final MemorySegment sv = arena.allocate(8, 4);
+        final int rc = (int) socketpair.invoke(AF_UNIX, SOCK_STREAM, 0, sv);
+        assertEquals(0, rc, "socketpair() must succeed");
+        return new int[]{ sv.get(ValueLayout.JAVA_INT, 0), sv.get(ValueLayout.JAVA_INT, 4) };
+    }
+
+    private static void closeFd(int fd) throws Throwable {
+        final Linker linker = Linker.nativeLinker();
+        final MethodHandle close = linker.downcallHandle(
+                linker.defaultLookup().find("close").orElseThrow(
+                        ()->new IllegalStateException("libc 'close' symbol not found")),
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
+        close.invoke(fd);
     }
 }
