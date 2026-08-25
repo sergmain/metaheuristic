@@ -100,6 +100,19 @@ public final class PeerPidVerifier {
      *
      * <p>Pulled out as a package-private static so the platform impls can be
      * unit-tested by passing a real, locally-bound socket's FD.
+     *
+     * <p>❗ Those flags are NOT set, and that is deliberate. The surefire {@code argLine} that
+     * supplied them was removed from {@code apps/metaheuristic/pom.xml} on purpose: strongly
+     * encapsulated JDK internals are being closed off, so this reflection has an expiry date and
+     * putting the flags back is NOT the fix. As things stand this method throws
+     * {@link java.lang.reflect.InaccessibleObjectException} and {@link #peerPid(Socket)} returns
+     * {@code -1}, which is the fail-closed outcome.
+     *
+     * <p>The forward-compatible shape is to never involve a JDK {@link Socket} at all: the platform
+     * impls already take a raw {@code int} fd, and a natively created descriptor - {@code socketpair(2)}
+     * through FFM, say - needs no {@code --add-opens}. {@code PeerPidVerifierTest} covers the
+     * AF_UNIX path that way; there is no test of this method, because there cannot be one while the
+     * flags are absent.
      */
     static int extractFd(Socket socket) throws Exception {
         Field implField = Socket.class.getDeclaredField("impl");
