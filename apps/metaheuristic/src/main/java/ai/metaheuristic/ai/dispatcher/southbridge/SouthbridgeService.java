@@ -120,16 +120,12 @@ public class SouthbridgeService {
     // return a requested data to a processor
     // data can be Function or Variable
     public CleanerInfo deliverData(@Nullable Long taskId, final EnumsApi.DataType binaryType, final String dataId, @Nullable final String chunkSize, final int chunkNum) {
-        switch (binaryType) {
-            case function:
-                return deliverFunction(dataId, chunkSize, chunkNum);
-            case variable:
-                return deliverVariable(taskId, dataId, chunkSize, chunkNum);
-            case global_variable:
-                return deliverGlobalVariable(dataId, chunkSize, chunkNum);
-            default:
-                throw new IllegalStateException("444.160 Unknown type of data: " + binaryType);
-        }
+        return switch (binaryType) {
+            case function -> deliverFunction(dataId, chunkSize, chunkNum);
+            case variable -> deliverVariable(taskId, dataId, chunkSize, chunkNum);
+            case global_variable -> deliverGlobalVariable(dataId, chunkSize, chunkNum);
+            default -> throw new IllegalStateException("444.160 Unknown type of data: " + binaryType);
+        };
     }
 
     // Delivers a Function asset. Path computed from dispatcherResourcesPath.
