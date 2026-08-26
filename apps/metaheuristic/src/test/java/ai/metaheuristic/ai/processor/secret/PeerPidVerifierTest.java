@@ -63,6 +63,32 @@ public class PeerPidVerifierTest {
     }
 
     @Test
+    @Disabled("extractFd() reflects into java.base (Socket.impl -> SocketImpl.fd -> FileDescriptor.fd) "
+        + "and needs --add-opens=java.base/java.net and --add-opens=java.base/java.io. That argLine was "
+        + "removed from apps/metaheuristic/pom.xml DELIBERATELY: strongly-encapsulated internals are being "
+        + "closed off, so the reflection has an expiry date and restoring the flags is not the fix. "
+        + "test_peerPid_returnsOwnPid_forAfUnixSocketPair covers the same capability without add-opens.")
+    public void test_extractFd_returnsPositiveDescriptor_forRealConnectedSocket() throws Exception {
+        try (ServerSocket server = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            server.setSoTimeout(2_000);
+            int port = server.getLocalPort();
+
+            Thread.ofVirtual().start(() -> {
+                try (Socket ignored = new Socket("127.0.0.1", port)) {
+                    Thread.sleep(200);
+                } catch (Exception e) {
+                    // swallowed
+                }
+            });
+
+            try (Socket peer = server.accept()) {
+                int fd = PeerPidVerifier.extractFd(peer);
+                assertTrue(fd > 0, "fd must be a positive int; got " + fd);
+            }
+        }
+    }
+
+    @Test
     public void test_peerPid_isUntrustworthy_onTcpLoopback() throws Exception {
         // Documents the AF_INET limitation: on a TCP loopback socket, peerPid
         // returns 0 on Linux/macOS (kernel zero-fills the ucred for non-AF_UNIX
