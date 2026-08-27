@@ -107,7 +107,7 @@ public class LicenseInstallationService {
      * Deleting it would be a write into the directory this change exists to stop writing to, and
      * the value in it is not wrong — the id never changes — merely orphaned.
      */
-    private static void mirrorToFile(Globals globals, String id) {
+    static void mirrorToFile(Globals globals, String id) {
         try {
             final Path dir = globals.getHome();
             final Path file = dir.resolve(INSTALLATION_ID_FILE);

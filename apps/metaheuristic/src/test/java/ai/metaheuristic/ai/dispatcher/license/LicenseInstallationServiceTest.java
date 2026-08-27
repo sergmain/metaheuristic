@@ -21,101 +21,162 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
+import static ai.metaheuristic.ai.dispatcher.license.LicenseInstallationService.INSTALLATION_ID_FILE;
+import static ai.metaheuristic.ai.dispatcher.license.LicenseInstallationService.mirrorToFile;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
- * The caching contract of {@link LicenseInstallationService#installationId}.
+ * {@link LicenseInstallationService#mirrorToFile} driven directly.
  *
- * <p>Spring-less: the identity is whatever the supplier answers, so nothing here needs a database.
+ * <p>Spring-less: the method's only inputs are a {@code mh.home} and a string, and its only output
+ * is a file, so every assertion below reads the real filesystem. Nothing here goes through
+ * {@code installationId()} - the caching in front of it would let only the first call in the JVM
+ * reach the mirror, so each case gets its own temp home and its own direct call.
  *
- * <p>❗ Both tests below need a COLD cache, and the cache is a JVM-wide static, so only whichever
- * of them runs first in a given JVM sees one. Run them one at a time until that changes.
+ * <p>{@code LicenseInstallationMirrorFileTest} covers the same method through the public entry
+ * point; this one covers the decisions inside it.
  *
  * @author Serge
  */
 @Execution(CONCURRENT)
 public class LicenseInstallationServiceTest {
 
-    /** A service over a fresh temp {@code mh.home} whose TX service answers with a fixed id. */
-    private static LicenseInstallationService serviceOn(String id) throws IOException {
-        final Path home = Files.createTempDirectory("mh-home-");
+    private static final String ID = "3f2c1a90-1111-2222-3333-444444444444";
+    private static final String OTHER_ID = "8b7e0000-9999-8888-7777-666666666666";
+
+    /** A {@code Globals} over a fresh temp {@code mh.home}; only getHome() is ever reached. */
+    private static Globals globalsOn(Path home) {
         final Globals globals = new Globals();
         globals.home = home;
-        globals.dispatcherPath = Files.createDirectories(home.resolve("dispatcher"));
+        return globals;
+    }
 
-        return new LicenseInstallationService(globals, new LicenseInstallationTxService(null) {
-            @Override
-            public String getOrCreateInstallationId() {
-                return id;
-            }
-        });
+    private static Path tempHome() throws IOException {
+        return Files.createTempDirectory("mh-home-");
+    }
+
+    private static Path mirror(Path home) {
+        return home.resolve(INSTALLATION_ID_FILE);
+    }
+
+    private static String read(Path file) throws IOException {
+        return Files.readString(file, StandardCharsets.UTF_8);
     }
 
     @Test
-    public void test_twoInstances_mintIndependently() throws IOException {
-        // one dispatcher owns one identity, and the cache exists to keep the verify path off the
-        // database - it is not a place for one instance to answer on behalf of another.
-        final LicenseInstallationService alpha = serviceOn("id-alpha");
-        final LicenseInstallationService beta = serviceOn("id-beta");
+    public void test_missingFile_isWritten() throws IOException {
+        final Path home = tempHome();
 
-        assertEquals("id-alpha", alpha.installationId(), "alpha must answer with its own id");
-        assertEquals("id-beta", beta.installationId(), "beta must answer with its own id");
+        mirrorToFile(globalsOn(home), ID);
+
+        assertTrue(Files.exists(mirror(home)), "the mirror must be created when it is absent");
+        assertEquals(ID, read(mirror(home)));
     }
 
-    /**
-     * The race, rather than the leak the test above shows sequentially.
-     *
-     * <p>Four installations call at the same moment. Exactly one of them reaches the synchronized
-     * block first; its supplier is the only one ever consulted, its consumer is the only mirror
-     * ever written, and the other three are handed an identity they did not mint and never wrote
-     * to disk. WHICH one wins is decided by thread scheduling and differs between runs, so the
-     * observed value in the failure below is not stable - only the collapse to a single value is.
-     *
-     * <p>What that costs in production: three dispatchers report a licence-bound identity that
-     * belongs to a fourth, and their {@code mh.home} holds no {@code installation-id.txt} at all,
-     * because {@code consumer.accept(id)} is inside the block none of them entered.
-     */
     @Test
-    public void test_concurrentInstances_raceForTheSharedCache() throws Exception {
-        final int n = 4;
-        final CountDownLatch start = new CountDownLatch(1);
-        final ExecutorService pool = Executors.newFixedThreadPool(n);
-        try {
-            final List<Future<String>> answers = new ArrayList<>();
-            for (int i = 0; i < n; i++) {
-                final LicenseInstallationService service = serviceOn("id-" + i);
-                answers.add(pool.submit(() -> {
-                    start.await();
-                    return service.installationId();
-                }));
-            }
+    public void test_writtenFile_holdsTheIdVerbatim_noTrailingNewline() throws IOException {
+        // an operator reads this off the box by hand and pastes it into a licence request, so
+        // whatever decoration is added here has to be stripped by whoever consumes it.
+        final Path home = tempHome();
 
-            // released together, so the winner is whichever thread the scheduler lets in first
-            start.countDown();
+        mirrorToFile(globalsOn(home), ID);
 
-            final Set<String> observed = new TreeSet<>();
-            for (Future<String> answer : answers) {
-                observed.add(answer.get(30, TimeUnit.SECONDS));
-            }
+        assertEquals(ID, read(mirror(home)), "the file is the id and nothing else");
+    }
 
-            assertEquals(Set.of("id-0", "id-1", "id-2", "id-3"), observed,
-                    "each of the " + n + " installations must answer with the id its own supplier minted");
-        }
-        finally {
-            pool.shutdownNow();
-        }
+    @Test
+    public void test_landsAtTheHomeRoot_neverUnderConfigOrDispatcher() throws IOException {
+        // config/ is CONFIGURATION the operator supplies and deployments may mount it read-only;
+        // minting an identity into it is the dispatcher writing to its own input.
+        final Path home = tempHome();
+        Files.createDirectories(home.resolve("config"));
+        Files.createDirectories(home.resolve("dispatcher"));
+
+        mirrorToFile(globalsOn(home), ID);
+
+        assertTrue(Files.exists(mirror(home)));
+        assertFalse(Files.exists(home.resolve("config").resolve(INSTALLATION_ID_FILE)));
+        assertFalse(Files.exists(home.resolve("dispatcher").resolve(INSTALLATION_ID_FILE)));
+    }
+
+    @Test
+    public void test_missingHomeDir_isCreated() throws IOException {
+        // Files.createDirectories(dir) is what makes a first boot on an empty volume work.
+        final Path home = tempHome().resolve("not-created-yet");
+        assertFalse(Files.exists(home));
+
+        mirrorToFile(globalsOn(home), ID);
+
+        assertTrue(Files.isDirectory(home), "the home dir must be created rather than reported missing");
+        assertEquals(ID, read(mirror(home)));
+    }
+
+    @Test
+    public void test_agreeingFile_isLeftByteForByte() throws IOException {
+        // decideMirror says LEAVE, so the file is not rewritten on every boot. A trailing newline
+        // from an editor is not a disagreement, and surviving it is what proves nothing was
+        // rewritten - a rewrite would normalise the file to the bare id.
+        final Path home = tempHome();
+        Files.writeString(mirror(home), ID + "\n", StandardCharsets.UTF_8);
+
+        mirrorToFile(globalsOn(home), ID);
+
+        assertEquals(ID + "\n", read(mirror(home)), "an agreeing file must not be rewritten");
+    }
+
+    @Test
+    public void test_disagreeingFile_isOverwritten_databaseWins() throws IOException {
+        // the file is never adopted: anyone who can write a text file could otherwise re-point
+        // this installation's identity.
+        final Path home = tempHome();
+        Files.writeString(mirror(home), OTHER_ID, StandardCharsets.UTF_8);
+
+        mirrorToFile(globalsOn(home), ID);
+
+        assertEquals(ID, read(mirror(home)), "the authoritative id must replace the file's value");
+    }
+
+    @Test
+    public void test_blankFile_isOverwritten() throws IOException {
+        final Path home = tempHome();
+        Files.writeString(mirror(home), "   \n ", StandardCharsets.UTF_8);
+
+        mirrorToFile(globalsOn(home), ID);
+
+        assertEquals(ID, read(mirror(home)));
+    }
+
+    @Test
+    public void test_emptyFile_isOverwritten() throws IOException {
+        final Path home = tempHome();
+        Files.writeString(mirror(home), "", StandardCharsets.UTF_8);
+
+        mirrorToFile(globalsOn(home), ID);
+
+        assertEquals(ID, read(mirror(home)));
+    }
+
+    @Test
+    public void test_unwritableHome_isSwallowed() throws IOException {
+        // a read-only filesystem is a supported deployment: the mirror grants nothing, so failing
+        // to write it must not take out a dispatcher. A FILE where the directory should be makes
+        // createDirectories throw.
+        final Path home = Files.createFile(tempHome().resolve("home"));
+
+        assertDoesNotThrow(() -> mirrorToFile(globalsOn(home), ID));
+
+        assertTrue(Files.isRegularFile(home), "the fixture must still be a file, not a dir");
+    }
+
+    @Test
+    public void test_unsetHome_isSwallowed() {
+        // getHome() throws IllegalArgumentException when mh.home was never bound; that is a
+        // RuntimeException inside the try, and the catch covers RuntimeException for this reason.
+        assertDoesNotThrow(() -> mirrorToFile(new Globals(), ID));
     }
 }
