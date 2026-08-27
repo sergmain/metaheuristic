@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.license;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.exceptions.LicenseInstallationMirrorException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,19 +88,27 @@ public class LicenseInstallationService {
     }
 
     /**
-     * Best-effort copy for the operator, so the id can be read off the box without the UI.
+     * The operator's copy of the id, so it can be read off the box without the UI.
      *
-     * <p>Never load-bearing. A read-only filesystem is a supported deployment (air-gapped,
-     * container images), so a failure here is logged and boot continues on the database value —
-     * refusing to start because a convenience file could not be written would take out a
-     * dispatcher over something that grants nothing.
+     * <p>❗ Load-bearing. A failure to write it raises
+     * {@link ai.metaheuristic.ai.exceptions.LicenseInstallationMirrorException} rather than being
+     * logged and stepped over, so the identity is not handed out unless the file beside it exists.
+     *
+     * <p>⚠️ The blast radius is wider than this method, because the throw leaves
+     * {@link #installationId} before {@code cached.set(id)}: the cache stays empty, so every later
+     * call re-enters and re-throws. An unwritable {@code mh.home}, or one that was never bound,
+     * therefore takes the installation identity out of service permanently — and with it licence
+     * installation, which passes the id to {@code LicenseTokenCodec.verify}, and entitlement
+     * reporting, which reports it. A read-only {@code mh.home} is no longer a deployment this
+     * method tolerates.
      *
      * <p>❗ It goes at the {@code {mh.home}} root, NOT under {@code {mh.home}/config}.
      * {@code config} is CONFIGURATION the operator supplies to the dispatcher, and deployments are
-     * entitled to mount it read-only — which is the same class of deployment the paragraph above
-     * promises to support. Minting an identity into it is the dispatcher writing to its own input:
-     * it fails exactly where the guarantee was supposed to hold, and on a writable box it quietly
-     * puts generated state somewhere an operator may be copying between installations. The root of
+     * entitled to mount it read-only. Minting an identity into it is the dispatcher writing to its
+     * own input: it fails exactly where the guarantee was supposed to hold, and on a writable box
+     * it quietly puts generated state somewhere an operator may be copying between installations.
+     * Since the paragraph above makes a failed write fatal, writing there would also hand a
+     * read-only {@code config} the power to disable the identity outright. The root of
      * {@code mh.home} is where an operator looks first, and reading it off the box by hand is the
      * whole reason the file exists.
      *
@@ -123,8 +132,8 @@ public class LicenseInstallationService {
             Files.writeString(file, id, StandardCharsets.UTF_8);
         }
         catch (IOException | RuntimeException e) {
-            log.warn("01.255.020 can't mirror the installation id to a file, continuing on the database value: "
-                    + e.getMessage());
+            throw new LicenseInstallationMirrorException(
+                    "01.255.020 can't mirror the installation id to a file: " + e.getMessage(), e);
         }
     }
 }

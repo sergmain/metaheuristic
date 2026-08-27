@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.license;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.exceptions.LicenseInstallationMirrorException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
@@ -162,21 +163,22 @@ public class LicenseInstallationServiceTest {
     }
 
     @Test
-    public void test_unwritableHome_isSwallowed() throws IOException {
+    public void test_unwritableHome_raisesMirrorException() throws IOException {
         // a read-only filesystem is a supported deployment: the mirror grants nothing, so failing
         // to write it must not take out a dispatcher. A FILE where the directory should be makes
         // createDirectories throw.
+        // the IOException arm of the catch: the cause is carried, not flattened into a message.
         final Path home = Files.createFile(tempHome().resolve("home"));
 
-        assertDoesNotThrow(() -> mirrorToFile(globalsOn(home), ID));
+        assertThrows(LicenseInstallationMirrorException.class, () -> mirrorToFile(globalsOn(home), ID));
 
         assertTrue(Files.isRegularFile(home), "the fixture must still be a file, not a dir");
     }
 
     @Test
-    public void test_unsetHome_isSwallowed() {
+    public void test_unsetHome_raisesMirrorException() {
         // getHome() throws IllegalArgumentException when mh.home was never bound; that is a
         // RuntimeException inside the try, and the catch covers RuntimeException for this reason.
-        assertDoesNotThrow(() -> mirrorToFile(new Globals(), ID));
+        assertThrows(LicenseInstallationMirrorException.class, () -> mirrorToFile(new Globals(), ID));
     }
 }
