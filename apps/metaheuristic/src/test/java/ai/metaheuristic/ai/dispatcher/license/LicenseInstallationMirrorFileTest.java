@@ -124,14 +124,6 @@ public class LicenseInstallationMirrorFileTest {
         globals.home = Files.createFile(parent.resolve("home"));
         globals.dispatcherPath = globals.home.resolve("dispatcher");
 
-        final LicenseInstallationService service =
-                new LicenseInstallationService(globals, new LicenseInstallationTxService(null) {
-                    @Override
-                    public String getOrCreateInstallationId() {
-                        return ID;
-                    }
-                });
-
-        assertEquals(ID, service.installationId());
+        assertEquals(ID, LicenseInstallationService.installationId(()->ID, (_)->{}));
     }
 }

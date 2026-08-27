@@ -15,31 +15,18 @@
  */
 
 package ai.metaheuristic.ai.profiles;
-import ai.metaheuristic.ai.MhSharedItTest;
 
-import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.MhComplexTestConfig;
-import ai.metaheuristic.ai.spi.MhSpi;
+import ai.metaheuristic.ai.*;
 import ai.metaheuristic.api.ConstsApi;
-import ch.qos.logback.classic.LoggerContext;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.cache.test.autoconfigure.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
-import java.nio.file.Path;
 import java.util.List;
 
 import static ai.metaheuristic.api.EnumsApi.DispatcherAssetMode.replicated;

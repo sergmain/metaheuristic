@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.license;
 import ai.metaheuristic.ai.Globals;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -29,6 +28,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * The installation identity every other part of the license manager asks for.
@@ -55,7 +56,7 @@ public class LicenseInstallationService {
     private final Globals globals;
     private final LicenseInstallationTxService licenseInstallationTxService;
 
-    private final AtomicReference<String> cached = new AtomicReference<>();
+    private static final AtomicReference<String> cached = new AtomicReference<>();
 
     /**
      * The installation id, minted on first call if this dispatcher has never had one.
@@ -65,17 +66,21 @@ public class LicenseInstallationService {
      * asked first. The window is one call at first boot, so the cost of serialising it is nil.
      */
     public String installationId() {
+        return installationId(licenseInstallationTxService::getOrCreateInstallationId, id -> mirrorToFile(globals, id));
+    }
+
+    public static String installationId(Supplier<String> supplier, Consumer<String> consumer) {
         final String c = cached.get();
         if (c != null) {
             return c;
         }
-        synchronized (this) {
+        synchronized (cached) {
             final String again = cached.get();
             if (again != null) {
                 return again;
             }
-            final String id = licenseInstallationTxService.getOrCreateInstallationId();
-            mirrorToFile(id);
+            final String id = supplier.get();
+            consumer.accept(id);
             cached.set(id);
             return id;
         }
@@ -102,7 +107,7 @@ public class LicenseInstallationService {
      * Deleting it would be a write into the directory this change exists to stop writing to, and
      * the value in it is not wrong — the id never changes — merely orphaned.
      */
-    private void mirrorToFile(String id) {
+    private static void mirrorToFile(Globals globals, String id) {
         try {
             final Path dir = globals.getHome();
             final Path file = dir.resolve(INSTALLATION_ID_FILE);
