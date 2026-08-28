@@ -43,6 +43,12 @@ public interface DispatcherBlobStorage {
 
     void copyVariableData(StoredVariable sourceVariable, TaskParamsYaml.OutputVariable targetVariable);
 
+    // Release a VariableBlob. Which artifacts actually go away is the BACKEND's decision, not the caller's:
+    // a backend whose medium physically guarantees write-once storage implements this as a no-op, because
+    // there is nothing it is permitted to remove. Callers must therefore treat this as "I no longer reference
+    // this blob", never as "this blob is now gone", and must not assume the id becomes unreadable afterwards.
+    void deleteVariableData(Long variableBlobId);
+
     InputStream getGlobalVariableDataAsStreamById(Long globalVariableId);
 
     void accessGlobalVariableData(final Long globalVariableId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException;

@@ -105,6 +105,12 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     }
 
     @Override
+    public void deleteVariableData(Long variableBlobId) {
+        // In DB mode the row IS the payload, so dropping the row releases the data with it.
+        variableBlobRepository.deleteById(variableBlobId);
+    }
+
+    @Override
     public void copyVariableData(StoredVariable sourceVariable, TaskParamsYaml.OutputVariable targetVariable) {
         variableDatabaseSpecificService.copyData(sourceVariable, targetVariable);
     }

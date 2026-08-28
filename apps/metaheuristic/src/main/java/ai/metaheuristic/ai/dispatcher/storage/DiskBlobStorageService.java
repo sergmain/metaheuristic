@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
 import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
@@ -128,6 +129,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     private final VariableRepository variableRepository;
     private final GeneralBlobService generalBlobService;
     private final GlobalVariableRepository globalVariableRepository;
+    private final VariableBlobRepository variableBlobRepository;
 
     private DataStorage dataStorageVariable;
     private DataStorage dataStorageGlobalVariable;
@@ -270,6 +272,19 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
         cacheVariable.createdOn = System.currentTimeMillis();
         cacheVariable.nullified = false;
         CacheVariable result = cacheVariableRepository.save(cacheVariable);
+    }
+
+    @SneakyThrows
+    @Override
+    public void deleteVariableData(Long variableBlobId) {
+        // A local filesystem offers no write-once guarantee, so disk mode really does release both artifacts:
+        // the payload file first, then the anchor row that pointed at it. Order matters - if the row went
+        // first, a failure here would leave a file no id can reach.
+        final Path path = getPath(dataStorageVariable.basePath, variableBlobId);
+        if (path!=null) {
+            Files.deleteIfExists(path.resolve(variableBlobId + CommonConsts.BIN_EXT));
+        }
+        variableBlobRepository.deleteById(variableBlobId);
     }
 
     @SneakyThrows
