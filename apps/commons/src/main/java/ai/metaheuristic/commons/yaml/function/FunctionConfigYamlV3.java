@@ -18,6 +18,7 @@ package ai.metaheuristic.commons.yaml.function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
@@ -62,6 +63,9 @@ public class FunctionConfigYamlV3 implements BaseParams, Cloneable {
         if (this.system!=null) {
             clone.system = this.system.clone();
         }
+        if (this.dataStorage!=null) {
+            clone.dataStorage = this.dataStorage.clone();
+        }
         return clone;
     }
 
@@ -77,6 +81,38 @@ public class FunctionConfigYamlV3 implements BaseParams, Cloneable {
             final SystemV3 clone = (SystemV3) super.clone();
             clone.checksumMap = new HashMap<>(this.checksumMap);
             clone.archive = this.archive;
+            return clone;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DataStorageV3 implements Cloneable {
+
+        // it's a name of asset. Asset can be Variable, GlobalVariable or Function
+        // for Variable and GlobalVariable it's a 'name' field
+        // for Function it's a 'code' field
+        public String name;
+
+        public EnumsApi.DataSourcing sourcing;
+
+        public @Nullable GitInfo git;
+
+        public @Nullable DiskInfo disk;
+
+        public EnumsApi.@Nullable VariableType type;
+
+        public @Nullable Long size = null;
+
+        public @Nullable Map<EnumsApi.HashAlgo, String> checksumMap = null;
+
+        @SneakyThrows
+        public DataStorageV3 clone() {
+            final DataStorageV3 clone = (DataStorageV3) super.clone();
+            if (this.checksumMap!=null) {
+                clone.checksumMap = new HashMap<>(this.checksumMap);
+            }
             return clone;
         }
     }
@@ -176,5 +212,12 @@ public class FunctionConfigYamlV3 implements BaseParams, Cloneable {
     public FunctionConfigV3 function = new FunctionConfigV3();
 
     public @Nullable SystemV3 system = new SystemV3();
+
+    /**
+     * Payload storage of this Function, @Nullable per the @Nullable-exception rule of the
+     * multi-versioning mechanic - no version bump. Defaults to null so that a function.yaml which
+     * never declared it upgrades to a null dataStorage rather than to an empty one.
+     */
+    public @Nullable DataStorageV3 dataStorage = null;
 
 }

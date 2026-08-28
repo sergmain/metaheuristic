@@ -54,7 +54,4 @@ public class FunctionData implements Serializable {
     @Lob
     public Blob data;
 
-    @Column(name = "PARAMS")
-    public String params;
-
 }

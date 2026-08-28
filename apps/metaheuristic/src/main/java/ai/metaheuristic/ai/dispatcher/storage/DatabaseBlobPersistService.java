@@ -126,11 +126,6 @@ public class DatabaseBlobPersistService {
         if (function==null) {
             throw new FunctionDataNotFoundException("id#"+functionDataId, "174.120 function data not found");
         }
-        DataStorageParams dataStorageParams = DataStorageParamsUtils.UTILS.to(function.params);
-        if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.dispatcher) {
-            // this is an exception for the case when two resources have the same names but different pool codes
-            throw new FunctionDataErrorException("FunctionData#"+ functionDataId, "174.160 Sourcing must be dispatcher, value in db: " + dataStorageParams.sourcing);
-        }
 
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         function.setData(blob);

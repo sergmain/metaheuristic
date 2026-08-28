@@ -94,7 +94,6 @@ public class MhGeneralBlobTxService implements GeneralBlobTxService {
         FunctionData data = new FunctionData();
         data.functionCode = functionCode;
         data.uploadTs = new Timestamp(System.currentTimeMillis());
-        data.setParams(DataStorageParamsUtils.UTILS.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, functionCode)));
 
         ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(bais, Consts.STUB_BYTES.length);

@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
+import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
 import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.api.EnumsApi;
@@ -38,6 +39,9 @@ import java.util.stream.Stream;
 
 import static ai.metaheuristic.api.EnumsApi.FunctionSourcing.dispatcher;
 
+/**
+ * <p>Error code prefix: {@code 01.297.} (unique to this class).
+ */
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -61,11 +65,26 @@ public class FunctionTxService {
         Function function = new Function();
         function.code = functionConfig.function.code;
         function.type = functionConfig.function.type!=null ? functionConfig.function.type : "";
-        function.updateParams(functionConfig);
+
+        // the payload description used to be written onto the FunctionData row by
+        // createEmptyFunctionData; it belongs to the Function itself, so it is set here instead.
+        // A copy is made because the caller keeps using its own FunctionConfigYaml afterwards.
+        // No inputStream means no dispatcher-held bytes at all - a git-sourced Function - and then
+        // there is no payload to describe, hence null rather than an empty DataStorage.
+        final FunctionConfigYaml fcy = functionConfig.clone();
+        fcy.dataStorage = inputStream==null
+                ? null
+                : new FunctionConfigYaml.DataStorage(EnumsApi.DataSourcing.dispatcher, functionConfig.function.code);
+        function.updateParams(fcy);
 
         String functionCode = function.getCode();
         function = functionCache.save(function);
         if (inputStream!=null) {
+            // this is an exception for the case when two resources have the same names but different pool codes
+            if (fcy.dataStorage==null || fcy.dataStorage.sourcing!=EnumsApi.DataSourcing.dispatcher) {
+                throw new FunctionDataErrorException(functionCode,
+                        "01.297.020 Sourcing must be dispatcher, actual: " + (fcy.dataStorage==null ? null : fcy.dataStorage.sourcing));
+            }
             Long functionDataId = generalBlobTxService.createEmptyFunctionData(functionCode);
             dispatcherBlobStorage.storeFunctionData(functionDataId, inputStream, size);
         }

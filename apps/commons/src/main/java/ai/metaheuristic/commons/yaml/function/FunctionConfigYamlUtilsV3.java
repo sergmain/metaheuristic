@@ -20,10 +20,12 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -53,6 +55,7 @@ public class FunctionConfigYamlUtilsV3
         // trg was just created so system isn't null
         //noinspection DataFlowIssue
         toSystem(src.system, trg.system);
+        trg.dataStorage = toDataStorage(src.dataStorage);
 
         trg.checkIntegrity();
         return trg;
@@ -88,6 +91,25 @@ public class FunctionConfigYamlUtilsV3
             }
         }
 
+        return trg;
+    }
+
+    // a Function that was stored before dataStorage existed carries no payload description at all, and
+    // null is the honest answer for it - an empty DataStorage would claim a sourcing nobody declared
+    static FunctionConfigYaml.@Nullable DataStorage toDataStorage(FunctionConfigYamlV3.@Nullable DataStorageV3 src) {
+        if (src==null) {
+            return null;
+        }
+        FunctionConfigYaml.DataStorage trg = new FunctionConfigYaml.DataStorage();
+        trg.name = src.name;
+        trg.sourcing = src.sourcing;
+        trg.git = src.git;
+        trg.disk = src.disk;
+        trg.type = src.type;
+        trg.size = src.size;
+        if (src.checksumMap!=null) {
+            trg.checksumMap = new HashMap<>(src.checksumMap);
+        }
         return trg;
     }
 

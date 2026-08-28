@@ -318,8 +318,7 @@ CREATE TABLE mh_function_data
     VERSION         NUMERIC(5, 0)   NOT NULL,
     FUNCTION_CODE    VARCHAR(100)   not null,
     UPLOAD_TS       TIMESTAMP       NOT NULL default CURRENT_TIMESTAMP,
-    DATA            BLOB,
-    PARAMS          LONG VARCHAR      not null
+    DATA            BLOB
 );
 
 CREATE UNIQUE INDEX mmh_function_data_function_code_idx

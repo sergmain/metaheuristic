@@ -19,6 +19,7 @@ package ai.metaheuristic.commons.yaml.function;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
@@ -128,6 +129,9 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
         if (this.system!=null) {
             clone.system = this.system.clone();
         }
+        if (this.dataStorage!=null) {
+            clone.dataStorage = this.dataStorage.clone();
+        }
         return clone;
     }
 
@@ -143,6 +147,51 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
             final System clone = (System) super.clone();
             clone.checksumMap = new HashMap<>(this.checksumMap);
             clone.archive = this.archive;
+            return clone;
+        }
+    }
+
+    /**
+     * Where this Function's payload lives and what is known about it.
+     *
+     * <p>Moved here from {@code FunctionData.params}, which used to hold a whole DataStorageParams
+     * document next to the bytes. Keeping it there meant the row that stores the payload also decided
+     * whether the payload was allowed to be stored - a rule about the Function expressed by its blob.
+     * It belongs to the Function's own descriptor, so the blob row now carries bytes only.
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DataStorage implements Cloneable {
+
+        // it's a name of asset. Asset can be Variable, GlobalVariable or Function
+        // for Variable and GlobalVariable it's a 'name' field
+        // for Function it's a 'code' field
+        public String name;
+
+        public EnumsApi.DataSourcing sourcing;
+
+        public @Nullable GitInfo git;
+
+        public @Nullable DiskInfo disk;
+
+        public EnumsApi.@Nullable VariableType type;
+
+        public @Nullable Long size = null;
+
+        public @Nullable Map<EnumsApi.HashAlgo, String> checksumMap = null;
+
+        public DataStorage(EnumsApi.DataSourcing sourcing, String name) {
+            this.sourcing = sourcing;
+            this.name = name;
+        }
+
+        @SneakyThrows
+        public DataStorage clone() {
+            final DataStorage clone = (DataStorage) super.clone();
+            if (this.checksumMap!=null) {
+                clone.checksumMap = new HashMap<>(this.checksumMap);
+            }
             return clone;
         }
     }
@@ -297,5 +346,19 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
     public FunctionConfig function = new FunctionConfig();
 
     public @Nullable System system = new System();
+
+    /**
+     * Payload storage of this Function. @Nullable per the @Nullable-exception rule of the
+     * multi-versioning mechanic - no version bump.
+     *
+     * <p>❗ Defaults to null, not to an empty DataStorage, and the default is load-bearing. This is
+     * dispatcher-side state - it is assigned when the dispatcher takes the payload in
+     * (FunctionTxService.persistFunction), and a Function author never writes it in function.yaml.
+     * An empty default would be dumped as {@code dataStorage: {}} by PackageBundle, which round-trips
+     * every bundled function.yaml through this class, putting a dispatcher concept into a distributed
+     * artifact that has no dispatcher. null is skipped by the representer, so the descriptor an author
+     * wrote comes out of the packager unchanged.
+     */
+    public @Nullable DataStorage dataStorage = null;
 
 }
