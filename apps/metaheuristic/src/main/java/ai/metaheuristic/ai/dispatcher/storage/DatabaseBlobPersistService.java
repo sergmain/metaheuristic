@@ -18,11 +18,9 @@ package ai.metaheuristic.ai.dispatcher.storage;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
-import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
@@ -58,7 +56,6 @@ public class DatabaseBlobPersistService {
 
     private final VariableBlobRepository variableBlobRepository;
     private final GlobalVariableRepository globalVariableRepository;
-    private final FunctionDataRepository functionDataRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final EntityManager em;
 
@@ -118,20 +115,6 @@ public class DatabaseBlobPersistService {
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         globalVariable.setData(blob);
         GlobalVariable result = globalVariableRepository.save(globalVariable);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void storeFunctionData(Long functionDataId, InputStream is, long size) {
-        FunctionData function = functionDataRepository.findById(functionDataId).orElse(null);
-        if (function==null) {
-            throw new FunctionDataNotFoundException("id#"+functionDataId, "174.120 function data not found");
-        }
-
-        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
-        function.setData(blob);
-        function.setUploadTs(new Timestamp(System.currentTimeMillis()));
-
-        FunctionData result = functionDataRepository.save(function);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

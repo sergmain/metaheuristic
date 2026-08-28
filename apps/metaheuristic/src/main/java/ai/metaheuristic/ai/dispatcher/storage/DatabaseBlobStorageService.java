@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.storage;
 
-import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import ai.metaheuristic.ai.dispatcher.storage.variable.VariableDatabaseSpecificService;
@@ -58,7 +58,7 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     private final VariableBlobRepository variableBlobRepository;
     private final DatabaseBlobPersistService databaseBlobStoreService;
     private final GlobalVariableRepository globalVariableRepository;
-    private final FunctionDataRepository functionDataRepository;
+    private final FunctionRepository functionRepository;
     private final CacheVariableDatabaseStorageService cacheVariableDatabaseStorageService;
 
     @Override
@@ -152,21 +152,24 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     @Override
     public void accessFunctionData(String functionCode, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
         TxUtils.checkTxExists();
-        Blob blob = functionDataRepository.getDataAsStreamByCode(functionCode);
+        // a Function with no VARIABLE_BLOB_ID is not a broken row - it is a Function whose bytes the
+        // dispatcher never held (git-sourced). Asking for them is still an error for the caller, which
+        // is why this reports not-found rather than returning quietly.
+        final Long variableBlobId = functionRepository.findVariableBlobIdByCode(functionCode);
+        if (variableBlobId==null) {
+            String es = "01.174.380 Function #"+ functionCode +" has no stored payload";
+            log.warn(es);
+            throw new FunctionDataNotFoundException(functionCode, es);
+        }
+        Blob blob = variableBlobRepository.getDataAsStreamById(variableBlobId);
         if (blob==null) {
-            String es = "174.380 FunctionData #"+ functionCode +" wasn't found";
+            String es = "01.174.385 VariableBlob #"+ variableBlobId +" of Function "+ functionCode +" wasn't found";
             log.warn(es);
             throw new FunctionDataNotFoundException(functionCode, es);
         }
         try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is)) {
             processBlobDataFunc.accept(bis);
         }
-    }
-
-    @Override
-    public void storeFunctionData(Long functionDataId, InputStream is, long size) {
-        databaseBlobStoreService.storeFunctionData(functionDataId, is, size);
-
     }
 
     @Override

@@ -17,10 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.storage;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
-import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import ai.metaheuristic.commons.spi.GeneralBlobTxService;
@@ -55,7 +53,6 @@ public class MhGeneralBlobTxService implements GeneralBlobTxService {
 
     private final VariableBlobRepository variableBlobRepository;
     private final GlobalVariableRepository globalVariableRepository;
-    private final FunctionDataRepository functionDataRepository;
     private final EntityManager em;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -88,18 +85,4 @@ public class MhGeneralBlobTxService implements GeneralBlobTxService {
         return r.id;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Override
-    public Long createEmptyFunctionData(String functionCode) {
-        FunctionData data = new FunctionData();
-        data.functionCode = functionCode;
-        data.uploadTs = new Timestamp(System.currentTimeMillis());
-
-        ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
-        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(bais, Consts.STUB_BYTES.length);
-        data.setData(blob);
-
-        FunctionData r = functionDataRepository.save(data);
-        return r.id;
-    }
 }

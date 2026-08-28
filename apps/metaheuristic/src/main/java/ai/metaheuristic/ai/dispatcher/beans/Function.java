@@ -64,6 +64,17 @@ public class Function implements Serializable {
         this.paramsLocked.reset(()->this.params = params);
     }
 
+    /**
+     * MH_VARIABLE_BLOB.ID holding this Function's payload, or null when there are no
+     * dispatcher-held bytes - a git-sourced Function.
+     *
+     * <p>Replaces the former by-FUNCTION_CODE join to MH_FUNCTION_DATA. A Function's payload is an
+     * ordinary VariableBlob now, reached by primary key, so it inherits the WORM guard and the
+     * disk/S3 backends that VariableBlob already has instead of needing a parallel set of its own.
+     */
+    @Column(name = "VARIABLE_BLOB_ID")
+    public Long variableBlobId;
+
     @Transient
     @JsonIgnore
     private final ThreadUtils.CommonThreadLocker<FunctionConfigYaml> paramsLocked =

@@ -16,8 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.function;
 
-import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
-import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
@@ -43,7 +41,6 @@ import java.util.Optional;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class FunctionDataTxService {
 
-    private final FunctionDataRepository functionDataRepository;
     private final DispatcherBlobStorage dispatcherBlobStorage;
 
     @Transactional(readOnly = true)
@@ -61,21 +58,6 @@ public class FunctionDataTxService {
             log.error(es, th);
             throw new FunctionDataErrorException(code, es);
         }
-    }
-
-    @Transactional
-    public void deleteById(Long id) {
-        functionDataRepository.deleteById(id);
-    }
-
-    @Transactional
-    public void deleteByFunctionCode(String functionCode) {
-        functionDataRepository.deleteByFunctionCode(functionCode);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<FunctionData> findById(Long id) {
-        return functionDataRepository.findById(id);
     }
 
 }

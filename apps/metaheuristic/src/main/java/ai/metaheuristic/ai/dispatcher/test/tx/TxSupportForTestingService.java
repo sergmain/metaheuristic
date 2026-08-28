@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
+import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.LogDataRepository;
@@ -68,7 +68,7 @@ public class TxSupportForTestingService {
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ExecContextGraphService execContextGraphService;
     private final FunctionCache functionCache;
-    private final FunctionDataTxService functionDataService;
+    private final DispatcherBlobStorage dispatcherBlobStorage;
     private final ProcessorCache processorCache;
     private final ExecContextCreatorService execContextCreatorService;
     private final BatchCache batchCache;
@@ -143,8 +143,11 @@ public class TxSupportForTestingService {
         if (functionId != null) {
             Function f = functionCache.findById(functionId);
             if (f!=null) {
+                final Long variableBlobId = f.variableBlobId;
                 functionCache.delete(functionId);
-                functionDataService.deleteByFunctionCode(f.code);
+                if (variableBlobId!=null) {
+                    dispatcherBlobStorage.deleteVariableData(variableBlobId);
+                }
             }
         }
     }

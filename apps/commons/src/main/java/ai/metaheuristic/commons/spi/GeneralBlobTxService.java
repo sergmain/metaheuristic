@@ -32,7 +32,4 @@ public interface GeneralBlobTxService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     Long createEmptyGlobalVariable(String variable, @Nullable String filename);
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    Long createEmptyFunctionData(String functionCode);
 }

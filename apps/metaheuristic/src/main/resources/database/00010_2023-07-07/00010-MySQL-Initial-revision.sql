@@ -329,18 +329,6 @@ CREATE TABLE mh_variable_global
 CREATE UNIQUE INDEX mh_variable_global_name_unq_idx
     ON mh_variable_global (NAME);
 
-CREATE TABLE mh_function_data
-(
-    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION         INT UNSIGNED    NOT NULL,
-    FUNCTION_CODE    VARCHAR(100) not null,
-    UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP default CURRENT_TIMESTAMP,
-    DATA            LONGBLOB
-);
-
-CREATE UNIQUE INDEX mh_function_data_function_code_unq_idx
-    ON mh_function_data (FUNCTION_CODE);
-
 CREATE TABLE mh_experiment
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
@@ -397,7 +385,8 @@ CREATE TABLE mh_function
     VERSION         INT UNSIGNED    NOT NULL,
     FUNCTION_CODE   VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin not null,
     FUNCTION_TYPE   VARCHAR(50) not null,
-    PARAMS          MEDIUMTEXT not null
+    PARAMS          MEDIUMTEXT not null,
+    VARIABLE_BLOB_ID NUMERIC(10)
 );
 
 CREATE UNIQUE INDEX mh_function_function_code_unq_idx

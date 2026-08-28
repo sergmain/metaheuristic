@@ -175,7 +175,7 @@ public class FunctionService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "295.080 function wasn't found, functionId: " + id);
         }
-        functionTxService.deleteFunction(function.getId(), function.getCode());
+        functionTxService.deleteFunction(function.getId());
         try {
             deleteResourceDirForFunction(function.getCode());
         } catch (IOException e) {

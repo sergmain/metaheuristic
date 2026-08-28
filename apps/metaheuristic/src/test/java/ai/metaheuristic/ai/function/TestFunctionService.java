@@ -68,7 +68,6 @@ class TestFunctionService extends MhSharedItTest {
     @Autowired private FunctionTxService functionTxService;
     @Autowired private FunctionService functionTopLevelService;
     @Autowired private TxTestingTopLevelService txTestingTopLevelService;
-    @Autowired private FunctionDataTxService functionDataService;
     @Autowired private Globals globals;
 
     public @Nullable Function function = null;
@@ -120,14 +119,9 @@ class TestFunctionService extends MhSharedItTest {
         log.info("Start after()");
         if (function != null) {
             try {
-                functionTxService.deleteFunction(function.getId(), function.code);
+                functionTxService.deleteFunction(function.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
-            }
-            try {
-                functionDataService.deleteByFunctionCode(function.getCode());
-            } catch (Throwable th) {
-                th.printStackTrace();
             }
         }
         System.out.println("Was finished correctly");

@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -124,7 +124,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     }
 
     private final Globals globals;
-    private final FunctionDataRepository functionDataRepository;
+    private final FunctionRepository functionRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final VariableRepository variableRepository;
     private final GeneralBlobService generalBlobService;
@@ -133,14 +133,12 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
 
     private DataStorage dataStorageVariable;
     private DataStorage dataStorageGlobalVariable;
-    private DataStorage dataStorageFunction;
     private DataStorage dataStorageCacheVariable;
 
     @PostConstruct
     public void init() {
         dataStorageVariable = new DataStorage(globals.getDispatcherStorageVariablesPath());
         dataStorageGlobalVariable = new DataStorage(globals.getDispatcherStorageGlobalVariablesPath());
-        dataStorageFunction = new DataStorage(globals.getDispatcherStorageFunctionsPath());
         dataStorageCacheVariable = new DataStorage(globals.getDispatcherStorageCacheVariablessPath());
     }
 
@@ -247,17 +245,13 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
 
     @Override
     public void accessFunctionData(String functionCode, Consumer<InputStream> processBlobDataFunc) throws IOException {
-        Long functionId = functionDataRepository.findIdByCode(functionCode);
-        if (functionId == null) {
-            throw new FunctionDataErrorException(functionCode, "176.200 error");
+        // a Function's payload is an ordinary VariableBlob now, so it lives under the variables path -
+        // there is no separate functions store on disk any more
+        Long variableBlobId = functionRepository.findVariableBlobIdByCode(functionCode);
+        if (variableBlobId == null) {
+            throw new FunctionDataErrorException(functionCode, "01.176.200 Function has no stored payload");
         }
-        dataStorageFunction.accessData(functionId, processBlobDataFunc);
-    }
-
-    @SneakyThrows
-    @Override
-    public void storeFunctionData(Long functionDataId, InputStream is, long size) {
-        dataStorageFunction.storeData(functionDataId, is, size);
+        dataStorageVariable.accessData(variableBlobId, processBlobDataFunc);
     }
 
     @SneakyThrows

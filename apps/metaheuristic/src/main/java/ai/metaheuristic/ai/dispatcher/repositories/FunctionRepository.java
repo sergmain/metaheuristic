@@ -54,6 +54,13 @@ public interface FunctionRepository extends CrudRepository<Function, Long> {
     @Query(value="select b.id from Function b where b.code=:code")
     Long findIdByCode(String code);
 
+    // the processor addresses a Function by code, the payload lives under a VariableBlob id -
+    // this is the whole of the translation between the two
+    @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+    @Nullable
+    @Query(value="select b.variableBlobId from Function b where b.code=:code")
+    Long findVariableBlobIdByCode(String code);
+
     @Transactional(readOnly = true)
     @Nullable
     @Query(value="select max(b.id) from Function b where b.type=:funcType")

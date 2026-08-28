@@ -74,7 +74,6 @@ public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
     private final CacheTxService cacheService;
     private final ExecContextTxService execContextTxService;
     private final DispatcherEventRepository dispatcherEventRepository;
-    private final FunctionDataRepository functionDataRepository;
     private final ProcessorRepository processorRepository;
     private final ProcessorCoreTxService processorCoreService;
     private final ProcessorCoreRepository processorCoreRepository;
@@ -132,7 +131,6 @@ public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
 //        deleteOrphanVariables();
         deleteOrphanCacheData();
         deleteObsoleteEvents();
-        deleteObsoleteFunctionData();
         deleteOrphanCores();
     }
 
@@ -168,25 +166,6 @@ public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
                     catch (Throwable th) {
                         log.error("510.060 variableService.deleteOrphanVariables("+processorId+")", th);
                     }
-                }
-            }
-        }
-    }
-
-    private void deleteObsoleteFunctionData() {
-        log.info("510.090 start deleteObsoleteFunctionData()");
-        List<String> functionCodesInData = functionDataRepository.findAllFunctionCodes();
-        List<String> functionCodes = functionRepository.findAllFunctionCodes();
-        for (String functionCode : functionCodesInData) {
-            if (!functionCodes.contains(functionCode)) {
-                if (isShutdown()) {
-                    return;
-                }
-                try {
-                    functionDataRepository.deleteByFunctionCode(functionCode);
-                }
-                catch (Throwable th) {
-                    log.warn("510.120 error while deleting obsolete function " + functionCode+", " + th);
                 }
             }
         }

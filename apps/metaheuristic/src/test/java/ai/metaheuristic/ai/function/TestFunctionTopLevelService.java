@@ -42,9 +42,9 @@ class TestFunctionTopLevelService {
     public void test_1() {
 
         Map<Long, Function> map = Map.of(
-                1L, new Function(1L, 0, "code-1", "type", "params"),
-                3L, new Function(3L, 0, "code-3", "type", "params"),
-                2L, new Function(2L, 0, "code-2", "type", "params")
+                1L, new Function(1L, 0, "code-1", "type", "params", null),
+                3L, new Function(3L, 0, "code-3", "type", "params", null),
+                2L, new Function(2L, 0, "code-2", "type", "params", null)
         );
 
         FunctionData.FunctionsResult r = FunctionService.getFunctions(()->List.of(2L, 1L, 3L), map::get, EnumsApi.DispatcherAssetMode.local);
