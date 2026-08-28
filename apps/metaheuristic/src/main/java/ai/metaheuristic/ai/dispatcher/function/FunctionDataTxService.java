@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.function;
 
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
@@ -34,6 +35,8 @@ import java.util.Optional;
  * @author Serge
  * Date: 1/23/2020
  * Time: 9:34 PM
+ *
+ * <p>Error code prefix: {@code 01.087.} (unique to this class).
  */
 @Service
 @Slf4j
@@ -42,11 +45,20 @@ import java.util.Optional;
 public class FunctionDataTxService {
 
     private final DispatcherBlobStorage dispatcherBlobStorage;
+    private final FunctionRepository functionRepository;
 
     @Transactional(readOnly = true)
     public void storeToFile(String code, Path trgFile) {
         try {
-            dispatcherBlobStorage.accessFunctionData(code, (is)-> {
+            // translating a function code into a VariableBlob id belongs here, not in the storage
+            // backends: a Function's payload is an ordinary VariableBlob, so each backend was
+            // repeating the same lookup only to end up calling its own variable read. Resolve once,
+            // then use the variable path directly.
+            final Long variableBlobId = functionRepository.findVariableBlobIdByCode(code);
+            if (variableBlobId==null) {
+                throw new FunctionDataErrorException(code, "01.087.020 Function " + code + " has no stored payload");
+            }
+            dispatcherBlobStorage.accessVariableData(variableBlobId, (is)-> {
                 DirUtils.copy(is, trgFile);
                 //noinspection unused
                 int k=0;

@@ -124,7 +124,6 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     }
 
     private final Globals globals;
-    private final FunctionRepository functionRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final VariableRepository variableRepository;
     private final GeneralBlobService generalBlobService;
@@ -241,17 +240,6 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
         globalVariable.uploadTs = new Timestamp(System.currentTimeMillis());
         GlobalVariable result = globalVariableRepository.save(globalVariable);
         dataStorageGlobalVariable.storeData(globalVariableId, is, size);
-    }
-
-    @Override
-    public void accessFunctionData(String functionCode, Consumer<InputStream> processBlobDataFunc) throws IOException {
-        // a Function's payload is an ordinary VariableBlob now, so it lives under the variables path -
-        // there is no separate functions store on disk any more
-        Long variableBlobId = functionRepository.findVariableBlobIdByCode(functionCode);
-        if (variableBlobId == null) {
-            throw new FunctionDataErrorException(functionCode, "01.176.200 Function has no stored payload");
-        }
-        dataStorageVariable.accessData(variableBlobId, processBlobDataFunc);
     }
 
     @SneakyThrows

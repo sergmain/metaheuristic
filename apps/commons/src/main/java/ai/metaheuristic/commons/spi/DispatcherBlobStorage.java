@@ -55,11 +55,6 @@ public interface DispatcherBlobStorage {
 
     void storeGlobalVariableData(Long globalVariableId, InputStream is, long size) throws IOException;
 
-    // Reading a Function's payload stays keyed by code because that is how a Processor asks for it over
-    // the wire. The backend resolves the code to Function.variableBlobId and reads an ordinary
-    // VariableBlob; there is no function-specific write method because storeVariableData IS the write.
-    void accessFunctionData(String functionCode, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException;
-
     void storeCacheVariableData(Long cacheVariableId, InputStream is, long size) throws IOException;
 
     void accessCacheVariableData(Long cacheVariableId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException;
