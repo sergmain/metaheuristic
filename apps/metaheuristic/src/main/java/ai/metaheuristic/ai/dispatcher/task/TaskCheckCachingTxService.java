@@ -92,8 +92,15 @@ public class TaskCheckCachingTxService {
     }
 
     public void invalidateCacheItemInternal(Long cacheProcessId) {
+        // capture the anchors before the rows go - afterwards nothing knows which blobs these were.
+        // deleteVariableData means "this caller no longer references the blob"; what actually goes away
+        // is the backend's call, and a WORM backend correctly does nothing at all.
+        final List<Long> variableBlobIds = cacheVariableRepository.findVariableBlobIdsByCacheProcessId(cacheProcessId);
         cacheVariableRepository.deleteByCacheProcessId(cacheProcessId);
         cacheProcessRepository.deleteById(cacheProcessId);
+        for (Long variableBlobId : variableBlobIds) {
+            dispatcherBlobStorage.deleteVariableData(variableBlobId);
+        }
     }
 
     public enum CheckCachingStatus {task_not_found, isnt_check_cache_state, copied_from_cache, no_prev_cache}
@@ -154,7 +161,8 @@ public class TaskCheckCachingTxService {
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 Object[] obj = vars.stream().filter(o->o[1].equals(output.name)).findFirst().orElseThrow(()->new IllegalStateException("609.120 ???? How???"));
                 try {
-                    StoredVariable storedVariable = new StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], Boolean.TRUE.equals(obj[2]));
+                    StoredVariable storedVariable = new StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], Boolean.TRUE.equals(obj[2]),
+                            obj[3]==null ? null : ((Number)obj[3]).longValue());
                     if (storedVariable.nullified) {
                         VariableSyncService.getWithSyncVoidForCreation(output.id, () -> variableService.setVariableAsNull(taskId, output.id));
                     }

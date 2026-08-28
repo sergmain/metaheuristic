@@ -124,7 +124,6 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     }
 
     private final Globals globals;
-    private final CacheVariableRepository cacheVariableRepository;
     private final VariableRepository variableRepository;
     private final GeneralBlobService generalBlobService;
     private final GlobalVariableRepository globalVariableRepository;
@@ -132,13 +131,11 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
 
     private DataStorage dataStorageVariable;
     private DataStorage dataStorageGlobalVariable;
-    private DataStorage dataStorageCacheVariable;
 
     @PostConstruct
     public void init() {
         dataStorageVariable = new DataStorage(globals.getDispatcherStorageVariablesPath());
         dataStorageGlobalVariable = new DataStorage(globals.getDispatcherStorageGlobalVariablesPath());
-        dataStorageCacheVariable = new DataStorage(globals.getDispatcherStorageCacheVariablessPath());
     }
 
     @Override
@@ -209,7 +206,12 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
         trg.nullified = false;
         variableRepository.save(trg);
 
-        dataStorageCacheVariable.accessData(sourceVariable.id, (is)-> {
+        // the cached payload is an ordinary VariableBlob now, so this reads from the variable store.
+        // The anchor is resolved upstream and arrives on StoredVariable.
+        if (sourceVariable.variableBlobId==null) {
+            throw new IllegalStateException("01.176.125 CacheVariable #" + sourceVariable.id + " has no stored payload");
+        }
+        dataStorageVariable.accessData(sourceVariable.variableBlobId, (is)-> {
             try {
                 dataStorageVariable.storeData(trg.variableBlobId, is, -1);
             } catch (IOException e) {
@@ -244,20 +246,6 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
 
     @SneakyThrows
     @Override
-    @Transactional
-    public void storeCacheVariableData(Long cacheVariableId, InputStream is, long size) {
-        dataStorageCacheVariable.storeData(cacheVariableId, is, size);
-        CacheVariable cacheVariable = cacheVariableRepository.findById(cacheVariableId).orElse(null);
-        if (cacheVariable==null) {
-            throw new FunctionDataNotFoundException("id#"+cacheVariableId, "176.240 cacheVariable not found");
-        }
-        cacheVariable.createdOn = System.currentTimeMillis();
-        cacheVariable.nullified = false;
-        CacheVariable result = cacheVariableRepository.save(cacheVariable);
-    }
-
-    @SneakyThrows
-    @Override
     public void deleteVariableData(Long variableBlobId) {
         // A local filesystem offers no write-once guarantee, so disk mode really does release both artifacts:
         // the payload file first, then the anchor row that pointed at it. Order matters - if the row went
@@ -269,10 +257,4 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
         variableBlobRepository.deleteById(variableBlobId);
     }
 
-    @SneakyThrows
-    @Override
-    public void accessCacheVariableData(Long cacheVariableId, Consumer<InputStream> processBlobDataFunc) {
-        dataStorageCacheVariable.accessData(cacheVariableId, processBlobDataFunc);
-
-    }
 }

@@ -42,4 +42,10 @@ public class VariableMysqlService implements VariableDatabaseSpecificService {
     public void copyData(StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable) {
         variableDatabaseSpecificCommonService.copyData(storedVariable, targetVariable, variableMysqlRepository::copyData);
     }
+
+    @Override
+    public void delete(Long variableBlobId) {
+        // LONGBLOB is in-row, so the row delete disposes of the payload with it
+        variableMysqlRepository.deleteById(variableBlobId);
+    }
 }

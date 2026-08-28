@@ -55,9 +55,6 @@ public interface DispatcherBlobStorage {
 
     void storeGlobalVariableData(Long globalVariableId, InputStream is, long size) throws IOException;
 
-    void storeCacheVariableData(Long cacheVariableId, InputStream is, long size) throws IOException;
-
-    void accessCacheVariableData(Long cacheVariableId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException;
 }
 
 

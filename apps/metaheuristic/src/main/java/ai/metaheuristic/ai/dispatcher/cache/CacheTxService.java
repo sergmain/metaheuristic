@@ -75,7 +75,14 @@ public class CacheTxService {
 
     @Transactional
     public void deleteCacheVariable(Long cacheProcessId) {
+        // capture the anchors before the rows go - afterwards nothing knows which blobs these were.
+        // deleteVariableData means "this caller no longer references the blob"; what actually goes away
+        // is the backend's call, and a WORM backend correctly does nothing at all.
+        final List<Long> variableBlobIds = cacheVariableRepository.findVariableBlobIdsByCacheProcessId(cacheProcessId);
         cacheVariableRepository.deleteByCacheProcessId(cacheProcessId);
+        for (Long variableBlobId : variableBlobIds) {
+            dispatcherBlobStorage.deleteVariableData(variableBlobId);
+        }
     }
 
     @Transactional
@@ -147,8 +154,9 @@ public class CacheTxService {
             final long size;
             try {
                 size = Files.size(tempFile);
-                CacheVariable cacheVariable = cacheBlobTxService.createEmptyCacheVariable(cacheProcess.id, output.name);
-                dispatcherBlobStorage.storeCacheVariableData(cacheVariable.id, is, size);
+                final Long variableBlobId = generalBlobTxService.createEmptyVariable();
+                dispatcherBlobStorage.storeVariableData(variableBlobId, is, size);
+                cacheBlobTxService.createCacheVariable(cacheProcess.id, output.name, variableBlobId);
             }
             catch (IOException e) {
                 throw new RuntimeException(e);

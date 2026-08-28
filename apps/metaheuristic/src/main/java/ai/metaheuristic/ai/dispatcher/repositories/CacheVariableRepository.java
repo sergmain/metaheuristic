@@ -47,12 +47,13 @@ public interface CacheVariableRepository extends CrudRepository<CacheVariable, L
     @Query("delete from CacheVariable e where e.cacheProcessId=:cacheProcessId")
     void deleteByCacheProcessId(Long cacheProcessId);
 
-//    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+    // the payload is a separate VariableBlob, so a caller dropping these rows has to hand the anchors
+    // to DispatcherBlobStorage.deleteVariableData - it cannot be read back once the rows are gone
     @Transactional(readOnly = true)
-    @Query(value="select b.data from CacheVariable b where b.id=:id")
-    Blob getDataAsStreamById(Long id);
+    @Query(value="select b.variableBlobId from CacheVariable b where b.cacheProcessId=:cacheProcessId and b.variableBlobId is not null")
+    List<Long> findVariableBlobIdsByCacheProcessId(Long cacheProcessId);
 
-    @Query(value="select b.id, b.variableName, b.nullified from CacheVariable b where b.cacheProcessId=:cacheProcessId")
+    @Query(value="select b.id, b.variableName, b.nullified, b.variableBlobId from CacheVariable b where b.cacheProcessId=:cacheProcessId")
     @Transactional(readOnly = true, propagation=Propagation.NOT_SUPPORTED)
     List<Object[]> getVarsByCacheProcessId(Long cacheProcessId);
 

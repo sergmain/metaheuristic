@@ -36,7 +36,7 @@ import java.sql.Blob;
 @Table(name = "MH_CACHE_VARIABLE")
 @Data
 @EqualsAndHashCode(of = {"cacheProcessId", "variableName"})
-@ToString(exclude={"data"})
+@ToString
 @NoArgsConstructor
 public class CacheVariable implements Serializable {
     @Serial
@@ -64,9 +64,14 @@ public class CacheVariable implements Serializable {
     @Column(name = "IS_NULLIFIED")
     public boolean nullified;
 
+    /**
+     * MH_VARIABLE_BLOB.ID holding this cached output, or null when the cached value is itself null
+     * (see IS_NULLIFIED). The payload used to sit in a DATA column on this row; moving it out makes a
+     * cached output an ordinary VariableBlob, so it shares the variable storage backends instead of
+     * needing a parallel set, and MH_CACHE_VARIABLE stops carrying a large object of its own.
+     */
     @Nullable
-    @Column(name = "DATA")
-    @Lob
-    public Blob data;
+    @Column(name = "VARIABLE_BLOB_ID")
+    public Long variableBlobId;
 
 }

@@ -18,6 +18,7 @@ package ai.metaheuristic.commons.spi;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Sergio Lissner
@@ -30,4 +31,8 @@ public class StoredVariable {
     public Long id;
     public String name;
     public boolean nullified;
+
+    // MH_VARIABLE_BLOB.ID of the cached payload, null when nullified. Resolved once by the caller so
+    // that every storage backend is handed the anchor instead of repeating the same lookup.
+    public @Nullable Long variableBlobId;
 }

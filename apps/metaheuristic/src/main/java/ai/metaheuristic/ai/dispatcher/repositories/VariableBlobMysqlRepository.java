@@ -33,7 +33,7 @@ public interface VariableBlobMysqlRepository extends VariableBlobDatabaseSpecifi
 
     @Override
     @Modifying
-    @Query(nativeQuery = true, value="update mh_variable_blob as trg, (select data from mh_cache_variable where id=:srcId) as src " +
+    @Query(nativeQuery = true, value="update mh_variable_blob as trg, (select data from mh_variable_blob where id=:srcId) as src " +
             "set trg.DATA= src.data " +
             "where trg.id=:trgId")
     void copyData(Long srcId, Long trgId);

@@ -48,11 +48,25 @@ public class CacheBlobTxService {
         data.cacheProcessId = cacheProcessId;
         data.variableName = variable;
         data.createdOn = System.currentTimeMillis();
-        data.data = null;
+        data.variableBlobId = null;
         data.nullified = true;
 
         data = cacheVariableRepository.save(data);
 
         return data;
+    }
+
+    // the blob is written before this is called, so the row is saved in its final state rather than
+    // created nullified and then updated - there is no half-written CacheVariable to observe
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public CacheVariable createCacheVariable(Long cacheProcessId, String variable, Long variableBlobId) {
+        CacheVariable data = new CacheVariable();
+        data.cacheProcessId = cacheProcessId;
+        data.variableName = variable;
+        data.createdOn = System.currentTimeMillis();
+        data.variableBlobId = variableBlobId;
+        data.nullified = false;
+
+        return cacheVariableRepository.save(data);
     }
 }

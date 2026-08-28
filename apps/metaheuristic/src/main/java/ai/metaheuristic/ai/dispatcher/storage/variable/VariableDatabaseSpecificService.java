@@ -26,4 +26,8 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
  */
 public interface VariableDatabaseSpecificService {
     void copyData(StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable);
+
+    // how a VariableBlob's payload is released is a dialect question: with an in-row LONGBLOB the row
+    // delete is the whole of it, while PostgreSQL holds only a pointer and has to unlink the object too
+    void delete(Long variableBlobId);
 }

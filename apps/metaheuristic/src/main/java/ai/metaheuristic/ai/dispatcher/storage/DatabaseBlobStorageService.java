@@ -58,7 +58,6 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     private final VariableBlobRepository variableBlobRepository;
     private final DatabaseBlobPersistService databaseBlobStoreService;
     private final GlobalVariableRepository globalVariableRepository;
-    private final CacheVariableDatabaseStorageService cacheVariableDatabaseStorageService;
 
     @Override
     public void accessVariableData(Long variableBlobId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
@@ -106,7 +105,10 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     @Override
     public void deleteVariableData(Long variableBlobId) {
         // In DB mode the row IS the payload, so dropping the row releases the data with it.
-        variableBlobRepository.deleteById(variableBlobId);
+        // That holds for H2, MySQL and derby, where DATA is an in-row LONGBLOB/BLOB. It does NOT hold
+        // for PostgreSQL, where DATA is an OID and the bytes live in pg_largeobject - hence the
+        // dialect-specific delete, which unlinks the large object before dropping the row.
+        variableDatabaseSpecificService.delete(variableBlobId);
     }
 
     @Override
@@ -148,13 +150,4 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
 
     }
 
-    @Override
-    public void storeCacheVariableData(Long cacheVariableId, InputStream is, long size) {
-        databaseBlobStoreService.storeCacheVariableData(cacheVariableId, is, size);
-    }
-
-    @Override
-    public void accessCacheVariableData(Long cacheVariableId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
-        cacheVariableDatabaseStorageService.accessCacheVariableData(cacheVariableId, processBlobDataFunc);
-    }
 }

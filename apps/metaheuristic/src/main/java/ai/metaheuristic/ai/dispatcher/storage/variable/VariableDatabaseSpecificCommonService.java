@@ -48,13 +48,12 @@ public class VariableDatabaseSpecificCommonService {
     private final VariableRepository variableRepository;
     private final GeneralBlobService generalBlobService;
     private final GeneralBlobTxService generalBlobTxService;
-    private final CacheVariableRepository cacheVariableRepository;
 
     public void copyData(StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable, BiConsumer<Long, Long> copyDataFunc) {
         TxUtils.checkTxExists();
 
-        CacheVariable src = cacheVariableRepository.findById(storedVariable.id).orElse(null);
-        if (src==null) {
+        // the anchor arrives on StoredVariable, so there is no CacheVariable row to load here any more
+        if (storedVariable.variableBlobId==null) {
             return;
         }
 
@@ -87,6 +86,6 @@ public class VariableDatabaseSpecificCommonService {
         variableRepository.save(trg);
 
         // TODO 2021-10-14 right now, an array variable isn't supported
-        copyDataFunc.accept(storedVariable.id, trg.variableBlobId);
+        copyDataFunc.accept(storedVariable.variableBlobId, trg.variableBlobId);
     }
 }

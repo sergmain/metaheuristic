@@ -62,7 +62,7 @@ CREATE TABLE mh_cache_variable
     CACHE_PROCESS_ID    INT UNSIGNED    not null,
     VARIABLE_NAME       VARCHAR(250) NOT NULL,
     CREATED_ON          bigint not null,
-    DATA                LONGBLOB,
+    VARIABLE_BLOB_ID    NUMERIC(10),
     IS_NULLIFIED        BOOLEAN not null default false
 );
 

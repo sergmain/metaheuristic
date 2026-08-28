@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.dispatcher.storage.variable;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.storage.CacheVariableDatabaseStorageService;
 import ai.metaheuristic.ai.dispatcher.storage.DatabaseBlobPersistService;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
@@ -42,8 +42,11 @@ import org.springframework.context.annotation.Profile;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Blob;
+import java.util.function.Consumer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Timestamp;
@@ -67,7 +70,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
     private final ApplicationEventPublisher eventPublisher;
     private final DatabaseBlobPersistService databaseBlobPersistService;
     private final VariableRepository variableRepository;
-    private final CacheVariableDatabaseStorageService cacheVariableDatabaseStorageService;
+    private final VariableBlobRepository variableBlobRepository;
 
     @SneakyThrows
     public void copyData(StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
@@ -83,7 +86,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
         InputStream is;
         try {
             // TODO 2021-10-14 right now, an array variable isn't supported
-            cacheVariableDatabaseStorageService.accessCacheVariableData(srcVariable.id, (inputStream)-> DirUtils.copy(inputStream, tempFile));
+            accessCachedPayload(srcVariable, (inputStream)-> DirUtils.copy(inputStream, tempFile));
             is = Files.newInputStream(tempFile);
         } catch (CommonErrorWithDataException e) {
             eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
@@ -119,6 +122,32 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
         data.nullified = false;
 
         variableRepository.save(data);
+    }
+
+    // a cached output is an ordinary VariableBlob now, so this reads the blob the CacheVariable
+    // points at. The anchor is resolved upstream and arrives on StoredVariable.
+    @SneakyThrows
+    private void accessCachedPayload(StoredVariable srcVariable, Consumer<InputStream> processBlobDataFunc) {
+        if (srcVariable.variableBlobId==null) {
+            String es = "173.020 CacheVariable #" + srcVariable.id + " has no stored payload";
+            log.warn(es);
+            throw new VariableDataNotFoundException(srcVariable.id, EnumsApi.VariableContext.local, es);
+        }
+        final Blob blob = variableBlobRepository.getDataAsStreamById(srcVariable.variableBlobId);
+        if (blob==null) {
+            String es = "173.021 VariableBlob #" + srcVariable.variableBlobId + " of CacheVariable #" + srcVariable.id + " wasn't found";
+            log.warn(es);
+            throw new VariableDataNotFoundException(srcVariable.variableBlobId, EnumsApi.VariableContext.local, es);
+        }
+        try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is)) {
+            processBlobDataFunc.accept(bis);
+        }
+    }
+
+    @Override
+    public void delete(Long variableBlobId) {
+        // H2 and derby keep the payload in the row, so the row delete disposes of it
+        variableBlobRepository.deleteById(variableBlobId);
     }
 
     private Variable getVariableNotNull(Long variableId) {

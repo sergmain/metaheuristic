@@ -56,7 +56,6 @@ public class DatabaseBlobPersistService {
 
     private final VariableBlobRepository variableBlobRepository;
     private final GlobalVariableRepository globalVariableRepository;
-    private final CacheVariableRepository cacheVariableRepository;
     private final EntityManager em;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -117,17 +116,4 @@ public class DatabaseBlobPersistService {
         GlobalVariable result = globalVariableRepository.save(globalVariable);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void storeCacheVariableData(Long cacheVariableId, InputStream is, long size) {
-        CacheVariable cacheVariable = cacheVariableRepository.findById(cacheVariableId).orElse(null);
-        if (cacheVariable==null) {
-            throw new FunctionDataNotFoundException("id#"+cacheVariableId, "174.200 cacheVariable not found");
-        }
-        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
-        cacheVariable.setData(blob);
-        cacheVariable.createdOn = System.currentTimeMillis();
-        cacheVariable.nullified = false;
-
-        CacheVariable result = cacheVariableRepository.save(cacheVariable);
-    }
 }

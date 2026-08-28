@@ -42,4 +42,9 @@ public class VariablePostgresqlService implements VariableDatabaseSpecificServic
     public void copyData(StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable) {
         variableDatabaseSpecificCommonService.copyData(storedVariable, targetVariable, variablePostgresqlRepository::copyData);
     }
+
+    @Override
+    public void delete(Long variableBlobId) {
+        variablePostgresqlRepository.delete(variableBlobId);
+    }
 }
