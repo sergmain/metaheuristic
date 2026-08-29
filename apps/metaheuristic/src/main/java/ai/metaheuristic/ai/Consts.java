@@ -176,7 +176,6 @@ public class Consts {
     public static final String JSONPATH_CONTENT = "$['input'][*]['content']";
 
     public static final String EXPECTED = "expected";
-    public static final byte[] STUB_BYTES = "1".getBytes();
     public static final String STANDALONE_PROFILE = "standalone";
 
     /**

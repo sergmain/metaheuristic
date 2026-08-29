@@ -52,8 +52,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * materialized.
  *
  * <p>Characterization of the defect recorded on 2026-08-16: the guard compared the stored length
- * against {@link Consts#STUB_BYTES}, so exactly one byte of real content was indistinguishable
- * from a freshly pre-created stub and could be silently over-written.
+ * against the one-byte placeholder a pre-created row used to carry, so exactly one byte of real
+ * content was indistinguishable from a freshly pre-created stub and could be silently over-written.
+ * The placeholder is gone - a pre-created row now leaves DATA null - and IS_MATERIALIZED records
+ * the fact the comparison used to infer.
  *
  * @author Sergio Lissner
  */
@@ -107,11 +109,18 @@ public class DatabaseBlobPersistServiceWormGuardTest extends MhSharedItTest {
 
     /**
      * The guard must not over-fire: a fresh stub accepts its one and only real store.
+     *
+     * <p>A pre-created row carries no data at all - readBlob maps the null DATA to an empty array -
+     * and is not materialized. Those two facts together are what "fresh stub" now means; there is no
+     * placeholder content to recognise it by.
      */
     @Test
     public void test_storeVariable_firstStoreIntoFreshStub_isAllowed() {
         final Long blobId = generalBlobTxService.createEmptyVariable();
-        assertArrayEquals(Consts.STUB_BYTES, readBlob(blobId));
+        assertArrayEquals(new byte[0], readBlob(blobId));
+        final Boolean materialized = new TransactionTemplate(txManager).execute(
+                status -> variableBlobRepository.findById(blobId).orElseThrow().isMaterialized());
+        assertEquals(Boolean.FALSE, materialized);
 
         final byte[] content = "first-store".getBytes(StandardCharsets.UTF_8);
         databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(content), content.length);

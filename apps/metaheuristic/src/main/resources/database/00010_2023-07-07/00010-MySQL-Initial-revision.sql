@@ -309,7 +309,7 @@ CREATE TABLE mh_variable_blob
 (
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
-    DATA                LONGBLOB        not null,
+    DATA                LONGBLOB,
     IS_MATERIALIZED     BOOLEAN         not null default false
 );
 

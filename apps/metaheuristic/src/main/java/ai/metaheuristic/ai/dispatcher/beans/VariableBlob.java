@@ -45,8 +45,8 @@ public class VariableBlob implements Serializable {
     @Lob
     private Blob data;
 
-    // WORM: recorded materialization state. false = the row carries only Consts.STUB_BYTES from a
-    // pre-create; true = DATA holds real content and the record is closed to further writes. This is a
+    // WORM: recorded materialization state. false = the row was pre-created and DATA is still null;
+    // true = DATA holds real content and the record is closed to further writes. This is a
     // fact ON the blob row, so it works for EVERY caller regardless of which table holds the pointer to
     // this blob - MH_VARIABLE.VARIABLE_BLOB_ID or a caller-owned column. It replaces the old inference
     // that compared DATA's length against the stub length, which could not tell a stub from real

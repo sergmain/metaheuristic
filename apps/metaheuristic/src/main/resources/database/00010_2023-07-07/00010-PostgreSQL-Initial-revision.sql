@@ -323,7 +323,7 @@ CREATE TABLE mh_variable_blob
 (
     ID                SERIAL PRIMARY KEY,
     VERSION           NUMERIC(5, 0) NOT NULL,
-    DATA              OID        not null,
+    DATA              OID,
     IS_MATERIALIZED   BOOLEAN    not null default false
 );
 

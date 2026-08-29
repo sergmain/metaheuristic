@@ -53,17 +53,19 @@ public class MhGeneralBlobTxService implements GeneralBlobTxService {
 
     private final VariableBlobRepository variableBlobRepository;
     private final GlobalVariableRepository globalVariableRepository;
-    private final EntityManager em;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
     public Long createEmptyVariable() {
         VariableBlob data = new VariableBlob();
-        ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
-        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(bais, Consts.STUB_BYTES.length);
-        data.setData(blob);
         // WORM: a pre-created record is a stub, not content. The first real store flips this in
         // DatabaseBlobPersistService.storeVariable and closes the record to any further write.
+        //
+        // DATA is left null rather than seeded with a placeholder. The placeholder existed to keep the
+        // column non-null and to be recognisable as "not real content", and IS_MATERIALIZED now records
+        // that fact directly. Seeding it was also costly on PostgreSQL, where DATA is an OID: the
+        // placeholder allocated a large object that the first real store replaced in the column without
+        // unlinking, leaking one object per variable created.
         data.setMaterialized(false);
         VariableBlob r = variableBlobRepository.save(data);
         return r.id;

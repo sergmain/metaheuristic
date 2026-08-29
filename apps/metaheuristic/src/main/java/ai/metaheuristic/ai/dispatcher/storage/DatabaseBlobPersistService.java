@@ -64,8 +64,8 @@ public class DatabaseBlobPersistService {
             throw new VariableCommonException("174.040 variableBlob not found", variableBlobId);
         }
 
-        // Immutability: a VariableBlob record is write-once. A freshly created record carries only
-        // Consts.STUB_BYTES; the first (and only) real store replaces that stub. If the record is already
+        // Immutability: a VariableBlob record is write-once. A freshly created record carries no data at
+        // all; the first (and only) real store fills it. If the record is already
         // materialized some path is trying to over-write a real blob, which is forbidden - re-execution
         // must allocate a NEW VariableBlob (the referrer re-points to it) rather than mutate this one.
         // Enforced in the default DB backend so the whole default-context test suite exercises it;
