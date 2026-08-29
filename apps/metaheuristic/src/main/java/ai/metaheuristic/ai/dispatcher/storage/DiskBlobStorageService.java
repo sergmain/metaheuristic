@@ -126,16 +126,13 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     private final Globals globals;
     private final VariableRepository variableRepository;
     private final GeneralBlobService generalBlobService;
-    private final GlobalVariableRepository globalVariableRepository;
     private final VariableBlobRepository variableBlobRepository;
 
     private DataStorage dataStorageVariable;
-    private DataStorage dataStorageGlobalVariable;
 
     @PostConstruct
     public void init() {
         dataStorageVariable = new DataStorage(globals.getDispatcherStorageVariablesPath());
-        dataStorageGlobalVariable = new DataStorage(globals.getDispatcherStorageGlobalVariablesPath());
     }
 
     @Override
@@ -221,28 +218,6 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
 
     }
 
-    @SneakyThrows
-    @Override
-    public InputStream getGlobalVariableDataAsStreamById(Long globalVariableId) {
-        return dataStorageGlobalVariable.getStreamById(globalVariableId);
-    }
-
-    @Override
-    public void accessGlobalVariableData(Long globalVariableId, Consumer<InputStream> processBlobDataFunc) throws IOException {
-        dataStorageGlobalVariable.accessData(globalVariableId, processBlobDataFunc);
-    }
-
-    @Override
-    @Transactional
-    public void storeGlobalVariableData(Long globalVariableId, InputStream is, long size) throws IOException {
-        GlobalVariable globalVariable = globalVariableRepository.findById(globalVariableId).orElse(null);
-        if (globalVariable==null) {
-            throw new VariableCommonException("176.160 globalVariable not found", globalVariableId);
-        }
-        globalVariable.uploadTs = new Timestamp(System.currentTimeMillis());
-        GlobalVariable result = globalVariableRepository.save(globalVariable);
-        dataStorageGlobalVariable.storeData(globalVariableId, is, size);
-    }
 
     @SneakyThrows
     @Override

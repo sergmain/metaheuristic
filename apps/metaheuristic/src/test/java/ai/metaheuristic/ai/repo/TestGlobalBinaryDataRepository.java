@@ -72,11 +72,11 @@ class TestGlobalBinaryDataRepository extends MhSharedItTest {
         globalVariableId = variableBlobTxService.createEmptyGlobalVariable("test-01", "test-file.bin");
         assertNotNull(globalVariableId);
 
-        dispatcherBlobStorage.storeGlobalVariableData(globalVariableId, inputStream, bytes.length);
+        globalVariableService.storeData(globalVariableId, inputStream, bytes.length);
         GlobalVariable gv = globalVariableRepository.findById(globalVariableId).orElseThrow();
 
 
-        dispatcherBlobStorage.accessGlobalVariableData(globalVariableId, (o)->{
+        globalVariableService.accessData(globalVariableId, (o)->{
                     try {
                         String actual = IOUtils.toString(o, StandardCharsets.UTF_8);
                         assertEquals(s, actual);
@@ -91,12 +91,12 @@ class TestGlobalBinaryDataRepository extends MhSharedItTest {
         final String s1 = "another one very short data";
         bytes = s1.getBytes();
         inputStream = new ByteArrayInputStream(bytes);
-        dispatcherBlobStorage.storeGlobalVariableData(globalVariableId, inputStream, bytes.length);
+        globalVariableService.storeData(globalVariableId, inputStream, bytes.length);
 
         GlobalVariable gv1 = globalVariableRepository.findById(globalVariableId).orElseThrow();
 
         assertNotEquals(gv.uploadTs, gv1.uploadTs);
-        dispatcherBlobStorage.accessGlobalVariableData(globalVariableId, (o)->{
+        globalVariableService.accessData(globalVariableId, (o)->{
             try {
                 String actual = IOUtils.toString(o, StandardCharsets.UTF_8);
                 assertEquals(s1, actual);

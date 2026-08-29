@@ -57,7 +57,6 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     private final VariableDatabaseSpecificService variableDatabaseSpecificService;
     private final VariableBlobRepository variableBlobRepository;
     private final DatabaseBlobPersistService databaseBlobStoreService;
-    private final GlobalVariableRepository globalVariableRepository;
 
     @Override
     public void accessVariableData(Long variableBlobId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
@@ -114,40 +113,6 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     @Override
     public void copyVariableData(StoredVariable sourceVariable, TaskParamsYaml.OutputVariable targetVariable) {
         variableDatabaseSpecificService.copyData(sourceVariable, targetVariable);
-    }
-
-    @SneakyThrows
-    @Override
-    public InputStream getGlobalVariableDataAsStreamById(Long globalVariableId) {
-        Blob blob = globalVariableRepository.getDataAsStreamById(Objects.requireNonNull(globalVariableId));
-        if (blob==null) {
-            String es = "174.240 Variable #"+ globalVariableId +" wasn't found";
-            log.warn(es);
-            throw new VariableDataNotFoundException(globalVariableId, EnumsApi.VariableContext.local, es);
-        }
-        InputStream is = blob.getBinaryStream();
-//        BufferedInputStream bis = new BufferedInputStream(is);
-        return is;
-    }
-
-    @Override
-    public void accessGlobalVariableData(Long globalVariableId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
-        //TxUtils.checkTxExists();
-        Blob blob = globalVariableRepository.getDataAsStreamById(Objects.requireNonNull(globalVariableId));
-        if (blob==null) {
-            String es = "174.340 Variable #"+ globalVariableId +" wasn't found";
-            log.warn(es);
-            throw new VariableDataNotFoundException(globalVariableId, EnumsApi.VariableContext.local, es);
-        }
-        try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is)) {
-            processBlobDataFunc.accept(bis);
-        }
-    }
-
-    @Override
-    public void storeGlobalVariableData(Long globalVariableId, InputStream is, long size) {
-        databaseBlobStoreService.storeGlobalVariable(globalVariableId, is, size);
-
     }
 
 }

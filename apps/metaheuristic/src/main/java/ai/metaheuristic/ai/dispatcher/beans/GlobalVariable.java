@@ -32,7 +32,7 @@ import java.sql.Timestamp;
 @Table(name = "MH_VARIABLE_GLOBAL")
 @Data
 @EqualsAndHashCode(of = {"id", "version"})
-@ToString(exclude={"data"})
+@ToString
 @NoArgsConstructor
 public class GlobalVariable implements Serializable {
     @Serial
@@ -51,9 +51,15 @@ public class GlobalVariable implements Serializable {
     @Column(name = "UPLOAD_TS")
     public Timestamp uploadTs;
 
-    @Column(name = "DATA")
-    @Lob
-    private Blob data;
+    /**
+     * MH_VARIABLE_BLOB.ID holding this global variable's payload, or null when it has none - a global
+     * variable declared with external storage carries its location in PARAMS and no bytes at all.
+     * The payload used to sit in a DATA column on this row; on PostgreSQL that was the last OID
+     * besides MH_VARIABLE_BLOB's own.
+     */
+    @Nullable
+    @Column(name = "VARIABLE_BLOB_ID")
+    public Long variableBlobId;
 
     @Nullable
     @Column(name = "FILENAME")

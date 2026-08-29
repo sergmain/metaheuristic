@@ -29,6 +29,7 @@ import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -72,6 +73,7 @@ public class CacheTxService {
     private final DispatcherBlobStorage dispatcherBlobStorage;
     private final GeneralBlobTxService generalBlobTxService;
     private final CacheBlobTxService cacheBlobTxService;
+    private final GlobalVariableTxService globalVariableTxService;
 
     @Transactional
     public void deleteCacheVariable(Long cacheProcessId) {
@@ -169,7 +171,7 @@ public class CacheTxService {
             variableTopLevelService::variableBlobIdRef,
             variableTxService::getVariableBlobDataAsString,
             dispatcherBlobStorage::getVariableDataAsStreamById,
-            dispatcherBlobStorage::getGlobalVariableDataAsStreamById);
+            globalVariableTxService::getDataAsStreamById);
     }
 
 }

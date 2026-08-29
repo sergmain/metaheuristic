@@ -166,7 +166,7 @@ public class PreparingSourceCodeInitService {
         byte[] bytes = "A resource for input pool".getBytes();
         Long globalVariableId = variableBlobTxService.createEmptyGlobalVariable(GLOBAL_TEST_VARIABLE, "file-01.txt");
         try (InputStream is = new ByteArrayInputStream(bytes)) {
-            dispatcherBlobStorage.storeGlobalVariableData(globalVariableId, is, bytes.length);
+            globalVariableService.storeData(globalVariableId, is, bytes.length);
         }
         data.testGlobalVariable = globalVariableRepository.findById(globalVariableId).orElseThrow();
 

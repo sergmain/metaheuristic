@@ -304,7 +304,7 @@ CREATE TABLE mh_variable_global
     VERSION     NUMERIC(5, 0)   NOT NULL,
     NAME        VARCHAR(250)    not null,
     UPLOAD_TS   TIMESTAMP       NOT NULL default CURRENT_TIMESTAMP,
-    DATA        BLOB        NOT NULL,
+    VARIABLE_BLOB_ID NUMERIC(10),
     FILENAME    VARCHAR(150),
     PARAMS      LONG VARCHAR      not null
 );

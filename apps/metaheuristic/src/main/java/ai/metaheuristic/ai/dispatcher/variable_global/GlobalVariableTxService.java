@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.variable_global;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
+import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
@@ -39,10 +40,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 @Service
 @Slf4j
@@ -52,6 +57,61 @@ public class GlobalVariableTxService {
 
     private final GlobalVariableRepository globalVariableRepository;
     private final DispatcherBlobStorage dispatcherBlobStorage;
+    private final GeneralBlobTxService generalBlobTxService;
+
+    /**
+     * Stores new content for a global variable.
+     *
+     * <p>WORM: a VariableBlob is written once, so this never overwrites the current payload. It
+     * allocates a fresh blob, re-points the row at it, and only then releases the one the row used to
+     * reference - which is the "re-execution allocates a NEW VariableBlob and the referrer re-points"
+     * rule that DatabaseBlobPersistService.storeVariable enforces.
+     */
+    @Transactional
+    public void storeData(Long globalVariableId, InputStream is, long size) {
+        final Long newVariableBlobId = generalBlobTxService.createEmptyVariable();
+        dispatcherBlobStorage.storeVariableData(newVariableBlobId, is, size);
+
+        GlobalVariable gv = globalVariableRepository.findByIdForUpdate(globalVariableId);
+        if (gv==null) {
+            throw new VariableCommonException("089.020 globalVariable not found", globalVariableId);
+        }
+        final Long oldVariableBlobId = gv.variableBlobId;
+        gv.variableBlobId = newVariableBlobId;
+        gv.uploadTs = new Timestamp(System.currentTimeMillis());
+        globalVariableRepository.save(gv);
+
+        if (oldVariableBlobId!=null) {
+            dispatcherBlobStorage.deleteVariableData(oldVariableBlobId);
+        }
+    }
+
+    // resolving the global variable to its VariableBlob belongs here rather than in each storage
+    // backend: the payload is an ordinary VariableBlob, so the backends only ever needed the anchor.
+    //
+    // @Transactional because accessVariableData asserts an active tx, which the global-variable read
+    // never used to - the DB backend had its checkTxExists() commented out. The in-class callers below
+    // are already transactional and reach this by self-invocation, so the annotation is what covers a
+    // caller from outside.
+    @Transactional(readOnly = true)
+    public void accessData(Long globalVariableId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
+        dispatcherBlobStorage.accessVariableData(variableBlobIdNotNull(globalVariableId), processBlobDataFunc);
+    }
+
+    @Transactional(readOnly = true)
+    public InputStream getDataAsStreamById(Long globalVariableId) {
+        return dispatcherBlobStorage.getVariableDataAsStreamById(variableBlobIdNotNull(globalVariableId));
+    }
+
+    private Long variableBlobIdNotNull(Long globalVariableId) {
+        final Long variableBlobId = globalVariableRepository.findVariableBlobIdById(globalVariableId);
+        if (variableBlobId==null) {
+            final String es = "089.021 Global variable #" + globalVariableId + " has no stored payload";
+            log.warn(es);
+            throw new VariableDataNotFoundException(globalVariableId, EnumsApi.VariableContext.global, es);
+        }
+        return variableBlobId;
+    }
 
     @Transactional(readOnly = true)
     public String getVariableDataAsString(Long variableId) {
@@ -68,7 +128,7 @@ public class GlobalVariableTxService {
     private String getVariableDataAsString(Long variableId, boolean nullable) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            dispatcherBlobStorage.accessGlobalVariableData(variableId, (is)-> {
+            accessData(variableId, (is)-> {
                 try {
                     IOUtils.copy(is, baos);
                 } catch (IOException e) {
@@ -93,7 +153,7 @@ public class GlobalVariableTxService {
 
     public void storeToFile(Long variableId, Path trgFile) {
         try {
-            dispatcherBlobStorage.accessGlobalVariableData(variableId, (is)-> DirUtils.copy(is, trgFile));
+            accessData(variableId, (is)-> DirUtils.copy(is, trgFile));
 /*
             Blob blob = globalVariableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
@@ -115,7 +175,11 @@ public class GlobalVariableTxService {
 
     @Transactional
     public void deleteByVariable(String variable) {
+        final List<Long> variableBlobIds = globalVariableRepository.findVariableBlobIdsByName(variable);
         globalVariableRepository.deleteByName(variable);
+        for (Long variableBlobId : variableBlobIds) {
+            dispatcherBlobStorage.deleteVariableData(variableBlobId);
+        }
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -127,7 +191,8 @@ public class GlobalVariableTxService {
         data.setFilename(null);
         data.setParams(params);
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-        data.setData(null);
+        // external storage: the location lives in PARAMS, there are no dispatcher-held bytes
+        data.variableBlobId = null;
         globalVariableRepository.save(data);
 
         return data;
@@ -137,8 +202,14 @@ public class GlobalVariableTxService {
         return globalVariableRepository.findAll(pageable);
     }
 
+    @Transactional
     public void deleteById(Long id) {
+        // capture the anchor before the row goes - afterwards nothing knows which blob this was
+        final Long variableBlobId = globalVariableRepository.findVariableBlobIdById(id);
         globalVariableRepository.deleteById(id);
+        if (variableBlobId!=null) {
+            dispatcherBlobStorage.deleteVariableData(variableBlobId);
+        }
     }
 
     public Optional<GlobalVariable> findById(Long id) {

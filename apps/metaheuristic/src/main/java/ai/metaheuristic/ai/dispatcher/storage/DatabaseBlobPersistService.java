@@ -55,7 +55,6 @@ import java.sql.Timestamp;
 public class DatabaseBlobPersistService {
 
     private final VariableBlobRepository variableBlobRepository;
-    private final GlobalVariableRepository globalVariableRepository;
     private final EntityManager em;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -100,20 +99,6 @@ public class DatabaseBlobPersistService {
         variableBlob.setMaterialized(true);
         VariableBlob result = variableBlobRepository.save(variableBlob);
         return result.id;
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void storeGlobalVariable(Long globalVariableId, InputStream is, long size) {
-        GlobalVariable globalVariable = globalVariableRepository.findById(globalVariableId).orElse(null);
-
-        if (globalVariable==null) {
-            throw new VariableCommonException("174.080 globalVariable not found", globalVariableId);
-        }
-        globalVariable.uploadTs = new Timestamp(System.currentTimeMillis());
-
-        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
-        globalVariable.setData(blob);
-        GlobalVariable result = globalVariableRepository.save(globalVariable);
     }
 
 }

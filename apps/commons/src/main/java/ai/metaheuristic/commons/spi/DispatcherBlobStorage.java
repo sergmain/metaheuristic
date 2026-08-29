@@ -49,11 +49,6 @@ public interface DispatcherBlobStorage {
     // this blob", never as "this blob is now gone", and must not assume the id becomes unreadable afterwards.
     void deleteVariableData(Long variableBlobId);
 
-    InputStream getGlobalVariableDataAsStreamById(Long globalVariableId);
-
-    void accessGlobalVariableData(final Long globalVariableId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException;
-
-    void storeGlobalVariableData(Long globalVariableId, InputStream is, long size) throws IOException;
 
 }
 

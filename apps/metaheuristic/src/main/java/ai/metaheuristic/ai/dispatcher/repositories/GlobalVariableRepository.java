@@ -48,11 +48,16 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
     @Query(value="delete from GlobalVariable t where t.id=:id")
     void deleteById(Long id);
 
+    // the payload is a separate VariableBlob, so a caller dropping these rows has to hand the anchors
+    // to DispatcherBlobStorage.deleteVariableData - they cannot be read back once the rows are gone
     @Nullable
-//    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     @Transactional(readOnly = true)
-    @Query(value="select b.data from GlobalVariable b where b.id=:id")
-    Blob getDataAsStreamById(Long id);
+    @Query(value="select b.variableBlobId from GlobalVariable b where b.id=:id")
+    Long findVariableBlobIdById(Long id);
+
+    @Transactional(readOnly = true)
+    @Query(value="select b.variableBlobId from GlobalVariable b where b.name=:name and b.variableBlobId is not null")
+    List<Long> findVariableBlobIdsByName(String name);
 
     @Transactional(readOnly = true)
     @Nullable

@@ -321,7 +321,7 @@ CREATE TABLE mh_variable_global
     VERSION         INT UNSIGNED    NOT NULL,
     NAME            VARCHAR(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin not null,
     UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP default CURRENT_TIMESTAMP,
-    DATA            LONGBLOB        NOT NULL,
+    VARIABLE_BLOB_ID NUMERIC(10),
     FILENAME        VARCHAR(150),
     PARAMS          MEDIUMTEXT not null
 );

@@ -77,10 +77,8 @@ public class MhGeneralBlobTxService implements GeneralBlobTxService {
         data.filename = filename;
         data.setParams(DataStorageParamsUtils.UTILS.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, variable)));
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-
-        ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
-        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(bais, Consts.STUB_BYTES.length);
-        data.setData(blob);
+        // no stub payload: the row starts with no VariableBlob and gains one on the first store
+        data.variableBlobId = null;
         GlobalVariable r = globalVariableRepository.save(data);
         return r.id;
     }

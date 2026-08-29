@@ -299,7 +299,7 @@ CREATE TABLE mh_variable_global
     VERSION     NUMERIC(5, 0)   NOT NULL,
     NAME        VARCHAR(250)    not null,
     UPLOAD_TS   TIMESTAMP       NOT NULL ON UPDATE CURRENT_TIMESTAMP,
-    DATA        LONGBLOB        NOT NULL,
+    VARIABLE_BLOB_ID NUMERIC(10),
     FILENAME    VARCHAR(150),
     PARAMS      MEDIUMTEXT      not null
 );
