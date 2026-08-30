@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: '00020-meta-storage'
+      author: mh
+      validCheckSum: any
+      changes:
+        - sqlFile:
+            dbms: 'h2'
+            path: 00020-H2-meta-storage.sql
+            stripComments: true
+            relativeToChangelogFile: true
+        - sqlFile:
+            dbms: 'mysql,mariadb'
+            path: 00020-MySQL-meta-storage.sql
+            stripComments: true
+            relativeToChangelogFile: true
+        - sqlFile:
+            dbms: 'postgresql'
+            path: 00020-PostgreSQL-meta-storage.sql
+            stripComments: true
+            relativeToChangelogFile: true
+        - sqlFile:
+            dbms: 'derby'
+            path: 00020-derby-meta-storage.sql
+            stripComments: true
+            relativeToChangelogFile: true
