@@ -1,0 +1,9 @@
+# Meta storage Liquibase changelogs
+# Each line is a changelog path (classpath resource)
+#
+# MhLiquibaseAutoConfiguration scans classpath*:META-INF/liquibase-changelogs.txt, so every module
+# on the classpath contributes its own changelogs and MH registers a SpringLiquibase bean per line.
+# That is why this file exists rather than a SpringLiquibase @Bean here: dropping this jar into the
+# dispatcher is all the wiring the schema needs, and MH keeps spring.liquibase.enabled=false so
+# Boot's own auto-configuration never competes with it.
+classpath:database/meta-storage/meta-storage-changelog.yaml

@@ -60,10 +60,30 @@
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
 
-        <!-- JdbcTemplate. HikariCP arrives with it and is pinned to a single connection in MetaStorageConfig. -->
+        <!-- JdbcTemplate. HikariCP arrives with it and is pinned to a single connection inside SqliteMetaStorageService. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+
+        <!-- MAIN datasource stack: the Liquibase-migrated, Hibernate-mapped store the stub table lives in. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+        </dependency>
+        <!--
+          Spring Boot 4 moved LiquibaseAutoConfiguration out of spring-boot-autoconfigure into its
+          own module. It is what runs the changelog when this module is tested standalone. Inside
+          the dispatcher it stays dormant: MH sets spring.liquibase.enabled=false and drives the
+          schema through MhLiquibaseAutoConfiguration + META-INF/liquibase-changelogs.txt instead.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-liquibase</artifactId>
         </dependency>
 
         <!-- Embedded SQLite. Ships platform natives inside the jar; no separate installation. -->
@@ -99,6 +119,13 @@
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>
             <version>1.0.0</version>
+        </dependency>
+
+        <!-- H2 backs the MAIN datasource in tests, exactly as the V3 harness does in MH. -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

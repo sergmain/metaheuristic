@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: '00010-meta-storage-init'
+      author: meta-storage-module
+      validCheckSum: any
+      changes:
+        - sqlFile:
+            dbms: 'h2'
+            path: 00010-H2-init.sql
+            stripComments: true
+            relativeToChangelogFile: true
+        - sqlFile:
+            dbms: 'mysql,mariadb'
+            path: 00010-MySQL-init.sql
+            stripComments: true
+            relativeToChangelogFile: true
+        - sqlFile:
+            dbms: 'postgresql'
+            path: 00010-PostgreSQL-init.sql
+            stripComments: true
+            relativeToChangelogFile: true

@@ -18,11 +18,18 @@ package ai.metaheuristic.meta_storage;
 
 import ai.metaheuristic.meta_storage.data.MetaRecordParams;
 import ai.metaheuristic.meta_storage.json.MetaRecordParamsUtils;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -58,10 +65,65 @@ public class SqliteMetaStorageService implements MetaStorageSpi {
      */
     public static final int MAX_KEYS_PER_QUERY = 500;
 
+    /**
+     * Fail fast rather than block. A caller that already holds a connection from the MAIN pool -
+     * anything inside {@code @Transactional} - and then waits here holds that main connection for
+     * the whole wait. Hikari's 30s default would make a slow meta-storage write into main-pool
+     * starvation; 3s turns it into an error the caller can see.
+     */
+    public static final Duration CONNECTION_TIMEOUT = Duration.ofSeconds(3);
+
+    private final HikariDataSource dataSource;
     private final JdbcTemplate jdbcTemplate;
 
-    public SqliteMetaStorageService(DataSource dataSource) {
-        this.jdbcTemplate = new JdbcTemplate(dataSource);
+    /**
+     * ❗ The pool is built and owned HERE, not published as a Spring {@code DataSource} bean.
+     *
+     * <p>{@code DataSourceAutoConfiguration} is {@code @ConditionalOnMissingBean(DataSource.class)},
+     * and {@code EntityManagerFactory}, the JPA transaction manager and {@code SpringLiquibase} all
+     * resolve {@code DataSource} BY TYPE. A second bean of that type either makes Boot skip
+     * configuring the real database, or leaves those three with two candidates and no rule for
+     * choosing - and the bad outcome is not a startup failure but Liquibase running the main
+     * changelog into the SQLite file.
+     *
+     * <p>Keeping the pool private means the context has exactly one {@code DataSource} bean, so no
+     * {@code @Primary} and no qualifier is needed anywhere and a consumer cannot wire this one by
+     * accident.
+     */
+    public SqliteMetaStorageService(MetaStorageProperties props) {
+        final Path dbPath = Path.of(props.getDbPath()).toAbsolutePath();
+        // SQLite creates the database FILE but never its parent directory - a missing parent comes
+        // back as SQLITE_CANTOPEN from inside pool initialisation, which reads like a permissions
+        // problem rather than a missing mkdir. Creating it here keeps a configured db-path working
+        // wherever it points.
+        final Path parent = dbPath.getParent();
+        if (parent != null) {
+            try {
+                Files.createDirectories(parent);
+            }
+            catch (IOException e) {
+                throw new IllegalStateException(
+                        "01.940.005 Can't create dir for the meta storage db: " + parent, e);
+            }
+        }
+        final HikariConfig cfg = new HikariConfig();
+        cfg.setJdbcUrl("jdbc:sqlite:" + dbPath);
+        cfg.setDriverClassName("org.sqlite.JDBC");
+        // SQLite permits one writer. A bigger pool converts a short in-pool wait into SQLITE_BUSY
+        // surfacing in the caller, so serialisation happens here and callers never see it.
+        cfg.setMaximumPoolSize(1);
+        cfg.setPoolName("meta-storage");
+        cfg.setAutoCommit(true);
+        cfg.setConnectionTimeout(CONNECTION_TIMEOUT.toMillis());
+        this.dataSource = new HikariDataSource(cfg);
+        this.jdbcTemplate = new JdbcTemplate(this.dataSource);
+        log.info("01.940.010 meta storage db: {}", dbPath);
+    }
+
+    @PreDestroy
+    public void close() {
+        dataSource.close();
+        log.info("01.940.080 meta storage pool closed");
     }
 
     /**
