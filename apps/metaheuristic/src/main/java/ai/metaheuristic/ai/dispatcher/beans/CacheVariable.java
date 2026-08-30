@@ -49,15 +49,12 @@ public class CacheVariable implements Serializable {
     @Version
     private Integer version;
 
-//    @NotNull
     @Column(name = "CACHE_PROCESS_ID")
     public Long cacheProcessId;
 
     @Column(name="CREATED_ON")
     public long createdOn;
 
-//    @NotNull
-//    @NotEmpty
     @Column(name = "VARIABLE_NAME")
     public String variableName;
 

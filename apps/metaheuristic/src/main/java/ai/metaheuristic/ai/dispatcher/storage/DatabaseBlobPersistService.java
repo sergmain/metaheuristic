@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.storage;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
@@ -72,7 +71,7 @@ public class DatabaseBlobPersistService {
         // external (disk/S3) backends inherit the same invariant.
         //
         // The decision reads IS_MATERIALIZED, a fact recorded ON this row, never the length of DATA. The
-        // former length-vs-STUB_BYTES comparison could not tell a stub from real content of the same
+        // former length-vs-1-byte comparison could not tell a stub from real content of the same
         // size, so a legal 1-byte blob slipped through and was silently over-written. It also must not
         // be replaced by anything outside MH_VARIABLE_BLOB: a caller that allocates a stub via
         // createEmptyVariable() and keeps the returned variableBlobId in its OWN table never creates an

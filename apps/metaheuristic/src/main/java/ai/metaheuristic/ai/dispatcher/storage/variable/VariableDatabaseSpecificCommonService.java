@@ -16,13 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.storage.variable;
 
-import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobService;
-import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.commons.spi.StoredVariable;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -64,18 +62,6 @@ public class VariableDatabaseSpecificCommonService {
         }
 
         trg.variableBlobId = generalBlobService.createVariableIfNotExist(trg.variableBlobId);
-/*
-        if (trg.variableBlobId==null) {
-            trg.variableBlobId = variableBlobTxService.createVariableIfNotExist(null);
-            if (trg.variableBlobId==null) {
-                throw new IllegalStateException("(trg.variableBlobId==null)");
-            }
-
-            // TODO p5 2023-08-17 delete after Oct 1, 2023 if Ok
-//            ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
-//            dispatcherBlobStorage.storeVariableData(trg.variableBlobId, bais, Consts.STUB_BYTES.length);
-        }
-*/
 
         // that's correct - targetVariable.filename
         trg.filename = targetVariable.filename;
