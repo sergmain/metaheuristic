@@ -88,7 +88,10 @@ public class ExecContextGraftSplitterExactBindTest extends MhSharedItTest {
         ec.companyId = 7L;
         ec.accountId = 1L;
         ec.createdOn = System.currentTimeMillis();
-        ec.state = EnumsApi.ExecContextState.STARTED.code;
+        // NOT started: this ExecContext is a hand-built fixture and its state is never read. STARTED
+        // made the shared-IT per-test cleanup try to stop it, and this class is @Transactional, so that
+        // cleanup can never run (see MhSharedItTest.resetSharedItStatePerTest).
+        ec.state = EnumsApi.ExecContextState.FINISHED.code;
         ec.execContextVariableStateId = ecvs.id;
         ec.execContextGraphId = 0L;
         ec.execContextTaskStateId = 0L;

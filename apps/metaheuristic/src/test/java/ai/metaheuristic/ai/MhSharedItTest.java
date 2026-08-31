@@ -65,15 +65,15 @@ public abstract class MhSharedItTest {
     // DB, a class that doesn't stop its STARTED ExecContexts and clear caches leaves state that
     // accumulates and is 'stolen' by a later test's pipeline driver. Centralizing it on the shared
     // base guarantees no class can skip it.
+    // A cleanup that could not run must FAIL the test. Catching Throwable here turned a broken
+    // per-test reset into a green tick: a @Transactional subclass leaves a tx bound to the thread
+    // (Spring ends the test tx AFTER @AfterEach), execContextTargetState -> getWithSync ->
+    // TxUtils.checkTxNotExists() throws "Tx exists", the ExecContext stays STARTED for every later
+    // test in the run, and nothing reports it. Pinned by SharedItCleanupSwallowTest.
     @AfterEach
     public void resetSharedItStatePerTest() {
-        try {
-            stopNonFinishedExecContexts();
-            MhSpi.cleanUpOnShutdown();
-        }
-        catch (Throwable th) {
-            log.error("Error in resetSharedItStatePerTest", th);
-        }
+        stopNonFinishedExecContexts();
+        MhSpi.cleanUpOnShutdown();
     }
 
     protected void stopNonFinishedExecContexts() {
@@ -81,16 +81,11 @@ public abstract class MhSharedItTest {
             return;
         }
         for (Long ecId : execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code)) {
-            try {
-                ExecContextImpl ec = execContextCache.findById(ecId, true);
-                if (ec == null) {
-                    continue;
-                }
-                execContextTopLevelService.execContextTargetState(ecId, EnumsApi.ExecContextState.STOPPED, ec.companyId);
+            ExecContextImpl ec = execContextCache.findById(ecId, true);
+            if (ec == null) {
+                continue;
             }
-            catch (Throwable th) {
-                log.error("Error stopping leftover ExecContext #" + ecId, th);
-            }
+            execContextTopLevelService.execContextTargetState(ecId, EnumsApi.ExecContextState.STOPPED, ec.companyId);
         }
     }
 }
