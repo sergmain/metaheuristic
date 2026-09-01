@@ -16,29 +16,24 @@
 
 package ai.metaheuristic.ai.dispatcher.storage;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.commons.yaml.data_storage.DataStorageParamsUtils;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.engine.spi.SessionImplementor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayInputStream;
-import java.sql.Blob;
 import java.sql.Timestamp;
 
 /**
