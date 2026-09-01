@@ -904,3 +904,22 @@ CREATE INDEX mh_meta_storage_company_type_gen_idx ON MH_META_STORAGE(COMPANY_ID,
 insert into mh_gen_ids
 (SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)
 values ('mh_meta_storage_ids', 0);
+
+CREATE TABLE MH_META_STORAGE_SYNTHETIC
+(
+    ID          bigint NOT NULL PRIMARY KEY,
+    VERSION     INT NOT NULL,
+    COMPANY_ID  bigint NOT NULL,
+    TYPE        VARCHAR(50) NOT NULL,
+    REC_KEY     VARCHAR(191) NOT NULL,
+    BODY        MEDIUMTEXT NOT NULL,
+    GEN         bigint NOT NULL,
+    UPDATED_AT  bigint NOT NULL,
+    CONSTRAINT UK_MH_META_STORAGE_SYNTHETIC UNIQUE (COMPANY_ID, TYPE, REC_KEY)
+);
+
+CREATE INDEX mh_meta_storage_synthetic_company_type_gen_idx ON MH_META_STORAGE_SYNTHETIC(COMPANY_ID, TYPE, GEN);
+
+insert into mh_gen_ids
+(SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)
+values ('mh_meta_storage_synthetic_ids', 0);

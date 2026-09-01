@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageService;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageSyntheticService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -83,11 +84,13 @@ public class MetaStorageFunction implements InternalFunction {
     private static final String KEYS = "keys";
     private static final String OUTPUT = "output";
     private static final String CONTENT = "content";
+    private static final String SYNTHETIC = "synthetic";
 
     private static final String ACTION_SELECT = "select";
     private static final String ACTION_UPSERT = "upsert";
 
     private final MetaStorageService metaStorageService;
+    private final MetaStorageSyntheticService metaStorageSyntheticService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final VariableTxService variableTxService;
 
@@ -128,7 +131,7 @@ public class MetaStorageFunction implements InternalFunction {
 
     private void processSelect(
             ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
-            TaskParamsYaml taskParamsYaml, String type) throws Exception {
+            TaskParamsYaml taskParamsYaml, String type) {
 
         final String outputName = MetaUtils.getValue(taskParamsYaml.task.metas, OUTPUT);
         if (S.b(outputName)) {
@@ -153,8 +156,9 @@ public class MetaStorageFunction implements InternalFunction {
 
     private void processUpsert(
             ExecContextApiData.SimpleExecContext simpleExecContext, String taskContextId,
-            TaskParamsYaml taskParamsYaml, String type) throws Exception {
+            TaskParamsYaml taskParamsYaml, String type) {
 
+        final boolean synthetic = MetaUtils.isTrue(taskParamsYaml.task.metas, SYNTHETIC);
         final String contentName = MetaUtils.getValue(taskParamsYaml.task.metas, CONTENT);
         if (S.b(contentName)) {
             throw new InternalFunctionException(meta_not_found, "01.942.140 meta '" + CONTENT + "' wasn't found or it's blank");
@@ -189,7 +193,13 @@ public class MetaStorageFunction implements InternalFunction {
             records.add(new MetaStorageData.Record(type, r.recKey(), r.body()));
         }
 
-        final int rows = metaStorageService.upsert(simpleExecContext.companyId, records);
+        final int rows;
+        if (synthetic) {
+            rows = metaStorageSyntheticService.upsert(simpleExecContext.companyId, records);
+        }
+        else {
+            rows = metaStorageService.upsert(simpleExecContext.companyId, records);
+        }
         log.info("01.942.220 upsert type: {}, records: {}, rows: {}", type, records.size(), rows);
     }
 
