@@ -86,19 +86,19 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
         return is;
     }
 
-    public void storeVariableData(Long variableBlobId, InputStream is, long size ) {
+    public void storeVariableData(Long variableBlobId, InputStream is, long size, String kind) {
         if (size<=0) {
             throw new IllegalStateException("174.165 Variable can't be of zero length, variableBlobId: " + variableBlobId);
         }
-        databaseBlobStoreService.storeVariable(variableBlobId, is, size);
+        databaseBlobStoreService.storeVariable(variableBlobId, is, size, kind);
     }
 
     @Override
-    public Long createAndStoreVariableData(InputStream is, long size) {
+    public Long createAndStoreVariableData(InputStream is, long size, String kind) {
         if (size<=0) {
             throw new IllegalStateException("174.170 Variable can't be of zero length");
         }
-        return databaseBlobStoreService.createVariableWithData(is, size);
+        return databaseBlobStoreService.createVariableWithData(is, size, kind);
     }
 
     @Override

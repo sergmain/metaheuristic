@@ -149,7 +149,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
 
     @SneakyThrows
     @Override
-    public void storeVariableData(Long variableBlobId, InputStream is, long size) {
+    public void storeVariableData(Long variableBlobId, InputStream is, long size, String kind) {
         if (size<=0) {
             throw new IllegalStateException("174.245 Variable can't be of zero length, variableBlobId: " + variableBlobId);
         }
@@ -161,19 +161,23 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
         if (Files.exists(dataPath)) {
             throw new IllegalStateException("174.247 VariableBlob file already exists and is immutable (write-once): " + dataPath);
         }
+        // KIND was recorded on the anchor row when the caller allocated it via createEmptyVariable(kind),
+        // so nothing is written to the DB here. The parameter is still validated, because a caller passing
+        // a blank or over-long kind is a bug worth failing on at the same place the DB backend fails on it.
+        DispatcherBlobStorage.normalizeKind(kind);
         dataStorageVariable.storeData(variableBlobId, is, size);
     }
 
     @SneakyThrows
     @Override
-    public Long createAndStoreVariableData(InputStream is, long size) {
+    public Long createAndStoreVariableData(InputStream is, long size, String kind) {
         if (size<=0) {
             throw new IllegalStateException("174.172 Variable can't be of zero length");
         }
         // Immutability (WORM): external mode mints a fresh anchor VariableBlob id, then writes the file. The
         // anchor is created once; the DB DATA there is inert (never read) and never updated. A fresh id must
         // not map to a pre-existing file.
-        final Long variableBlobId = generalBlobService.createVariableIfNotExist(null);
+        final Long variableBlobId = generalBlobService.createVariableIfNotExist(null, kind);
         final Path newDataPath = getPoweredPath(dataStorageVariable.basePath, variableBlobId).resolve(variableBlobId + CommonConsts.BIN_EXT);
         if (Files.exists(newDataPath)) {
             throw new IllegalStateException("174.174 VariableBlob file already exists and is immutable (write-once): " + newDataPath);
@@ -191,7 +195,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
             return;
         }
 
-        trg.variableBlobId = generalBlobService.createVariableIfNotExist(trg.variableBlobId);
+        trg.variableBlobId = generalBlobService.createVariableIfNotExist(trg.variableBlobId, DispatcherBlobStorage.KIND_MH);
         if (trg.variableBlobId==null) {
             throw new IllegalStateException("(trg.variableBlobId==null)");
         }

@@ -93,8 +93,8 @@ public class FunctionTxService {
             // the payload goes into an ordinary VariableBlob and the Function keeps its id. The blob is
             // written before the Function row is saved so the anchor is never persisted pointing at
             // nothing - createEmptyVariable and the store both run in their own REQUIRES_NEW tx.
-            final Long variableBlobId = generalBlobTxService.createEmptyVariable();
-            dispatcherBlobStorage.storeVariableData(variableBlobId, inputStream, size);
+            final Long variableBlobId = generalBlobTxService.createEmptyVariable(DispatcherBlobStorage.KIND_MH);
+            dispatcherBlobStorage.storeVariableData(variableBlobId, inputStream, size, DispatcherBlobStorage.KIND_MH);
             function.variableBlobId = variableBlobId;
         }
         function = functionCache.save(function);

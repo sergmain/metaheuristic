@@ -121,7 +121,7 @@ public class VariableTxService {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         data.setTaskContextId(taskContextId);
 
-        data.variableBlobId = dispatcherBlobStorage.createAndStoreVariableData(is, size);
+        data.variableBlobId = dispatcherBlobStorage.createAndStoreVariableData(is, size, DispatcherBlobStorage.KIND_MH);
 
         variableRepository.save(data);
 
@@ -144,7 +144,7 @@ public class VariableTxService {
         dsp.size = size;
         data.updateParams(dsp);
 
-        data.variableBlobId = dispatcherBlobStorage.createAndStoreVariableData(is, size);
+        data.variableBlobId = dispatcherBlobStorage.createAndStoreVariableData(is, size, DispatcherBlobStorage.KIND_MH);
 
         data.inited = true;
         data.nullified = false;
@@ -166,7 +166,7 @@ public class VariableTxService {
         data.filename = filename;
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        data.variableBlobId = dispatcherBlobStorage.createAndStoreVariableData(is, size);
+        data.variableBlobId = dispatcherBlobStorage.createAndStoreVariableData(is, size, DispatcherBlobStorage.KIND_MH);
 
         data.inited = true;
         data.nullified = false;

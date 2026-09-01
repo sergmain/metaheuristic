@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
+import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.commons.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -56,7 +57,7 @@ public class MhGeneralBlobTxService implements GeneralBlobTxService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
-    public Long createEmptyVariable() {
+    public Long createEmptyVariable(String kind) {
         VariableBlob data = new VariableBlob();
         // WORM: a pre-created record is a stub, not content. The first real store flips this in
         // DatabaseBlobPersistService.storeVariable and closes the record to any further write.
@@ -67,6 +68,10 @@ public class MhGeneralBlobTxService implements GeneralBlobTxService {
         // placeholder allocated a large object that the first real store replaced in the column without
         // unlinking, leaking one object per variable created.
         data.setMaterialized(false);
+        // KIND is known here even though the content is not: the caller allocating the stub IS the owner.
+        // Recording it at INSERT means an allocated-but-never-materialized row is still attributed to
+        // whoever allocated it, rather than defaulting to MH and misreporting the owner.
+        data.setKind(DispatcherBlobStorage.normalizeKind(kind));
         VariableBlob r = variableBlobRepository.save(data);
         return r.id;
     }

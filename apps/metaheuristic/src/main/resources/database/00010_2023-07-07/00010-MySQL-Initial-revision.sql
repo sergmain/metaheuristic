@@ -310,7 +310,8 @@ CREATE TABLE mh_variable_blob
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
     DATA                LONGBLOB,
-    IS_MATERIALIZED     BOOLEAN         not null default false
+    IS_MATERIALIZED     BOOLEAN         not null default false,
+    KIND                VARCHAR(20)     not null default 'MH'
 );
 
 -- its name is VARIABLE_GLOBAL, not GLOBAL_VARIABLE because I want these tables to be in the same spot in scheme;

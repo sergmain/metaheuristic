@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.commons.spi.StoredVariable;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -115,8 +116,8 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
         data.filename = filename;
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        data.variableBlobId = generalBlobService.createVariableIfNotExist(data.variableBlobId);
-        databaseBlobPersistService.storeVariable(data.variableBlobId, is, size);
+        data.variableBlobId = generalBlobService.createVariableIfNotExist(data.variableBlobId, DispatcherBlobStorage.KIND_MH);
+        databaseBlobPersistService.storeVariable(data.variableBlobId, is, size, DispatcherBlobStorage.KIND_MH);
 
         data.inited = true;
         data.nullified = false;

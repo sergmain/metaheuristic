@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
 import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
+import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.commons.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -57,7 +58,8 @@ public class DatabaseBlobPersistService {
     private final EntityManager em;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void storeVariable(Long variableBlobId, InputStream is, long size ) {
+    public void storeVariable(Long variableBlobId, InputStream is, long size, String kind) {
+        final String normalizedKind = DispatcherBlobStorage.normalizeKind(kind);
         VariableBlob variableBlob = variableBlobRepository.findById(variableBlobId).orElse(null);
         if (variableBlob==null) {
             throw new VariableCommonException("174.040 variableBlob not found", variableBlobId);
@@ -84,11 +86,17 @@ public class DatabaseBlobPersistService {
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         variableBlob.setData(blob);
         variableBlob.setMaterialized(true);
+        // Re-stated rather than trusted: the stub already carries the kind its allocator declared in
+        // createEmptyVariable(kind), and in every current path that is the same value arriving here. Writing
+        // it again costs nothing on a row being UPDATEd anyway, and keeps the store's own declaration
+        // authoritative for a stub allocated by one caller and filled by another.
+        variableBlob.setKind(normalizedKind);
         VariableBlob result = variableBlobRepository.save(variableBlob);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Long createVariableWithData(InputStream is, long size) {
+    public Long createVariableWithData(InputStream is, long size, String kind) {
+        final String normalizedKind = DispatcherBlobStorage.normalizeKind(kind);
         // Immutability (WORM): the VariableBlob record is written exactly once. The DB backend INSERTs the row
         // together with its real data in a single operation - no empty pre-create, no stub, no later UPDATE of
         // DATA. This is the create-at-store-time path that makes the record literally touched once.
@@ -96,6 +104,7 @@ public class DatabaseBlobPersistService {
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         variableBlob.setData(blob);
         variableBlob.setMaterialized(true);
+        variableBlob.setKind(normalizedKind);
         VariableBlob result = variableBlobRepository.save(variableBlob);
         return result.id;
     }

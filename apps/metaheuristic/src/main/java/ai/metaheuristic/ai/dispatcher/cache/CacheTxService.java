@@ -156,8 +156,8 @@ public class CacheTxService {
             final long size;
             try {
                 size = Files.size(tempFile);
-                final Long variableBlobId = generalBlobTxService.createEmptyVariable();
-                dispatcherBlobStorage.storeVariableData(variableBlobId, is, size);
+                final Long variableBlobId = generalBlobTxService.createEmptyVariable(DispatcherBlobStorage.KIND_MH);
+                dispatcherBlobStorage.storeVariableData(variableBlobId, is, size, DispatcherBlobStorage.KIND_MH);
                 cacheBlobTxService.createCacheVariable(cacheProcess.id, output.name, variableBlobId);
             }
             catch (IOException e) {

@@ -69,8 +69,8 @@ public class GlobalVariableTxService {
      */
     @Transactional
     public void storeData(Long globalVariableId, InputStream is, long size) {
-        final Long newVariableBlobId = generalBlobTxService.createEmptyVariable();
-        dispatcherBlobStorage.storeVariableData(newVariableBlobId, is, size);
+        final Long newVariableBlobId = generalBlobTxService.createEmptyVariable(DispatcherBlobStorage.KIND_MH);
+        dispatcherBlobStorage.storeVariableData(newVariableBlobId, is, size, DispatcherBlobStorage.KIND_MH);
 
         GlobalVariable gv = globalVariableRepository.findByIdForUpdate(globalVariableId);
         if (gv==null) {

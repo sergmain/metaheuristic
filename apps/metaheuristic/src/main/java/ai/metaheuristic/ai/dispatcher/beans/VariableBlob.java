@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -53,6 +54,15 @@ public class VariableBlob implements Serializable {
     // content of the same size.
     @Column(name = "IS_MATERIALIZED")
     private boolean materialized;
+
+    // Which application owns this blob. 'MH' is the engine's own; every other writer stamps its own value
+    // through createEmptyVariable(kind) or the DispatcherBlobStorage store methods. Stored upper-cased.
+    //
+    // Set at INSERT, never inferred: the caller allocating a row IS its owner, including for a stub that is
+    // never materialized. The field initializer and the column DEFAULT both say 'MH' only as a backstop for
+    // a row reaching the DB without one; no code path relies on either any more.
+    @Column(name = "KIND")
+    private String kind = DispatcherBlobStorage.KIND_MH;
 
     // TODO 2020-12-21 need to add a way to check the length of variable with length of stored on disk variable
     //  maybe even with checksum

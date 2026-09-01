@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobService;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.commons.spi.StoredVariable;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -61,7 +62,7 @@ public class VariableDatabaseSpecificCommonService {
             return;
         }
 
-        trg.variableBlobId = generalBlobService.createVariableIfNotExist(trg.variableBlobId);
+        trg.variableBlobId = generalBlobService.createVariableIfNotExist(trg.variableBlobId, DispatcherBlobStorage.KIND_MH);
 
         // that's correct - targetVariable.filename
         trg.filename = targetVariable.filename;

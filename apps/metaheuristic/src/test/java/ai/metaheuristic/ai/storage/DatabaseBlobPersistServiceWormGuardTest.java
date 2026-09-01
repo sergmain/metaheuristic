@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import ai.metaheuristic.ai.dispatcher.storage.DatabaseBlobPersistService;
 import ai.metaheuristic.commons.spi.GeneralBlobTxService;
+import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -76,13 +77,13 @@ public class DatabaseBlobPersistServiceWormGuardTest extends MhSharedItTest {
      */
     @Test
     public void test_storeVariable_secondStoreOfOneByteContent_isRejected() {
-        final Long blobId = generalBlobTxService.createEmptyVariable();
+        final Long blobId = generalBlobTxService.createEmptyVariable(DispatcherBlobStorage.KIND_MH);
 
-        databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(new byte[]{'A'}), 1);
+        databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(new byte[]{'A'}), 1, DispatcherBlobStorage.KIND_MH);
         assertArrayEquals(new byte[]{'A'}, readBlob(blobId));
 
         IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(new byte[]{'B'}), 1));
+                () -> databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(new byte[]{'B'}), 1, DispatcherBlobStorage.KIND_MH));
 
         assertTrue(e.getMessage().startsWith("174.045"), e.getMessage());
         assertArrayEquals(new byte[]{'A'}, readBlob(blobId));
@@ -94,14 +95,14 @@ public class DatabaseBlobPersistServiceWormGuardTest extends MhSharedItTest {
      */
     @Test
     public void test_storeVariable_secondStoreOfMultiByteContent_isRejected() {
-        final Long blobId = generalBlobTxService.createEmptyVariable();
+        final Long blobId = generalBlobTxService.createEmptyVariable(DispatcherBlobStorage.KIND_MH);
         final byte[] content = "hello".getBytes(StandardCharsets.UTF_8);
 
-        databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(content), content.length);
+        databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(content), content.length, DispatcherBlobStorage.KIND_MH);
 
         final byte[] second = "world".getBytes(StandardCharsets.UTF_8);
         IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(second), second.length));
+                () -> databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(second), second.length, DispatcherBlobStorage.KIND_MH));
 
         assertTrue(e.getMessage().startsWith("174.045"), e.getMessage());
         assertArrayEquals(content, readBlob(blobId));
@@ -116,14 +117,14 @@ public class DatabaseBlobPersistServiceWormGuardTest extends MhSharedItTest {
      */
     @Test
     public void test_storeVariable_firstStoreIntoFreshStub_isAllowed() {
-        final Long blobId = generalBlobTxService.createEmptyVariable();
+        final Long blobId = generalBlobTxService.createEmptyVariable(DispatcherBlobStorage.KIND_MH);
         assertArrayEquals(new byte[0], readBlob(blobId));
         final Boolean materialized = new TransactionTemplate(txManager).execute(
                 status -> variableBlobRepository.findById(blobId).orElseThrow().isMaterialized());
         assertEquals(Boolean.FALSE, materialized);
 
         final byte[] content = "first-store".getBytes(StandardCharsets.UTF_8);
-        databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(content), content.length);
+        databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(content), content.length, DispatcherBlobStorage.KIND_MH);
 
         assertArrayEquals(content, readBlob(blobId));
     }
@@ -134,9 +135,9 @@ public class DatabaseBlobPersistServiceWormGuardTest extends MhSharedItTest {
      */
     @Test
     public void test_storeVariable_firstStoreOfOneByteContent_isAllowed() {
-        final Long blobId = generalBlobTxService.createEmptyVariable();
+        final Long blobId = generalBlobTxService.createEmptyVariable(DispatcherBlobStorage.KIND_MH);
 
-        databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(new byte[]{'Z'}), 1);
+        databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(new byte[]{'Z'}), 1, DispatcherBlobStorage.KIND_MH);
 
         assertArrayEquals(new byte[]{'Z'}, readBlob(blobId));
     }
@@ -149,11 +150,11 @@ public class DatabaseBlobPersistServiceWormGuardTest extends MhSharedItTest {
     public void test_createVariableWithData_thenStore_isRejected() {
         final byte[] content = "created-with-data".getBytes(StandardCharsets.UTF_8);
         final Long blobId = databaseBlobPersistService.createVariableWithData(
-                new ByteArrayInputStream(content), content.length);
+                new ByteArrayInputStream(content), content.length, DispatcherBlobStorage.KIND_MH);
 
         final byte[] second = "overwrite".getBytes(StandardCharsets.UTF_8);
         IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(second), second.length));
+                () -> databaseBlobPersistService.storeVariable(blobId, new ByteArrayInputStream(second), second.length, DispatcherBlobStorage.KIND_MH));
 
         assertTrue(e.getMessage().startsWith("174.045"), e.getMessage());
         assertArrayEquals(content, readBlob(blobId));

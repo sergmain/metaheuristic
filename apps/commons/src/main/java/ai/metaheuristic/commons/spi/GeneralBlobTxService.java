@@ -28,7 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 public interface GeneralBlobTxService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    Long createEmptyVariable();
+    // 'kind' names the application that owns the blob being allocated - see DispatcherBlobStorage.KIND_MH
+    // for why it is a String rather than an enum. It is recorded at INSERT, so the row is correctly
+    // attributed from the moment it exists, even if it is never materialized.
+    Long createEmptyVariable(String kind);
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     Long createEmptyGlobalVariable(String variable, @Nullable String filename);

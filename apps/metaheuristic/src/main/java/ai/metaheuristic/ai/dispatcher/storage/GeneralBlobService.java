@@ -43,7 +43,7 @@ public class GeneralBlobService {
     private final VariableBlobRepository variableBlobRepository;
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public Long createVariableIfNotExist(@Nullable Long variableBlobId) {
+    public Long createVariableIfNotExist(@Nullable Long variableBlobId, String kind) {
         VariableBlob variableBlob = null;
         if (variableBlobId!=null) {
             variableBlob = variableBlobRepository.findById(variableBlobId).orElse(null);
@@ -52,6 +52,6 @@ public class GeneralBlobService {
             return variableBlobId;
         }
 
-        return generalBlobTxService.createEmptyVariable();
+        return generalBlobTxService.createEmptyVariable(kind);
     }
 }
