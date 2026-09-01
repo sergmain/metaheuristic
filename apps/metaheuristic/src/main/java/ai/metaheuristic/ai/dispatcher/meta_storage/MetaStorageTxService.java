@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.dispatcher.meta_storage;
 
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorage;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRepository;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,32 +62,42 @@ public class MetaStorageTxService {
      */
     @Transactional
     public int upsert(Long companyId, List<MetaStorageData.ResolvedWrite> writes, long gen, long now) {
-        int count = 0;
-        for (MetaStorageData.ResolvedWrite w : writes) {
-            final MetaStorage row;
-            if (w.existingId()==null) {
-                row = new MetaStorage();
-                row.companyId = companyId;
-                row.type = w.record().type();
-                row.recKey = w.record().recKey();
-            }
-            else {
-                row = metaStorageRepository.findById(w.existingId()).orElseThrow(
+        try {
+            int count = 0;
+            for (MetaStorageData.ResolvedWrite w : writes) {
+                final MetaStorage row;
+                if (w.existingId()==null) {
+                    row = new MetaStorage();
+                    row.companyId = companyId;
+                    row.type = w.record().type();
+                    row.recKey = w.record().recKey();
+                }
+                else {
+                    row = metaStorageRepository.findById(w.existingId()).orElseThrow(
                         () -> new IllegalStateException("01.940.020 record disappeared between resolution and write, id: " + w.existingId()));
+                }
+                row.body = w.record().body();
+                row.gen = gen;
+                row.updatedAt = now;
+                metaStorageRepository.save(row);
+                count++;
             }
-            row.body = w.record().body();
-            row.gen = gen;
-            row.updatedAt = now;
-            metaStorageRepository.save(row);
-            count++;
+            log.info("01.940.040 upsert companyId: {}, records: {}, gen: {}", companyId, count, gen);
+            return count;
         }
-        log.info("01.940.040 upsert companyId: {}, records: {}, gen: {}", companyId, count, gen);
-        return count;
+        catch (Throwable th) {
+            throw new CommonRollbackException(th.getMessage(), EnumsApi.OperationStatus.ERROR);
+        }
     }
 
     @Transactional
     public void deleteByIds(List<Long> ids) {
-        metaStorageRepository.deleteAllById(ids);
-        log.info("01.940.060 deleted {} records", ids.size());
+        try {
+            metaStorageRepository.deleteAllById(ids);
+            log.info("01.940.060 deleted {} records", ids.size());
+        }
+        catch (Throwable th) {
+            throw new CommonRollbackException(th.getMessage(), EnumsApi.OperationStatus.ERROR);
+        }
     }
 }

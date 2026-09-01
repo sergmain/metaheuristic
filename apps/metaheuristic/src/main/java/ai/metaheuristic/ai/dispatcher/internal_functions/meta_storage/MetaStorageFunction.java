@@ -25,9 +25,11 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -107,8 +109,8 @@ public class MetaStorageFunction implements InternalFunction {
     @SneakyThrows
     @Override
     public void process(
-            ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
-            TaskParamsYaml taskParamsYaml) {
+        ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
+        TaskParamsYaml taskParamsYaml) {
 
         TxUtils.checkTxNotExists();
 
@@ -120,18 +122,35 @@ public class MetaStorageFunction implements InternalFunction {
         if (S.b(type)) {
             throw new InternalFunctionException(meta_not_found, "01.942.040 meta '" + TYPE + "' wasn't found or it's blank");
         }
-
-        switch (action) {
-            case ACTION_SELECT -> processSelect(simpleExecContext, taskId, taskContextId, taskParamsYaml, type);
-            case ACTION_UPSERT -> processUpsert(simpleExecContext, taskContextId, taskParamsYaml, type);
-            default -> throw new InternalFunctionException(source_code_is_broken,
+        try {
+            switch (action) {
+                case ACTION_SELECT -> processSelect(simpleExecContext, taskId, taskContextId, taskParamsYaml, type);
+                case ACTION_UPSERT -> processUpsert(simpleExecContext, taskContextId, taskParamsYaml, type);
+                default -> throw new InternalFunctionException(source_code_is_broken,
                     "01.942.060 unknown action '" + action + "', supported: " + ACTION_SELECT + ", " + ACTION_UPSERT);
+            }
+        }
+        catch (InternalFunctionException e) {
+            throw e;
+        }
+        catch (CommonRollbackException e) {
+            if (e.status== EnumsApi.OperationStatus.ERROR) {
+                throw new InternalFunctionException(general_error,
+                    "01.942.064 action '" + action + "', error: " + e.getMessage());
+            }
+            if (log.isDebugEnabled()) {
+                log.info("01.942.066 error: {}", e.infoMessage());
+            }
+        }
+        catch (Throwable th) {
+            throw new InternalFunctionException(general_error,
+                "01.942.068 action '" + action + "', error: " + th.getMessage());
         }
     }
 
     private void processSelect(
-            ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
-            TaskParamsYaml taskParamsYaml, String type) {
+        ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
+        TaskParamsYaml taskParamsYaml, String type) {
 
         final String outputName = MetaUtils.getValue(taskParamsYaml.task.metas, OUTPUT);
         if (S.b(outputName)) {
@@ -142,21 +161,21 @@ public class MetaStorageFunction implements InternalFunction {
         final List<MetaStorageData.Record> records = metaStorageService.select(simpleExecContext.companyId, type, recKeys);
 
         final TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.stream()
-                .filter(o -> o.name.equals(outputName))
-                .findFirst()
-                .orElseThrow(() -> new InternalFunctionException(output_variable_not_found,
-                        "01.942.100 output variable not found '" + outputName + "'"));
+            .filter(o -> o.name.equals(outputName))
+            .findFirst()
+            .orElseThrow(() -> new InternalFunctionException(output_variable_not_found,
+                "01.942.100 output variable not found '" + outputName + "'"));
 
         final String json = JsonUtils.getMapper().writeValueAsString(records);
         VariableSyncService.getWithSyncVoid(outputVariable.id,
-                () -> variableTxService.storeStringInVariable(simpleExecContext.execContextId, taskId, outputVariable, json));
+            () -> variableTxService.storeStringInVariable(simpleExecContext.execContextId, taskId, outputVariable, json));
 
         log.info("01.942.120 select type: {}, keys: {}, records: {}", type, recKeys==null ? "<all>" : recKeys.size(), records.size());
     }
 
     private void processUpsert(
-            ExecContextApiData.SimpleExecContext simpleExecContext, String taskContextId,
-            TaskParamsYaml taskParamsYaml, String type) {
+        ExecContextApiData.SimpleExecContext simpleExecContext, String taskContextId,
+        TaskParamsYaml taskParamsYaml, String type) {
 
         final boolean synthetic = MetaUtils.isTrue(taskParamsYaml.task.metas, SYNTHETIC);
         final String contentName = MetaUtils.getValue(taskParamsYaml.task.metas, CONTENT);
@@ -164,10 +183,10 @@ public class MetaStorageFunction implements InternalFunction {
             throw new InternalFunctionException(meta_not_found, "01.942.140 meta '" + CONTENT + "' wasn't found or it's blank");
         }
         final String json = internalFunctionVariableService.getValueOfVariable(
-                simpleExecContext.execContextId, taskContextId, contentName);
+            simpleExecContext.execContextId, taskContextId, contentName);
         if (S.b(json)) {
             throw new InternalFunctionException(data_not_found,
-                    "01.942.160 variable '" + contentName + "' is empty");
+                "01.942.160 variable '" + contentName + "' is empty");
         }
         // ❗ The ENVELOPE only - the JSON array of {type, recKey, body} that this function defines as
         // its wire format. It says nothing about a body: a body's encoding is the caller's decision
@@ -177,7 +196,7 @@ public class MetaStorageFunction implements InternalFunction {
         // @SneakyThrows, naming neither the variable nor the cause.
         if (!JsonUtils.isValidJson(json)) {
             throw new InternalFunctionException(source_code_is_broken,
-                    "01.942.170 variable '" + contentName + "' is not well-formed JSON, length: " + json.length());
+                "01.942.170 variable '" + contentName + "' is not well-formed JSON, length: " + json.length());
         }
 
         final MetaStorageData.Record[] parsed = JsonUtils.getMapper().readValue(json, MetaStorageData.Record[].class);
@@ -209,14 +228,14 @@ public class MetaStorageFunction implements InternalFunction {
      */
     @Nullable
     private List<String> readKeys(
-            ExecContextApiData.SimpleExecContext simpleExecContext, String taskContextId, TaskParamsYaml taskParamsYaml) {
+        ExecContextApiData.SimpleExecContext simpleExecContext, String taskContextId, TaskParamsYaml taskParamsYaml) {
 
         final String keysName = MetaUtils.getValue(taskParamsYaml.task.metas, KEYS);
         if (S.b(keysName)) {
             return null;
         }
         final String content = internalFunctionVariableService.getValueOfVariable(
-                simpleExecContext.execContextId, taskContextId, keysName);
+            simpleExecContext.execContextId, taskContextId, keysName);
         if (S.b(content)) {
             return List.of();
         }

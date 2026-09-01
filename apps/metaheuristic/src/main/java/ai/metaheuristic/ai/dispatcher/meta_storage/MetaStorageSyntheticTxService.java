@@ -16,9 +16,10 @@
 
 package ai.metaheuristic.ai.dispatcher.meta_storage;
 
-import ai.metaheuristic.ai.dispatcher.beans.MetaStorage;
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorageSynthetic;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageSyntheticRepository;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,34 +60,43 @@ public class MetaStorageSyntheticTxService {
      * rather than a duplicate row. For a batch pipeline this does not arise - a key belongs to
      * exactly one batch.
      */
-    @Transactional
+    @Transactional(rollbackFor = CommonRollbackException.class)
     public int upsert(Long companyId, List<MetaStorageData.ResolvedWrite> writes, long gen, long now) {
-        int count = 0;
-        for (MetaStorageData.ResolvedWrite w : writes) {
-            final MetaStorageSynthetic row;
-            if (w.existingId()==null) {
-                row = new MetaStorageSynthetic();
-                row.companyId = companyId;
-                row.type = w.record().type();
-                row.recKey = w.record().recKey();
+        try {
+            int count = 0;
+            for (MetaStorageData.ResolvedWrite w : writes) {
+                final MetaStorageSynthetic row;
+                if (w.existingId()==null) {
+                    row = new MetaStorageSynthetic();
+                    row.companyId = companyId;
+                    row.type = w.record().type();
+                    row.recKey = w.record().recKey();
+                }
+                else {
+                    row = metaStorageSyntheticRepository.findById(w.existingId()).orElseThrow(
+                            () -> new IllegalStateException("01.940.020 record disappeared between resolution and write, id: " + w.existingId()));
+                }
+                row.body = w.record().body();
+                row.gen = gen;
+                row.updatedAt = now;
+                metaStorageSyntheticRepository.save(row);
+                count++;
             }
-            else {
-                row = metaStorageSyntheticRepository.findById(w.existingId()).orElseThrow(
-                        () -> new IllegalStateException("01.940.020 record disappeared between resolution and write, id: " + w.existingId()));
-            }
-            row.body = w.record().body();
-            row.gen = gen;
-            row.updatedAt = now;
-            metaStorageSyntheticRepository.save(row);
-            count++;
+            log.info("01.940.040 upsert companyId: {}, records: {}, gen: {}", companyId, count, gen);
+            return count;
+        } catch (Throwable th) {
+            throw new CommonRollbackException(th.getMessage(), EnumsApi.OperationStatus.ERROR);
         }
-        log.info("01.940.040 upsert companyId: {}, records: {}, gen: {}", companyId, count, gen);
-        return count;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = CommonRollbackException.class)
     public void deleteByIds(List<Long> ids) {
-        metaStorageSyntheticRepository.deleteAllById(ids);
-        log.info("01.940.060 deleted {} records", ids.size());
+        try {
+            metaStorageSyntheticRepository.deleteAllById(ids);
+            log.info("01.940.060 deleted {} records", ids.size());
+        }
+        catch (Throwable th) {
+            throw new CommonRollbackException(th.getMessage(), EnumsApi.OperationStatus.ERROR);
+        }
     }
 }
