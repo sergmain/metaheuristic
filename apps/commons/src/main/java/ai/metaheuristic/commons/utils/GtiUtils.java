@@ -31,7 +31,9 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static ai.metaheuristic.commons.system.SystemProcessLauncher.ExecResult;
 import static ai.metaheuristic.commons.system.SystemProcessLauncher.execCmd;
@@ -48,9 +50,39 @@ public class GtiUtils {
     private static final String GIT_PREFIX = "git";
     public static int taskConsoleOutputMaxLines = 1000;
 
-    public static ExecResult execClone(Path repoDir, String gitUrl, GitData.GitContext gitContext) {
+    /**
+     * Whether this repo can be cloned with --depth 1.
+     *
+     * <p>A clone here is always followed by a checkout of {@link GitInfo#commit}, and --depth 1 leaves
+     * exactly one commit in the local repo. Any older revision is then simply not present and the
+     * checkout fails with "reference is not a tree". HEAD - and a commit that isn't set at all, which
+     * cannot address a revision either way - is the only case where the tip of the branch IS the
+     * revision wanted, so it is the only case where the shallow clone is correct.
+     *
+     * <p>A branch is required as well because --depth 1 alone clones the remote's default branch; a
+     * subsequent 'pull origin &lt;other-branch&gt;' into that shallow repo merges two histories with no
+     * common ancestor and is refused. --depth and --branch travel together.
+     */
+    public static boolean isShallowCloneSafe(@Nullable String branch, @Nullable String commit) {
+        if (StringUtils.isBlank(branch)) {
+            return false;
+        }
+        return StringUtils.isBlank(commit) || "HEAD".equals(commit.strip());
+    }
+
+    public static List<String> cloneCmd(Path repoDir, String gitUrl, @Nullable String branch, boolean shallow) {
         // git -C <path> clone <git-repo-url> git-repo
-        List<String> cmd = List.of("git", "-C", repoDir.toAbsolutePath().toString(), "clone", gitUrl, CommonConsts.GIT_REPO);
+        // git -C <path> clone --depth 1 --branch <branch> <git-repo-url> git-repo
+        final List<String> cmd = new ArrayList<>(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "clone"));
+        if (shallow) {
+            cmd.addAll(List.of("--depth", "1", "--branch", Objects.requireNonNull(branch)));
+        }
+        cmd.addAll(List.of(gitUrl, CommonConsts.GIT_REPO));
+        return List.copyOf(cmd);
+    }
+
+    public static ExecResult execClone(Path repoDir, String gitUrl, GitData.GitContext gitContext, @Nullable String branch, boolean shallow) {
+        List<String> cmd = cloneCmd(repoDir, gitUrl, branch, shallow);
         log.info("exec {}", cmd);
         ExecResult result = execGitCmd(cmd, gitContext.withTimeout(0L));
         return result;
@@ -63,11 +95,13 @@ public class GtiUtils {
         Path repoDir = gitDir.resolve(CommonConsts.GIT_REPO);
         log.info("028.070 Target dir: {}, exist: {}", repoDir.toAbsolutePath(), Files.exists(repoDir) );
 
+        final boolean shallow = isShallowCloneSafe(gitInfo.branch, gitInfo.commit);
+
         if (Files.notExists(repoDir)) {
-            ExecResult result = execClone(gitDir, gitUrl,  gitContext);
+            ExecResult result = execClone(gitDir, gitUrl,  gitContext, gitInfo.branch, shallow);
             log.info("028.080 Result of cloning repo: {}", result.toString());
             if (!result.ok || !result.systemExecResult.isOk()) {
-                result = tryToRepairRepo(gitDir, gitContext, gitUrl);
+                result = tryToRepairRepo(gitDir, gitContext, gitUrl, gitInfo.branch, shallow);
                 log.info("028.090 Result of repairing of repo: {}", result.toString());
                 if (!result.ok || !result.systemExecResult.isOk()) {
                     return result;
@@ -83,7 +117,7 @@ public class GtiUtils {
             return new ExecResult(null, false, result.systemExecResult.console);
         }
         if (!"true".equals(result.systemExecResult.console.strip())) {
-            result = tryToRepairRepo(repoDir, gitContext, gitUrl);
+            result = tryToRepairRepo(repoDir, gitContext, gitUrl, gitInfo.branch, shallow);
             log.info("028.110 Result of tryToRepairRepo: {}", result.toString());
             if (!result.ok) {
                 return result;
@@ -138,7 +172,7 @@ public class GtiUtils {
         return null;
     }
 
-    public static ExecResult tryToRepairRepo(Path gitDir, GitData.GitContext gitContext, String gitUrl) {
+    public static ExecResult tryToRepairRepo(Path gitDir, GitData.GitContext gitContext, String gitUrl, @Nullable String branch, boolean shallow) {
         Path repoDir = gitDir.resolve(CommonConsts.GIT_REPO);
         ExecResult result;
         try {
@@ -152,7 +186,7 @@ public class GtiUtils {
                 false,
                 "028.170 Error preparing git repo " + repoDir.toAbsolutePath());
         }
-        result = execClone(gitDir, gitUrl, gitContext);
+        result = execClone(gitDir, gitUrl, gitContext, branch, shallow);
         return result;
     }
 

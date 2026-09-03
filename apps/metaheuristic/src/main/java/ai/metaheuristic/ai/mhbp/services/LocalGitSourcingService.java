@@ -164,7 +164,8 @@ public class LocalGitSourcingService {
         }
 
         if (Files.notExists(repoDir)) {
-            ExecResult result = GtiUtils.execClone(functionDir, git.getRepo(), gitContext);
+            ExecResult result = GtiUtils.execClone(functionDir, git.getRepo(), gitContext, git.getBranch(),
+                GtiUtils.isShallowCloneSafe(git.getBranch(), git.getCommit()));
             log.info("026.080 Result of cloning repo: {}", result.toString());
             if (!result.ok || !result.systemExecResult.isOk()) {
                 result = tryToRepairRepo(functionDir, git, gitContext);
@@ -242,7 +243,8 @@ public class LocalGitSourcingService {
                     false,
                     "026.170 can't prepare repo dir for function: " + repoDir.toAbsolutePath());
         }
-        result = GtiUtils.execClone(functionDir, git.getRepo(), gitContext);
+        result = GtiUtils.execClone(functionDir, git.getRepo(), gitContext, git.getBranch(),
+            GtiUtils.isShallowCloneSafe(git.getBranch(), git.getCommit()));
         return result;
     }
 
