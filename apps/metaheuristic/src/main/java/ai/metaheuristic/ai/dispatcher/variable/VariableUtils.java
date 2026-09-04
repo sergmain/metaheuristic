@@ -162,7 +162,9 @@ public class VariableUtils {
 
             taskOutputs.add(
                     new TaskParamsYaml.OutputVariable(
-                            variableId, EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
+                            variableId, EnumsApi.VariableContext.local, variable.name, variable.sourcing,
+                            ExecContextParamsYaml.GitParams.toGitInfo(variable.git),
+                            ExecContextParamsYaml.DiskParams.toDiskInfo(variable.disk),
                             null, false, variable.type, true, variable.getNullable(), variable.ext
                     ));
         }

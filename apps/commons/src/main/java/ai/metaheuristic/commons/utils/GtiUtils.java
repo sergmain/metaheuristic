@@ -67,7 +67,84 @@ public class GtiUtils {
         if (StringUtils.isBlank(branch)) {
             return false;
         }
+        return isHeadRevision(commit);
+    }
+
+    /**
+     * Whether the descriptor names a moving target rather than a revision.
+     *
+     * <p>HEAD is a POLICY - "whatever is on the tip of the branch when you look" - so it must be
+     * resolved to a concrete sha exactly once, by the Dispatcher, when an ExecContext is created. An
+     * unset commit cannot address a revision either, so it means the same thing here.
+     */
+    public static boolean isHeadRevision(@Nullable String commit) {
         return StringUtils.isBlank(commit) || "HEAD".equals(commit.strip());
+    }
+
+    public static List<String> lsRemoteCmd(String repo, String branch) {
+        // git ls-remote <git-repo-url> refs/heads/<branch>
+        return List.of("git", "ls-remote", repo, "refs/heads/" + branch);
+    }
+
+    /**
+     * Pulls the sha out of `git ls-remote` output, whose lines are `<sha>\t<ref>`.
+     *
+     * <p>Returns null rather than throwing when nothing usable is there: an unknown branch produces
+     * empty output and is a configuration error the caller reports with its own error code and its own
+     * context, which is more useful than an exception from a parser.
+     */
+    @Nullable
+    public static String parseLsRemoteOutput(@Nullable String console) {
+        if (console==null) {
+            return null;
+        }
+        for (String line : console.split("\\R")) {
+            final String stripped = line.strip();
+            if (stripped.isEmpty()) {
+                continue;
+            }
+            final String sha = stripped.split("\\s+")[0];
+            if (isSha(sha)) {
+                return sha;
+            }
+        }
+        return null;
+    }
+
+    public static boolean isSha(@Nullable String s) {
+        if (s==null || s.length()!=40) {
+            return false;
+        }
+        for (int i = 0; i < s.length(); i++) {
+            final char ch = s.charAt(i);
+            final boolean hex = (ch>='0' && ch<='9') || (ch>='a' && ch<='f') || (ch>='A' && ch<='F');
+            if (!hex) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Resolves the tip of a branch to a concrete sha WITHOUT cloning - `ls-remote` is one round-trip
+     * over the wire and touches no working tree.
+     *
+     * @return the sha, or null when the repo or branch couldn't be reached or produced nothing usable
+     */
+    @Nullable
+    public static String resolveHeadCommit(String repo, String branch, GitData.GitContext gitContext) {
+        final List<String> cmd = lsRemoteCmd(repo, branch);
+        log.info("exec {}", cmd);
+        final ExecResult result = execGitCmd(cmd, gitContext);
+        if (!result.ok || result.systemExecResult==null || !result.systemExecResult.isOk()) {
+            log.warn("028.200 Error of resolving HEAD for repo: {}, branch: {}, error: {}", repo, branch, result.error);
+            return null;
+        }
+        final String sha = parseLsRemoteOutput(result.systemExecResult.console);
+        if (sha==null) {
+            log.warn("028.210 Can't resolve HEAD for repo: {}, branch: {}, console: {}", repo, branch, result.systemExecResult.console);
+        }
+        return sha;
     }
 
     public static List<String> cloneCmd(Path repoDir, String gitUrl, @Nullable String branch, boolean shallow) {

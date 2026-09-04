@@ -100,7 +100,7 @@ public class ExecContextParamsYamlUtilsV5
     }
 
     private static ExecContextParamsYamlV6.VariableV6 toVariable(ExecContextParamsYamlV5.VariableV5 v) {
-        return new ExecContextParamsYamlV6.VariableV6(v.name, v.context, v.sourcing, v.git, v.disk, v.parentContext, v.type, v.getNullable(), v.ext, null);
+        return new ExecContextParamsYamlV6.VariableV6(v.name, v.context, v.sourcing, ExecContextParamsYamlV6.GitParamsV6.from(v.git), ExecContextParamsYamlV6.DiskParamsV6.from(v.disk), v.parentContext, v.type, v.getNullable(), v.ext, null);
     }
 
     private static ExecContextParamsYamlV6.FunctionDefinitionV6 toFunction(ExecContextParamsYamlV5.FunctionDefinitionV5 f1) {

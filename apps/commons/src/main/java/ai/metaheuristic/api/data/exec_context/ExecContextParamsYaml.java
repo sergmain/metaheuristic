@@ -63,9 +63,9 @@ public class ExecContextParamsYaml implements BaseParams {
         public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         @Nullable
-        public GitInfo git;
+        public GitParams git;
         @Nullable
-        public DiskInfo disk;
+        public DiskParams disk;
         @Nullable
         public Boolean parentContext;
         @Nullable
@@ -126,6 +126,121 @@ public class ExecContextParamsYaml implements BaseParams {
         public FunctionDefinition(String code, EnumsApi.FunctionExecContext context) {
             this.code = code;
             this.context = context;
+        }
+    }
+
+    /**
+     * A git revision pinned for ONE external, git-sourced Function, resolved once when the ExecContext
+     * is created and constant for the whole life of that ExecContext.
+     *
+     * <p>The Function descriptor may name a moving target - branch tip, i.e. commit=HEAD. That is a
+     * POLICY ("use the latest"), not a revision, and resolving it independently on each Processor at
+     * each Task would let two Tasks of one ExecContext run different code. So the branch tip is resolved
+     * to a concrete sha here, at creation time, and every Task produced from this ExecContext carries
+     * that sha.
+     *
+     * <p>git.commit always holds the RESOLVED sha, never HEAD - that is the whole point of this class.
+     */
+    /**
+     * This class's own git shape - a deliberate copy of {@link GitInfo} rather than a reuse of it.
+     *
+     * <p>GitInfo is shared across unrelated owners: Variables, DataStorage and the Function descriptor.
+     * Everything an ExecContext holds - a git-sourced Variable and the pinned revision of a git-sourced
+     * Function alike - uses GitParams instead, so this params class owns its own type and can evolve
+     * without dragging the other owners of GitInfo along.
+     *
+     * <p>Fields mirror GitInfo exactly, INCLUDING their names, so the stored yaml is unchanged and no
+     * migration is needed. Conversion to and from GitInfo happens only at the boundary, below.
+     *
+     * <p>On a {@link GitSourceInfo}, `commit` holds the RESOLVED sha, never HEAD.
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GitParams {
+        public String repo;
+        // right now it'll be always as origin
+//        public String remote;
+        public String branch;
+        public String commit;
+        public String path;
+
+        @Nullable
+        public static GitParams from(@Nullable GitInfo git) {
+            return git==null ? null : new GitParams(git.repo, git.branch, git.commit, git.path);
+        }
+
+        @Nullable
+        public static GitInfo toGitInfo(@Nullable GitParams git) {
+            return git==null ? null : new GitInfo(git.repo, git.branch, git.commit, git.path);
+        }
+    }
+
+    /**
+     * This class's own disk shape - a deliberate copy of {@link DiskInfo}, for the same reason
+     * {@link GitParams} copies GitInfo: DiskInfo is shared with DataStorage, SourceCodeParamsYaml and
+     * TaskParamsYaml, and an ExecContext's params should own every type it stores.
+     *
+     * <p>Fields mirror DiskInfo exactly, INCLUDING their names, so the stored yaml is unchanged and no
+     * migration is needed. Conversion happens only at the boundary, below.
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DiskParams {
+        /**
+         * A file mask. Can include * and ? as well
+         */
+        public String mask;
+
+        /**
+         * A code for directory. This code must be configured at processor side in file env.yaml
+         */
+        public String code;
+
+        /**
+         * A direct path to file(s), path + mask
+         * i.e. \tmp\some-dir\file??.*
+         */
+        public String path;
+
+        @Nullable
+        public static DiskParams from(@Nullable DiskInfo disk) {
+            return disk==null ? null : new DiskParams(disk.mask, disk.code, disk.path);
+        }
+
+        @Nullable
+        public static DiskInfo toDiskInfo(@Nullable DiskParams disk) {
+            return disk==null ? null : new DiskInfo(disk.mask, disk.code, disk.path);
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GitSourceInfo {
+        public String functionCode;
+        public GitParams git;
+    }
+
+    /**
+     * All git revisions this ExecContext is pinned to, one entry per git-sourced external Function
+     * found in the DAG. Null when the DAG uses no git-sourced Function at all, which is the common case.
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GitSources {
+        public final List<GitSourceInfo> gitSourceInfos = new ArrayList<>();
+
+        @JsonIgnore
+        @Nullable
+        public GitSourceInfo find(String functionCode) {
+            for (GitSourceInfo info : gitSourceInfos) {
+                if (info.functionCode.equals(functionCode)) {
+                    return info;
+                }
+            }
+            return null;
         }
     }
 
@@ -272,6 +387,10 @@ public class ExecContextParamsYaml implements BaseParams {
 
     @Nullable
     public ExecContextGraph execContextGraph;
+
+    // git revisions this ExecContext is pinned to; null when no git-sourced Function is in the DAG
+    @Nullable
+    public GitSources gitSources;
 
     @JsonIgnore
     private @Nullable HashMap<String, Process> getProcessMap() {

@@ -22,6 +22,7 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -65,6 +66,7 @@ public class ExecContextParamsYamlUtilsV6
         }
         t.columnNames.putAll(v6.columnNames);
         v6.groups.stream().map(ExecContextParamsYamlUtilsV6::toGroup).collect(Collectors.toCollection(()->t.groups));
+        t.gitSources = toGitSources(v6.gitSources);
         return t;
     }
 
@@ -99,6 +101,25 @@ public class ExecContextParamsYamlUtilsV6
         return p;
     }
 
+    private static ExecContextParamsYaml.@Nullable DiskParams toDiskParams(ExecContextParamsYamlV6.@Nullable DiskParamsV6 disk) {
+        return disk==null ? null : new ExecContextParamsYaml.DiskParams(disk.mask, disk.code, disk.path);
+    }
+
+    private static ExecContextParamsYaml.@Nullable GitParams toGitParams(ExecContextParamsYamlV6.@Nullable GitParamsV6 git) {
+        return git==null ? null : new ExecContextParamsYaml.GitParams(git.repo, git.branch, git.commit, git.path);
+    }
+
+    private static ExecContextParamsYaml.@Nullable GitSources toGitSources(ExecContextParamsYamlV6.@Nullable GitSourcesV6 src) {
+        if (src==null) {
+            return null;
+        }
+        ExecContextParamsYaml.GitSources trg = new ExecContextParamsYaml.GitSources();
+        for (ExecContextParamsYamlV6.GitSourceInfoV6 info : src.gitSourceInfos) {
+            trg.gitSourceInfos.add(new ExecContextParamsYaml.GitSourceInfo(info.functionCode, toGitParams(info.git)));
+        }
+        return trg;
+    }
+
     private static ExecContextParamsYaml.Graft toGraft(ExecContextParamsYamlV6.GraftV6 g2) {
         if (g2==null) {
             return null;
@@ -123,7 +144,7 @@ public class ExecContextParamsYamlUtilsV6
     }
 
     private static ExecContextParamsYaml.Variable toVariable(ExecContextParamsYamlV6.VariableV6 v) {
-        return new ExecContextParamsYaml.Variable(v.name, v.context, v.sourcing, v.git, v.disk, v.parentContext, v.type, v.getNullable(), v.ext, null);
+        return new ExecContextParamsYaml.Variable(v.name, v.context, v.sourcing, toGitParams(v.git), toDiskParams(v.disk), v.parentContext, v.type, v.getNullable(), v.ext, null);
     }
 
     private static ExecContextParamsYaml.FunctionDefinition toFunction(ExecContextParamsYamlV6.FunctionDefinitionV6 f1) {

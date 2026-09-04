@@ -249,8 +249,8 @@ public class SourceCodeService {
             input.sourcing = o.sourcing;
             input.empty = false;
             input.setNullable(false);
-            input.disk = o.disk;
-            input.git = o.git;
+            input.disk = ExecContextParamsYaml.DiskParams.toDiskInfo(o.disk);
+            input.git = ExecContextParamsYaml.GitParams.toGitInfo(o.git);
             input.filename = "file-name-for-this-variable.txt";
             tpy.task.inputs.add(input);
         }
@@ -263,8 +263,8 @@ public class SourceCodeService {
             output.context = o.context;
             output.type = o.type;
             output.ext = o.ext;
-            output.disk = o.disk;
-            output.git = o.git;
+            output.disk = ExecContextParamsYaml.DiskParams.toDiskInfo(o.disk);
+            output.git = ExecContextParamsYaml.GitParams.toGitInfo(o.git);
             output.empty = false;
             output.setNullable(false);
             tpy.task.outputs.add(output);

@@ -120,7 +120,8 @@ public class ExecContextCreatorService {
     @Transactional(rollbackFor = {CommonRollbackException.class, ExecContextTooManyInstancesException.class} )
     public ExecContextCreationResult createExecContextAndStart(
             Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks,
-            ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo) {
+            ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo,
+            ExecContextParamsYaml.@Nullable GitSources gitSources) {
 
         SourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
@@ -135,7 +136,7 @@ public class ExecContextCreatorService {
             throw new CommonRollbackException(
                 "562.080 Error creating execContext: sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.companyId(), ERROR);
         }
-        final ExecContextCreationResult creationResult = createExecContext(sourceCode, context, rootAndParent, execContextCreationInfo);
+        final ExecContextCreationResult creationResult = createExecContext(sourceCode, context, rootAndParent, execContextCreationInfo, gitSources);
 
         if (!isProduceTasks) {
             return creationResult;
@@ -196,7 +197,8 @@ public class ExecContextCreatorService {
      * @return ExecContextCreationResult
      */
     public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context,
-                                                       ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo) {
+                                                       ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo,
+                                                       ExecContextParamsYaml.@Nullable GitSources gitSources) {
         TxUtils.checkTxExists();
         SourceCodeSyncService.checkWriteLockPresent(sourceCode.id);
 
@@ -220,7 +222,7 @@ public class ExecContextCreatorService {
             throw new CommonRollbackException("562.180 processGraph is broken", ERROR);
         }
 
-        ExecContextImpl execContext = createExecContext(sourceCode, context, scg, rootAndParent, execContextCreationInfo);
+        ExecContextImpl execContext = createExecContext(sourceCode, context, scg, rootAndParent, execContextCreationInfo, gitSources);
         ExecContextCreationResult ecr = new ExecContextCreationResult();
         ecr.execContext = execContext;
         return ecr;
@@ -228,7 +230,8 @@ public class ExecContextCreatorService {
 
     private ExecContextImpl createExecContext(
             SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context, SourceCodeGraph sourceCodeGraph,
-            ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo) {
+            ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo,
+            ExecContextParamsYaml.@Nullable GitSources gitSources) {
 
         ExecContextImpl ec = new ExecContextImpl();
         ec.companyId = context.companyId();
@@ -239,6 +242,9 @@ public class ExecContextCreatorService {
         ec.setCompletedOn(null);
         ExecContextParamsYaml ecpy = to(sourceCodeGraph);
         ecpy.sourceCodeUid = sourceCode.uid;
+        // already resolved by the orchestrator, OUTSIDE this transaction - `ls-remote` is a network call
+        // and SPRING-TX-RULES.md 1 keeps context reads out of the tx
+        ecpy.gitSources = gitSources;
         if (rootAndParent!=null) {
             ecpy.execContextGraph = new ExecContextParamsYaml.ExecContextGraph(rootAndParent.rootExecContextId, rootAndParent.parentExecContextId);
             ec.rootExecContextId = rootAndParent.rootExecContextId;

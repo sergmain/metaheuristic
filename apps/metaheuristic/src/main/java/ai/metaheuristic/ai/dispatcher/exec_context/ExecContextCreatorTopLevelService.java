@@ -21,7 +21,11 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
+import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.commons.S;
@@ -45,6 +49,7 @@ public class ExecContextCreatorTopLevelService {
 
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextCreatorService execContextCreatorService;
+    private final ExecContextGitSourceService execContextGitSourceService;
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
         String sourceCodeUid, ExecContextApiData.UserExecContext context, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo) {
@@ -68,8 +73,15 @@ public class ExecContextCreatorTopLevelService {
         final ExecContextCreatorService.ExecContextCreationResult withSyncForCreation = SourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
             () -> {
                 try {
+                    // Resolved HERE, in the non-transactional orchestrator, and handed to the tx method as a
+                    // parameter: `git ls-remote` is a network call, and SPRING-TX-RULES.md 1 requires context
+                    // data to be read outside the transaction and passed in with the smallest possible scope.
+                    // The SourceCode is parsed twice as a result - that duplication is the accepted cost of
+                    // transactional purity (SPRING-TX-RULES.md 1, "purity > fewer lines").
+                    final ExecContextParamsYaml.GitSources gitSources = resolveGitSources(sourceCodeId, context);
+
                     ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(
-                        sourceCodeId, context, isProduceTasks, rootAndParent, execContextCreationInfo);
+                        sourceCodeId, context, isProduceTasks, rootAndParent, execContextCreationInfo, gitSources);
                     return result;
                 } catch (CommonRollbackException e) {
                     return new ExecContextCreatorService.ExecContextCreationResult(e.messages);
@@ -89,5 +101,23 @@ public class ExecContextCreatorTopLevelService {
         return withSyncForCreation;
     }
 
+    /**
+     * Pins every git-sourced external Function in the DAG to a concrete revision, before any transaction
+     * is opened.
+     *
+     * <p>Returns null when the SourceCode can't be read - the tx method re-reads it and produces the
+     * proper "sourceCode wasn't found" error, so failing here would only replace a good message with a
+     * worse one.
+     */
+    private ExecContextParamsYaml.@Nullable GitSources resolveGitSources(Long sourceCodeId, ExecContextApiData.UserExecContext context) {
+        final SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, context.companyId());
+        if (sourceCodesForCompany.isErrorMessages() || sourceCodesForCompany.items.isEmpty()) {
+            return null;
+        }
+        final SourceCodeImpl sourceCode = (SourceCodeImpl) sourceCodesForCompany.items.get(0);
+        final SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
+        final SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+        return execContextGitSourceService.resolveGitSources(scg.processes, scg.groups);
+    }
 
 }

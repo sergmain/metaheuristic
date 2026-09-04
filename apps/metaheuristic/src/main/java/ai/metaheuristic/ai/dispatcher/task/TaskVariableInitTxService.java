@@ -159,8 +159,8 @@ public class TaskVariableInitTxService {
         iv.context = v.context;
         iv.name = v.name;
         iv.sourcing = v.sourcing;
-        iv.disk = v.disk;
-        iv.git = v.git;
+        iv.disk = ExecContextParamsYaml.DiskParams.toDiskInfo(v.disk);
+        iv.git = ExecContextParamsYaml.GitParams.toGitInfo(v.git);
         iv.type = v.type;
         iv.setNullable(v.getNullable());
         return iv;

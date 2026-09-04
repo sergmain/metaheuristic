@@ -64,9 +64,9 @@ public class ExecContextParamsYamlV6 implements BaseParams {
         public EnumsApi.VariableContext context;
         public EnumsApi.@Nullable DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         @Nullable
-        public GitInfo git;
+        public GitParamsV6 git;
         @Nullable
-        public DiskInfo disk;
+        public DiskParamsV6 disk;
         @Nullable
         public Boolean parentContext;
         @Nullable
@@ -242,6 +242,51 @@ public class ExecContextParamsYamlV6 implements BaseParams {
         }
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GitParamsV6 {
+        public String repo;
+        // right now it'll be always as origin
+//        public String remote;
+        public String branch;
+        public String commit;
+        public String path;
+
+        @Nullable
+        public static GitParamsV6 from(@Nullable GitInfo git) {
+            return git==null ? null : new GitParamsV6(git.repo, git.branch, git.commit, git.path);
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DiskParamsV6 {
+        public String mask;
+        public String code;
+        public String path;
+
+        @Nullable
+        public static DiskParamsV6 from(@Nullable DiskInfo disk) {
+            return disk==null ? null : new DiskParamsV6(disk.mask, disk.code, disk.path);
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GitSourceInfoV6 {
+        public String functionCode;
+        public GitParamsV6 git;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class GitSourcesV6 {
+        public final List<GitSourceInfoV6> gitSourceInfos = new ArrayList<>();
+    }
+
     public boolean clean;
     public String sourceCodeUid;
 
@@ -262,4 +307,8 @@ public class ExecContextParamsYamlV6 implements BaseParams {
 
     @Nullable
     public ExecContextGraphV6 execContextGraph;
+
+    // git revisions this ExecContext is pinned to; null when no git-sourced Function is in the DAG
+    @Nullable
+    public GitSourcesV6 gitSources;
 }
