@@ -287,10 +287,6 @@ public class ExecContextParamsYaml implements BaseParams {
         public String internalContextId;
 
         public FunctionDefinition function;
-        @Nullable
-        public List<FunctionDefinition> preFunctions;
-        @Nullable
-        public List<FunctionDefinition> postFunctions;
 
         public EnumsApi.@Nullable SourceCodeSubProcessLogic logic;
 

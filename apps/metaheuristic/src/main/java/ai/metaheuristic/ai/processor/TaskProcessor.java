@@ -271,23 +271,6 @@ public class TaskProcessor {
 
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
 
-            for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
-                result = functionRepositoryProcessorService.prepareFunction(assetManagerUrl, preFunctionConfig);
-                if (result.isError) {
-                    markFunctionAsFinishedWithPermanentError(core, task.taskId, result);
-                    isNotReady = true;
-                    break;
-                }
-                if (!result.isLoaded || !isAllLoaded) {
-                    isNotReady = true;
-                    break;
-                }
-                results[idx++] = result;
-            }
-            if (isNotReady) {
-                continue;
-            }
-
             result = functionRepositoryProcessorService.prepareFunction(assetManagerUrl, taskParamYaml.task.getFunction());
             if (result.isError) {
                 markFunctionAsFinishedWithPermanentError(core, task.taskId, result);
@@ -295,23 +278,6 @@ public class TaskProcessor {
             }
             results[idx++] = result;
             if (!result.isLoaded || !isAllLoaded) {
-                continue;
-            }
-
-            for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.task.postFunctions) {
-                result = functionRepositoryProcessorService.prepareFunction(assetManagerUrl, postFunctionConfig);
-                if (result.isError) {
-                    markFunctionAsFinishedWithPermanentError(core, task.taskId, result);
-                    isNotReady = true;
-                    break;
-                }
-                if (!result.isLoaded) {
-                    isNotReady = true;
-                    break;
-                }
-                results[idx++] = result;
-            }
-            if (isNotReady) {
                 continue;
             }
 
@@ -451,27 +417,6 @@ public class TaskProcessor {
         boolean isOk = true;
         int idx = 0;
         DispatcherSchedule schedule = dispatcher.schedule.policy == ExtendedTimePeriod.SchedulePolicy.strict ? dispatcher.schedule : null;
-        int preIdx = 0;
-        for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
-            FunctionRepositoryData.FunctionPrepareResult result = results[idx++];
-            FunctionApiData.SystemExecResult execResult;
-            if (result==null) {
-                execResult = new FunctionApiData.SystemExecResult(
-                        preFunctionConfig.code, false, -999,
-                        "100.170 Illegal State, result of preparing of function "+ preFunctionConfig.code+" is null");
-            }
-            else {
-                SystemProcessLauncher.SecretHandoff preHandoff =
-                        ("pre[" + preIdx + "]").equals(secretPhase) ? secretHandoff : null;
-                execResult = execFunction(core, dispatcher.dispatcherLookup, task, taskDir, taskParamYaml, systemDir, result, schedule, preHandoff);
-            }
-            preIdx++;
-            preSystemExecResult.add(execResult);
-            if (!execResult.isOk) {
-                isOk = false;
-                break;
-            }
-        }
         FunctionApiData.SystemExecResult systemExecResult = null;
         FunctionApiData.SystemExecResult generalExec = null;
         if (isOk) {
@@ -491,27 +436,6 @@ public class TaskProcessor {
                     isOk = false;
                 }
                 if (isOk) {
-                    int postIdx = 0;
-                    for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.task.postFunctions) {
-                        result = results[idx++];
-                        FunctionApiData.SystemExecResult execResult;
-                        if (result==null) {
-                            execResult = new FunctionApiData.SystemExecResult(
-                                    postFunctionConfig.code, false, -999,
-                                    "100.210 Illegal State, result of preparing of function "+ postFunctionConfig.code+" is null");
-                        }
-                        else {
-                            SystemProcessLauncher.SecretHandoff postHandoff =
-                                    ("post[" + postIdx + "]").equals(secretPhase) ? secretHandoff : null;
-                            execResult = execFunction(core, dispatcher.dispatcherLookup, task, taskDir, taskParamYaml, systemDir, result, schedule, postHandoff);
-                        }
-                        postIdx++;
-                        postSystemExecResult.add(execResult);
-                        if (!execResult.isOk) {
-                            isOk = false;
-                            break;
-                        }
-                    }
                     if (isOk && systemExecResult.isOk()) {
                         try {
                             for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
@@ -578,8 +502,6 @@ public class TaskProcessor {
 
     private static int totalCountOfFunctions(TaskParamsYaml.TaskYaml taskYaml) {
         int count = 0;
-        count += taskYaml.preFunctions.size();
-        count += taskYaml.postFunctions.size();
         count++;
         return count;
     }

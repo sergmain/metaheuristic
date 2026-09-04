@@ -187,8 +187,6 @@ public class ScenarioUtils {
         f.context = EnumsApi.FunctionExecContext.internal;
 
         p.function = f;
-        p.preFunctions = null;
-        p.postFunctions = null;
 
         // 60 second for exec
         p.timeoutBeforeTerminate = 60L;

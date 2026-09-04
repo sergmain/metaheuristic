@@ -349,15 +349,14 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                     } else if (pe.priorityDecl() != null) {
                         process.priority = parsePriority(pe.priorityDecl());
                     } else if (pe.preFunctionDecl() != null) {
-                        if (process.preFunctions == null) {
-                            process.preFunctions = new ArrayList<>();
-                        }
-                        process.preFunctions.add(parseFunctionRef(pe.preFunctionDecl().functionRef()));
+                        // the grammar still accepts the declaration on purpose: parsing it and rejecting it
+                        // here names the offending process, where a grammar removal would only produce a
+                        // syntax error pointing at a token
+                        throw new SourceCodeGraphException(
+                            "01.564.500 preFunctions are not supported anymore, found one in process '" + processCode + "'");
                     } else if (pe.postFunctionDecl() != null) {
-                        if (process.postFunctions == null) {
-                            process.postFunctions = new ArrayList<>();
-                        }
-                        process.postFunctions.add(parseFunctionRef(pe.postFunctionDecl().functionRef()));
+                        throw new SourceCodeGraphException(
+                            "01.564.520 postFunctions are not supported anymore, found one in process '" + processCode + "'");
                     } else if (pe.nameDecl() != null) {
                         process.processName = unquote(pe.nameDecl().STRING().getText());
                     } else if (pe.paramsDecl() != null) {

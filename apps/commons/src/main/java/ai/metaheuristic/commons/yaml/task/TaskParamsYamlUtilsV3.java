@@ -56,8 +56,7 @@ public class TaskParamsYamlUtilsV3
         t.task = new TaskParamsYaml.TaskYaml();
         BeanUtils.copyProperties(v1.task, t.task, "function", "preFunctions", "postFunctions", "inline", "inputs", "outputs", "metas", "cache");
         t.task.function = toUp(v1.task.function);
-        v1.task.preFunctions.stream().map(TaskParamsYamlUtilsV3::toUp).collect(Collectors.toCollection(()->t.task.preFunctions));
-        v1.task.postFunctions.stream().map(TaskParamsYamlUtilsV3::toUp).collect(Collectors.toCollection(()->t.task.postFunctions));
+        // pre/post Functions are not supported anymore - a V3 that still carries them loses them here
 
         t.task.inline = v1.task.inline;
         v1.task.inputs.stream().map(TaskParamsYamlUtilsV3::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));

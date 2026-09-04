@@ -36,6 +36,8 @@ import java.util.Map;
  * @author Serge
  * Date: 6/17/2019
  * Time: 9:01 PM
+ *
+ * <p>Error code prefix: {@code 01.608.} (unique to this class).
  */
 @Data
 public class SourceCodeParamsYaml implements BaseParams {
@@ -54,6 +56,19 @@ public class SourceCodeParamsYaml implements BaseParams {
         for (Process process : source.processes) {
             if (process.function ==null) {
                 throw new CheckIntegrityFailedException("608.060 (process.function==null)");
+            }
+            // pre/post Functions are no longer supported. The fields survive on this class ONLY so that a
+            // SourceCode still carrying them is REJECTED here with a clear message, instead of parsing
+            // cleanly and then silently dropping functions the author expected to run.
+            if (process.preFunctions!=null && !process.preFunctions.isEmpty()) {
+                throw new CheckIntegrityFailedException(
+                    "01.608.100 preFunctions are not supported anymore, found " + process.preFunctions.size() +
+                    " in process '" + process.code + "'");
+            }
+            if (process.postFunctions!=null && !process.postFunctions.isEmpty()) {
+                throw new CheckIntegrityFailedException(
+                    "01.608.120 postFunctions are not supported anymore, found " + process.postFunctions.size() +
+                    " in process '" + process.code + "'");
             }
             if (StringUtils.containsAny(process.tag, ',', ' ')) {
                 throw new CheckIntegrityFailedException("608.080 process.tag can't contain comma or space and must be handled as single tag");

@@ -266,24 +266,6 @@ public class SourceCodeValidationService {
                 }
             }
         }
-        if (process.preFunctions !=null) {
-            for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.preFunctions) {
-                SourceCodeApiData.SourceCodeValidationResult x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
-                if (x.status != OK) {
-                    log.error("178.340 Pre-function {} wasn't found", snDef.code);
-                    return x;
-                }
-            }
-        }
-        if (process.postFunctions !=null) {
-            for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.postFunctions) {
-                SourceCodeApiData.SourceCodeValidationResult x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
-                if (x.status != OK) {
-                    log.error("178.360 Post-function {} wasn't found", snDef.code);
-                    return x;
-                }
-            }
-        }
 
         if (process.subProcesses!=null) {
             for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {

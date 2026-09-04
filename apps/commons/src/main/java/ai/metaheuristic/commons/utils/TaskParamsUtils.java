@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.commons.utils;
 
+import ai.metaheuristic.api.EnumsApi;
+import org.jspecify.annotations.Nullable;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 
@@ -25,6 +27,23 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
  * Time: 3:21 PM
  */
 public class TaskParamsUtils {
+
+    /**
+     * A git-sourced Function has its payload extracted into the Task's own asset dir, so that dir MUST be
+     * cleaned when the Task finishes: the next Task of the next ExecContext is pinned to a different sha,
+     * and content left behind is both stale and unbounded on disk. ASSETS is therefore the default rather
+     * than something each descriptor has to remember to declare.
+     *
+     * <p>An explicit policy always wins - a descriptor asking for ALL means the whole task dir goes, which
+     * covers the asset dir too.
+     */
+    public static EnumsApi.@Nullable CleaningPolicy defaultCleaningPolicy(
+            EnumsApi.@Nullable FunctionSourcing sourcing, EnumsApi.@Nullable CleaningPolicy declared) {
+        if (declared!=null) {
+            return declared;
+        }
+        return sourcing==EnumsApi.FunctionSourcing.git ? EnumsApi.CleaningPolicy.ASSETS : null;
+    }
 
     public static TaskParamsYaml.FunctionConfig toFunctionConfig(FunctionConfigYaml src) {
         TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig();
@@ -43,7 +62,7 @@ public class TaskParamsUtils {
         trg.sourcing = src.function.sourcing;
         trg.type = src.function.type;
         trg.assetDir = src.function.assetDir;
-        trg.cleaningPolicy = src.function.cleaningPolicy;
+        trg.cleaningPolicy = defaultCleaningPolicy(src.function.sourcing, src.function.cleaningPolicy);
         // Stage 5 (vault secret handoff): propagate FunctionConfigYaml.api → TaskParamsYaml.api.
         if (src.function.api != null) {
             trg.api = new TaskParamsYaml.Api(src.function.api.keyCode);

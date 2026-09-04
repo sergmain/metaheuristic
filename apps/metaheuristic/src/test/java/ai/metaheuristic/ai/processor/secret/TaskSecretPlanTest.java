@@ -91,38 +91,10 @@ public class TaskSecretPlanTest {
         assertSame(sealed, p.sealed());
     }
 
-    @Test
-    public void test_plan_returnsReady_forPrePhase_whenOnlyPreHasApi() {
-        SealedSecret sealed = dummySealed();
-        TaskParamsYaml.TaskYaml task = taskWithMain(fnWithApi("main-fn", null));
-        task.preFunctions.add(fnWithApi("pre-fn-0", null));
-        task.preFunctions.add(fnWithApi("pre-fn-1", "stripe_secret"));
-        TaskSecretPlan.Plan p = TaskSecretPlan.plan(task, 7L, oneEntry("stripe_secret", sealed));
-        assertEquals(TaskSecretPlan.Kind.READY, p.kind());
-        assertEquals("pre[1]", p.phase());
-        assertEquals("stripe_secret", p.keyCode());
-    }
-
-    @Test
-    public void test_plan_returnsReady_forPostPhase_whenOnlyPostHasApi() {
-        SealedSecret sealed = dummySealed();
-        TaskParamsYaml.TaskYaml task = taskWithMain(fnWithApi("main-fn", null));
-        task.postFunctions.add(fnWithApi("post-fn-0", "anthropic_api_key"));
-        TaskSecretPlan.Plan p = TaskSecretPlan.plan(task, 7L, oneEntry("anthropic_api_key", sealed));
-        assertEquals(TaskSecretPlan.Kind.READY, p.kind());
-        assertEquals("post[0]", p.phase());
-    }
-
-    @Test
-    public void test_plan_returnsViolation_whenMultipleFunctionsHaveApi() {
-        TaskParamsYaml.TaskYaml task = taskWithMain(fnWithApi("main-fn", "openai_api_key"));
-        task.preFunctions.add(fnWithApi("pre-fn-0", "stripe_secret"));
-        TaskSecretPlan.Plan p = TaskSecretPlan.plan(task, 7L, empty());
-        assertEquals(TaskSecretPlan.Kind.MULTI_SECRET_VIOLATION, p.kind());
-        assertTrue(p.violationMessage().contains("INV-5"));
-        assertTrue(p.violationMessage().contains("main=openai_api_key"));
-        assertTrue(p.violationMessage().contains("pre[0]=stripe_secret"));
-    }
+    // Deleted with the removal of pre/post Functions: the pre-phase, post-phase and
+    // MULTI_SECRET_VIOLATION tests all needed a Task carrying more than one Function, which
+    // TaskParamsYaml can no longer express. A Task now has exactly one Function, so at most one
+    // api key can be in play and the multi-secret branch is unreachable by construction.
 
     @Test
     public void test_plan_blankKeyCodeIsTreatedAsNoApi() {

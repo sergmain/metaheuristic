@@ -80,8 +80,7 @@ public class ExecContextParamsYamlUtilsV6
     private static ExecContextParamsYaml.Process toProcess(ExecContextParamsYamlV6.ProcessV6 p2) {
         ExecContextParamsYaml.Process p = new ExecContextParamsYaml.Process();
         p.function = toFunction(p2.function);
-        p.preFunctions = p2.preFunctions!=null ? p2.preFunctions.stream().map(ExecContextParamsYamlUtilsV6::toFunction).collect(Collectors.toList()) : null;
-        p.postFunctions = p2.postFunctions!=null ? p2.postFunctions.stream().map(ExecContextParamsYamlUtilsV6::toFunction).collect(Collectors.toList()) : null;
+        // pre/post Functions are not supported anymore - a V6 that still carries them loses them here
         p2.inputs.stream().map(ExecContextParamsYamlUtilsV6::toVariable).collect(Collectors.toCollection(()->p.inputs));
         p2.outputs.stream().map(ExecContextParamsYamlUtilsV6::toVariable).collect(Collectors.toCollection(()->p.outputs));
         p.metas.addAll(p2.metas);

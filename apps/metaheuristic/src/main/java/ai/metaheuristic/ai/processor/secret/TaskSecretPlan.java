@@ -108,33 +108,15 @@ public final class TaskSecretPlan {
             return Plan.noSecretNeeded();
         }
 
-        // Walk pre + main + post in stable order; collect (phase, api) pairs
-        // for any Function that declares an api.
+        // Only the main Function remains - pre/post Functions are not supported anymore. The phase label
+        // is kept so the rest of this class, and its diagnostics, read unchanged.
         record PhaseApi(String phase, String keyCode) {}
         List<PhaseApi> withApi = new ArrayList<>();
 
-        if (task.preFunctions != null) {
-            for (int i = 0; i < task.preFunctions.size(); i++) {
-                TaskParamsYaml.FunctionConfig fc = task.preFunctions.get(i);
-                String kc = activeKeyCode(fc);
-                if (kc != null) {
-                    withApi.add(new PhaseApi("pre[" + i + "]", kc));
-                }
-            }
-        }
         if (task.function != null) {
             String kc = activeKeyCode(task.function);
             if (kc != null) {
                 withApi.add(new PhaseApi("main", kc));
-            }
-        }
-        if (task.postFunctions != null) {
-            for (int i = 0; i < task.postFunctions.size(); i++) {
-                TaskParamsYaml.FunctionConfig fc = task.postFunctions.get(i);
-                String kc = activeKeyCode(fc);
-                if (kc != null) {
-                    withApi.add(new PhaseApi("post[" + i + "]", kc));
-                }
             }
         }
 

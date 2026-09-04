@@ -434,24 +434,6 @@ public class SourceCodeValidationUtils {
                 return r;
             }
         }
-        if (process.preFunctions != null) {
-            for (ExecContextParamsYaml.FunctionDefinition fnDef : process.preFunctions) {
-                SourceCodeApiData.SourceCodeValidationResult r =
-                        checkMhscFunctionDef(process.processCode, fnDef, internalFunctionResolver, externalFunctionResolver);
-                if (r.status != OK) {
-                    return r;
-                }
-            }
-        }
-        if (process.postFunctions != null) {
-            for (ExecContextParamsYaml.FunctionDefinition fnDef : process.postFunctions) {
-                SourceCodeApiData.SourceCodeValidationResult r =
-                        checkMhscFunctionDef(process.processCode, fnDef, internalFunctionResolver, externalFunctionResolver);
-                if (r.status != OK) {
-                    return r;
-                }
-            }
-        }
         return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
     }
 

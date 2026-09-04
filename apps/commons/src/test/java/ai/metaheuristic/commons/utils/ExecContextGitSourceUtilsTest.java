@@ -96,13 +96,11 @@ public class ExecContextGitSourceUtilsTest {
     }
 
     @Test
-    public void test_collectIncludesPreAndPostFunctions() {
+    public void test_collectSeesOnlyTheMainFunction() {
         final ExecContextParamsYaml.Process p = process("p1", "fn-main", EnumsApi.FunctionExecContext.external);
-        p.preFunctions = List.of(new ExecContextParamsYaml.FunctionDefinition("fn-pre", EnumsApi.FunctionExecContext.external));
-        p.postFunctions = List.of(new ExecContextParamsYaml.FunctionDefinition("fn-post", EnumsApi.FunctionExecContext.external));
 
-        assertEquals(List.of("fn-main", "fn-pre", "fn-post"),
-            ExecContextGitSourceUtils.collectExternalFunctionCodes(List.of(p), List.of()));
+        assertEquals(List.of("fn-main"), ExecContextGitSourceUtils.collectExternalFunctionCodes(List.of(p), List.of()),
+            "pre/post Functions are not supported anymore, a Process has exactly one Function to pin");
     }
 
     @Test

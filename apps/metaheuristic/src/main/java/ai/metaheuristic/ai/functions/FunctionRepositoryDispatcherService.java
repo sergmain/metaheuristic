@@ -251,20 +251,6 @@ public class FunctionRepositoryDispatcherService {
         if (process.function !=null && process.function.context==EnumsApi.FunctionExecContext.external) {
             codes.add(process.function.code);
         }
-        if (process.preFunctions !=null) {
-            for (ExecContextParamsYaml.FunctionDefinition snDef : process.preFunctions) {
-                if (snDef.context==EnumsApi.FunctionExecContext.external) {
-                    codes.add(snDef.code);
-                }
-            }
-        }
-        if (process.postFunctions !=null) {
-            for (ExecContextParamsYaml.FunctionDefinition snDef : process.postFunctions) {
-                if (snDef.context==EnumsApi.FunctionExecContext.external) {
-                    codes.add(snDef.code);
-                }
-            }
-        }
     }
 
     public void updateActiveFunctions(Set<String> funcCodes) {

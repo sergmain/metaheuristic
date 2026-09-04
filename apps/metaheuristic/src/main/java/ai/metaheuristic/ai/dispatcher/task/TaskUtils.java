@@ -27,20 +27,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 public class TaskUtils {
 
     public static boolean gitUnavailable(TaskParamsYaml.TaskYaml task, boolean gitNotInstalled) {
-        if (task.function.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
-            return true;
-        }
-        for (TaskParamsYaml.FunctionConfig preFunction : task.preFunctions) {
-            if (preFunction.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
-                return true;
-            }
-        }
-        for (TaskParamsYaml.FunctionConfig postFunction : task.postFunctions) {
-            if (postFunction.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
-                return true;
-            }
-        }
-        return false;
+        return task.function.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled;
     }
 
 

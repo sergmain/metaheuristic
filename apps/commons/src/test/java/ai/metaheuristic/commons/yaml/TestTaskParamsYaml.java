@@ -90,9 +90,7 @@ public class TestTaskParamsYaml {
         assertNotNull(tpy);
         assertEquals(3, tpy.version);
         assertNotNull(tpy.task);
-        assertNotNull(tpy.task.preFunctions);
         assertNotNull(tpy.task.function);
-        assertNotNull(tpy.task.postFunctions);
         assertNotNull(tpy.task.inline);
         assertNotNull(tpy.task.inline.get(ConstsApi.MH_HYPER_PARAMS));
         assertNotNull(tpy.task.workingPath);
@@ -119,16 +117,11 @@ public class TestTaskParamsYaml {
 
         // test functions
 
-        assertEquals(1, tpy.task.preFunctions.size());
-        assertEquals("pre-function-code", tpy.task.preFunctions.get(0).code);
-        assertEquals(EnumsApi.FunctionSourcing.dispatcher, tpy.task.preFunctions.get(0).sourcing);
-
         assertEquals("function-code", tpy.task.function.code);
         assertEquals(EnumsApi.FunctionSourcing.git, tpy.task.function.sourcing);
 
-        assertEquals(1, tpy.task.postFunctions.size());
-        assertEquals("post-function-code", tpy.task.postFunctions.get(0).code);
-        assertEquals(EnumsApi.FunctionSourcing.dispatcher, tpy.task.postFunctions.get(0).sourcing);
+        // the source yaml declares a pre-function and a post-function; both are dropped by the upgrade,
+        // because pre/post Functions are not supported anymore. Nothing on TaskParamsYaml can hold them.
 
     }
 }

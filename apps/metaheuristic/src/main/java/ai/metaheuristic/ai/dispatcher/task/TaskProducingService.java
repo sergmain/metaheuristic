@@ -290,28 +290,6 @@ public class TaskProducingService {
             // run different code
             ExecContextGitSourceUtils.pinGitRevision(fConfig, execContextParamsYaml.gitSources);
             taskParams.task.function = fConfig;
-            if (process.getPreFunctions()!=null) {
-                for (ExecContextParamsYaml.FunctionDefinition preFunction : process.getPreFunctions()) {
-                    TaskParamsYaml.FunctionConfig functionConfig = functionTopLevelService.getFunctionConfig(preFunction);
-                    if (functionConfig==null) {
-                        String es = S.f("375.145 Pre-function '%s' wasn't found", preFunction.code);
-                        throw new CommonRollbackException(es, EnumsApi.OperationStatus.ERROR);
-                    }
-                    ExecContextGitSourceUtils.pinGitRevision(functionConfig, execContextParamsYaml.gitSources);
-                    taskParams.task.preFunctions.add(functionConfig);
-                }
-            }
-            if (process.getPostFunctions()!=null) {
-                for (ExecContextParamsYaml.FunctionDefinition postFunction : process.getPostFunctions()) {
-                    TaskParamsYaml.FunctionConfig functionConfig = functionTopLevelService.getFunctionConfig(postFunction);
-                    if (functionConfig==null) {
-                        String es = S.f("375.150 Post-function '%s' wasn't found", postFunction.code);
-                        throw new CommonRollbackException(es, EnumsApi.OperationStatus.ERROR);
-                    }
-                    ExecContextGitSourceUtils.pinGitRevision(functionConfig, execContextParamsYaml.gitSources);
-                    taskParams.task.postFunctions.add(functionConfig);
-                }
-            }
         }
         taskParams.task.clean = execContextParamsYaml.clean;
         taskParams.task.timeoutBeforeTerminate = process.timeoutBeforeTerminate;

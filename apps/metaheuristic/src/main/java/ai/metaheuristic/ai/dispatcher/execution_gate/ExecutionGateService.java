@@ -216,20 +216,7 @@ public class ExecutionGateService {
      * grounds to skip this Task for this Processor, never to withhold work from it more broadly.
      */
     public boolean allFunctionsReady(Long processorId, TaskParamsYaml tpy) {
-        if (!isProcessorReadyLogged(tpy.task.function.code, processorId)) {
-            return false;
-        }
-        for (TaskParamsYaml.FunctionConfig preFunction : tpy.task.preFunctions) {
-            if (!isProcessorReadyLogged(preFunction.code, processorId)) {
-                return false;
-            }
-        }
-        for (TaskParamsYaml.FunctionConfig postFunction : tpy.task.postFunctions) {
-            if (!isProcessorReadyLogged(postFunction.code, processorId)) {
-                return false;
-            }
-        }
-        return true;
+        return isProcessorReadyLogged(tpy.task.function.code, processorId);
     }
 
     private boolean isProcessorReadyLogged(String functionCode, Long processorId) {

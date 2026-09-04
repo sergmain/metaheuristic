@@ -275,8 +275,6 @@ public class TaskParamsYaml implements BaseParams {
         public String taskContextId;
         public String processCode;
         public FunctionConfig function;
-        public final List<FunctionConfig> preFunctions = new ArrayList<>();
-        public final List<FunctionConfig> postFunctions = new ArrayList<>();
 
         public boolean clean = false;
         public EnumsApi.FunctionExecContext context;

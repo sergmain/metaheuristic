@@ -224,8 +224,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         o.outputs.stream().map(v->getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(()->pr.outputs));
         pr.function = new ExecContextParamsYaml.FunctionDefinition(o.function.code, o.function.params, o.function.context, o.function.refType);
         pr.logic = o.subProcesses!=null ? o.subProcesses.logic : null;
-        pr.preFunctions = o.preFunctions !=null ? o.preFunctions.stream().map(d->new ExecContextParamsYaml.FunctionDefinition(d.code, d.params, d.context, d.refType)).collect(Collectors.toList()) : null;
-        pr.postFunctions = o.postFunctions !=null ? o.postFunctions.stream().map(d->new ExecContextParamsYaml.FunctionDefinition(d.code, d.params, d.context, d.refType)).collect(Collectors.toList()) : null;
+        // pre/post Functions are not supported anymore, SourceCodeParamsYaml.checkIntegrity() rejects them
         pr.metas = o.metas;
         if (o.cache!=null) {
             pr.cache = new ExecContextParamsYaml.Cache(o.cache.enabled, o.cache.omitInline, o.cache.cacheMeta);

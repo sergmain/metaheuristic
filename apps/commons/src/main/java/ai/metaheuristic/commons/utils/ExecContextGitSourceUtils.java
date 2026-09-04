@@ -49,9 +49,9 @@ public class ExecContextGitSourceUtils {
     /**
      * Every external Function code the DAG can reach, in encounter order and de-duplicated.
      *
-     * <p>Covers pre/post Functions as well as the main one, and reaches into `groups[].body` because
-     * DSL v2 keeps a grafted group's processes there rather than in the top-level list - a git-sourced
-     * Function inside a group body still executes and still needs pinning.
+     * <p>Reaches into `groups[].body` because DSL v2 keeps a grafted group's processes there rather than
+     * in the top-level list - a git-sourced Function inside a group body still executes and still needs
+     * pinning.
      */
     public static List<String> collectExternalFunctionCodes(
             List<ExecContextParamsYaml.Process> processes, List<ExecContextParamsYaml.Group> groups) {
@@ -70,16 +70,6 @@ public class ExecContextGitSourceUtils {
 
     private static void collectFromProcess(ExecContextParamsYaml.Process p, Set<String> codes) {
         addIfExternal(p.function, codes);
-        if (p.preFunctions!=null) {
-            for (ExecContextParamsYaml.FunctionDefinition fd : p.preFunctions) {
-                addIfExternal(fd, codes);
-            }
-        }
-        if (p.postFunctions!=null) {
-            for (ExecContextParamsYaml.FunctionDefinition fd : p.postFunctions) {
-                addIfExternal(fd, codes);
-            }
-        }
     }
 
     private static void addIfExternal(ExecContextParamsYaml.@Nullable FunctionDefinition fd, Set<String> codes) {

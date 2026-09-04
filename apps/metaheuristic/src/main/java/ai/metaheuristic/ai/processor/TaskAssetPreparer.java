@@ -194,16 +194,6 @@ public class TaskAssetPreparer {
         if ( !checkFunctionPreparedness(core, functionConfig, assetManagerUrl, task.taskId) ) {
             isAllReady.set(false);
         }
-        taskParamYaml.task.preFunctions.forEach(sc-> {
-            if ( !checkFunctionPreparedness(core, sc, assetManagerUrl, task.taskId) ) {
-                isAllReady.set(false);
-            }
-        });
-        taskParamYaml.task.postFunctions.forEach(sc-> {
-            if ( !checkFunctionPreparedness(core, sc, assetManagerUrl, task.taskId) ) {
-                isAllReady.set(false);
-            }
-        });
 
         // update the status of task if everything is prepared
         if (isAllReady.get()) {
