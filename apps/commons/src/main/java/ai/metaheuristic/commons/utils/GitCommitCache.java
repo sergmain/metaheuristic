@@ -209,6 +209,12 @@ public class GitCommitCache {
         return List.copyOf(shas);
     }
 
+    // TODO P5 2026-09-04 nothing evicts commits/<sha>/ - entries accumulate for every revision any
+    //  ExecContext was ever pinned to, and only a crashed extraction's tmp dir is swept. Needs a janitor:
+    //  touch an entry on use, then delete entries untouched for longer than the longest possible Task, so
+    //  a Task can never have its own source removed while it runs. Refcounting live Tasks per sha would be
+    //  exact but has to survive Processor restarts, and at ~150KB an entry the precision isn't worth it.
+
     /** Sweeps tmp dirs a crashed extraction left behind. They are never valid entries. */
     public static int sweepAbandoned(Path cacheRoot) throws IOException {
         if (!Files.isDirectory(cacheRoot)) {

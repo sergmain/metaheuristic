@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponsePar
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParamsUtils;
 import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
@@ -115,17 +116,34 @@ public class FunctionRepositoryDispatcherService {
             r.functions = new ArrayList<>();
             for (String activeFunctionCode : activeFunctionCodes) {
                 FunctionRepositoryResponseParams.ShortFunctionConfig shortFunctionConfig = toShortFunctionConfig(activeFunctionCode);
-                if (shortFunctionConfig != null) {
-                    r.functions.add(shortFunctionConfig);
-                }
-                else {
+                if (shortFunctionConfig == null) {
                     log.warn("479.040 Function wasn't found for code " + activeFunctionCode);
+                    continue;
                 }
+                if (unresolvedGitRevision(shortFunctionConfig)) {
+                    // This broadcast tells a Processor to start preparing a Function ahead of any Task. A
+                    // git-sourced Function whose descriptor names HEAD has no revision to prepare: the
+                    // revision only exists once an ExecContext resolves it, and it may differ per
+                    // ExecContext. Advertising it would ask the Processor to pick a revision of its own,
+                    // which is the thing pinning exists to prevent - so it is left out here and prepared
+                    // through the task-driven path, where the sha is on the Task.
+                    log.debug("479.045 Function {} is git-sourced at '{}', it'll be prepared per-Task instead",
+                        activeFunctionCode, shortFunctionConfig.git==null ? null : shortFunctionConfig.git.commit);
+                    continue;
+                }
+                r.functions.add(shortFunctionConfig);
             }
         }
 
         String response = FunctionRepositoryResponseParamsUtils.UTILS.toString(r);
         return response;
+    }
+
+    private static boolean unresolvedGitRevision(FunctionRepositoryResponseParams.ShortFunctionConfig f) {
+        if (f.sourcing!=EnumsApi.FunctionSourcing.git) {
+            return false;
+        }
+        return f.git==null || GtiUtils.isHeadRevision(f.git.commit);
     }
 
     private FunctionRepositoryResponseParams.@Nullable ShortFunctionConfig toShortFunctionConfig(String functionCode) {
