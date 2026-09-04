@@ -29,7 +29,9 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -217,45 +219,54 @@ public class TaskAssetPreparer {
             return checkFunctionPreparednessWithDispatcher(core, functionConfig, assetManagerUrl, taskId, shortFunctionConfig);
         }
         else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.git) {
-            return checkFunctionPreparednessWithGit(core, functionConfig, assetManagerUrl, taskId, shortFunctionConfig);
+            return checkFunctionPreparednessWithGit(core, functionConfig, taskId);
         }
         return true;
     }
 
-    private boolean checkFunctionPreparednessWithGit(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId, ShortFunctionConfig shortFunctionConfig) {
-        final DownloadStatus functionDownloadStatuses = FunctionRepositoryProcessorService.getFunctionDownloadStatus(assetManagerUrl, functionConfig.code);
-        final DispatcherLookupExtended dispatcher = processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap.get(core.dispatcherUrl);
+    /**
+     * Readiness for a git-sourced Function is whether the pinned commit is materialized on this
+     * Processor - a filesystem fact. None of the asset-manager states the dispatcher path goes through
+     * (function_config_error, download_error, dispatcher_config_error) can arise here, because no asset
+     * manager is involved in getting these bytes.
+     */
+    private boolean checkFunctionPreparednessWithGit(
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
+            TaskParamsYaml.FunctionConfig functionConfig, Long taskId) {
 
-        if (functionDownloadStatuses==null) {
-            downloadGitFunctionService.addTask(new DownloadGitFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+        if (functionConfig.git==null) {
+            processorTaskService.markAsFinishedWithError(core, taskId,
+                S.f("951.360 Task #%d can't be processed: function %s is git-sourced but carries no git info",
+                    taskId, functionConfig.code));
+            return false;
+        }
+        final String actualFunctionFile = AssetUtils.getActualFunctionFile(functionConfig);
+        if (actualFunctionFile==null) {
+            processorTaskService.markAsFinishedWithError(core, taskId,
+                S.f("951.390 Task #%d can't be processed: function %s declares no target file",
+                    taskId, functionConfig.code));
+            return false;
+        }
+        if (!GtiUtils.isSha(functionConfig.git.commit)) {
+            // The Dispatcher resolves the revision when it creates the ExecContext, so this can only mean a
+            // Task was produced without that resolution. Fail it here, where it is visible, rather than
+            // queueing work that could never complete.
+            processorTaskService.markAsFinishedWithError(core, taskId,
+                S.f("951.395 Task #%d can't be processed: function %s carries an unresolved git revision '%s'",
+                    taskId, functionConfig.code, functionConfig.git.commit));
             return false;
         }
 
-        final EnumsApi.FunctionState functionState = functionDownloadStatuses.state;
-        if (functionState == EnumsApi.FunctionState.none) {
-            downloadGitFunctionService.addTask(new DownloadGitFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
-            return false;
-        }
-        else {
-            if (functionState== EnumsApi.FunctionState.function_config_error || functionState== EnumsApi.FunctionState.download_error) {
-                log.error("951.360 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
+        final DownloadGitFunctionTask task =
+            new DownloadGitFunctionTask(functionConfig.code, functionConfig.git, actualFunctionFile, NORMAL);
 
-                FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none, null);
-
-                downloadGitFunctionService.addTask(new DownloadGitFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
-                return true;
-            }
-            else if (functionState== EnumsApi.FunctionState.dispatcher_config_error) {
-                processorTaskService.markAsFinishedWithError(core,
-                    taskId,
-                        S.f("951.390 Task #%d can't be processed because dispatcher at %s was mis-configured and function %s can't downloaded",
-                            taskId, core.dispatcherUrl.url, functionConfig.code));
-            }
-            if (functionState!= EnumsApi.FunctionState.ready) {
-                log.warn("951.420 Function {} has broken state as {}", functionConfig.code, functionState);
-            }
-            return functionState == EnumsApi.FunctionState.ready;
+        if (downloadGitFunctionService.isReady(task)) {
+            return true;
         }
+        // idempotent: the queue runs with checkForDouble, so re-adding the same function at the same
+        // revision while it is still pending is a no-op
+        downloadGitFunctionService.addTask(task);
+        return false;
     }
 
     private boolean checkFunctionPreparednessWithDispatcher(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId, ShortFunctionConfig shortFunctionConfig) {

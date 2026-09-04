@@ -73,31 +73,6 @@ public class TaskParamsUtilsCleaningPolicyTest {
     }
 
     @Test
-    public void test_gitSourcedWithNoAssetDirDefaultsToGitRepo() {
-        assertEquals("git-repo", TaskParamsUtils.defaultAssetDir(EnumsApi.FunctionSourcing.git, null),
-            "TaskProcessor skips the copy into the Task's asset dir when assetDir is blank, so a git Function must have one");
-        assertEquals("git-repo", TaskParamsUtils.defaultAssetDir(EnumsApi.FunctionSourcing.git, "  "));
-    }
-
-    @Test
-    public void test_anExplicitAssetDirAlwaysWins() {
-        assertEquals("scripts", TaskParamsUtils.defaultAssetDir(EnumsApi.FunctionSourcing.git, "scripts"));
-        assertEquals("scripts", TaskParamsUtils.defaultAssetDir(EnumsApi.FunctionSourcing.dispatcher, "scripts"));
-    }
-
-    @Test
-    public void test_dispatcherSourcedKeepsNoAssetDir() {
-        assertNull(TaskParamsUtils.defaultAssetDir(EnumsApi.FunctionSourcing.dispatcher, null));
-        assertNull(TaskParamsUtils.defaultAssetDir(null, null));
-    }
-
-    @Test
-    public void test_assetDirDefaultIsAppliedByToFunctionConfig() {
-        assertEquals("git-repo", TaskParamsUtils.toFunctionConfig(cfg(EnumsApi.FunctionSourcing.git, null)).assetDir);
-        assertNull(TaskParamsUtils.toFunctionConfig(cfg(EnumsApi.FunctionSourcing.dispatcher, null)).assetDir);
-    }
-
-    @Test
     public void test_defaultIsAppliedByToFunctionConfig() {
         final TaskParamsYaml.FunctionConfig fc = TaskParamsUtils.toFunctionConfig(cfg(EnumsApi.FunctionSourcing.git, null));
         assertEquals(EnumsApi.CleaningPolicy.ASSETS, fc.cleaningPolicy,

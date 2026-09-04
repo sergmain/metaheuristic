@@ -24,7 +24,9 @@ import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
+import ai.metaheuristic.commons.utils.GitCommitCache;
 import ai.metaheuristic.commons.utils.GtiUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.EnumsApi.FunctionState;
@@ -112,22 +114,8 @@ public class FunctionRepositoryProcessorService {
         if (S.b(functionCode)) {
             throw new IllegalStateException("816.240 functionCode is null");
         }
-        return setFunctionState(assetManagerUrl, functionCode, functionState, assetFile, EnumsApi.FunctionSourcing.dispatcher, null);
-    }
-
-    /**
-     * @param sourcing  the Function's real sourcing. The 4-arg overload above hardcodes {@code dispatcher},
-     *                  which is wrong for a git-sourced Function but is what every non-git caller means.
-     * @param gitCommit the revision checked out on disk, for a git-sourced Function
-     */
-    @Nullable
-    public static DownloadStatus setFunctionState(
-            final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, FunctionState functionState,
-            @Nullable AssetFile assetFile, EnumsApi.FunctionSourcing sourcing, @Nullable String gitCommit) {
-        if (S.b(functionCode)) {
-            throw new IllegalStateException("816.245 functionCode is null");
-        }
-        final DownloadStatus status = new DownloadStatus(functionState, functionCode, assetManagerUrl, sourcing, assetFile, gitCommit);
+        // every remaining caller is dispatcher-sourced: a git Function's readiness is the filesystem
+        final DownloadStatus status = new DownloadStatus(functionState, functionCode, assetManagerUrl, EnumsApi.FunctionSourcing.dispatcher, assetFile);
         functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).put(functionCode, status);
         return status;
     }
@@ -149,7 +137,7 @@ public class FunctionRepositoryProcessorService {
                 return prepareWithSourcingAsDispatcher(assetManagerUrl, function, globals.processorResourcesPath);
             }
             else if (function.sourcing== EnumsApi.FunctionSourcing.git) {
-                return prepareWithSourcingAsGit(assetManagerUrl, function);
+                return prepareWithSourcingAsGit(function, globals.processorResourcesPath);
             }
             throw new IllegalStateException("816.330 Shouldn't get there");
         } catch (Throwable th) {
@@ -164,40 +152,53 @@ public class FunctionRepositoryProcessorService {
         }
     }
 
+    /**
+     * For a git-sourced Function the answer is on disk, not in a map: a materialized commit directory
+     * exists or it doesn't, and {@link GitCommitCache} only publishes one by an atomic rename, so a
+     * directory that exists is complete. There is no download status to consult and none to go stale -
+     * which is what let a second ExecContext silently reuse the first one's revision.
+     */
     private static FunctionPrepareResult prepareWithSourcingAsGit(
-        ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig functionConfig ) {
+        TaskParamsYaml.FunctionConfig functionConfig, Path processorResourcesPath) {
 
         if (functionConfig.git==null) {
             throw new IllegalStateException("816.390 (functionConfig.git==null)");
         }
+        final FunctionPrepareResult result = new FunctionPrepareResult(functionConfig);
 
-        FunctionPrepareResult result = new FunctionPrepareResult(functionConfig);
+        final String sha = functionConfig.git.commit;
+        if (!GtiUtils.isSha(sha)) {
+            final String es = S.f("816.395 Function %s has an unresolved git revision '%s'", functionConfig.code, sha);
+            log.warn(es);
+            result.systemExecResult = new FunctionApiData.SystemExecResult(functionConfig.code, false, -1, es);
+            result.isLoaded = false;
+            result.isError = true;
+            return result;
+        }
 
-        DownloadStatus f = functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).get(functionConfig.code);
-        if (f!=null && GtiUtils.revisionChanged(f.gitCommit, functionConfig.git.commit)) {
-            // the repo on disk is at another revision than this Task is pinned to; treat it as not prepared
-            // so DownloadGitFunctionService re-checks it out, rather than running the previous sha's code
-            log.info("816.395 Function {} is prepared at revision {} but this task wants {}, re-preparing",
-                functionConfig.code, f.gitCommit, functionConfig.git.commit);
-            functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).remove(functionConfig.code);
-            f = null;
+        final Path commits = GitCommitCache.commitsDir(
+            processorResourcesPath.resolve("git").resolve(StrUtils.asCode(functionConfig.git.repo)));
+        if (!GitCommitCache.isCached(commits, sha)) {
+            result.isLoaded = false;
+            return result;
         }
-        if (f!=null) {
-            result.functionAssetFile = f.assetFile;
-            if (f.state==ready) {
-                log.info("816.420 Function asset file: {}, exist: {}", result.functionAssetFile.file.toAbsolutePath(), Files.exists(result.functionAssetFile.file));
-                return result;
-            }
-            else if (f.state.failed) {
-                final String es = S.f("816.450 function %s is active but failed to be downloaded. assetManagerUrl: %s", functionConfig.code, assetManagerUrl.url);
-                log.warn(es);
-                result.systemExecResult = new FunctionApiData.SystemExecResult(functionConfig.code, false, -1, es);
-                result.isLoaded = false;
-                result.isError = true;
-                return result;
-            }
+
+        final String actualFunctionFile = AssetUtils.getActualFunctionFile(functionConfig);
+        if (actualFunctionFile==null) {
+            final String es = S.f("816.400 actualFunctionFile is null for function %s", functionConfig.code);
+            log.error(es);
+            result.systemExecResult = new FunctionApiData.SystemExecResult(functionConfig.code, false, -1, es);
+            result.isLoaded = false;
+            result.isError = true;
+            return result;
         }
-        result.isLoaded = false;
+        final AssetFile assetFile = new AssetFile();
+        assetFile.file = GitCommitCache.entryPath(commits, sha)
+            .resolve(functionConfig.git.path==null ? "" : functionConfig.git.path)
+            .resolve(actualFunctionFile);
+        assetFile.isContent = Files.exists(assetFile.file);
+        result.functionAssetFile = assetFile;
+        result.isLoaded = assetFile.isContent;
         return result;
     }
 

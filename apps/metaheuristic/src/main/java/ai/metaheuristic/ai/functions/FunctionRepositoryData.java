@@ -26,6 +26,9 @@ import ai.metaheuristic.commons.utils.threads.EventWithId;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.utils.GtiUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -55,18 +58,54 @@ public class FunctionRepositoryData {
         }
     }
 
-    @AllArgsConstructor
-    @EqualsAndHashCode(of = {"functionCode", "assetManagerUrl"})
-    public static class DownloadGitFunctionTask implements EventWithId<FunctionEnums.DownloadPriority> {
+    /**
+     * The git counterpart of {@link DownloadFunctionTask}. Deliberately a SEPARATE type rather than a
+     * shared one, so the two download paths can change independently - but it is not a copy of the other
+     * one's fields, because the two get their bytes from different places.
+     *
+     * <p>❗ No assetManagerUrl and no signatureRequired. The source of a git Function's payload is the
+     * repo; an asset manager supplies nothing here. Everything needed is either in GitInfo or was already
+     * sent by the Dispatcher in TaskParamsYaml, so there is nothing to look up over HTTP.
+     *
+     * <p>❗ getId() is the QUEUE TENANT: the normalized repo url. One virtual thread per repo is what
+     * serialises writes into that repo's object store, and it is why no lock is needed around the fetch.
+     * Keying on priority - which is what the copied version did - put every repo onto one of two shared
+     * lanes, giving no isolation between repos and two lanes writing one object store.
+     *
+     * <p>❗ equals is the DEDUP KEY of a queue running with checkForDouble==true, so it must include the
+     * revision. Without it a request for fn-py@456 counts as a duplicate of a queued fn-py@123 and is
+     * dropped, and the Task pinned to the newer sha waits a whole poll cycle while the older one is
+     * prepared instead.
+     */
+    @EqualsAndHashCode(of = {"functionCode", "git"})
+    public static class DownloadGitFunctionTask implements EventWithId<String> {
         public final String functionCode;
-        public final FunctionRepositoryResponseParams.ShortFunctionConfig shortFunctionConfig;
-        public final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
-        public final boolean signatureRequired;
+        public final GitInfo git;
+        /** resolved by the caller from the Function's targets; the Dispatcher already sent them */
+        public final String actualFunctionFile;
         public final FunctionEnums.DownloadPriority priority;
 
+        public DownloadGitFunctionTask(String functionCode, GitInfo git, String actualFunctionFile,
+                                       FunctionEnums.DownloadPriority priority) {
+            // ❗ A Processor never sees HEAD, a branch or a tag. The Dispatcher resolves the revision once,
+            // when it creates the ExecContext, and every Task of that ExecContext carries the resulting sha
+            // - that is what makes all Tasks of one ExecContext run the same code. So an unresolved
+            // revision here is not an input to cope with, it is a broken invariant, and it fails at
+            // construction rather than becoming a Task that can never be prepared and never says why.
+            if (!GtiUtils.isSha(git.commit)) {
+                throw new IllegalStateException(
+                    "816.600 function " + functionCode + " reached a Processor with an unresolved git revision '"
+                    + git.commit + "'. The Dispatcher must resolve it to a sha when the ExecContext is created.");
+            }
+            this.functionCode = functionCode;
+            this.git = git;
+            this.actualFunctionFile = actualFunctionFile;
+            this.priority = priority;
+        }
+
         @Override
-        public FunctionEnums.DownloadPriority getId() {
-            return priority;
+        public String getId() {
+            return StrUtils.asCode(git.repo);
         }
     }
 
@@ -100,23 +139,6 @@ public class FunctionRepositoryData {
         public ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
         public EnumsApi.FunctionSourcing sourcing;
         public AssetFile assetFile;
-
-        /**
-         * For a git-sourced Function, the revision actually checked out on disk. Null for every other
-         * sourcing, and null for a git Function prepared before revisions were tracked.
-         *
-         * <p>This is what stops a second ExecContext, pinned to a newer sha, from silently reusing the
-         * first one's working tree: the cache is keyed by Function code, so without the revision there is
-         * nothing to compare and "already downloaded" is always true.
-         */
-        @Nullable
-        public String gitCommit;
-
-        public DownloadStatus(EnumsApi.FunctionState state, String code,
-                              ProcessorAndCoreData.AssetManagerUrl assetManagerUrl,
-                              EnumsApi.FunctionSourcing sourcing, AssetFile assetFile) {
-            this(state, code, assetManagerUrl, sourcing, assetFile, null);
-        }
     }
 
     @Data

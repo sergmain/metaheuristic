@@ -43,6 +43,16 @@
     </properties>
 
     <dependencies>
+
+        <dependency>
+            <!-- pure-java git, tests only: builds real repos with real commits in a temp dir so the git
+                 asset-preparing path can be exercised without a network or a checked-in fixture -->
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit</artifactId>
+            <version>7.1.0.202411261347-r</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>ai.metaheuristic</groupId>
             <artifactId>mh-commons</artifactId>

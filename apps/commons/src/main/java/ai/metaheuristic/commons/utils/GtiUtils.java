@@ -81,23 +81,6 @@ public class GtiUtils {
         return StringUtils.isBlank(commit) || "HEAD".equals(commit.strip());
     }
 
-    /**
-     * Whether a repo already prepared at {@code prepared} has to be re-prepared to serve {@code wanted}.
-     *
-     * <p>The Processor caches a prepared Function by code, and that cache is what made a second
-     * ExecContext silently reuse the first one's revision. Comparing the revisions is what makes the
-     * cache correct instead of merely fast.
-     *
-     * <p>An unknown prepared revision counts as changed: it was prepared before revisions were tracked,
-     * so nothing can vouch for what is on disk.
-     */
-    public static boolean revisionChanged(@Nullable String prepared, @Nullable String wanted) {
-        if (StringUtils.isBlank(prepared)) {
-            return true;
-        }
-        return !prepared.strip().equals(wanted==null ? null : wanted.strip());
-    }
-
     public static List<String> lsRemoteCmd(String repo, String branch) {
         // git ls-remote <git-repo-url> refs/heads/<branch>
         return List.of("git", "ls-remote", repo, "refs/heads/" + branch);
@@ -371,6 +354,62 @@ public class GtiUtils {
         // git fsck --full
         ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "checkout", functionConfig.git.commit),0L);
         return result;
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // object store + commit materialization.
+    //
+    // These serve git-sourced Functions and nothing else. Nothing here checks anything out into a
+    // working tree: `objects` is a BARE repo that only ever accumulates objects, and a commit is
+    // materialized by reading its tree. That is what lets several revisions of one repo be live at the
+    // same time, which one shared working tree could never do.
+    // ---------------------------------------------------------------------------------------------
+
+    /** Creates the bare object store if it isn't there yet. Nothing is ever checked out of it. */
+    public static void ensureBareRepo(Path objectsDir, String gitUrl, GitData.GitContext gitContext) throws IOException {
+        if (Files.exists(objectsDir.resolve("HEAD"))) {
+            return;
+        }
+        Files.createDirectories(objectsDir);
+        final ExecResult init = execGitCmd(List.of("git", "init", "--bare", objectsDir.toAbsolutePath().toString()), gitContext);
+        if (!init.ok) {
+            throw new IOException("028.220 Can't init a bare repo at " + objectsDir.toAbsolutePath() + ", error: " + init.error);
+        }
+        final ExecResult remote = execGitCmd(
+            List.of("git", "-C", objectsDir.toAbsolutePath().toString(), "remote", "add", "origin", gitUrl), gitContext);
+        if (!remote.ok) {
+            throw new IOException("028.230 Can't add remote " + gitUrl + ", error: " + remote.error);
+        }
+    }
+
+    /** Whether the object store already holds this commit. Answered locally, no network. */
+    public static boolean hasCommit(Path objectsDir, String sha, GitData.GitContext gitContext) {
+        final ExecResult result = execGitCmd(
+            List.of("git", "-C", objectsDir.toAbsolutePath().toString(), "cat-file", "-e", sha + "^{commit}"), gitContext);
+        return result.ok && result.systemExecResult!=null && result.systemExecResult.isOk();
+    }
+
+    /**
+     * Fetches exactly one commit.
+     *
+     * <p>❗ `clone` cannot do this - `--branch` resolves ref names only, so `clone --branch &lt;sha&gt;`
+     * fails even when the sha IS the branch tip. Only `fetch` accepts an object id, and only when the
+     * server allows it (uploadpack.allowReachableSHA1InWant; GitHub and GitLab do).
+     */
+    public static ExecResult fetchCommit(Path objectsDir, String sha, GitData.GitContext gitContext) {
+        final List<String> cmd = List.of(
+            "git", "-C", objectsDir.toAbsolutePath().toString(), "fetch", "--depth", "1", "origin", sha);
+        log.info("exec {}", cmd);
+        return execGitCmd(cmd, gitContext);
+    }
+
+    /** Writes a commit's tree into a tar file. `archive` reads objects and touches no working tree. */
+    public static ExecResult archiveCommit(Path objectsDir, String sha, Path tarFile, GitData.GitContext gitContext) {
+        final List<String> cmd = List.of(
+            "git", "-C", objectsDir.toAbsolutePath().toString(), "archive", "--format=tar",
+            "--output=" + tarFile.toAbsolutePath(), sha);
+        log.info("exec {}", cmd);
+        return execGitCmd(cmd, gitContext);
     }
 
     public static ExecResult execCheckoutRevision(Path repoDir, String commit) {

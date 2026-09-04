@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,54 +13,53 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.data.DispatcherData;
-import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
-import ai.metaheuristic.ai.processor.DispatcherContextInfoHolder;
-import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
-import ai.metaheuristic.ai.processor.actors.GetDispatcherContextInfoService;
-import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
-import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
-import ai.metaheuristic.ai.processor.tasks.GetDispatcherContextInfoTask;
-import ai.metaheuristic.ai.utils.asset.AssetUtils;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.AssetFile;
-import ai.metaheuristic.api.data.BundleData;
-import ai.metaheuristic.api.sourcing.GitInfo;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
-import ai.metaheuristic.commons.utils.BundleUtils;
+import ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority;
+import ai.metaheuristic.api.data.GitData;
+import ai.metaheuristic.commons.utils.GitCommitCache;
 import ai.metaheuristic.commons.utils.GtiUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.client5.http.HttpResponseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.jspecify.annotations.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.net.ConnectException;
-import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static ai.metaheuristic.commons.CommonConsts.GIT_REPO;
+import static ai.metaheuristic.ai.functions.FunctionRepositoryData.DownloadGitFunctionTask;
 
 /**
+ * Makes a git-sourced Function's payload present on this Processor, at the exact revision the Task is
+ * pinned to.
+ *
+ * <p>The sibling {@link DownloadFunctionService} is a separate implementation on purpose - the two get
+ * their bytes from different places and should be free to change independently. What they do NOT share
+ * is any of the asset-manager machinery: there is no chunked HTTP transfer here, no chunkSize, no
+ * checksum/signature verification, and no round-trip to fetch a Function config, because a git revision
+ * is self-identifying and the Dispatcher already sent everything else in TaskParamsYaml.
+ *
+ * <p>The work is exactly two steps, and both are idempotent:
+ * <ol>
+ *   <li>make sure the bare object store holds the commit - fetch only if it doesn't;</li>
+ *   <li>materialize the commit into {@code commits/&lt;sha&gt;/} - only if it isn't there.</li>
+ * </ol>
+ *
+ * <p>Readiness is then the existence of that directory. There is no in-memory state to go stale: the
+ * atomic rename in {@link GitCommitCache} means a directory that exists is a commit that was fully
+ * materialized.
+ *
+ * <p>Error code prefix: {@code 01.817.} (unique to this class).
+ *
  * @author Sergio Lissner
- * Date: 11/27/2023
- * Time: 9:54 PM
  */
 @Service
 @Slf4j
@@ -68,162 +67,95 @@ import static ai.metaheuristic.commons.CommonConsts.GIT_REPO;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class DownloadGitFunctionService {
 
+    private static final GitData.GitContext GIT_CONTEXT = new GitData.GitContext(600L, 1000);
+
     private final Globals globals;
-    private final ProcessorEnvironment processorEnvironment;
-    private final GetDispatcherContextInfoService getDispatcherContextInfoService;
 
-    private final MultiTenantedQueue<FunctionEnums.DownloadPriority, FunctionRepositoryData.DownloadGitFunctionTask> downloadFunctionQueue =
-        new MultiTenantedQueue<>(100, Duration.ZERO, true, "git-clone-", this::getGitRepo);
+    // tenant == normalized repo url, so one virtual thread per repo. Writes into a repo's object store
+    // are serialised by construction, and different repos make progress independently.
+    // checkForDouble collapses identical pending requests - same function, same repo, SAME sha.
+    private final MultiTenantedQueue<String, DownloadGitFunctionTask> downloadFunctionQueue =
+        new MultiTenantedQueue<>(100, Duration.ZERO, true, "git-fetch-", this::prepareCommit);
 
-    public void addTask(FunctionRepositoryData.DownloadGitFunctionTask task) {
+    public void addTask(DownloadGitFunctionTask task) {
         downloadFunctionQueue.putToQueue(task);
     }
 
     @Async
     @EventListener
-    public void processAssetPreparing(FunctionRepositoryData.DownloadGitFunctionTask event) {
+    public void processAssetPreparing(DownloadGitFunctionTask event) {
         try {
             addTask(event);
         } catch (Throwable th) {
-            log.error("817.020 Error, need to investigate ", th);
+            log.error("01.817.010 Error, need to investigate ", th);
         }
     }
 
-    public static class GitRepoSync {
-        private static final CommonSync<String> commonSync = new CommonSync<>();
+    /** Root of one repo's cache: {@code <processorResources>/git/<repoCode>/} */
+    public Path repoRoot(String repoUrl) {
+        return globals.processorResourcesPath.resolve("git").resolve(StrUtils.asCode(repoUrl));
+    }
 
-        public static void getWithSyncVoid(final String repo, Runnable runnable) {
-            final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(repo);
+    /** Readiness is a filesystem fact: the pinned commit is materialized on this Processor, or it isn't. */
+    public boolean isReady(DownloadGitFunctionTask task) {
+        return GitCommitCache.isCached(GitCommitCache.commitsDir(repoRoot(task.git.repo)), task.git.commit);
+    }
+
+    public void prepareCommit(DownloadGitFunctionTask task) {
+        if (globals.testing || !globals.processor.enabled) {
+            return;
+        }
+        // the revision is a sha - DownloadGitFunctionTask refuses to be constructed otherwise
+        final String sha = task.git.commit;
+
+        final Path root = repoRoot(task.git.repo);
+        final Path commits = GitCommitCache.commitsDir(root);
+        if (GitCommitCache.isCached(commits, sha)) {
+            return;
+        }
+
+        try {
+            final Path objects = GitCommitCache.objectsDir(root);
+            GtiUtils.ensureBareRepo(objects, task.git.repo, GIT_CONTEXT);
+
+            if (!GtiUtils.hasCommit(objects, sha, GIT_CONTEXT)) {
+                final var result = GtiUtils.fetchCommit(objects, sha, GIT_CONTEXT);
+                if (!result.ok) {
+                    log.error("01.817.030 Can't fetch {} from {}, error: {}", sha, task.git.repo, result.error);
+                    return;
+                }
+                if (!GtiUtils.hasCommit(objects, sha, GIT_CONTEXT)) {
+                    log.error("01.817.040 {} still isn't present after fetching it from {}. The server may not allow "
+                        + "fetching by object id, or the commit isn't reachable from any ref", sha, task.git.repo);
+                    return;
+                }
+            }
+
+            GitCommitCache.get(commits, sha, dir -> materialize(objects, sha, dir));
+            log.info("01.817.050 commit {} of {} is ready for function {}", sha, task.git.repo, task.functionCode);
+        }
+        catch (Throwable th) {
+            log.error("01.817.060 Can't prepare commit " + sha + " of " + task.git.repo, th);
+        }
+    }
+
+    /** git archive reads the commit's tree; nothing is checked out, so other revisions are undisturbed. */
+    private static void materialize(Path objects, String sha, Path target) {
+        try {
+            final Path tar = target.getParent().resolve(target.getFileName() + ".tar");
             try {
-                lock.lock();
-                runnable.run();
-            } finally {
-                lock.unlock();
+                final var result = GtiUtils.archiveCommit(objects, sha, tar, GIT_CONTEXT);
+                if (!result.ok) {
+                    throw new IOException("01.817.070 git archive failed for " + sha + ", error: " + result.error);
+                }
+                GitCommitCache.untar(tar, target);
+            }
+            finally {
+                Files.deleteIfExists(tar);
             }
         }
-    }
-
-    public void getGitRepo(FunctionRepositoryData.DownloadGitFunctionTask task) {
-        if (globals.testing) {
-            return;
-        }
-        if (!globals.processor.enabled) {
-            return;
-        }
-
-        if (task.shortFunctionConfig.sourcing!= EnumsApi.FunctionSourcing.git) {
-            log.warn("817.040 Attempt to download function from git but sourcing is {}", task.shortFunctionConfig.sourcing);
-            return;
-        }
-
-        // created for easier debugging
-        final String functionCode = task.functionCode;
-        final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = task.assetManagerUrl;
-
-        final FunctionRepositoryData.DownloadStatus prepared =
-            FunctionRepositoryProcessorService.getFunctionDownloadStatus(task.assetManagerUrl, task.functionCode);
-        if (prepared!=null && !GtiUtils.revisionChanged(prepared.gitCommit, task.shortFunctionConfig.git==null ? null : task.shortFunctionConfig.git.commit)) {
-            // already prepared AT THIS REVISION. Without the revision check this returned for any prepared
-            // Function, so a repo cloned for one ExecContext was reused forever, whatever the next one pinned.
-            return;
-        }
-
-        final DispatcherLookupParamsYaml.AssetManager assetManager = processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().getAssetManager(assetManagerUrl);
-        if (assetManager==null) {
-            log.error("817.080 assetManager server wasn't found for url {}", assetManagerUrl.url);
-            return;
-        }
-        if (task.shortFunctionConfig.git==null) {
-            FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error, null);
-            return;
-        }
-
-        final DispatcherData.DispatcherContextInfo contextInfo = getDispatcherContextInfo(assetManagerUrl);
-        if (contextInfo == null) {
-            return;
-        }
-
-        FunctionRepositoryData.DownloadedFunctionConfigStatus status = ProcessorFunctionUtils.downloadFunctionConfig(assetManager, functionCode);
-
-        final String actualFunctionFile = AssetUtils.getActualFunctionFile(status.functionConfig);
-        if (actualFunctionFile==null) {
-            log.error("811.010 actualFunctionFile is null");
-            FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error, null);
-            return;
-        }
-
-        final String assetDir = S.b(status.functionConfig.assetDir) ? GIT_REPO : status.functionConfig.assetDir;
-
-        GitRepoSync.getWithSyncVoid(task.shortFunctionConfig.git.repo,
-            ()-> initGitRepo(task.shortFunctionConfig.git, assetManagerUrl, functionCode, actualFunctionFile, assetDir));
-    }
-
-    /**
-     * Clones/fetches the repo into the FUNCTION'S ASSET DIR, i.e.
-     * {@code <processorResources>/<assetManager>/function/<code>/<assetDir>}.
-     *
-     * <p>That location is not incidental: TaskProcessor already copies {@code functionDir/<assetDir>} into
-     * the Task's own {@code asset} dir while preparing the environment, and cleaningPolicy=ASSETS (the
-     * default for a git Function) deletes that copy when the Task finishes. So putting the checkout here
-     * gives each Task its own snapshot of the repo, for the whole life of the Task and no longer, with no
-     * new machinery.
-     *
-     * <p>It also replaces one working tree shared by every git Function of a repo with one per Function.
-     */
-    private void initGitRepo(GitInfo gitInfo, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode,
-                             String actualFunctionFile, String assetDir) {
-        try {
-            Path baseResourcePath = MetadataParams.prepareBaseDir(globals.processorResourcesPath, assetManagerUrl);
-            Path functionDir = ArtifactCommonUtils.prepareFunctionPath(baseResourcePath)
-                .resolve(ArtifactCommonUtils.normalizeCode(functionCode));
-            Path baseRepoPath = functionDir.resolve(assetDir);
-            Files.createDirectories(baseRepoPath);
-
-            BundleData.Cfg cfg = new BundleData.Cfg(null, baseRepoPath, gitInfo);
-            BundleUtils.initRepo(cfg);
-
-            final AssetFile assetFile = new AssetFile();
-            assetFile.file = cfg.repoDir.resolve(gitInfo.path).resolve(actualFunctionFile);
-
-            FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode,
-                EnumsApi.FunctionState.ready, assetFile, EnumsApi.FunctionSourcing.git, gitInfo.commit);
-            return;
-        } catch (HttpResponseException e) {
-            logError(functionCode, e);
-        } catch (SocketTimeoutException e) {
-            log.error("817.500 SocketTimeoutException: {}", e.toString());
-        } catch (ConnectException e) {
-            log.error("817.520 ConnectException: {}", e.toString());
-        } catch (IOException e) {
-            log.error("817.540 IOException", e);
-        } catch (Throwable th) {
-            log.error("817.580 Throwable", th);
-        }
-        FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.io_error, null);
-    }
-
-    private DispatcherData.@Nullable DispatcherContextInfo getDispatcherContextInfo(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl) {
-        final DispatcherData.DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetManagerUrl);
-
-        // process only if dispatcher has already sent its config
-        if (contextInfo==null || contextInfo.chunkSize==null) {
-            log.warn("817.640 Asset dispatcher {} wasn't initialized yet, chunkSize is  undefined", assetManagerUrl.url);
-            getDispatcherContextInfoService.add(new GetDispatcherContextInfoTask(assetManagerUrl));
-            return null;
-        }
-        return contextInfo;
-    }
-
-    private static void logError(String functionCode, HttpResponseException e) {
-        if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
-            log.warn("817.660 Function with code {} wasn't found", functionCode);
-        }
-        else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
-            log.warn("817.680 Function with code {} is broken and need to be recreated", functionCode);
-        }
-        else {
-            log.error("817.700 HttpResponseException", e);
+        catch (IOException e) {
+            throw new RuntimeException("01.817.080 Can't materialize " + sha, e);
         }
     }
-
 }

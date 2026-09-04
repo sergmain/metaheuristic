@@ -46,21 +46,6 @@ public class TaskParamsUtils {
         return sourcing==EnumsApi.FunctionSourcing.git ? EnumsApi.CleaningPolicy.ASSETS : null;
     }
 
-    /**
-     * A git-sourced Function's payload IS a checked-out repo, and the Processor puts it in the Function's
-     * asset dir so that TaskProcessor copies it into the Task's own {@code asset} dir before the Function
-     * runs. TaskProcessor skips that copy entirely when assetDir is blank, so a git Function that declared
-     * none would get an empty asset dir and no scripts - hence the default rather than a requirement on
-     * every descriptor.
-     */
-    public static @Nullable String defaultAssetDir(
-            EnumsApi.@Nullable FunctionSourcing sourcing, @Nullable String declared) {
-        if (declared!=null && !declared.isBlank()) {
-            return declared;
-        }
-        return sourcing==EnumsApi.FunctionSourcing.git ? CommonConsts.GIT_REPO : declared;
-    }
-
     public static TaskParamsYaml.FunctionConfig toFunctionConfig(FunctionConfigYaml src) {
         TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig();
         trg.checksumMap = src.system!=null ? src.system.checksumMap : null;
@@ -77,7 +62,7 @@ public class TaskParamsUtils {
         trg.params = src.function.params;
         trg.sourcing = src.function.sourcing;
         trg.type = src.function.type;
-        trg.assetDir = defaultAssetDir(src.function.sourcing, src.function.assetDir);
+        trg.assetDir = src.function.assetDir;
         trg.cleaningPolicy = defaultCleaningPolicy(src.function.sourcing, src.function.cleaningPolicy);
         // Stage 5 (vault secret handoff): propagate FunctionConfigYaml.api → TaskParamsYaml.api.
         if (src.function.api != null) {

@@ -48,7 +48,10 @@ import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.commons.security.AsymmetricEncryptor;
 import ai.metaheuristic.commons.system.SystemProcessLauncher;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
+import ai.metaheuristic.commons.utils.GitCommitCache;
+import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -231,31 +234,57 @@ public class TaskProcessor {
                 continue;
             }
 
-            if (!S.b(taskParamYaml.task.function.assetDir)) {
+            // The Task gets its OWN copy of whatever the Function needs alongside it, built fresh here on
+            // every attempt: cleaningPolicy=ASSETS removes it when the Task finishes, and a Function is free
+            // to rewrite what it was handed, so a re-run must not inherit the previous attempt's damage.
+            // Two sources, chosen by sourcing - a git-sourced Function's payload is a materialized commit,
+            // not a subdirectory of an unpacked bundle.
+            final boolean gitSourced = taskParamYaml.task.function.sourcing==EnumsApi.FunctionSourcing.git;
+            if (gitSourced || !S.b(taskParamYaml.task.function.assetDir)) {
                 Path assetDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ASSET_DIR);
                 if (assetDir == null) {
                     processorTaskService.markAsFinishedWithError(core, task.taskId, "100.105 Error of configuring of environment. 'asset' directory wasn't created, task can't be processed.");
                     continue;
                 }
-                // copy content of Function's asset dir to Task's asset dir
-                final Path baseResourceDir = MetadataParams.prepareBaseDir(globals.processorResourcesPath,
-                        new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl));
-                final Path functionDir = ArtifactCommonUtils.prepareFunctionPath(baseResourceDir)
-                        .resolve(ArtifactCommonUtils.normalizeCode(taskParamYaml.task.function.code));
-                final Path functionAssetDir = functionDir.resolve(taskParamYaml.task.function.assetDir);
-                if (Files.isDirectory(functionAssetDir)) {
-                    try {
-                        PathUtils.copyDirectory(functionAssetDir, assetDir);
-                    }
-                    catch (IOException e) {
+                if (gitSourced) {
+                    final GitInfo git = taskParamYaml.task.function.git;
+                    if (git==null) {
                         processorTaskService.markAsFinishedWithError(core, task.taskId,
-                                "100.107 Error copying function's asset dir content to task's asset dir: " + e.getMessage());
+                                "100.108 Broken task. Function is git-sourced but carries no git info");
+                        continue;
+                    }
+                    final Path commits = GitCommitCache.commitsDir(
+                            globals.processorResourcesPath.resolve("git").resolve(StrUtils.asCode(git.repo)));
+                    try {
+                        GitCommitCache.copyToTask(GitCommitCache.entryPath(commits, git.commit), git.path, assetDir);
+                    }
+                    catch (Throwable e) {
+                        processorTaskService.markAsFinishedWithError(core, task.taskId,
+                                "100.109 Error copying commit " + git.commit + " of " + git.repo + " to task's asset dir: " + e.getMessage());
                         continue;
                     }
                 }
                 else {
-                    log.warn("100.106 Function {} has assetDir='{}' configured but directory {} doesn't exist",
-                            taskParamYaml.task.function.code, taskParamYaml.task.function.assetDir, functionAssetDir);
+                    // copy content of Function's asset dir to Task's asset dir
+                    final Path baseResourceDir = MetadataParams.prepareBaseDir(globals.processorResourcesPath,
+                            new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl));
+                    final Path functionDir = ArtifactCommonUtils.prepareFunctionPath(baseResourceDir)
+                            .resolve(ArtifactCommonUtils.normalizeCode(taskParamYaml.task.function.code));
+                    final Path functionAssetDir = functionDir.resolve(taskParamYaml.task.function.assetDir);
+                    if (Files.isDirectory(functionAssetDir)) {
+                        try {
+                            PathUtils.copyDirectory(functionAssetDir, assetDir);
+                        }
+                        catch (IOException e) {
+                            processorTaskService.markAsFinishedWithError(core, task.taskId,
+                                    "100.107 Error copying function's asset dir content to task's asset dir: " + e.getMessage());
+                            continue;
+                        }
+                    }
+                    else {
+                        log.warn("100.106 Function {} has assetDir='{}' configured but directory {} doesn't exist",
+                                taskParamYaml.task.function.code, taskParamYaml.task.function.assetDir, functionAssetDir);
+                    }
                 }
             }
 
