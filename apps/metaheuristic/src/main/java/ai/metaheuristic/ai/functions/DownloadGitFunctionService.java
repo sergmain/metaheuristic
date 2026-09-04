@@ -31,7 +31,10 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.BundleUtils;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -117,8 +120,11 @@ public class DownloadGitFunctionService {
         final String functionCode = task.functionCode;
         final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = task.assetManagerUrl;
 
-        if (FunctionRepositoryProcessorService.getFunctionDownloadStatus(task.assetManagerUrl, task.functionCode)!=null) {
-            // already downloaded
+        final FunctionRepositoryData.DownloadStatus prepared =
+            FunctionRepositoryProcessorService.getFunctionDownloadStatus(task.assetManagerUrl, task.functionCode);
+        if (prepared!=null && !GtiUtils.revisionChanged(prepared.gitCommit, task.shortFunctionConfig.git==null ? null : task.shortFunctionConfig.git.commit)) {
+            // already prepared AT THIS REVISION. Without the revision check this returned for any prepared
+            // Function, so a repo cloned for one ExecContext was reused forever, whatever the next one pinned.
             return;
         }
 
@@ -146,13 +152,31 @@ public class DownloadGitFunctionService {
             return;
         }
 
-        GitRepoSync.getWithSyncVoid(task.shortFunctionConfig.git.repo, ()-> initGitRepo(task.shortFunctionConfig.git, assetManagerUrl, functionCode, actualFunctionFile));
+        final String assetDir = S.b(status.functionConfig.assetDir) ? GIT_REPO : status.functionConfig.assetDir;
+
+        GitRepoSync.getWithSyncVoid(task.shortFunctionConfig.git.repo,
+            ()-> initGitRepo(task.shortFunctionConfig.git, assetManagerUrl, functionCode, actualFunctionFile, assetDir));
     }
 
-    private void initGitRepo(GitInfo gitInfo, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, String actualFunctionFile) {
+    /**
+     * Clones/fetches the repo into the FUNCTION'S ASSET DIR, i.e.
+     * {@code <processorResources>/<assetManager>/function/<code>/<assetDir>}.
+     *
+     * <p>That location is not incidental: TaskProcessor already copies {@code functionDir/<assetDir>} into
+     * the Task's own {@code asset} dir while preparing the environment, and cleaningPolicy=ASSETS (the
+     * default for a git Function) deletes that copy when the Task finishes. So putting the checkout here
+     * gives each Task its own snapshot of the repo, for the whole life of the Task and no longer, with no
+     * new machinery.
+     *
+     * <p>It also replaces one working tree shared by every git Function of a repo with one per Function.
+     */
+    private void initGitRepo(GitInfo gitInfo, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode,
+                             String actualFunctionFile, String assetDir) {
         try {
             Path baseResourcePath = MetadataParams.prepareBaseDir(globals.processorResourcesPath, assetManagerUrl);
-            Path baseRepoPath = baseResourcePath.resolve(GIT_REPO);
+            Path functionDir = ArtifactCommonUtils.prepareFunctionPath(baseResourcePath)
+                .resolve(ArtifactCommonUtils.normalizeCode(functionCode));
+            Path baseRepoPath = functionDir.resolve(assetDir);
             Files.createDirectories(baseRepoPath);
 
             BundleData.Cfg cfg = new BundleData.Cfg(null, baseRepoPath, gitInfo);
@@ -161,9 +185,8 @@ public class DownloadGitFunctionService {
             final AssetFile assetFile = new AssetFile();
             assetFile.file = cfg.repoDir.resolve(gitInfo.path).resolve(actualFunctionFile);
 
-            FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ready, assetFile);
-
-            int i=0;
+            FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode,
+                EnumsApi.FunctionState.ready, assetFile, EnumsApi.FunctionSourcing.git, gitInfo.commit);
             return;
         } catch (HttpResponseException e) {
             logError(functionCode, e);

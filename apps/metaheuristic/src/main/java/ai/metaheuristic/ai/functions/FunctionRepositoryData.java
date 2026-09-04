@@ -100,6 +100,23 @@ public class FunctionRepositoryData {
         public ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
         public EnumsApi.FunctionSourcing sourcing;
         public AssetFile assetFile;
+
+        /**
+         * For a git-sourced Function, the revision actually checked out on disk. Null for every other
+         * sourcing, and null for a git Function prepared before revisions were tracked.
+         *
+         * <p>This is what stops a second ExecContext, pinned to a newer sha, from silently reusing the
+         * first one's working tree: the cache is keyed by Function code, so without the revision there is
+         * nothing to compare and "already downloaded" is always true.
+         */
+        @Nullable
+        public String gitCommit;
+
+        public DownloadStatus(EnumsApi.FunctionState state, String code,
+                              ProcessorAndCoreData.AssetManagerUrl assetManagerUrl,
+                              EnumsApi.FunctionSourcing sourcing, AssetFile assetFile) {
+            this(state, code, assetManagerUrl, sourcing, assetFile, null);
+        }
     }
 
     @Data

@@ -81,6 +81,23 @@ public class GtiUtils {
         return StringUtils.isBlank(commit) || "HEAD".equals(commit.strip());
     }
 
+    /**
+     * Whether a repo already prepared at {@code prepared} has to be re-prepared to serve {@code wanted}.
+     *
+     * <p>The Processor caches a prepared Function by code, and that cache is what made a second
+     * ExecContext silently reuse the first one's revision. Comparing the revisions is what makes the
+     * cache correct instead of merely fast.
+     *
+     * <p>An unknown prepared revision counts as changed: it was prepared before revisions were tracked,
+     * so nothing can vouch for what is on disk.
+     */
+    public static boolean revisionChanged(@Nullable String prepared, @Nullable String wanted) {
+        if (StringUtils.isBlank(prepared)) {
+            return true;
+        }
+        return !prepared.strip().equals(wanted==null ? null : wanted.strip());
+    }
+
     public static List<String> lsRemoteCmd(String repo, String branch) {
         // git ls-remote <git-repo-url> refs/heads/<branch>
         return List.of("git", "ls-remote", repo, "refs/heads/" + branch);

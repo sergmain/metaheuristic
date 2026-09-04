@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.EnumsApi.FunctionState;
@@ -111,7 +112,22 @@ public class FunctionRepositoryProcessorService {
         if (S.b(functionCode)) {
             throw new IllegalStateException("816.240 functionCode is null");
         }
-        final DownloadStatus status = new DownloadStatus(functionState, functionCode, assetManagerUrl, EnumsApi.FunctionSourcing.dispatcher, assetFile);
+        return setFunctionState(assetManagerUrl, functionCode, functionState, assetFile, EnumsApi.FunctionSourcing.dispatcher, null);
+    }
+
+    /**
+     * @param sourcing  the Function's real sourcing. The 4-arg overload above hardcodes {@code dispatcher},
+     *                  which is wrong for a git-sourced Function but is what every non-git caller means.
+     * @param gitCommit the revision checked out on disk, for a git-sourced Function
+     */
+    @Nullable
+    public static DownloadStatus setFunctionState(
+            final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, FunctionState functionState,
+            @Nullable AssetFile assetFile, EnumsApi.FunctionSourcing sourcing, @Nullable String gitCommit) {
+        if (S.b(functionCode)) {
+            throw new IllegalStateException("816.245 functionCode is null");
+        }
+        final DownloadStatus status = new DownloadStatus(functionState, functionCode, assetManagerUrl, sourcing, assetFile, gitCommit);
         functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).put(functionCode, status);
         return status;
     }
@@ -158,6 +174,14 @@ public class FunctionRepositoryProcessorService {
         FunctionPrepareResult result = new FunctionPrepareResult(functionConfig);
 
         DownloadStatus f = functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).get(functionConfig.code);
+        if (f!=null && GtiUtils.revisionChanged(f.gitCommit, functionConfig.git.commit)) {
+            // the repo on disk is at another revision than this Task is pinned to; treat it as not prepared
+            // so DownloadGitFunctionService re-checks it out, rather than running the previous sha's code
+            log.info("816.395 Function {} is prepared at revision {} but this task wants {}, re-preparing",
+                functionConfig.code, f.gitCommit, functionConfig.git.commit);
+            functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).remove(functionConfig.code);
+            f = null;
+        }
         if (f!=null) {
             result.functionAssetFile = f.assetFile;
             if (f.state==ready) {

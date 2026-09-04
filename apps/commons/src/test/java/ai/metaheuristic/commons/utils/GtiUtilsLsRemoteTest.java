@@ -64,6 +64,32 @@ public class GtiUtilsLsRemoteTest {
     }
 
     @Test
+    public void test_revisionChangedWhenNothingWasPrepared() {
+        assertTrue(GtiUtils.revisionChanged(null, SHA),
+            "an unknown prepared revision can't vouch for what is on disk, so it must be re-prepared");
+        assertTrue(GtiUtils.revisionChanged("", SHA));
+        assertTrue(GtiUtils.revisionChanged("   ", SHA));
+    }
+
+    @Test
+    public void test_revisionUnchangedForTheSameSha() {
+        assertFalse(GtiUtils.revisionChanged(SHA, SHA));
+        assertFalse(GtiUtils.revisionChanged("  " + SHA + " ", SHA));
+        assertFalse(GtiUtils.revisionChanged(SHA, "  " + SHA));
+    }
+
+    @Test
+    public void test_revisionChangedForADifferentSha() {
+        assertTrue(GtiUtils.revisionChanged(SHA, "0123456789012345678901234567890123456789"),
+            "a second ExecContext pinned to a newer sha must not reuse the first one's working tree");
+    }
+
+    @Test
+    public void test_revisionChangedWhenNothingIsWanted() {
+        assertTrue(GtiUtils.revisionChanged(SHA, null));
+    }
+
+    @Test
     public void test_parseLsRemoteOutputTakesTheSha() {
         assertEquals(SHA, GtiUtils.parseLsRemoteOutput(SHA + "\trefs/heads/main"));
     }
