@@ -40,6 +40,7 @@ import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.utils.ContextUtils;
+import ai.metaheuristic.commons.utils.ExecContextGitSourceUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -284,6 +285,10 @@ public class TaskProducingService {
                 String es = S.f("375.140 Function '%s' wasn't found", process.function.code);
                 throw new CommonRollbackException(es, EnumsApi.OperationStatus.ERROR);
             }
+            // carry this ExecContext's pinned revision into the task; without this the Processor would
+            // resolve HEAD itself, per Processor and per Task, and two tasks of one ExecContext could
+            // run different code
+            ExecContextGitSourceUtils.pinGitRevision(fConfig, execContextParamsYaml.gitSources);
             taskParams.task.function = fConfig;
             if (process.getPreFunctions()!=null) {
                 for (ExecContextParamsYaml.FunctionDefinition preFunction : process.getPreFunctions()) {
@@ -292,6 +297,7 @@ public class TaskProducingService {
                         String es = S.f("375.145 Pre-function '%s' wasn't found", preFunction.code);
                         throw new CommonRollbackException(es, EnumsApi.OperationStatus.ERROR);
                     }
+                    ExecContextGitSourceUtils.pinGitRevision(functionConfig, execContextParamsYaml.gitSources);
                     taskParams.task.preFunctions.add(functionConfig);
                 }
             }
@@ -302,6 +308,7 @@ public class TaskProducingService {
                         String es = S.f("375.150 Post-function '%s' wasn't found", postFunction.code);
                         throw new CommonRollbackException(es, EnumsApi.OperationStatus.ERROR);
                     }
+                    ExecContextGitSourceUtils.pinGitRevision(functionConfig, execContextParamsYaml.gitSources);
                     taskParams.task.postFunctions.add(functionConfig);
                 }
             }

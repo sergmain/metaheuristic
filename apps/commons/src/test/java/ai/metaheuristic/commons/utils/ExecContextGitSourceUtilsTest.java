@@ -20,6 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -235,6 +236,89 @@ public class ExecContextGitSourceUtilsTest {
         assertEquals(SHA_1, actual.gitSourceInfos.get(0).git.commit);
         assertEquals("HEAD", descriptorGit.commit,
             "resolving must not write the sha back into the Function descriptor's own GitInfo");
+    }
+
+    // ---------- pinGitRevision: the pin reaching TaskParamsYaml ----------
+
+    private static ExecContextParamsYaml.GitSources pinned(String functionCode, String commit) {
+        final ExecContextParamsYaml.GitSources gs = new ExecContextParamsYaml.GitSources();
+        gs.gitSourceInfos.add(new ExecContextParamsYaml.GitSourceInfo(functionCode,
+            new ExecContextParamsYaml.GitParams(REPO, "main", commit, "fn/" + functionCode)));
+        return gs;
+    }
+
+    private static TaskParamsYaml.FunctionConfig taskFunctionConfig(String code, EnumsApi.FunctionSourcing sourcing, GitInfo git) {
+        final TaskParamsYaml.FunctionConfig fc = new TaskParamsYaml.FunctionConfig();
+        fc.code = code;
+        fc.sourcing = sourcing;
+        fc.git = git;
+        return fc;
+    }
+
+    @Test
+    public void test_pinReplacesHeadInTheTaskConfig() {
+        final TaskParamsYaml.FunctionConfig fc = taskFunctionConfig(
+            "fn-py", EnumsApi.FunctionSourcing.git, new GitInfo(REPO, "main", "HEAD", "fn/fn-py"));
+
+        ExecContextGitSourceUtils.pinGitRevision(fc, pinned("fn-py", SHA_1));
+
+        assertEquals(SHA_1, fc.git.commit);
+        assertEquals(REPO, fc.git.repo);
+        assertEquals("main", fc.git.branch);
+        assertEquals("fn/fn-py", fc.git.path);
+    }
+
+    @Test
+    public void test_pinDoesNotMutateTheSharedDescriptorGitInfo() {
+        final GitInfo shared = new GitInfo(REPO, "main", "HEAD", "fn/fn-py");
+        final TaskParamsYaml.FunctionConfig fc = taskFunctionConfig("fn-py", EnumsApi.FunctionSourcing.git, shared);
+
+        ExecContextGitSourceUtils.pinGitRevision(fc, pinned("fn-py", SHA_1));
+
+        assertEquals("HEAD", shared.commit,
+            "toFunctionConfig shares the descriptor's GitInfo, so pinning must assign a new object, never write through");
+        assertNotSame(shared, fc.git);
+    }
+
+    @Test
+    public void test_pinLeavesADispatcherSourcedFunctionAlone() {
+        final TaskParamsYaml.FunctionConfig fc = taskFunctionConfig("fn-jar", EnumsApi.FunctionSourcing.dispatcher, null);
+
+        ExecContextGitSourceUtils.pinGitRevision(fc, pinned("fn-jar", SHA_1));
+
+        assertNull(fc.git, "a dispatcher-sourced Function has no git revision to pin");
+    }
+
+    @Test
+    public void test_pinIsANoopWhenTheExecContextPinnedNothing() {
+        final TaskParamsYaml.FunctionConfig fc = taskFunctionConfig(
+            "fn-py", EnumsApi.FunctionSourcing.git, new GitInfo(REPO, "main", "HEAD", "fn/fn-py"));
+
+        ExecContextGitSourceUtils.pinGitRevision(fc, null);
+
+        assertEquals("HEAD", fc.git.commit,
+            "an ExecContext created before pinning existed must still produce tasks");
+    }
+
+    @Test
+    public void test_pinIsANoopWhenThisCodeWasNotPinned() {
+        final TaskParamsYaml.FunctionConfig fc = taskFunctionConfig(
+            "fn-py", EnumsApi.FunctionSourcing.git, new GitInfo(REPO, "main", "HEAD", "fn/fn-py"));
+
+        ExecContextGitSourceUtils.pinGitRevision(fc, pinned("fn-other", SHA_1));
+
+        assertEquals("HEAD", fc.git.commit);
+    }
+
+    @Test
+    public void test_pinOverridesAnExplicitCommitWithTheExecContextsOwn() {
+        final TaskParamsYaml.FunctionConfig fc = taskFunctionConfig(
+            "fn-py", EnumsApi.FunctionSourcing.git, new GitInfo(REPO, "main", SHA_2, "fn/fn-py"));
+
+        ExecContextGitSourceUtils.pinGitRevision(fc, pinned("fn-py", SHA_2));
+
+        assertEquals(SHA_2, fc.git.commit,
+            "the ExecContext is the authority for what this task runs, even when it agrees with the descriptor");
     }
 
     @Test

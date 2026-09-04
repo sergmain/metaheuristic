@@ -20,6 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
@@ -141,6 +142,37 @@ public class ExecContextGitSourceUtils {
         final ExecContextParamsYaml.GitSources gitSources = new ExecContextParamsYaml.GitSources();
         gitSources.gitSourceInfos.addAll(infos);
         return gitSources;
+    }
+
+    /**
+     * Replaces a Function's descriptor-level git revision with the one this ExecContext pinned.
+     *
+     * <p>This is what actually carries the pin to the Processor: the Processor never sees
+     * ExecContextParamsYaml, only the TaskParamsYaml of the task it was assigned, so a pin that is not
+     * copied in here has no effect on what gets checked out.
+     *
+     * <p>❗ A NEW GitInfo is assigned rather than the existing one mutated. TaskParamsUtils.toFunctionConfig
+     * copies the reference straight out of the cached FunctionConfigYaml, so writing through it would
+     * rewrite the descriptor shared by every other ExecContext.
+     *
+     * <p>Does nothing for a Function that isn't git-sourced, and nothing when the ExecContext carries no
+     * pin for this code - an ExecContext created before pinning existed keeps its old behaviour rather
+     * than failing to produce tasks.
+     */
+    public static void pinGitRevision(TaskParamsYaml.FunctionConfig fc, ExecContextParamsYaml.@Nullable GitSources gitSources) {
+        if (fc.sourcing!=EnumsApi.FunctionSourcing.git) {
+            return;
+        }
+        if (gitSources==null) {
+            log.warn("01.921.040 Function {} is git-sourced but its ExecContext pinned no revision, using the descriptor's own", fc.code);
+            return;
+        }
+        final ExecContextParamsYaml.GitSourceInfo info = gitSources.find(fc.code);
+        if (info==null) {
+            log.warn("01.921.050 Function {} is git-sourced but wasn't pinned by its ExecContext, using the descriptor's own", fc.code);
+            return;
+        }
+        fc.git = new GitInfo(info.git.repo, info.git.branch, info.git.commit, info.git.path);
     }
 
     @Nullable
