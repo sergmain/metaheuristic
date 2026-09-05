@@ -97,6 +97,26 @@ public class GitSupportedRevisionTest {
     }
 
     @Test
+    public void test_aCaseVariantOfHeadIsToldExactlyWhatToChange() {
+        for (String variant : java.util.List.of("head", "Head", "hEaD", "  head  ")) {
+            assertFalse(GtiUtils.isSupportedRevision(variant), variant + " must still be refused");
+
+            final String msg = GtiUtils.unsupportedRevisionMessage(variant);
+            assertTrue(msg.contains("case-sensitively"), msg);
+            assertTrue(msg.contains("Change it to HEAD in upper case"), msg);
+            assertTrue(msg.contains("40-char sha"), msg);
+            assertTrue(msg.contains("branch name that can point at a different commit"), msg);
+        }
+    }
+
+    @Test
+    public void test_aTagDoesNotGetTheHeadCaseAdvice() {
+        final String msg = GtiUtils.unsupportedRevisionMessage("v1.0");
+        assertFalse(msg.contains("case-sensitively"), "advice about HEAD's case is noise for a tag: " + msg);
+        assertTrue(msg.contains("Tags and branch names are not supported"), msg);
+    }
+
+    @Test
     public void test_theMessageNamesWhatWasFoundAndWhatIsAllowed() {
         final String msg = GtiUtils.unsupportedRevisionMessage("v1.0");
         assertTrue(msg.contains("v1.0"), msg);

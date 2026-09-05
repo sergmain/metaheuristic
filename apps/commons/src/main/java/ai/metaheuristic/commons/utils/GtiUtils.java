@@ -99,7 +99,21 @@ public class GtiUtils {
         return isHeadRevision(commit) || isSha(commit==null ? null : commit.strip());
     }
 
+    /**
+     * ❗ A case variant of HEAD gets its own message rather than the general one. It is the single most
+     * likely thing an author writes by accident, and it is NOT a spelling git forgives: pseudo-refs are
+     * matched exactly, so `git rev-parse head` fails outright - and if the repo happens to contain a
+     * branch literally named `head`, it resolves to THAT instead, silently and to a different commit. So
+     * the fix has to be stated, not left to be inferred from a list of what is allowed.
+     */
     public static String unsupportedRevisionMessage(@Nullable String commit) {
+        final String stripped = commit==null ? "" : commit.strip();
+        if (!"HEAD".equals(stripped) && "HEAD".equalsIgnoreCase(stripped)) {
+            return "a git-sourced function's commit was '" + commit + "', which is not HEAD. Git matches HEAD "
+                + "case-sensitively, and '" + stripped + "' is a valid branch name that can point at a different "
+                + "commit entirely. Change it to HEAD in upper case to always take the tip of the branch, or "
+                + "replace it with a full 40-char sha to pin a revision.";
+        }
         return "a git-sourced function's commit must be a full 40-char sha or 'HEAD', but was '" + commit
             + "'. Tags and branch names are not supported - use HEAD to always take the tip of the branch, "
             + "or a sha to pin a revision.";
