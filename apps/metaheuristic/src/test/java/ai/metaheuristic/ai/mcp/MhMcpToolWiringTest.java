@@ -64,13 +64,15 @@ public class MhMcpToolWiringTest {
         put("mh_get_exec_context_task_state", "execContextTaskStateId");
         put("mh_get_exec_context_variable_state", "execContextVariableStateId");
         put("mh_get_source_code", "sourceCodeId");
+        // not an id: this one is resolved from a repo url, and 'repo' is the first argument its handler asks for
+        put("mh_import_bundle_from_git", "repo");
     }};
 
     /** Takes no arguments, so the probe above cannot reach it. */
     private static final String NO_ARG_TOOL = "mh_list_source_codes";
 
     private static List<McpServerFeatures.SyncToolSpecification> specs() {
-        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null)
+        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null)
                 .getAllToolSpecifications();
     }
 

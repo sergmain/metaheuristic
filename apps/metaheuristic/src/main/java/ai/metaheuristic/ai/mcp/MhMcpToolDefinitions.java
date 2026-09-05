@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.mcp;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
+import ai.metaheuristic.ai.dispatcher.bundle.BundleService;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
@@ -34,7 +35,10 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskResetService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -67,7 +71,7 @@ import java.util.stream.Stream;
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
- * 12 tools total — read-mostly access to MH internals plus a few control operations:
+ * 13 tools total — read-mostly access to MH internals plus a few control operations:
  *
  *   mh_get_variable_info               — metadata for an internal Variable by id
  *   mh_get_variable_content            — content of an internal Variable, truncated to N bytes
@@ -81,6 +85,7 @@ import java.util.stream.Stream;
  *   mh_get_exec_context_variable_state — ExecContextVariableState by id (raw params YAML, dynamic Variable state)
  *   mh_list_source_codes               — list all SourceCodes with general info (id, uid, companyId, latch, valid)
  *   mh_get_source_code                 — full SourceCode by id, including params YAML (truncated to maxParamsBytes)
+ *   mh_import_bundle_from_git          — import a bundle straight from a git repo url + path
  *
  * <p>Error code prefix: {@code 01.260.} (unique to this class).
  *
@@ -107,6 +112,7 @@ public class MhMcpToolDefinitions {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final SourceCodeRepository sourceCodeRepository;
+    private final BundleService bundleService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -191,6 +197,27 @@ public class MhMcpToolDefinitions {
             String message
     ) {}
 
+    public record ImportBundleResultDto(
+            boolean ok,
+            String repo,
+            String path,
+            Long companyId,
+            List<String> errorMessages,
+            List<String> infoMessages
+    ) {}
+
+    /**
+     * The MCP server carries no authenticated principal, so the caller states the company it is importing
+     * into. Deliberately NOT a DispatcherContext: that one needs real Account and Company entities, and
+     * fabricating them to satisfy a getter would be worse than saying plainly that this is the only
+     * identity the tool has.
+     */
+    private record McpUserContext(Long accountId, Long companyId, String username) implements UserContext {
+        @Override public Long getAccountId() { return accountId; }
+        @Override public Long getCompanyId() { return companyId; }
+        @Override public String getUsername() { return username; }
+    }
+
     public record SourceCodeDto(
             Long id,
             @Nullable Integer version,
@@ -236,6 +263,52 @@ public class MhMcpToolDefinitions {
         });
     }
 
+    // ==================== Tool 13: import a bundle straight from a git repo ====================
+
+    private static final Tool IMPORT_BUNDLE_FROM_GIT_TOOL = Tool.builder("mh_import_bundle_from_git",
+                    objectSchema(
+                            Map.of(
+                                    "repo", Map.of("type", "string",
+                                            "description", "Url of the git repository holding the bundle, e.g. https://github.com/sergmain/metaheuristic-assets.git"),
+                                    "path", Map.of("type", "string",
+                                            "description", "Path inside the repo to the directory containing mh-bundle.yaml. Required: one repo may hold several bundles at different paths."),
+                                    "companyId", Map.of("type", "integer",
+                                            "description", "Unique id of the company to import into"),
+                                    "accountId", Map.of("type", "integer",
+                                            "description", "Optional account id recorded as the importer. Defaults to 0.")),
+                            List.of("repo", "path", "companyId")))
+            .title("Import a bundle from git")
+            .description("Import a bundle - Functions, SourceCodes, api and auth - directly from a git repository, "
+                    + "without packaging and uploading a zip first. The dispatcher clones the repo's DEFAULT branch "
+                    + "shallowly, reads mh-bundle.yaml at the given path, and processes it through the same pipeline an "
+                    + "uploaded zip goes through. No branch and no revision are accepted: delivery always takes the "
+                    + "current state of the descriptors. This says nothing about a Function's sourcing - a Function whose "
+                    + "artifacts sit beside its own mh-function.yaml is packaged as usual; only a Function declaring its "
+                    + "own git block is git-sourced.")
+            .build();
+
+    private CallToolResult handleImportBundleFromGit(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final String repo = getRequiredString(arguments, "repo");
+        final String path = getRequiredString(arguments, "path");
+        final Long companyId = getRequiredLong(arguments, "companyId");
+        final Integer accountId = getOptionalInt(arguments, "accountId");
+
+        log.info("01.260.300 MCP importBundleFromGit(repo={}, path={}, companyId={})", repo, path, companyId);
+
+        // branch and commit are left unset on purpose: delivery clones whatever remote HEAD points at,
+        // which is the repo's default branch - master for some repos, main for others
+        final GitInfo gitInfo = new GitInfo(repo, "", "", path);
+        final UserContext context = new McpUserContext(
+                accountId == null ? 0L : accountId.longValue(), companyId, "mcp");
+
+        final BundleData.UploadingStatus status = bundleService.uploadFromGit(gitInfo, context);
+
+        final List<String> errors = status.getErrorMessagesAsList();
+        return toCallToolResult(new ImportBundleResultDto(
+                errors.isEmpty(), repo, path, companyId, errors, status.getInfoMessagesAsList()));
+    }
+
     // ==================== Build all tool specifications ====================
 
     public List<McpServerFeatures.SyncToolSpecification> getAllToolSpecifications() {
@@ -251,7 +324,8 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(GET_EXEC_CONTEXT_TASK_STATE_TOOL, this::handleGetExecContextTaskState),
                 new McpServerFeatures.SyncToolSpecification(GET_EXEC_CONTEXT_VARIABLE_STATE_TOOL, this::handleGetExecContextVariableState),
                 new McpServerFeatures.SyncToolSpecification(LIST_SOURCE_CODES_TOOL, this::handleListSourceCodes),
-                new McpServerFeatures.SyncToolSpecification(GET_SOURCE_CODE_TOOL, this::handleGetSourceCode)
+                new McpServerFeatures.SyncToolSpecification(GET_SOURCE_CODE_TOOL, this::handleGetSourceCode),
+                new McpServerFeatures.SyncToolSpecification(IMPORT_BUNDLE_FROM_GIT_TOOL, this::handleImportBundleFromGit)
         ).map(MhMcpToolDefinitions::transportGuarded).toList();
     }
 
@@ -618,6 +692,14 @@ public class MhMcpToolDefinitions {
     }
 
     // ==================== Utility methods ====================
+
+    private static String getRequiredString(Map<String, Object> arguments, String key) {
+        Object value = arguments.get(key);
+        if (value == null || value.toString().isBlank()) {
+            throw new IllegalArgumentException("Required parameter '" + key + "' is missing or blank");
+        }
+        return value.toString().strip();
+    }
 
     private static Long getRequiredLong(Map<String, Object> arguments, String key) {
         Object value = arguments.get(key);
