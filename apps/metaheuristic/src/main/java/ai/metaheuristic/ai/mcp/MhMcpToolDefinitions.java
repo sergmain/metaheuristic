@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.mcp;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.bundle.BundleService;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
@@ -27,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
@@ -35,11 +37,13 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepositor
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskResetService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.account.UserContext;
@@ -75,7 +79,7 @@ import java.util.stream.Stream;
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
- * 14 tools total — read-mostly access to MH internals plus a few control operations:
+ * 15 tools total — read-mostly access to MH internals plus a few control operations:
  *
  *   mh_get_variable_info               — metadata for an internal Variable by id
  *   mh_get_variable_content            — content of an internal Variable, truncated to N bytes
@@ -89,6 +93,7 @@ import java.util.stream.Stream;
  *   mh_get_exec_context_task_state     — ExecContextTaskState by id (raw params YAML, dynamic Task DAG)
  *   mh_get_exec_context_variable_state — ExecContextVariableState by id (raw params YAML, dynamic Variable state)
  *   mh_list_source_codes               — list all SourceCodes with general info (id, uid, companyId, latch, valid)
+ *   mh_list_processors                 — list Processors with liveness, blacklist reason and declared envs
  *   mh_get_source_code                 — full SourceCode by id, including params YAML (truncated to maxParamsBytes)
  *   mh_import_bundle_from_git          — import a bundle straight from a git repo url + path
  *
@@ -119,6 +124,7 @@ public class MhMcpToolDefinitions {
     private final SourceCodeRepository sourceCodeRepository;
     private final BundleService bundleService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
+    private final ProcessorTopLevelService processorTopLevelService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -210,6 +216,28 @@ public class MhMcpToolDefinitions {
             Long companyId,
             List<String> errorMessages,
             List<String> infoMessages
+    ) {}
+
+    public record ProcessorCoreDto(
+            Long id,
+            String code,
+            boolean busy
+    ) {}
+
+    public record ProcessorDto(
+            Long id,
+            @Nullable String ip,
+            @Nullable String host,
+            boolean active,
+            boolean blacklisted,
+            @Nullable String blacklistReason,
+            long blacklistedForMills,
+            long lastSeen,
+            int taskParamsVersion,
+            @Nullable String os,
+            @Nullable List<String> envCodes,
+            @Nullable List<String> errors,
+            List<ProcessorCoreDto> cores
     ) {}
 
     public record CreateExecContextResultDto(
@@ -333,6 +361,7 @@ public class MhMcpToolDefinitions {
         return Stream.of(
                 new McpServerFeatures.SyncToolSpecification(GET_VARIABLE_INFO_TOOL, this::handleGetVariableInfo),
                 new McpServerFeatures.SyncToolSpecification(GET_VARIABLE_CONTENT_TOOL, this::handleGetVariableContent),
+                new McpServerFeatures.SyncToolSpecification(LIST_PROCESSORS_TOOL, this::handleListProcessors),
                 new McpServerFeatures.SyncToolSpecification(CREATE_EXEC_CONTEXT_TOOL, this::handleCreateExecContext),
                 new McpServerFeatures.SyncToolSpecification(START_EXEC_CONTEXT_TOOL, this::handleStartExecContext),
                 new McpServerFeatures.SyncToolSpecification(STOP_EXEC_CONTEXT_TOOL, this::handleStopExecContext),
@@ -422,6 +451,41 @@ public class MhMcpToolDefinitions {
         }
     }
 
+    // ==================== Tool 15: list processors ====================
+
+    private static final Tool LIST_PROCESSORS_TOOL = Tool.builder("mh_list_processors",
+                    objectSchema(Map.of(), List.of()))
+            .title("List Processors")
+            .description("List the Processors known to this Dispatcher, newest heartbeat first - the same view as the "
+                    + "Processors page in the UI. Answers why a Task sits unassigned: whether any Processor is "
+                    + "connected at all, when it was last seen, whether it is blacklisted and why, which envs it "
+                    + "declares (an external Function whose 'env' is not among them can never be run there), and "
+                    + "which of its cores are already busy.")
+            .build();
+
+    private CallToolResult handleListProcessors(McpSyncServerExchange exchange, CallToolRequest request) {
+        log.info("01.260.360 MCP listProcessors()");
+        final ProcessorData.ProcessorsResult result = processorTopLevelService.getProcessors(Consts.PAGE_REQUEST_100_REC);
+        final List<ProcessorDto> dtos = new ArrayList<>();
+        for (ProcessorData.ProcessorStatus ps : result.items) {
+            final ProcessorStatusYaml status = ps.processor.getProcessorStatusYaml();
+            // envs is the field a caller actually needs here: a Function declaring env 'python' is only
+            // runnable on a Processor whose env.yaml defines that code. The exec line itself is deliberately
+            // NOT returned - it is a local command line, and the question this answers is which codes exist.
+            final List<String> envCodes = status.env == null ? null : status.env.envs.keySet().stream().sorted().toList();
+            final List<ProcessorCoreDto> cores = ps.cores.stream()
+                    .map(c -> new ProcessorCoreDto(c.id(), c.code(), c.busy()))
+                    .toList();
+            dtos.add(new ProcessorDto(
+                    ps.processor.id, ps.ip, ps.host, ps.active,
+                    ps.blacklisted, ps.blacklistReason, ps.blacklistedForMills,
+                    ps.lastSeen, status.taskParamsVersion,
+                    status.os == null ? null : status.os.name(),
+                    envCodes, status.errors, cores));
+        }
+        return toCallToolResult(dtos);
+    }
+
     // ==================== Tool 14: create execContext ====================
 
     private static final Tool CREATE_EXEC_CONTEXT_TOOL = Tool.builder("mh_create_exec_context",
@@ -436,8 +500,9 @@ public class MhMcpToolDefinitions {
                             List.of("sourceCodeId", "companyId")))
             .title("Create ExecContext")
             .description("Create an ExecContext from a SourceCode and produce its Tasks - the same operation as the "
-                    + "'create ExecContext' button in the UI (POST /exec-context-add-commit). The new ExecContext is "
-                    + "NOT started: call mh_start_exec_context with the returned execContextId to begin execution. "
+                    + "'create ExecContext' button in the UI (POST /exec-context-add-commit). The returned stateName "
+                    + "reports the state it landed in; createExecContextAndStart already leaves it STARTED, so "
+                    + "mh_start_exec_context is only needed for one that isn't. "
                     + "Fails when the SourceCode declares source-level input variables, because those must be "
                     + "initialized before Tasks can be produced.")
             .build();

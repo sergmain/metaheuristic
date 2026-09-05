@@ -69,11 +69,11 @@ public class MhMcpToolWiringTest {
         put("mh_import_bundle_from_git", "repo");
     }};
 
-    /** Takes no arguments, so the probe above cannot reach it. */
-    private static final String NO_ARG_TOOL = "mh_list_source_codes";
+    /** Take no arguments, so the probe above cannot reach them. */
+    private static final Set<String> NO_ARG_TOOLS = Set.of("mh_list_source_codes", "mh_list_processors");
 
     private static List<McpServerFeatures.SyncToolSpecification> specs() {
-        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null, null)
+        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null, null, null)
                 .getAllToolSpecifications();
     }
 
@@ -102,7 +102,7 @@ public class MhMcpToolWiringTest {
 
         assertEquals(names.size(), Set.copyOf(names).size(), "duplicate tool registered: " + names);
         Set<String> expected = new java.util.HashSet<>(REQUIRED_ARG.keySet());
-        expected.add(NO_ARG_TOOL);
+        expected.addAll(NO_ARG_TOOLS);
         assertEquals(expected, Set.copyOf(names));
     }
 
@@ -110,7 +110,7 @@ public class MhMcpToolWiringTest {
     @Test
     public void test_eachHandlerIsPairedWithItsOwnTool() {
         specs().stream()
-                .filter(s -> !NO_ARG_TOOL.equals(s.tool().name()))
+                .filter(s -> !NO_ARG_TOOLS.contains(s.tool().name()))
                 .forEach(s -> {
                     String toolName = s.tool().name();
                     String expectedArg = REQUIRED_ARG.get(toolName);
@@ -126,20 +126,22 @@ public class MhMcpToolWiringTest {
                 });
     }
 
-    /** The no-argument tool still reaches a handler rather than failing to resolve one. */
+    /** The no-argument tools still reach a handler rather than failing to resolve one. */
     @Test
-    public void test_noArgToolIsWired() {
-        McpServerFeatures.SyncToolSpecification spec = specs().stream()
-                .filter(s -> NO_ARG_TOOL.equals(s.tool().name()))
-                .findFirst()
-                .orElseThrow();
+    public void test_noArgToolsAreWired() {
+        for (String toolName : NO_ARG_TOOLS) {
+            McpServerFeatures.SyncToolSpecification spec = specs().stream()
+                    .filter(s -> toolName.equals(s.tool().name()))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("not registered: " + toolName));
 
-        CallToolResult result = spec.callHandler()
-                .apply(null, new CallToolRequest(NO_ARG_TOOL, Map.of()));
+            CallToolResult result = spec.callHandler()
+                    .apply(null, new CallToolRequest(toolName, Map.of()));
 
-        // no required argument to probe, so it runs on to the null repository - reaching it proves
-        // a handler is attached, and the guard turns the failure into a readable tool error
-        assertEquals(Boolean.TRUE, result.isError());
-        assertFalse(textOf(result).isBlank());
+            // no required argument to probe, so it runs on to the null service - reaching it proves
+            // a handler is attached, and the guard turns the failure into a readable tool error
+            assertEquals(Boolean.TRUE, result.isError(), toolName);
+            assertFalse(textOf(result).isBlank(), toolName);
+        }
     }
 }
