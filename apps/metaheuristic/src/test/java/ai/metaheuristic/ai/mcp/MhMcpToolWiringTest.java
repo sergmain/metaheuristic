@@ -55,6 +55,7 @@ public class MhMcpToolWiringTest {
     private static final Map<String, String> REQUIRED_ARG = new LinkedHashMap<>() {{
         put("mh_get_variable_info", "variableId");
         put("mh_get_variable_content", "variableId");
+        put("mh_create_exec_context", "sourceCodeId");
         put("mh_start_exec_context", "execContextId");
         put("mh_stop_exec_context", "execContextId");
         put("mh_get_task_info", "taskId");
@@ -72,7 +73,7 @@ public class MhMcpToolWiringTest {
     private static final String NO_ARG_TOOL = "mh_list_source_codes";
 
     private static List<McpServerFeatures.SyncToolSpecification> specs() {
-        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null)
+        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null, null)
                 .getAllToolSpecifications();
     }
 

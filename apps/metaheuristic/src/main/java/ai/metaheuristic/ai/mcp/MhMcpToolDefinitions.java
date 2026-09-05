@@ -24,8 +24,11 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
@@ -37,6 +40,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -71,10 +75,11 @@ import java.util.stream.Stream;
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
- * 13 tools total — read-mostly access to MH internals plus a few control operations:
+ * 14 tools total — read-mostly access to MH internals plus a few control operations:
  *
  *   mh_get_variable_info               — metadata for an internal Variable by id
  *   mh_get_variable_content            — content of an internal Variable, truncated to N bytes
+ *   mh_create_exec_context             — create an ExecContext from a SourceCode and produce its Tasks
  *   mh_start_exec_context              — transition an ExecContext to STARTED
  *   mh_stop_exec_context               — transition an ExecContext to STOPPED
  *   mh_get_task_info                   — Task info by id
@@ -113,6 +118,7 @@ public class MhMcpToolDefinitions {
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final SourceCodeRepository sourceCodeRepository;
     private final BundleService bundleService;
+    private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -202,6 +208,18 @@ public class MhMcpToolDefinitions {
             String repo,
             String path,
             Long companyId,
+            List<String> errorMessages,
+            List<String> infoMessages
+    ) {}
+
+    public record CreateExecContextResultDto(
+            boolean ok,
+            @Nullable Long execContextId,
+            Long sourceCodeId,
+            Long companyId,
+            @Nullable String sourceCodeUid,
+            @Nullable Integer state,
+            @Nullable String stateName,
             List<String> errorMessages,
             List<String> infoMessages
     ) {}
@@ -315,6 +333,7 @@ public class MhMcpToolDefinitions {
         return Stream.of(
                 new McpServerFeatures.SyncToolSpecification(GET_VARIABLE_INFO_TOOL, this::handleGetVariableInfo),
                 new McpServerFeatures.SyncToolSpecification(GET_VARIABLE_CONTENT_TOOL, this::handleGetVariableContent),
+                new McpServerFeatures.SyncToolSpecification(CREATE_EXEC_CONTEXT_TOOL, this::handleCreateExecContext),
                 new McpServerFeatures.SyncToolSpecification(START_EXEC_CONTEXT_TOOL, this::handleStartExecContext),
                 new McpServerFeatures.SyncToolSpecification(STOP_EXEC_CONTEXT_TOOL, this::handleStopExecContext),
                 new McpServerFeatures.SyncToolSpecification(GET_TASK_INFO_TOOL, this::handleGetTaskInfo),
@@ -401,6 +420,55 @@ public class MhMcpToolDefinitions {
             return toCallToolResult(new VariableContentDto(v.id, v.name, 0, false, null,
                     "Error reading content: " + th.getMessage()));
         }
+    }
+
+    // ==================== Tool 14: create execContext ====================
+
+    private static final Tool CREATE_EXEC_CONTEXT_TOOL = Tool.builder("mh_create_exec_context",
+                    objectSchema(
+                            Map.of(
+                                    "sourceCodeId", Map.of("type", "integer",
+                                            "description", "Numeric id of the SourceCode to instantiate. Use mh_list_source_codes to discover it."),
+                                    "companyId", Map.of("type", "integer",
+                                            "description", "Unique id of the company owning the SourceCode"),
+                                    "accountId", Map.of("type", "integer",
+                                            "description", "Optional account id recorded as the creator. Defaults to 0.")),
+                            List.of("sourceCodeId", "companyId")))
+            .title("Create ExecContext")
+            .description("Create an ExecContext from a SourceCode and produce its Tasks - the same operation as the "
+                    + "'create ExecContext' button in the UI (POST /exec-context-add-commit). The new ExecContext is "
+                    + "NOT started: call mh_start_exec_context with the returned execContextId to begin execution. "
+                    + "Fails when the SourceCode declares source-level input variables, because those must be "
+                    + "initialized before Tasks can be produced.")
+            .build();
+
+    private CallToolResult handleCreateExecContext(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final Long sourceCodeId = getRequiredLong(arguments, "sourceCodeId");
+        final Long companyId = getRequiredLong(arguments, "companyId");
+        final Integer accountId = getOptionalInt(arguments, "accountId");
+
+        log.info("01.260.320 MCP createExecContext(sourceCodeId={}, companyId={})", sourceCodeId, companyId);
+
+        final ExecContextApiData.UserExecContext context = new ExecContextApiData.UserExecContext(
+                accountId == null ? 0L : accountId.longValue(), companyId);
+
+        final ExecContextCreatorService.ExecContextCreationResult result =
+                execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context, true, null,
+                        new ExecContextData.ExecContextCreationInfo("by mh_create_exec_context"));
+
+        final List<String> errors = result.getErrorMessagesAsList();
+        final ExecContextImpl ec = result.execContext;
+        if (ec == null) {
+            return toCallToolResult(new CreateExecContextResultDto(false, null, sourceCodeId, companyId,
+                    result.sourceCode == null ? null : result.sourceCode.uid, null, null,
+                    errors.isEmpty() ? List.of("01.260.340 ExecContext wasn't created and no error was reported") : errors,
+                    result.getInfoMessagesAsList()));
+        }
+        return toCallToolResult(new CreateExecContextResultDto(errors.isEmpty(), ec.id, sourceCodeId, companyId,
+                result.sourceCode == null ? null : result.sourceCode.uid,
+                ec.state, EnumsApi.ExecContextState.toState(ec.state).name(),
+                errors, result.getInfoMessagesAsList()));
     }
 
     // ==================== Tool 3a: start execContext ====================
