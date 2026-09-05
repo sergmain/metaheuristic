@@ -119,6 +119,21 @@ public class GtiUtils {
             + "or a sha to pin a revision.";
     }
 
+    /**
+     * Clones the repo's DEFAULT branch, shallow, for bundle delivery.
+     *
+     * <p>No branch and no revision are given because delivery has neither to give: it always takes the
+     * current state of the descriptors. Remote HEAD is a symref to whatever branch the repo was created
+     * with - master for metaheuristic-assets, main elsewhere - so asking for the default is the only
+     * spelling that works everywhere, and it is what a branch-less clone does.
+     *
+     * <p>--depth 1 is unconditionally correct here, unlike the Function payload path: there is exactly one
+     * commit of interest, nothing is checked out afterwards, and no second branch is ever pulled in.
+     */
+    public static ExecResult cloneDefaultBranchShallow(Path repoDir, String gitUrl, GitData.GitContext gitContext) {
+        return execClone(repoDir, gitUrl, gitContext, null, true);
+    }
+
     public static List<String> lsRemoteCmd(String repo, String branch) {
         // git ls-remote <git-repo-url> refs/heads/<branch>
         return List.of("git", "ls-remote", repo, "refs/heads/" + branch);
@@ -190,7 +205,10 @@ public class GtiUtils {
         // git -C <path> clone --depth 1 --branch <branch> <git-repo-url> git-repo
         final List<String> cmd = new ArrayList<>(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "clone"));
         if (shallow) {
-            cmd.addAll(List.of("--depth", "1", "--branch", Objects.requireNonNull(branch)));
+            cmd.addAll(List.of("--depth", "1"));
+            if (!StringUtils.isBlank(branch)) {
+                cmd.addAll(List.of("--branch", branch));
+            }
         }
         cmd.addAll(List.of(gitUrl, CommonConsts.GIT_REPO));
         return List.copyOf(cmd);

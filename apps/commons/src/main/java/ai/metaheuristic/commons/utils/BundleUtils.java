@@ -111,7 +111,14 @@ public class BundleUtils {
 
         GitData.GitContext gitContext = new GitData.GitContext(60L, 1000);
 
-        SystemProcessLauncher.ExecResult result = GtiUtils.initGitRepository(cfg.gitInfo, gitDir, cfg.gitInfo.repo, gitContext, true);
+        // Delivery always takes the current state of the descriptors from the repo's default branch, so
+        // there is no branch and no revision to honour and nothing to check out afterwards - one shallow
+        // clone of whatever remote HEAD points at is the whole operation.
+        Path repoDir = gitDir.resolve(GIT_REPO);
+        if (Files.exists(repoDir)) {
+            PathUtils.deleteDirectory(repoDir);
+        }
+        SystemProcessLauncher.ExecResult result = GtiUtils.cloneDefaultBranchShallow(gitDir, cfg.gitInfo.repo, gitContext);
         if (result!=null && !result.ok) {
             throw new BundleProcessingException("Error while cloning repo "+cfg.gitInfo.repo+", error: "+result.error);
         }
@@ -252,7 +259,24 @@ public class BundleUtils {
             }
         }
         else if (function.sourcing==EnumsApi.FunctionSourcing.git) {
-            throw new IllegalStateException("git sourcing isn't implemented");
+            // mh-function.yaml is the ONLY place where the location of a Function's artifacts may be
+            // declared, so this block is authoritative and is verified, never replaced. Nothing on disk is
+            // checked here: the artifacts live in another repo, which may not be the repo this bundle was
+            // delivered from, and is not cloned at bundling time.
+            if (function.git==null) {
+                log.error("function " + function.code + " has sourcing 'git' but no git block.");
+                isError = true;
+            }
+            else {
+                if (S.b(function.git.repo)) {
+                    log.error("function " + function.code + " has an empty git.repo.");
+                    isError = true;
+                }
+                if (!GtiUtils.isSupportedRevision(function.git.commit)) {
+                    log.error("function " + function.code + ": " + GtiUtils.unsupportedRevisionMessage(function.git.commit));
+                    isError = true;
+                }
+            }
         }
         return isError;
     }
@@ -273,19 +297,15 @@ public class BundleUtils {
             if (verify(fcy, p)) {
                 throw new BundleProcessingException("Error while verification was encountered.");
             }
-            if (cfg.gitInfo==null) {
+            // ❗ Packaging depends on the Function's SOURCING, never on how the bundle was delivered.
+            // This used to branch on cfg.gitInfo and, when the bundle came from git, stamp the delivery
+            // repo's coordinates over function.git - destroying the only authoritative declaration of
+            // where the artifacts live, and silently redirecting FunctionService.trusted() at the delivery
+            // repo instead of the payload repo it is written to check. The two repos are unrelated and may
+            // be entirely different repos.
+            if (fcy.config().function.sourcing==EnumsApi.FunctionSourcing.dispatcher) {
                 Path zippedFunction = createZipWithFunction(tempFuncPath, fcy.config(), p);
                 calcChecksum(zippedFunction, fcy.config(), cfg);
-            }
-            else {
-                fcy.config().function.sourcing = EnumsApi.FunctionSourcing.git;
-                Path pathToFunc = Path.of(cfg.gitInfo.path).resolve(path);
-                if (pathToFunc.isAbsolute()) {
-                    throw new BundleProcessingException("Can't create relative path, actual is absolute: " + pathToFunc);
-                }
-                fcy.config().function.git = new GitInfo(cfg.gitInfo.repo, cfg.gitInfo.branch, cfg.gitInfo.commit, pathToFunc.toString());
-
-                int i=0;
             }
 
             storeFunctionConfigYaml(tempFuncPath, fcy.config());

@@ -93,9 +93,13 @@ public class GtiUtilsCloneCmdTest {
     }
 
     @Test
-    public void test_cloneCmdRefusesShallowWithoutABranch() {
+    public void test_shallowWithoutABranchTakesTheDefaultBranch() {
+        // this is bundle delivery: no branch to give, because it always takes whatever remote HEAD points
+        // at - master for metaheuristic-assets, main elsewhere
         final Path dir = Path.of("/tmp/mh-git").toAbsolutePath();
-        assertThrows(NullPointerException.class, () -> GtiUtils.cloneCmd(dir, URL, null, true));
+        assertEquals(List.of("git", "-C", dir.toString(), "clone", "--depth", "1", URL, "git-repo"),
+            GtiUtils.cloneCmd(dir, URL, null, true));
+        assertEquals(GtiUtils.cloneCmd(dir, URL, null, true), GtiUtils.cloneCmd(dir, URL, "  ", true));
     }
 
     @Test
