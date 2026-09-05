@@ -71,6 +71,10 @@ public class FunctionCoreUtils {
                 if (functionConfig.git ==null) {
                     return new FunctionApiData.FunctionConfigStatus(false, "401.042 sourcing is 'git', but git info is absent");
                 }
+                if (!GtiUtils.isSupportedRevision(functionConfig.git.commit)) {
+                    return new FunctionApiData.FunctionConfigStatus(false,
+                        "401.043 " + GtiUtils.unsupportedRevisionMessage(functionConfig.git.commit));
+                }
                 break;
         }
         return FUNCTION_CONFIG_STATUS_OK;

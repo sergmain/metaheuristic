@@ -81,6 +81,30 @@ public class GtiUtils {
         return StringUtils.isBlank(commit) || "HEAD".equals(commit.strip());
     }
 
+    /**
+     * The only two revisions a git-sourced Function may declare: a full sha, or HEAD.
+     *
+     * <p>❗ A TAG IS NOT SUPPORTED, and this is deliberate rather than unimplemented. HEAD is a policy the
+     * Dispatcher resolves to a sha once, when it creates an ExecContext, and a sha is already the answer.
+     * A tag is neither: it is a name that resolves to a commit, and unlike a branch tip it carries an
+     * implied promise of immutability that git does not actually keep - a tag can be moved or deleted, and
+     * a moved tag would silently change what an already-running ExecContext believes it pinned. Adding tag
+     * support would mean resolving it exactly like HEAD, which HEAD already covers, in exchange for a name
+     * that can lie about being stable.
+     *
+     * <p>The same rules out a branch name, a short sha, and {@code HEAD~2}: everything that is not already
+     * a revision has to be resolved, and there is exactly one supported way to say "resolve this for me".
+     */
+    public static boolean isSupportedRevision(@Nullable String commit) {
+        return isHeadRevision(commit) || isSha(commit==null ? null : commit.strip());
+    }
+
+    public static String unsupportedRevisionMessage(@Nullable String commit) {
+        return "a git-sourced function's commit must be a full 40-char sha or 'HEAD', but was '" + commit
+            + "'. Tags and branch names are not supported - use HEAD to always take the tip of the branch, "
+            + "or a sha to pin a revision.";
+    }
+
     public static List<String> lsRemoteCmd(String repo, String branch) {
         // git ls-remote <git-repo-url> refs/heads/<branch>
         return List.of("git", "ls-remote", repo, "refs/heads/" + branch);

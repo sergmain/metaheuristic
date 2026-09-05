@@ -22,6 +22,7 @@ import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BundleProcessingException;
 import ai.metaheuristic.commons.utils.BundleUtils;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
 import org.apache.commons.lang3.SystemUtils;
@@ -87,6 +88,9 @@ public class PackageBundleUtils {
 
             if (gitInfo.branch.indexOf('/')!=-1) {
                 throw new BundleProcessingException("Option --git-branch can't contain '/', i.e. origin/main or remote/master are wrong, must be main only.");
+            }
+            if (!GtiUtils.isSupportedRevision(gitInfo.commit)) {
+                throw new BundleProcessingException("Option --git-commit: " + GtiUtils.unsupportedRevisionMessage(gitInfo.commit));
             }
             if (privateKey!=null) {
                 privateKey = null;
