@@ -116,7 +116,7 @@ public class BundleUtils {
         // clone of whatever remote HEAD points at is the whole operation.
         Path repoDir = gitDir.resolve(GIT_REPO);
         if (Files.exists(repoDir)) {
-            PathUtils.deleteDirectory(repoDir);
+            GtiUtils.deleteGitRepoDirectory(repoDir);
         }
         SystemProcessLauncher.ExecResult result = GtiUtils.cloneDefaultBranchShallow(gitDir, cfg.gitInfo.repo, gitContext);
         if (result!=null && !result.ok) {

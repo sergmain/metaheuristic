@@ -25,6 +25,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.file.PathUtils;
+import org.apache.commons.io.file.StandardDeleteOption;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 
@@ -45,6 +46,19 @@ import static ai.metaheuristic.commons.system.SystemProcessLauncher.execCmd;
  */
 @Slf4j
 public class GtiUtils {
+
+    /**
+     * Removes a directory that holds a git working tree or repository.
+     *
+     * <p>Its own method because a git-managed tree is not an ordinary directory to delete: git writes
+     * the files under {@code .git/objects/pack/} read-only, so a plain recursive delete refuses them.
+     * Every caller here is removing a tree git itself created, so they all need the same handling and
+     * none of them should have to remember it.
+     */
+    public static void deleteGitRepoDirectory(Path dir) throws IOException {
+        PathUtils.deleteDirectory(dir, StandardDeleteOption.OVERRIDE_READ_ONLY);
+    }
+
     private static final List<String> GIT_VERSION_CMD = List.of("git", "--version");
     private static final String GIT_VERSION_PREFIX = "git version";
     private static final String GIT_PREFIX = "git";
@@ -282,7 +296,7 @@ public class GtiUtils {
         log.info("028.140 Result of execPullOrigin: {}", result.toString());
         if (!result.ok) {
             if (firstRun) {
-                PathUtils.deleteDirectory(repoDir);
+                deleteGitRepoDirectory(repoDir);
                 return initGitRepository(gitInfo, gitDir, gitUrl, gitContext, false);
             }
             else {
@@ -309,7 +323,7 @@ public class GtiUtils {
         Path repoDir = gitDir.resolve(CommonConsts.GIT_REPO);
         ExecResult result;
         try {
-            PathUtils.deleteDirectory(repoDir);
+            deleteGitRepoDirectory(repoDir);
         }
         catch (IOException e) {
             //
