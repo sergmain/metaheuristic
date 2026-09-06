@@ -28,6 +28,10 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.data.ExecutionGateViewData;
+import ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateService;
+import ai.metaheuristic.ai.dispatcher.monitoring.GateMonitoring;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
@@ -61,6 +65,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -79,7 +84,7 @@ import java.util.stream.Stream;
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
- * 15 tools total — read-mostly access to MH internals plus a few control operations:
+ * 16 tools total — read-mostly access to MH internals plus a few control operations:
  *
  *   mh_get_variable_info               — metadata for an internal Variable by id
  *   mh_get_variable_content            — content of an internal Variable, truncated to N bytes
@@ -94,6 +99,7 @@ import java.util.stream.Stream;
  *   mh_get_exec_context_variable_state — ExecContextVariableState by id (raw params YAML, dynamic Variable state)
  *   mh_list_source_codes               — list all SourceCodes with general info (id, uid, companyId, latch, valid)
  *   mh_list_processors                 — list Processors with liveness, blacklist reason and declared envs
+ *   mh_execution_gate_status           — what work is being withheld from Processors, and why
  *   mh_get_source_code                 — full SourceCode by id, including params YAML (truncated to maxParamsBytes)
  *   mh_import_bundle_from_git          — import a bundle straight from a git repo url + path
  *
@@ -125,6 +131,9 @@ public class MhMcpToolDefinitions {
     private final BundleService bundleService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final ProcessorTopLevelService processorTopLevelService;
+    private final UserContextService userContextService;
+    private final ExecutionGateService executionGateService;
+    private final GateMonitoring gateMonitoring;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -226,9 +235,11 @@ public class MhMcpToolDefinitions {
 
     public record ProcessorDto(
             Long id,
+            @Nullable String description,
             @Nullable String ip,
             @Nullable String host,
             boolean active,
+            boolean functionProblem,
             boolean blacklisted,
             @Nullable String blacklistReason,
             long blacklistedForMills,
@@ -253,15 +264,25 @@ public class MhMcpToolDefinitions {
     ) {}
 
     /**
-     * The MCP server carries no authenticated principal, so the caller states the company it is importing
-     * into. Deliberately NOT a DispatcherContext: that one needs real Account and Company entities, and
-     * fabricating them to satisfy a getter would be worse than saying plainly that this is the only
-     * identity the tool has.
+     * The caller's own identity, taken from the authenticated principal.
+     *
+     * <p>❗ NOT a companyId argument. An earlier version let the caller name the company it was writing
+     * into, which is wrong twice over: it is an authorization decision handed to the party being
+     * authorized, and in practice callers passed {@code Consts.MANAGEMENT_COMPANY_ID}, so imported
+     * SourceCodes landed in the management company and were invisible on the source-codes page of the
+     * company that had asked for them. The company a caller may write to is a property OF the caller.
+     *
+     * <p>{@code MhMcpServerConfig} captures the Spring Security {@code Authentication} on the servlet
+     * thread and stashes it in the transport context precisely so a handler can do this.
      */
-    private record McpUserContext(Long accountId, Long companyId, String username) implements UserContext {
-        @Override public Long getAccountId() { return accountId; }
-        @Override public Long getCompanyId() { return companyId; }
-        @Override public String getUsername() { return username; }
+    private UserContext userContextOf(McpSyncServerExchange exchange) {
+        final Object authentication = exchange==null ? null : exchange.transportContext().get("authentication");
+        if (!(authentication instanceof Authentication auth) || !auth.isAuthenticated()) {
+            throw new IllegalStateException(
+                    "01.260.380 this tool writes on behalf of a company and the request carries no authenticated "
+                    + "principal to take one from");
+        }
+        return userContextService.getContext(auth);
     }
 
     public record SourceCodeDto(
@@ -317,12 +338,8 @@ public class MhMcpToolDefinitions {
                                     "repo", Map.of("type", "string",
                                             "description", "Url of the git repository holding the bundle, e.g. https://github.com/sergmain/metaheuristic-assets.git"),
                                     "path", Map.of("type", "string",
-                                            "description", "Path inside the repo to the directory containing mh-bundle.yaml. Required: one repo may hold several bundles at different paths."),
-                                    "companyId", Map.of("type", "integer",
-                                            "description", "Unique id of the company to import into"),
-                                    "accountId", Map.of("type", "integer",
-                                            "description", "Optional account id recorded as the importer. Defaults to 0.")),
-                            List.of("repo", "path", "companyId")))
+                                            "description", "Path inside the repo to the directory containing mh-bundle.yaml. Required: one repo may hold several bundles at different paths.")),
+                            List.of("repo", "path")))
             .title("Import a bundle from git")
             .description("Import a bundle - Functions, SourceCodes, api and auth - directly from a git repository, "
                     + "without packaging and uploading a zip first. The dispatcher clones the repo's DEFAULT branch "
@@ -337,16 +354,14 @@ public class MhMcpToolDefinitions {
         final Map<String, Object> arguments = request.arguments();
         final String repo = getRequiredString(arguments, "repo");
         final String path = getRequiredString(arguments, "path");
-        final Long companyId = getRequiredLong(arguments, "companyId");
-        final Integer accountId = getOptionalInt(arguments, "accountId");
+        final UserContext context = userContextOf(exchange);
+        final Long companyId = context.getCompanyId();
 
         log.info("01.260.300 MCP importBundleFromGit(repo={}, path={}, companyId={})", repo, path, companyId);
 
         // branch and commit are left unset on purpose: delivery clones whatever remote HEAD points at,
         // which is the repo's default branch - master for some repos, main for others
         final GitInfo gitInfo = new GitInfo(repo, "", "", path);
-        final UserContext context = new McpUserContext(
-                accountId == null ? 0L : accountId.longValue(), companyId, "mcp");
 
         final BundleData.UploadingStatus status = bundleService.uploadFromGit(gitInfo, context);
 
@@ -362,6 +377,7 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(GET_VARIABLE_INFO_TOOL, this::handleGetVariableInfo),
                 new McpServerFeatures.SyncToolSpecification(GET_VARIABLE_CONTENT_TOOL, this::handleGetVariableContent),
                 new McpServerFeatures.SyncToolSpecification(LIST_PROCESSORS_TOOL, this::handleListProcessors),
+                new McpServerFeatures.SyncToolSpecification(EXECUTION_GATE_STATUS_TOOL, this::handleExecutionGateStatus),
                 new McpServerFeatures.SyncToolSpecification(CREATE_EXEC_CONTEXT_TOOL, this::handleCreateExecContext),
                 new McpServerFeatures.SyncToolSpecification(START_EXEC_CONTEXT_TOOL, this::handleStartExecContext),
                 new McpServerFeatures.SyncToolSpecification(STOP_EXEC_CONTEXT_TOOL, this::handleStopExecContext),
@@ -451,6 +467,44 @@ public class MhMcpToolDefinitions {
         }
     }
 
+    // ==================== Tool 16: execution gate status ====================
+
+    private static final Tool EXECUTION_GATE_STATUS_TOOL = Tool.builder("mh_execution_gate_status",
+                    objectSchema(Map.of(), List.of()))
+            .title("Execution Gate Status")
+            .description("What the Dispatcher is currently withholding from Processors and why - the same view as the "
+                    + "execution-gate page in the UI. Two halves: active blocks (a quarantined Function code, API key "
+                    + "or Processor, with the reason and how long is left), and the rejection reasons seen recently, "
+                    + "each with exemplar Tasks. ❗ This is the tool that explains a Task sitting in NONE and never "
+                    + "being assigned: 'interpreter_is_undefined' names an env no Processor declares - check "
+                    + "mh_list_processors envCodes against the Function's env; 'functions_not_ready' means no "
+                    + "Processor has reported holding the Function at the revision the Task is pinned to. "
+                    + "bucketsPresent matters more than count: a reason firing across the whole window has stopped "
+                    + "being transient whatever its volume.")
+            .build();
+
+    private CallToolResult handleExecutionGateStatus(McpSyncServerExchange exchange, CallToolRequest request) {
+        log.info("01.260.400 MCP executionGateStatus()");
+        final long now = System.currentTimeMillis();
+        final ExecutionGateViewData.GateStatus status = new ExecutionGateViewData.GateStatus(
+                executionGateService.liveRecords().stream()
+                        .map(r -> new ExecutionGateViewData.GateRecordView(
+                                r.scope(), r.refKey(), r.reasonCode(), r.blockedUntil(), r.blockedUntil() - now))
+                        .toList(),
+                gateMonitoring.actionableView(now).stream()
+                        .map(level -> new ExecutionGateViewData.ReasonLevelView(
+                                level.reason().name(),
+                                level.rejectionClass().name(),
+                                level.count(),
+                                level.bucketsPresent(),
+                                level.exemplars().stream()
+                                        .map(e -> new ExecutionGateViewData.ExemplarView(
+                                                e.atMills(), e.taskId(), e.functionCode(), e.processorId(), e.offendingValue()))
+                                        .toList()))
+                        .toList());
+        return toCallToolResult(status);
+    }
+
     // ==================== Tool 15: list processors ====================
 
     private static final Tool LIST_PROCESSORS_TOOL = Tool.builder("mh_list_processors",
@@ -460,7 +514,8 @@ public class MhMcpToolDefinitions {
                     + "Processors page in the UI. Answers why a Task sits unassigned: whether any Processor is "
                     + "connected at all, when it was last seen, whether it is blacklisted and why, which envs it "
                     + "declares (an external Function whose 'env' is not among them can never be run there), and "
-                    + "which of its cores are already busy.")
+                    + "which of its cores are already busy. Carries every column of that page, with the raw status "
+                    + "yaml replaced by the fields worth acting on - os, envCodes, taskParamsVersion, errors.")
             .build();
 
     private CallToolResult handleListProcessors(McpSyncServerExchange exchange, CallToolRequest request) {
@@ -477,7 +532,7 @@ public class MhMcpToolDefinitions {
                     .map(c -> new ProcessorCoreDto(c.id(), c.code(), c.busy()))
                     .toList();
             dtos.add(new ProcessorDto(
-                    ps.processor.id, ps.ip, ps.host, ps.active,
+                    ps.processor.id, ps.processor.description, ps.ip, ps.host, ps.active, ps.functionProblem,
                     ps.blacklisted, ps.blacklistReason, ps.blacklistedForMills,
                     ps.lastSeen, status.taskParamsVersion,
                     status.os == null ? null : status.os.name(),
@@ -510,13 +565,13 @@ public class MhMcpToolDefinitions {
     private CallToolResult handleCreateExecContext(McpSyncServerExchange exchange, CallToolRequest request) {
         final Map<String, Object> arguments = request.arguments();
         final Long sourceCodeId = getRequiredLong(arguments, "sourceCodeId");
-        final Long companyId = getRequiredLong(arguments, "companyId");
-        final Integer accountId = getOptionalInt(arguments, "accountId");
+        final UserContext userContext = userContextOf(exchange);
+        final Long companyId = userContext.getCompanyId();
 
         log.info("01.260.320 MCP createExecContext(sourceCodeId={}, companyId={})", sourceCodeId, companyId);
 
-        final ExecContextApiData.UserExecContext context = new ExecContextApiData.UserExecContext(
-                accountId == null ? 0L : accountId.longValue(), companyId);
+        final ExecContextApiData.UserExecContext context =
+                new ExecContextApiData.UserExecContext(userContext.getAccountId(), companyId);
 
         final ExecContextCreatorService.ExecContextCreationResult result =
                 execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context, true, null,

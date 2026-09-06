@@ -87,6 +87,14 @@ public class BundleService {
     public BundleData.UploadingStatus uploadFromGit(GitInfo gitInfo, UserContext context) {
 //      --git-repo https://github.com/sergmain/metaheuristic-assets.git --git-branch master --git-commit HEAD --git-path common-bundle
 
+        // ❗ The same refusal uploadFromFile has made since forever, and this entry point was missing it.
+        // The management company is not a tenant: a SourceCode stored against it is a common one, visible
+        // to every company and listed on no ordinary company's page. An import that lands there looks
+        // like it worked and then cannot be found by whoever asked for it.
+        if (Consts.MANAGEMENT_COMPANY_ID.equals(context.getCompanyId())) {
+            return new BundleData.UploadingStatus("971.010 A bundle can't be imported into company #1");
+        }
+
         int j=11;
 
         // ❗ An import owns everything it creates, including the clone. The delivery repo used to be cloned
@@ -154,10 +162,11 @@ public class BundleService {
         log.info("971.120 Staring of uploadFromFile(), file: {}, size: {}", file.getOriginalFilename(), file.getSize());
 
         BundleData.BundleLocation bundleLocation;
+        Path tempDir = null;
         try {
             // TODO 2021.03.13 add a support of
             //  CleanerInfo resource = new CleanerInfo();
-            Path tempDir = DirUtils.createMhTempPath("uploaded-bundle-");
+            tempDir = DirUtils.createMhTempPath("uploaded-bundle-");
             if (tempDir==null) {
                 return new BundleData.UploadingStatus( "971.140 Can't create a temporary dir");
             }
@@ -183,6 +192,11 @@ public class BundleService {
         catch (IOException e) {
             return new BundleData.UploadingStatus("971.200 Can't create a new temp zip file");
         }
+        finally {
+            // this entry point created the tree, so it removes it - the uploaded zip lives in here and
+            // used to be left behind whenever processBundle's own cleanup was not the whole story
+            DirUtils.deletePathAsync(tempDir);
+        }
     }
 
     private BundleData.UploadingStatus processBundle(Path processingPath, BundleData.BundleLocation bundleLocation, UserContext userContext) {
@@ -201,7 +215,10 @@ public class BundleService {
             return new BundleData.UploadingStatus(es);
         }
         finally {
-            DirUtils.deletePathAsync(bundleLocation.dir);
+            // Cleanup is NOT done here. Each entry point creates its own temp tree and removes that whole
+            // tree itself, because deleting a part of someone else's tree is what produced
+            // '971.065 Can't remove the temp dir ...' naming the 'upload' dir, on every git import: this
+            // async delete emptied 'upload' while uploadFromGit's own delete was walking the tree above it.
         }
     }
 
