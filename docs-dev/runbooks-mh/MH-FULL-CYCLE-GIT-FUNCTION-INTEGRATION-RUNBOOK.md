@@ -84,8 +84,22 @@ function:
     - mh.task-params-version: 1
 ```
 
-`.mhsc` — ❗ a colon is not legal in an identifier, so a Function code written `x:1.0` is referenced as
-`x_1.0` here. This SourceCode declares **no source-level input variables**: an ExecContext cannot
+`.mhsc` — ❗ the Function code is written here EXACTLY as it appears in `mh-function.yaml`. There is no
+translation of any kind between the two.
+
+⚠️ Which constrains how the Function may be named, and the constraint belongs to the DSL rather than to
+MH. The mhsc grammar's identifier is `ID : [a-zA-Z_][a-zA-Z0-9_.\-]*`, so a colon cannot be written in
+a `.mhsc` at all — a Function intended to be referenced from one must therefore be AUTHORED with a
+colon-free code, as these are (`mh-verify.hello-dispatcher_1.2`). `.yaml` SourceCodes have no such
+limitation and production uses colons freely: `get-list-of-edition-pairs:2.0.2`,
+`aggregate-statistics:2.3` in `jcons` under `releases/edition-maker/em-statistics/`.
+
+❗ Do not expect `x:1.0` to be reachable as `x_1.0`. `ArtifactCommonUtils.normalizeCode` does map `:` to
+`_`, but only for filesystem paths — zip names, the Processor's function directories — never when
+resolving a Function reference. Writing `x_1.0` looks up a Function whose code is literally `x_1.0`,
+finds nothing, and the SourceCode fails validation.
+
+This SourceCode declares **no source-level input variables**: an ExecContext cannot
 produce Tasks while inputs are uninitialized, and `mh_create_exec_context` fails outright if any exist.
 
 ```
