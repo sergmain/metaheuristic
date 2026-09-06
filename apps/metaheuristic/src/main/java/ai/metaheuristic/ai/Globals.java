@@ -703,7 +703,6 @@ public class Globals {
     // some fields, will be inited in postConstruct()
     public Path dispatcherTempPath;
     public Path dispatcherResourcesPath;
-    public Path dispatcherGitRepoPath;
     public Path dispatcherPath;
     public Path dispatcherStoragePath;
     public Path dispatcherStorageVariablesPath;
@@ -766,9 +765,6 @@ public class Globals {
 
             dispatcherResourcesPath = dispatcherPath.resolve(Consts.RESOURCES_DIR);
             Files.createDirectories(dispatcherResourcesPath);
-
-            dispatcherGitRepoPath = dispatcherPath.resolve(CommonConsts.GIT_REPO);
-            Files.createDirectories(dispatcherGitRepoPath);
 
             dispatcherStoragePath = dispatcherPath.resolve(Consts.STORAGE_DIR);
             Files.createDirectories(dispatcherStoragePath);

@@ -37,6 +37,7 @@ import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.exceptions.BundleProcessingException;
 import ai.metaheuristic.commons.graph.source_code_graph.MhscIncludeResolver;
 import ai.metaheuristic.commons.utils.BundleUtils;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
@@ -88,13 +89,26 @@ public class BundleService {
 
         int j=11;
 
+        // ❗ An import owns everything it creates, including the clone. The delivery repo used to be cloned
+        // into a PERSISTENT dispatcher-level directory, one per repo url, which made the operation neither
+        // atomic nor repeatable: initRepo deletes an existing clone before re-cloning, so the second import
+        // of a repo depended on that delete succeeding - and on Windows it never does, because git writes
+        // pack files read-only. Every import after the first failed, permanently, with no way back short of
+        // removing the directory by hand. Two concurrent imports of the same repo also raced on that single
+        // directory. Cloning into this import's own temp dir removes all of it: there is never a previous
+        // clone to delete, and two imports share nothing.
+        Path tempBundleDir = null;
         try {
-            BundleData.Cfg cfg = new BundleData.Cfg(null, globals.dispatcherGitRepoPath, gitInfo);
-            BundleUtils.initRepo(cfg);
-            Path tempBundleDir = DirUtils.createMhTempPath("bundle-");
+            tempBundleDir = DirUtils.createMhTempPath("bundle-");
             if (tempBundleDir==null) {
                 return new BundleData.UploadingStatus("971.020 Can't create temporary dir");
             }
+            Path gitPath = tempBundleDir.resolve(CommonConsts.GIT_REPO);
+            Files.createDirectories(gitPath);
+
+            BundleData.Cfg cfg = new BundleData.Cfg(null, gitPath, gitInfo);
+            BundleUtils.initRepo(cfg);
+
             Path uploadPath = tempBundleDir.resolve("upload");
             Files.createDirectories(uploadPath);
             cfg.initOtherPaths(uploadPath);
@@ -112,6 +126,20 @@ public class BundleService {
             return new BundleData.UploadingStatus("971.040 Error while processing git repo "+ gitInfo.repo+", error: " + e.message);
         } catch (Throwable e) {
             return new BundleData.UploadingStatus("971.060 Error while processing git repo "+ gitInfo.repo+", error: " + e.getMessage());
+        }
+        finally {
+            // NOT DirUtils.deletePathAsync: the clone lives under this tree, so the delete has to clear
+            // git's read-only pack files. That handling stays HERE rather than in the shared helper -
+            // OVERRIDE_READ_ONLY makes commons-io relax the permissions of the deleted dir's PARENT, which
+            // fails for any caller whose parent isn't its own. This one's parent is MH's own temp tree.
+            if (tempBundleDir!=null) {
+                try {
+                    GtiUtils.deleteGitRepoDirectory(tempBundleDir);
+                }
+                catch (Throwable th) {
+                    log.warn("971.065 Can't remove the temp dir of an import: {}, error: {}", tempBundleDir, th.getMessage());
+                }
+            }
         }
     }
 
