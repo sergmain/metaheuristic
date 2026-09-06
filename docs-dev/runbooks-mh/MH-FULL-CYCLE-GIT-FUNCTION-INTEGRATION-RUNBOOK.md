@@ -27,6 +27,12 @@ verifiable without them, so the verification Functions are plain python that wri
   prefix of the repo url in the Function's `git.repo`. The default list already contains
   `https://github.com/sergmain/metaheuristic-assets`.
 
+⚠️ **After redeploying the Dispatcher, reconnect the MCP client.** An MCP client caches the tool list
+and their schemas from when it connected. A tool added by the redeploy is invisible until it
+reconnects, and a tool whose arguments changed is still validated against the OLD schema client-side —
+so a call can be rejected before it is ever sent, or an argument the server no longer reads can be
+demanded. Neither is a Dispatcher problem and no amount of restarting MH fixes it.
+
 ❗ **Check the Processor's envs BEFORE authoring anything.** The `env` in `mh-function.yaml` must be a
 code the Processor's `env.yaml` defines. `python` and `python-3` are different codes, and getting this
 wrong costs a full round trip — see §5.
@@ -189,11 +195,30 @@ mh_get_exec_context_task_state(execContextTaskStateId=<id from above>)
 
 ✅ **Pass:** `stateName: FINISHED` and every entry in `states:` is `OK`. Nothing in `ERROR`.
 
-Confirm the Function actually ran rather than being skipped — `functionExecResultsExcerpt` carries its
-console, including the path it was executed from, which is how scenario #2 is distinguished from #1:
+⚠️ `mh_get_exec_context_task_state` takes the **execContextTaskStateId** from the previous call, not the
+execContextId. They happen to be equal on a clean database, which hides a wrong argument until they
+diverge.
+
+❗ **A green ExecContext is not yet proof for scenario #2.** Both scenarios finish identically, so
+confirm WHERE the Function ran: `functionExecResultsExcerpt` carries its console, including the
+absolute path of the script.
 
 ```
 mh_get_task_info(taskId=<id>)
+```
+
+For scenario #1 that path is under the unpacked bundle:
+
+```
+processor\resources\<dispatcher>\function\mh-verify.hello-dispatcher_1.2\src\mh_verify_hello.py
+```
+
+For scenario #2 it is under the materialized commit, and the sha in it must be the revision pushed in
+§3 — that is the whole claim of git sourcing, that a payload never packaged into any bundle ran from a
+pinned revision:
+
+```
+processor\resources\git\<repo-code>\commits\<sha>\verify-git-cycle\payload\fn-hello-git\src\mh_verify_hello_git.py
 ```
 
 Repeat §4 for `verify-git-cycle/scenario-2`.
@@ -213,7 +238,11 @@ reading any log:
 mh_execution_gate_status
 ```
 
-or the UI at `/#/dispatcher/execution-gate`. It returns active blocks and the recent rejection reasons
+or the UI at `/#/dispatcher/execution-gate`. ✅ On a healthy run both halves come back empty
+(`records: []`, `rejections: []`) — nothing is being withheld.
+
+⚠️ Read an empty result against the ExecContexts that exist. Empty is only good news if the Tasks you
+expected to run have actually finished; an ExecContext that was never created is also silent here. It returns active blocks and the recent rejection reasons
 with exemplar Tasks. ⚠️ `bucketsPresent` matters more than `count`: a reason present across the whole
 window has stopped being transient however small its volume.
 
@@ -238,7 +267,10 @@ it persists, check that the Processor has `git` on `PATH` and that the repo is t
 **Other checks, in order of cost:**
 
 - `mh_list_processors` — is a Processor connected at all? Is `lastSeen` current? Is it `blacklisted`,
-  and what is `blacklistReason`? Are all its cores `busy`?
+  and what is `blacklistReason`? Are all its cores `busy`? For `not_enough_quotas`, the same tool
+  reports `quotas` (limit, defaultValue, disabled, per-tag amounts). This tool is the analogue of the
+  `/#/dispatcher/processors` page and carries every column it shows, with the raw status yaml replaced
+  by the parsed fields worth acting on.
 - `mh_get_task_info` — `functionExecResultsExcerpt` holds the Function's own console for a Task that
   did run and failed.
 - Processor log — error codes `01.817.*` cover git fetch and materialization failures.

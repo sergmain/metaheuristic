@@ -233,6 +233,18 @@ public class MhMcpToolDefinitions {
             boolean busy
     ) {}
 
+    /**
+     * Quota state, because {@code not_enough_quotas} is one of the gate's rejection reasons and nothing
+     * else exposes what a Processor's limits actually are. Pairs with envCodes the same way: the gate
+     * names the reason, this says which Processor can satisfy it.
+     */
+    public record ProcessorQuotasDto(
+            int limit,
+            int defaultValue,
+            boolean disabled,
+            List<String> tags
+    ) {}
+
     public record ProcessorDto(
             Long id,
             @Nullable String description,
@@ -247,6 +259,8 @@ public class MhMcpToolDefinitions {
             int taskParamsVersion,
             @Nullable String os,
             @Nullable List<String> envCodes,
+            @Nullable ProcessorQuotasDto quotas,
+            @Nullable String currDir,
             @Nullable List<String> errors,
             List<ProcessorCoreDto> cores
     ) {}
@@ -528,6 +542,11 @@ public class MhMcpToolDefinitions {
             // runnable on a Processor whose env.yaml defines that code. The exec line itself is deliberately
             // NOT returned - it is a local command line, and the question this answers is which codes exist.
             final List<String> envCodes = status.env == null ? null : status.env.envs.keySet().stream().sorted().toList();
+            final ProcessorQuotasDto quotas = status.env==null ? null : new ProcessorQuotasDto(
+                    status.env.quotas.limit, status.env.quotas.defaultValue, status.env.quotas.disabled,
+                    status.env.quotas.values.stream()
+                            .map(q -> q.tag + "=" + q.amount + (q.disabled ? " (disabled)" : ""))
+                            .toList());
             final List<ProcessorCoreDto> cores = ps.cores.stream()
                     .map(c -> new ProcessorCoreDto(c.id(), c.code(), c.busy()))
                     .toList();
@@ -536,7 +555,7 @@ public class MhMcpToolDefinitions {
                     ps.blacklisted, ps.blacklistReason, ps.blacklistedForMills,
                     ps.lastSeen, status.taskParamsVersion,
                     status.os == null ? null : status.os.name(),
-                    envCodes, status.errors, cores));
+                    envCodes, quotas, status.currDir, status.errors, cores));
         }
         return toCallToolResult(dtos);
     }
