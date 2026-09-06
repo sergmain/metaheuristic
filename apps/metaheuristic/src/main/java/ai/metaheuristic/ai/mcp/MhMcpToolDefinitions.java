@@ -84,13 +84,12 @@ import java.util.stream.Stream;
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
- * 16 tools total — read-mostly access to MH internals plus a few control operations:
+ * 15 tools total — read-mostly access to MH internals plus a few control operations:
  *
  *   mh_get_variable_info               — metadata for an internal Variable by id
  *   mh_get_variable_content            — content of an internal Variable, truncated to N bytes
  *   mh_create_exec_context             — create an ExecContext from a SourceCode and produce its Tasks
- *   mh_start_exec_context              — transition an ExecContext to STARTED
- *   mh_stop_exec_context               — transition an ExecContext to STOPPED
+ *   mh_exec_context_target_state       — move an ExecContext, and its related ones, to STARTED or STOPPED
  *   mh_get_task_info                   — Task info by id
  *   mh_reset_task                      — reset a Task (delegates to TaskResetService)
  *   mh_get_exec_context_info           — ExecContext info by id
@@ -393,8 +392,7 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(LIST_PROCESSORS_TOOL, this::handleListProcessors),
                 new McpServerFeatures.SyncToolSpecification(EXECUTION_GATE_STATUS_TOOL, this::handleExecutionGateStatus),
                 new McpServerFeatures.SyncToolSpecification(CREATE_EXEC_CONTEXT_TOOL, this::handleCreateExecContext),
-                new McpServerFeatures.SyncToolSpecification(START_EXEC_CONTEXT_TOOL, this::handleStartExecContext),
-                new McpServerFeatures.SyncToolSpecification(STOP_EXEC_CONTEXT_TOOL, this::handleStopExecContext),
+                new McpServerFeatures.SyncToolSpecification(EXEC_CONTEXT_TARGET_STATE_TOOL, this::handleExecContextTargetState),
                 new McpServerFeatures.SyncToolSpecification(GET_TASK_INFO_TOOL, this::handleGetTaskInfo),
                 new McpServerFeatures.SyncToolSpecification(RESET_TASK_TOOL, this::handleResetTask),
                 new McpServerFeatures.SyncToolSpecification(GET_EXEC_CONTEXT_INFO_TOOL, this::handleGetExecContextInfo),
@@ -576,7 +574,7 @@ public class MhMcpToolDefinitions {
             .description("Create an ExecContext from a SourceCode and produce its Tasks - the same operation as the "
                     + "'create ExecContext' button in the UI (POST /exec-context-add-commit). The returned stateName "
                     + "reports the state it landed in; createExecContextAndStart already leaves it STARTED, so "
-                    + "mh_start_exec_context is only needed for one that isn't. "
+                    + "mh_exec_context_target_state is only needed for one that isn't. "
                     + "Fails when the SourceCode declares source-level input variables, because those must be "
                     + "initialized before Tasks can be produced.")
             .build();
@@ -610,49 +608,41 @@ public class MhMcpToolDefinitions {
                 errors, result.getInfoMessagesAsList()));
     }
 
-    // ==================== Tool 3a: start execContext ====================
+    // ==================== Tool 3: set an ExecContext's target state ====================
 
-    private static final Tool START_EXEC_CONTEXT_TOOL = Tool.builder("mh_start_exec_context",
+    private static final Tool EXEC_CONTEXT_TARGET_STATE_TOOL = Tool.builder("mh_exec_context_target_state",
                     objectSchema(
-                            Map.of("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext")),
-                            List.of("execContextId")))
-            .title("Start ExecContext")
-            .description("Start a specific ExecContext by id. Transitions the ExecContext to STARTED state.")
+                            Map.of(
+                                    "execContextId", Map.of("type", "integer",
+                                            "description", "Numeric id of the ExecContext"),
+                                    "state", Map.of("type", "string", "enum", List.of("STARTED", "STOPPED"),
+                                            "description", "Target state. STARTED admits its Tasks to Processors; STOPPED withholds them.")),
+                            List.of("execContextId", "state")))
+            .title("Set ExecContext Target State")
+            .description("Move an ExecContext to a target state - the same operation as the start and stop buttons in "
+                    + "the UI (GET /exec-context-target-state). Only STARTED and STOPPED are settable; the terminal "
+                    + "states are outcomes the Dispatcher records, not states to assign. "
+                    + "❗ The change CASCADES to every related ExecContext sharing this one's root, so stopping a "
+                    + "parent stops the children it spawned through mh.exec-source-code. An ExecContext that is "
+                    + "neither STARTED nor STOPPED - one already FINISHED, say - is skipped rather than dragged back.")
             .build();
 
-    private CallToolResult handleStartExecContext(McpSyncServerExchange exchange, CallToolRequest request) {
-        Long execContextId = getRequiredLong(request.arguments(), "execContextId");
-        log.info("260.080 MCP startExecContext({})", execContextId);
-        return toCallToolResult(changeExecContextState(execContextId, EnumsApi.ExecContextState.STARTED));
-    }
+    private CallToolResult handleExecContextTargetState(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Long execContextId = getRequiredLong(request.arguments(), "execContextId");
+        final String state = getRequiredString(request.arguments(), "state");
+        log.info("01.260.420 MCP execContextTargetState({}, {})", execContextId, state);
 
-    // ==================== Tool 3b: stop execContext ====================
+        // ❗ Deliberately the String-taking overload, which is what the UI button calls. The
+        // ExecContextState-taking one changes ONE ExecContext: the two tools this replaced used it, so
+        // stopping a parent left its children running. This one also rejects an unsettable state by name
+        // rather than silently writing it.
+        final OperationStatusRest status = execContextTopLevelService.changeExecContextState(
+                state, execContextId, userContextOf(exchange));
 
-    private static final Tool STOP_EXEC_CONTEXT_TOOL = Tool.builder("mh_stop_exec_context",
-                    objectSchema(
-                            Map.of("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext")),
-                            List.of("execContextId")))
-            .title("Stop ExecContext")
-            .description("Stop a specific ExecContext by id. Transitions the ExecContext to STOPPED state.")
-            .build();
-
-    private CallToolResult handleStopExecContext(McpSyncServerExchange exchange, CallToolRequest request) {
-        Long execContextId = getRequiredLong(request.arguments(), "execContextId");
-        log.info("260.100 MCP stopExecContext({})", execContextId);
-        return toCallToolResult(changeExecContextState(execContextId, EnumsApi.ExecContextState.STOPPED));
-    }
-
-    private OperationResultDto changeExecContextState(Long execContextId, EnumsApi.ExecContextState newState) {
-        ExecContextImpl ec = execContextCache.findById(execContextId, true);
-        if (ec == null) {
-            return new OperationResultDto(false, "ExecContext #" + execContextId + " not found");
-        }
-        OperationStatusRest status = execContextTopLevelService.execContextTargetState(execContextId, newState, ec.companyId);
-        boolean ok = status.status == EnumsApi.OperationStatus.OK;
-        String msg = ok
-                ? "ExecContext #" + execContextId + " transitioned to " + newState
-                : String.join("; ", status.getErrorMessagesAsList());
-        return new OperationResultDto(ok, msg);
+        final boolean ok = status.status == EnumsApi.OperationStatus.OK;
+        return toCallToolResult(new OperationResultDto(ok, ok
+                ? "ExecContext #" + execContextId + " and every related ExecContext moved to " + state.toUpperCase()
+                : String.join("; ", status.getErrorMessagesAsList())));
     }
 
     // ==================== Tool 4: get task info ====================

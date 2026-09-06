@@ -185,8 +185,8 @@ mh_list_source_codes                            -> note the id of the new uid
 mh_create_exec_context(sourceCodeId=<id>)       -> returns execContextId, stateName STARTED
 ```
 
-`createExecContextAndStart` already leaves it STARTED; `mh_start_exec_context` is only for one that
-isn't. Then poll:
+`createExecContextAndStart` already leaves it STARTED;
+`mh_exec_context_target_state(execContextId=<id>, state="STARTED")` is only for one that isn't. Then poll:
 
 ```
 mh_get_exec_context_info(execContextId=<id>)          -> stateName, completedOn
@@ -258,7 +258,8 @@ The exemplar names the Task, the Function code and the offending env, e.g.
 `task #1 — mh-verify.hello-dispatcher_1.0 — python` against `envCodes: [..., "python-3"]`. Fix by
 correcting `env` in `mh-function.yaml` — and per §3, **bump the Function code**, because editing the
 descriptor alone will not take effect. Note the old ExecContext keeps retrying its unassignable Task and
-keeps filling the gate; stop it with `mh_stop_exec_context` so the view reflects the new run.
+keeps filling the gate; stop it with `mh_exec_context_target_state(execContextId=<id>, state="STOPPED")`
+so the view reflects the new run.
 
 **`functions_not_ready` — transient.** No Processor has reported holding that Function at the revision
 the Task is pinned to. Normal for the first minute of a git-sourced run while the commit is fetched. If
@@ -283,4 +284,6 @@ it persists, check that the Processor has `git` on `PATH` and that the repo is t
 
 Bumping codes each iteration leaves stale SourceCodes and ExecContexts behind. They are harmless except
 that an unassignable Task from an earlier run keeps firing gate rejections and obscures the current one.
-Stop those ExecContexts (`mh_stop_exec_context`) rather than reading around them.
+Stop those ExecContexts — `mh_exec_context_target_state(execContextId=<id>, state="STOPPED")` — rather
+than reading around them. ⚠️ The stop cascades to every ExecContext sharing the same root, so stopping a
+parent stops the children it spawned through `mh.exec-source-code`. Stop the root, not each child.

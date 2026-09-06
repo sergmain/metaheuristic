@@ -56,8 +56,7 @@ public class MhMcpToolWiringTest {
         put("mh_get_variable_info", "variableId");
         put("mh_get_variable_content", "variableId");
         put("mh_create_exec_context", "sourceCodeId");
-        put("mh_start_exec_context", "execContextId");
-        put("mh_stop_exec_context", "execContextId");
+        put("mh_exec_context_target_state", "execContextId");
         put("mh_get_task_info", "taskId");
         put("mh_reset_task", "taskId");
         put("mh_get_exec_context_info", "execContextId");
