@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.execution_gate;
 
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.dispatcher.beans.ExecutionGate;
 import ai.metaheuristic.ai.dispatcher.data.GateData;
 import ai.metaheuristic.ai.Enums;
@@ -216,7 +217,29 @@ public class ExecutionGateService {
      * grounds to skip this Task for this Processor, never to withhold work from it more broadly.
      */
     public boolean allFunctionsReady(Long processorId, TaskParamsYaml tpy) {
-        return isProcessorReadyLogged(tpy.task.function.code, processorId);
+        return isProcessorReadyLogged(readinessKey(tpy.task.function), processorId);
+    }
+
+    /**
+     * What a readiness report is keyed by.
+     *
+     * <p>A Function code is enough for dispatcher sourcing: the code identifies the bytes, so a Processor
+     * holding that code holds the only version there is.
+     *
+     * <p>❗ It is NOT enough for git sourcing. The same code is pinned to a revision per ExecContext, so
+     * two ExecContexts can legitimately need the same Function at two different shas, and a report that
+     * said only "I have mh-verify.hello-git_1.1" would admit a Task whose revision the Processor has
+     * never fetched. The revision is therefore part of the identity of what was reported.
+     */
+    public static String readinessKey(TaskParamsYaml.FunctionConfig fc) {
+        return fc.sourcing==EnumsApi.FunctionSourcing.git && fc.git!=null
+                ? readinessKey(fc.code, fc.git.commit)
+                : fc.code;
+    }
+
+    /** The same key, for the two sides that hold a code and a sha rather than a whole FunctionConfig. */
+    public static String readinessKey(String functionCode, @Nullable String commit) {
+        return S.b(commit) ? functionCode : functionCode + "@" + commit;
     }
 
     private boolean isProcessorReadyLogged(String functionCode, Long processorId) {

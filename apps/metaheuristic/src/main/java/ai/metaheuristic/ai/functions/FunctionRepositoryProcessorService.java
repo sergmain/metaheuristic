@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateService;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParams;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
@@ -82,6 +84,14 @@ public class FunctionRepositoryProcessorService {
             final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
 
             for (FunctionRepositoryResponseParams.ShortFunctionConfig shortFunctionConfig : responseParams.functions) {
+                if (shortFunctionConfig.sourcing==EnumsApi.FunctionSourcing.git) {
+                    // ❗ A git-sourced Function has no asset-manager state to consult and must not be sent
+                    // down the download path: its bytes come from a git revision, and readiness is simply
+                    // whether that revision is materialized here. The Dispatcher only advertises one once an
+                    // ExecContext has pinned it, so the commit on the wire is always a sha.
+                    processAdvertisedGitFunction(shortFunctionConfig, codesReady);
+                    continue;
+                }
                 DownloadStatus f = functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).get(shortFunctionConfig.code);
                 if (f!=null) {
                     if (f.state==ready) {
@@ -102,6 +112,40 @@ public class FunctionRepositoryProcessorService {
         }
         return null;
     }
+
+    /**
+     * Reports a git-sourced Function as ready once its pinned revision is materialized here, and asks for
+     * it otherwise.
+     *
+     * <p>The reported key carries the sha, because the Dispatcher admits a Task against the revision that
+     * Task is pinned to - reporting the bare code would claim readiness for revisions never fetched.
+     */
+    private void processAdvertisedGitFunction(
+            FunctionRepositoryResponseParams.ShortFunctionConfig shortFunctionConfig, List<String> codesReady) {
+
+        final GitInfo git = shortFunctionConfig.git;
+        if (git==null || !GtiUtils.isSha(git.commit)) {
+            log.warn("816.035 function {} was advertised as git-sourced with revision '{}', which is not a sha; "
+                + "only a revision an ExecContext has resolved can be prepared",
+                shortFunctionConfig.code, git==null ? null : git.commit);
+            return;
+        }
+        final Path commits = GitCommitCache.commitsDir(
+            globals.processorResourcesPath.resolve("git").resolve(StrUtils.asCode(git.repo)));
+
+        if (GitCommitCache.isCached(commits, git.commit)) {
+            codesReady.add(ExecutionGateService.readinessKey(shortFunctionConfig.code, git.commit));
+            return;
+        }
+        eventPublisher.publishEvent(new DownloadGitFunctionTask(
+            shortFunctionConfig.code, git, GIT_ADVERTISED_NO_TARGET_FILE, HIGH));
+    }
+
+    /**
+     * The broadcast carries no targets - it exists to get the revision onto the Processor, and which file
+     * inside it runs is decided per Task from the Task's own config.
+     */
+    private static final String GIT_ADVERTISED_NO_TARGET_FILE = "";
 
     @Nullable
     public static DownloadStatus getFunctionDownloadStatus(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode) {

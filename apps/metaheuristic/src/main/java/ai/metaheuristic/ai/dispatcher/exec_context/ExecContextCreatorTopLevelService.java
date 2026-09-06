@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
+import ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -50,6 +51,7 @@ public class ExecContextCreatorTopLevelService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextCreatorService execContextCreatorService;
     private final ExecContextGitSourceService execContextGitSourceService;
+    private final FunctionRepositoryDispatcherService functionRepositoryDispatcherService;
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
         String sourceCodeUid, ExecContextApiData.UserExecContext context, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo) {
@@ -79,6 +81,9 @@ public class ExecContextCreatorTopLevelService {
                     // The SourceCode is parsed twice as a result - that duplication is the accepted cost of
                     // transactional purity (SPRING-TX-RULES.md 1, "purity > fewer lines").
                     final ExecContextParamsYaml.GitSources gitSources = resolveGitSources(sourceCodeId, context);
+                    // the sha exists from here on, so this is the first moment Processors can be told
+                    // to prepare the Function - before that there was only HEAD, which names nothing
+                    functionRepositoryDispatcherService.registerResolvedGitRevisions(gitSources);
 
                     ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(
                         sourceCodeId, context, isProduceTasks, rootAndParent, execContextCreationInfo, gitSources);

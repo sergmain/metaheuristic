@@ -31,6 +31,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.commons.utils.GtiUtils;
@@ -45,6 +46,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
@@ -119,14 +121,31 @@ public class FunctionRepositoryDispatcherService {
                     continue;
                 }
                 if (unresolvedGitRevision(shortFunctionConfig)) {
-                    // This broadcast tells a Processor to start preparing a Function ahead of any Task. A
-                    // git-sourced Function whose descriptor names HEAD has no revision to prepare: the
-                    // revision only exists once an ExecContext resolves it, and it may differ per
-                    // ExecContext. Advertising it would ask the Processor to pick a revision of its own,
-                    // which is the thing pinning exists to prevent - so it is left out here and prepared
-                    // through the task-driven path, where the sha is on the Task.
-                    log.debug("479.045 Function {} is git-sourced at '{}', it'll be prepared per-Task instead",
-                        activeFunctionCode, shortFunctionConfig.git==null ? null : shortFunctionConfig.git.commit);
+                    // A descriptor naming HEAD has no revision to advertise - HEAD is not a revision, and
+                    // asking a Processor to prepare it would invite it to pick one of its own, which is the
+                    // thing pinning exists to prevent. What CAN be advertised is what an ExecContext already
+                    // resolved: registerResolvedGitRevisions records each sha as it is pinned, and one
+                    // advertisement per pinned sha goes out here.
+                    //
+                    // ❗ Without this the Function is never advertised, so the Processor never reports it,
+                    // so allFunctionsReady never passes and the Task is withheld as functions_not_ready -
+                    // while the per-Task path that would have prepared it only runs on a Task the Processor
+                    // was given. That is a deadlock, and a git-sourced Function pinned at HEAD could never
+                    // run at all.
+                    final List<GitInfo> pinned = resolvedGitRevisionsOf(activeFunctionCode);
+                    if (pinned.isEmpty()) {
+                        log.debug("479.045 Function {} is git-sourced at HEAD and no ExecContext has pinned a "
+                            + "revision yet, so there is nothing to advertise", activeFunctionCode);
+                        continue;
+                    }
+                    for (GitInfo git : pinned) {
+                        final FunctionRepositoryResponseParams.ShortFunctionConfig resolved =
+                            new FunctionRepositoryResponseParams.ShortFunctionConfig();
+                        resolved.code = shortFunctionConfig.code;
+                        resolved.sourcing = shortFunctionConfig.sourcing;
+                        resolved.git = git;
+                        r.functions.add(resolved);
+                    }
                     continue;
                 }
                 r.functions.add(shortFunctionConfig);
@@ -135,6 +154,53 @@ public class FunctionRepositoryDispatcherService {
 
         String response = FunctionRepositoryResponseParamsUtils.UTILS.toString(r);
         return response;
+    }
+
+    /**
+     * Every revision a live ExecContext has pinned a git-sourced Function to.
+     *
+     * <p>Keyed by function code, then by sha, because the same Function legitimately runs at different
+     * revisions in different ExecContexts and each of those is separately worth advertising.
+     */
+    private static final Map<String, Map<String, GitInfo>> resolvedGitRevisions = new ConcurrentHashMap<>();
+
+    private static List<GitInfo> resolvedGitRevisionsOf(String functionCode) {
+        final Map<String, GitInfo> bySha = resolvedGitRevisions.get(functionCode);
+        return bySha==null ? List.of() : List.copyOf(bySha.values());
+    }
+
+    /**
+     * Called when an ExecContext has resolved HEAD to a concrete sha, which is the first moment the
+     * revision exists at all. Records it so the broadcast can advertise it, seeds its readiness entry,
+     * and nudges Processors to ask again rather than waiting out their poll interval.
+     */
+    public void registerResolvedGitRevisions(ExecContextParamsYaml.@Nullable GitSources gitSources) {
+        if (gitSources==null || gitSources.gitSourceInfos.isEmpty()) {
+            return;
+        }
+        boolean anyNew = false;
+        for (ExecContextParamsYaml.GitSourceInfo info : gitSources.gitSourceInfos) {
+            if (info.git==null || !GtiUtils.isSha(info.git.commit)) {
+                continue;
+            }
+            final GitInfo git = new GitInfo();
+            git.repo = info.git.repo;
+            git.branch = info.git.branch;
+            git.commit = info.git.commit;
+            git.path = info.git.path;
+
+            final Map<String, GitInfo> bySha =
+                resolvedGitRevisions.computeIfAbsent(info.functionCode, o -> new ConcurrentHashMap<>());
+            if (bySha.putIfAbsent(git.commit, git)==null) {
+                anyNew = true;
+            }
+            executionGateService.seedFunctionReadiness(
+                ExecutionGateService.readinessKey(info.functionCode, git.commit));
+        }
+        if (anyNew) {
+            eventPublisher.publishEvent(new ai.metaheuristic.ai.dispatcher.event.events.NewWebsocketEvent(
+                ai.metaheuristic.ai.Enums.WebsocketEventType.function));
+        }
     }
 
     private static boolean unresolvedGitRevision(FunctionRepositoryResponseParams.ShortFunctionConfig f) {
