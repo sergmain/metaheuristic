@@ -144,7 +144,7 @@ public class BundleService {
     }
 
     public BundleData.UploadingStatus uploadFromFile(final MultipartFile file, final UserContext dispatcherContext) {
-        if (Consts.ID_1.equals(dispatcherContext.getCompanyId())) {
+        if (Consts.MANAGEMENT_COMPANY_ID.equals(dispatcherContext.getCompanyId())) {
             return new BundleData.UploadingStatus("971.080 Batch can't be created in company #1");
         }
         if (file.getSize()==0) {

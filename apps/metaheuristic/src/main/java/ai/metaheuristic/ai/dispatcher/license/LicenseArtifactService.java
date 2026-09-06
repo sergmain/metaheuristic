@@ -34,7 +34,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -132,7 +131,7 @@ public class LicenseArtifactService {
      */
     private void announce(String what) {
         try {
-            signalBus.put(SignalKind.LICENSE_STATE, what, new ScopeRef(Consts.ID_1),
+            signalBus.put(SignalKind.LICENSE_STATE, what, new ScopeRef(Consts.MANAGEMENT_COMPANY_ID),
                     Map.of("change", what), true);
         }
         catch (RuntimeException e) {

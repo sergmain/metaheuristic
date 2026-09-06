@@ -147,7 +147,7 @@ public class SourceCodeSelectorService {
             }
 
             if (!groups.isEmpty()) {
-                List<SourceCodeImpl> commonSourceCodes = sourceCodeRepository.findAllAsSourceCode(Consts.ID_1).stream().filter(sourceCodeFilter::apply).filter(o -> {
+                List<SourceCodeImpl> commonSourceCodes = sourceCodeRepository.findAllAsSourceCode(Consts.MANAGEMENT_COMPANY_ID).stream().filter(sourceCodeFilter::apply).filter(o -> {
                     if (!o.isValid()) {
                         return false;
                     }

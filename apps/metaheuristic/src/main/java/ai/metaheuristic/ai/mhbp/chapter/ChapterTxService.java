@@ -46,7 +46,7 @@ public class ChapterTxService {
         chapter.code = kbCode;
         chapter.createdOn = System.currentTimeMillis();
         chapter.disabled = false;
-        chapter.companyId = Consts.ID_1;
+        chapter.companyId = Consts.MANAGEMENT_COMPANY_ID;
         // for companyId==1L it doesn't matter which accountId will be
         chapter.accountId = 0;
         chapter.updateParams(chapterParams);

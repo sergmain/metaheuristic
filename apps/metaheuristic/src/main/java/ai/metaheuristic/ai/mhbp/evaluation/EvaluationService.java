@@ -115,7 +115,7 @@ public class EvaluationService {
         for (String chapterIdStr : evaluation.chapterIds) {
             long chapterId = Long.parseLong(chapterIdStr);
             Chapter chapter = chapterRepository.findById(chapterId).orElse(null);
-            if (chapter==null || (chapter.companyId!=context.getCompanyId() && chapter.companyId!=Consts.ID_1)) {
+            if (chapter==null || (chapter.companyId!=context.getCompanyId() && chapter.companyId!=Consts.MANAGEMENT_COMPANY_ID)) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "567.260 Reference to Chapter is broken, evaluationId: " + evaluationId);
             }
         }

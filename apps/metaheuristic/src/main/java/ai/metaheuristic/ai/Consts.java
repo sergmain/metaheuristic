@@ -122,7 +122,7 @@ public class Consts {
     public static final String META_FUNCTION_DOWNLOAD_STATUS = "mh-function-download-status";
 
     public static final String RESULT_ZIP = "result.zip";
-    public static final Long ID_1 = 1L;
+    public static final Long MANAGEMENT_COMPANY_ID = 1L;
 
     public static final String MH_NOP_FUNCTION = "mh.nop";
     // process tag marking a process that must run even when its upstream errors, and must never be SKIPPED

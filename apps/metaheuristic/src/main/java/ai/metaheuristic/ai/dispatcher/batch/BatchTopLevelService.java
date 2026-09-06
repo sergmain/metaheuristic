@@ -259,7 +259,7 @@ public class BatchTopLevelService {
      */
     public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final UserContext userContext) {
         LicenseGuard.require(licenseSource, new Feature("MH.BATCH"));
-        if (Consts.ID_1.equals(userContext.getCompanyId())) {
+        if (Consts.MANAGEMENT_COMPANY_ID.equals(userContext.getCompanyId())) {
             return new BatchData.UploadingStatus("981.030 Batch can't be created in company #1");
         }
         if (file.getSize()==0) {

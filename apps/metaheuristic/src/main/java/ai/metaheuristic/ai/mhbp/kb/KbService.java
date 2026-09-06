@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.system.SystemProcessLauncher;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.beans.Chapter;
 import ai.metaheuristic.ai.mhbp.beans.Kb;
 import ai.metaheuristic.ai.mhbp.data.KbData;
@@ -139,7 +138,7 @@ public class KbService {
         pageable = PageUtils.fixPageSize(20, pageable);
 
         List<KbData.SimpleKb> simpleKbs = new ArrayList<>(50);
-        Page<Kb> kbs = kbRepository.findAllByCompanyUniqueId(pageable, Consts.ID_1);
+        Page<Kb> kbs = kbRepository.findAllByCompanyUniqueId(pageable, Consts.MANAGEMENT_COMPANY_ID);
         kbs.stream().map(KbData.SimpleKb::editableSimpleKb).collect(Collectors.toCollection(()->simpleKbs));
 
         kbs = kbRepository.findAllByCompanyUniqueId(pageable, context.getCompanyId());

@@ -48,7 +48,7 @@ public class ChapterService {
 
     public List<Kb> getKbsAllowedForCompany(DispatcherContext context) {
         List<Kb> result = new ArrayList<>(50);
-        List<Kb> kbs = kbRepository.findAllByCompanyUniqueId(Consts.ID_1);
+        List<Kb> kbs = kbRepository.findAllByCompanyUniqueId(Consts.MANAGEMENT_COMPANY_ID);
         result.addAll(kbs);
         kbs = kbRepository.findAllByCompanyUniqueId(context.getCompanyId());
         result.addAll(kbs);
@@ -57,7 +57,7 @@ public class ChapterService {
 
     public List<Long> getKbIdsAllowedForCompany(UserContext context) {
         List<Long> result = new ArrayList<>(50);
-        List<Long> kbs = kbRepository.findAllIdsByCompanyUniqueId(Consts.ID_1);
+        List<Long> kbs = kbRepository.findAllIdsByCompanyUniqueId(Consts.MANAGEMENT_COMPANY_ID);
         result.addAll(kbs);
         kbs = kbRepository.findAllIdsByCompanyUniqueId(context.getCompanyId());
         result.addAll(kbs);

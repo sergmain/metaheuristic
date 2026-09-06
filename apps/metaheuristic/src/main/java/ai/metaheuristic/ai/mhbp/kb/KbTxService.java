@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.mhbp.kb;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.beans.Chapter;
 import ai.metaheuristic.ai.mhbp.beans.Kb;
 import ai.metaheuristic.ai.mhbp.beans.Part;
@@ -67,7 +66,7 @@ public class KbTxService {
 
     @Transactional(propagation= SUPPORTS)
     public List<Kb> findSystemKbs() {
-        return kbRepository.findAllByCompanyUniqueId(Consts.ID_1);
+        return kbRepository.findAllByCompanyUniqueId(Consts.MANAGEMENT_COMPANY_ID);
     }
 
     @Transactional
@@ -76,7 +75,7 @@ public class KbTxService {
         kb.code = kbParams.kb.code;
         kb.createdOn = System.currentTimeMillis();
         kb.disabled = kbParams.disabled;
-        kb.companyId = Consts.ID_1;
+        kb.companyId = Consts.MANAGEMENT_COMPANY_ID;
         // for companyId==1L it doesn't matter which accountId will be
         kb.accountId = 0;
         kb.updateParams(kbParams);

@@ -33,7 +33,6 @@ import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
@@ -41,7 +40,6 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -155,7 +153,7 @@ public class PreparingSourceCodeInitService {
         assertNotNull(data.company.uniqueId);
 
         // id==1L must be assigned only to the management company
-        assertNotEquals(Consts.ID_1, data.company.id);
+        assertNotEquals(Consts.MANAGEMENT_COMPANY_ID, data.company.id);
 
         data.f1 = createFunction("function-01:1.1");
         data.f2 = createFunction("function-02:1.1");

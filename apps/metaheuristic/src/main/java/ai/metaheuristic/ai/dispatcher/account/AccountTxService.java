@@ -315,7 +315,7 @@ public class AccountTxService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.120 account wasn't found, accountId: " + accountId);
         }
 
-        List<String> possibleRoles = Consts.ID_1.equals(companyUniqueId) ? roleService.getManagementCompanyPossibleRoles() : roleService.getPossibleRoles();
+        List<String> possibleRoles = Consts.MANAGEMENT_COMPANY_ID.equals(companyUniqueId) ? roleService.getManagementCompanyPossibleRoles() : roleService.getPossibleRoles();
         if (!possibleRoles.contains(role)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.130 account wasn't found, accountId: " + accountId);
         }
@@ -352,7 +352,7 @@ public class AccountTxService {
             account.accountRoles.addRole(role);
         }
 
-        if (!Consts.ID_1.equals(account.getCompanyId())) {
+        if (!Consts.MANAGEMENT_COMPANY_ID.equals(account.getCompanyId())) {
             account.accountRoles.removeRole(SecConsts.ROLE_SERVER_REST_ACCESS);
         }
 
