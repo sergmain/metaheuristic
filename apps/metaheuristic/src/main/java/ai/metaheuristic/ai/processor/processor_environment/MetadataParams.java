@@ -53,7 +53,7 @@ public class MetadataParams {
     private final DispatcherLookupExtendedParams dispatcherLookupExtendedService;
     private final Path processorPath;
 
-    private @Nullable MetadataParamsYaml metadata = null;
+    private final MetadataParamsYaml metadata;
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
@@ -66,18 +66,24 @@ public class MetadataParams {
         this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
 
         final Path metadataFile = processorPath.resolve(Consts.METADATA_YAML_FILE_NAME);
+        MetadataParamsYaml md = null;
         if (Files.exists(metadataFile)) {
-            initMetadataFromFile(metadataFile);
+            md = initMetadataFromFile(metadataFile);
         }
-        if (metadata==null) {
+        if (md==null) {
             final Path metadataBackupFile = processorPath.resolve(Consts.METADATA_YAML_BAK_FILE_NAME);
             if (Files.exists(metadataBackupFile)) {
-                initMetadataFromFile(metadataBackupFile);
+                md = initMetadataFromFile(metadataBackupFile);
             }
         }
-        if (metadata==null) {
-            metadata = new MetadataParamsYaml();
+        if (md==null) {
+            md = new MetadataParamsYaml();
         }
+        //noinspection ConstantValue
+        if (md.processorSessions==null) {
+            md.processorSessions=new LinkedHashMap<>();
+        }
+        this.metadata = md;
         fixDispatcherUrls();
         fixProcessorCodes();
         for (ProcessorCodeAndIdAndDispatcherUrlRef ref : getAllEnabledRefs()) {
@@ -111,19 +117,21 @@ public class MetadataParams {
     private void fixDispatcherUrls() {
         List<DispatcherUrl> dispatcherUrls = dispatcherLookupExtendedService.getAllEnabledDispatchers();
         for (DispatcherUrl dispatcherUrl : dispatcherUrls) {
-            metadata.processorSessions.computeIfAbsent(dispatcherUrl.url, (o)->new MetadataParamsYaml.ProcessorSession(asCode(dispatcherUrl), null, null));
+            metadata.processorSessions.computeIfAbsent(dispatcherUrl.url, (_)->new MetadataParamsYaml.ProcessorSession(asCode(dispatcherUrl), null, null));
         }
     }
 
-    private void initMetadataFromFile(Path metadataFile) {
+    private static @Nullable MetadataParamsYaml initMetadataFromFile(Path metadataFile) {
         try {
             String yaml = Files.readString(metadataFile, StandardCharsets.UTF_8);
-            metadata = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+            MetadataParamsYaml metadata = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+            return metadata;
         } catch (org.yaml.snakeyaml.reader.ReaderException e) {
             log.error("815.020 Bad data in " + metadataFile.toAbsolutePath());
         } catch (Throwable e) {
             log.error("815.040 Error", e);
         }
+        return null;
     }
 
     private void fixProcessorCodes() {
