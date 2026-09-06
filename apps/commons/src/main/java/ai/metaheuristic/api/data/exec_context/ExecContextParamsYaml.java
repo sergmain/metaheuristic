@@ -61,7 +61,7 @@ public class ExecContextParamsYaml implements BaseParams {
     public static class Variable {
         public String name;
         public EnumsApi.VariableContext context;
-        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public EnumsApi.@Nullable DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         @Nullable
         public GitParams git;
         @Nullable

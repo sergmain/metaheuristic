@@ -32,15 +32,11 @@ import static ai.metaheuristic.commons.CommonConsts.GIT_REPO;
  */
 public class ArtifactCommonUtils {
     private static EnumsApi.DataType toType(EnumsApi.VariableContext context) {
-        switch (context) {
-            case global:
-                return EnumsApi.DataType.global_variable;
-            case local:
-            case array:
-                return EnumsApi.DataType.variable;
-            default:
-                throw new IllegalStateException("103.040 wrong context: " + context);
-        }
+        return switch (context) {
+            case global -> EnumsApi.DataType.global_variable;
+            case local, array -> EnumsApi.DataType.variable;
+            default -> throw new IllegalStateException("103.040 wrong context: " + context);
+        };
     }
 
     public static TaskFileParamsYaml.InputVariable upInputVariable(TaskParamsYaml.InputVariable v1) {
