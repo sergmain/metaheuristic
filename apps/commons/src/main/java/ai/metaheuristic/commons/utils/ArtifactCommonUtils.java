@@ -74,7 +74,16 @@ public class ArtifactCommonUtils {
         if (StringUtils.containsWhitespace(code)) {
             throw new IllegalStateException("Code can't contain any whitespace char");
         }
-        final String replaced = code.replace(':', '_');
+        // ❗ Escaping '_' comes FIRST, and the order is the whole point. This method names things on disk -
+        // a Function's directory under the Processor's resources, the zip it is delivered in - so two
+        // distinct codes normalizing to one string means two Functions sharing a directory, with whichever
+        // is unpacked second silently winning. Mapping ':' to '_' on its own does exactly that: 'a:b' and
+        // 'a_b' are different Function codes and both came out as 'a_b'.
+        //
+        // Doubling first keeps the mapping injective - every '_' in the result that came from the code is
+        // doubled, every single '_' came from a ':' - and doing it AFTER would re-escape the underscores
+        // this method had just produced, collapsing the distinction it exists to make.
+        final String replaced = code.replace("_", "__").replace(':', '_');
         int count=0;
         for (int i = replaced.length() - 1; i >= 0; i--) {
             final char c = replaced.charAt(i);

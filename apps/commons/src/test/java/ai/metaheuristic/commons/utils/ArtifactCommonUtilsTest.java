@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -41,5 +41,38 @@ public class ArtifactCommonUtilsTest {
 
 
         assertThrows(IllegalStateException.class, ()->ArtifactCommonUtils.normalizeCode(".."));
+    }
+
+    /**
+     * ❗ normalizeCode names things on disk - a Function's directory under the Processor's resources, the
+     * zip it is delivered in. Two distinct Function codes that normalize to one string therefore share a
+     * directory, and whichever is unpacked second wins.
+     *
+     * <p>Mapping ':' to '_' without first escaping '_' does exactly that: 'a:b' and 'a_b' are different
+     * codes and both come out as 'a_b'.
+     */
+    @Test
+    public void test_normalizeCodeDistinguishesAColonFromAnUnderscore() {
+        assertNotEquals(
+                ArtifactCommonUtils.normalizeCode("a:b"),
+                ArtifactCommonUtils.normalizeCode("a_b"),
+                "two different Function codes must not normalize onto the same path");
+    }
+
+    /** The escape itself, doubled so the mapping can be read back unambiguously. */
+    @Test
+    public void test_normalizeCodeDoublesAnUnderscore() {
+        assertEquals("a__b", ArtifactCommonUtils.normalizeCode("a_b"));
+        assertEquals("a_b", ArtifactCommonUtils.normalizeCode("a:b"));
+        assertEquals("mh-verify.hello-dispatcher__1.2",
+                ArtifactCommonUtils.normalizeCode("mh-verify.hello-dispatcher_1.2"));
+        assertEquals("mh.multiply_1.2", ArtifactCommonUtils.normalizeCode("mh.multiply:1.2"));
+    }
+
+    /** ❗ Escaping runs FIRST, so an underscore produced from a colon is never escaped in turn. */
+    @Test
+    public void test_underscoresIntroducedByAColonAreNotEscapedAgain() {
+        assertEquals("a_b__c", ArtifactCommonUtils.normalizeCode("a:b_c"));
+        assertEquals("a__b_c", ArtifactCommonUtils.normalizeCode("a_b:c"));
     }
 }
