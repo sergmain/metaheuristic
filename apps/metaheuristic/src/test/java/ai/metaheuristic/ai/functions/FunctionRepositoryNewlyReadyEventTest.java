@@ -47,7 +47,7 @@ public class FunctionRepositoryNewlyReadyEventTest {
         ExecutionGateService executionGateService = new ExecutionGateService(null, null, null, null, null);
 
         FunctionRepositoryDispatcherService svc =
-            new FunctionRepositoryDispatcherService(null, null, null, publisher, executionGateService);
+            new FunctionRepositoryDispatcherService(null, null, null, null, publisher, executionGateService);
 
         // Mark a function as active so registerReadyFunctionCodesOnProcessor accepts it
         java.lang.reflect.Field af = FunctionRepositoryDispatcherService.class.getDeclaredField("activeFunctions");
@@ -85,7 +85,7 @@ public class FunctionRepositoryNewlyReadyEventTest {
 
         ExecutionGateService executionGateService = new ExecutionGateService(null, null, null, null, null);
         FunctionRepositoryDispatcherService svc =
-            new FunctionRepositoryDispatcherService(null, null, null, publisher, executionGateService);
+            new FunctionRepositoryDispatcherService(null, null, null, null, publisher, executionGateService);
 
         assertTrue(executionGateService.recordFunctionReadiness("fn-y", 1L));
         assertFalse(executionGateService.recordFunctionReadiness("fn-y", 1L),

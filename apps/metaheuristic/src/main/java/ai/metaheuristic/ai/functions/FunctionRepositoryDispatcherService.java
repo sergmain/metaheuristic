@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.functions;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.event.events.RegisterFunctionCodesForStartedExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
@@ -64,6 +66,7 @@ public class FunctionRepositoryDispatcherService {
 
     private final SourceCodeRepository sourceCodeRepository;
     private final ExecContextRepository execContextRepository;
+    private final ExecContextCache execContextCache;
     private final FunctionRepository functionRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
     private final ExecutionGateService executionGateService;
@@ -207,11 +210,7 @@ public class FunctionRepositoryDispatcherService {
             if (info.git==null || !GtiUtils.isSha(info.git.commit)) {
                 continue;
             }
-            final GitInfo git = new GitInfo();
-            git.repo = info.git.repo;
-            git.branch = info.git.branch;
-            git.commit = info.git.commit;
-            git.path = info.git.path;
+            final GitInfo git = toGitInfo(info.git);
 
             final Map<String, GitInfo> bySha =
                 resolvedGitRevisions.computeIfAbsent(info.functionCode, o -> new ConcurrentHashMap<>());
@@ -225,6 +224,15 @@ public class FunctionRepositoryDispatcherService {
             eventPublisher.publishEvent(new ai.metaheuristic.ai.dispatcher.event.events.NewWebsocketEvent(
                 ai.metaheuristic.ai.Enums.WebsocketEventType.function));
         }
+    }
+
+    private static GitInfo toGitInfo(ExecContextParamsYaml.GitParams src) {
+        final GitInfo git = new GitInfo();
+        git.repo = src.repo;
+        git.branch = src.branch;
+        git.commit = src.commit;
+        git.path = src.path;
+        return git;
     }
 
     private static boolean unresolvedGitRevision(FunctionRepositoryResponseParams.ShortFunctionConfig f) {
@@ -365,7 +373,54 @@ public class FunctionRepositoryDispatcherService {
 
     }
 
+    /**
+     * Rebuilds the pinned-revision registry from the ExecContexts that still need them.
+     *
+     * <p>❗ Why this exists rather than relying on {@link #registerResolvedGitRevisions} alone: that one
+     * runs once, when an ExecContext is created, and writes to memory. A Dispatcher restart - crash,
+     * redeploy, anything - empties that memory while the ExecContext and its Tasks survive in the
+     * database. The revision would then never be advertised again, the Processor would never report it,
+     * and every remaining Task of that ExecContext would sit in {@code functions_not_ready} for ever.
+     * The ExecContext's own params are the durable record of what it is pinned to, so they are the thing
+     * to rebuild from.
+     *
+     * <p>Note the notification is not what has to survive: Processors poll, and the advertisement is
+     * recomputed on every poll. Only the registry's CONTENT has to be right, which is why re-deriving it
+     * on a timer is enough and no message needs replaying.
+     *
+     * <p>⚠️ Rebuilt wholesale rather than added to, so a revision stops being advertised once no live
+     * ExecContext is pinned to it. Otherwise every sha ever resolved would be offered to every Processor
+     * for the lifetime of the process.
+     */
+    private void rebuildResolvedGitRevisions(int liveState) {
+        final Map<String, Map<String, GitInfo>> rebuilt = new ConcurrentHashMap<>();
+        for (Long execContextId : execContextRepository.findIdsByExecState(liveState)) {
+            final ExecContextImpl ec = execContextCache.findById(execContextId, true);
+            if (ec==null) {
+                continue;
+            }
+            final ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
+            if (ecpy.gitSources==null) {
+                continue;
+            }
+            for (ExecContextParamsYaml.GitSourceInfo info : ecpy.gitSources.gitSourceInfos) {
+                if (info.git==null || !GtiUtils.isSha(info.git.commit)) {
+                    continue;
+                }
+                rebuilt.computeIfAbsent(info.functionCode, o -> new ConcurrentHashMap<>())
+                        .putIfAbsent(info.git.commit, toGitInfo(info.git));
+                executionGateService.seedFunctionReadiness(
+                        ExecutionGateService.readinessKey(info.functionCode, info.git.commit));
+            }
+        }
+        resolvedGitRevisions.keySet().retainAll(rebuilt.keySet());
+        resolvedGitRevisions.putAll(rebuilt);
+    }
+
     public void collectActiveFunctionCodes() {
+        // STARTED, the same state the active-Function rebuild below uses, so the two agree on what
+        // "live" means. A STOPPED ExecContext that is started again is picked up on the next tick.
+        rebuildResolvedGitRevisions(EnumsApi.ExecContextState.STARTED.code);
         List<Long> sourceCodeIds = execContextRepository.findAllSourceCodeIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
         Set<String> funcCodes = new HashSet<>();
         for (Long sourceCodeId : sourceCodeIds) {
