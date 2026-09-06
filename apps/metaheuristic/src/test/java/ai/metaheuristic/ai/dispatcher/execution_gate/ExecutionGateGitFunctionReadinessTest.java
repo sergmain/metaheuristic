@@ -108,6 +108,37 @@ public class ExecutionGateGitFunctionReadinessTest {
                 "seeding starts the entry's lifetime; it does not claim any Processor holds the revision");
     }
 
+    /**
+     * ❗ The advertise/report round trip must terminate.
+     *
+     * <p>The Processor answers the broadcast with the keys it holds, and the Dispatcher's reply to THAT
+     * must offer nothing further - {@code FunctionRepositoryRequestor} treats a non-empty second reply as
+     * a protocol violation and throws {@code 778.050 isNotEmpty(p)}. So whatever key the Processor
+     * reports has to be the same key the Dispatcher filters its advertisements by. Reporting
+     * {@code code@sha} while filtering on {@code code} never matches, and the pair loops for ever.
+     */
+    @Test
+    public void test_theKeyAProcessorReportsIsTheKeyThatSuppressesTheNextAdvertisement() {
+        final ExecutionGateService gate = gateService();
+        final String reportedByProcessor = ExecutionGateService.readinessKey("mh-verify.hello-git_1.1", SHA_A);
+
+        gate.recordFunctionReadiness(reportedByProcessor, 1L);
+
+        assertTrue(gate.isProcessorReady(ExecutionGateService.readinessKey("mh-verify.hello-git_1.1", SHA_A), 1L),
+                "the Dispatcher must recognise the very key the Processor just reported, or it re-advertises "
+                + "for ever and the protocol check fires on every poll");
+    }
+
+    /** And the code is recoverable from the key, which is how a report is matched to an active Function. */
+    @Test
+    public void test_functionCodeIsRecoverableFromAReadinessKey() {
+        assertEquals("mh-verify.hello-git_1.1",
+                ExecutionGateService.functionCodeOfReadinessKey(
+                        ExecutionGateService.readinessKey("mh-verify.hello-git_1.1", SHA_A)));
+        assertEquals("mh-verify.hello-dispatcher_1.1",
+                ExecutionGateService.functionCodeOfReadinessKey("mh-verify.hello-dispatcher_1.1"));
+    }
+
     /** The key itself, since both sides of the protocol have to build the same string. */
     @Test
     public void test_readinessKeyCarriesTheRevisionOnlyForGitSourcing() {

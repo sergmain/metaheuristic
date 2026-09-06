@@ -83,17 +83,21 @@ public class FunctionRepositoryDispatcherService {
     private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
     private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
-    public Set<String> getActiveFunctionCode(@Nullable Long processorId) {
+    /**
+     * ❗ No readiness filtering here any more. Readiness is keyed by what was reported, and for a
+     * git-sourced Function that key carries the revision - which is not known until the Function's
+     * descriptor has been loaded and its pinned shas looked up. Filtering on the bare code here would
+     * never match a git report, so the Function would be advertised for ever: the Processor answers "I
+     * have it", the Dispatcher offers it again, and the protocol's own check fires as
+     * {@code 778.050 isNotEmpty(p)} on every poll.
+     *
+     * <p>The filtering now happens in {@link #processRequest}, per advertised entry, where the sha is in
+     * hand.
+     */
+    public Set<String> getActiveFunctionCode() {
         readLock.lock();
         try {
-            if (processorId==null) {
-                return new HashSet<>(activeFunctions);
-            }
-            else {
-                return activeFunctions.stream()
-                        .filter(c-> !executionGateService.isProcessorReady(c, processorId))
-                        .collect(Collectors.toSet());
-            }
+            return new HashSet<>(activeFunctions);
         } finally {
             readLock.unlock();
         }
@@ -111,10 +115,17 @@ public class FunctionRepositoryDispatcherService {
             eventPublisher.publishEvent(new ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueEvent());
         }
 
-        final Set<String> activeFunctionCodes = getActiveFunctionCode(p.processorId);
+        final Set<String> activeFunctionCodes = getActiveFunctionCode();
         if (CollectionUtils.isNotEmpty(activeFunctionCodes)) {
             r.functions = new ArrayList<>();
             for (String activeFunctionCode : activeFunctionCodes) {
+                // Cheap skip first, and it covers the overwhelmingly common case: a dispatcher-sourced
+                // Function is reported under its bare code, so a match here settles it without loading the
+                // descriptor at all. Only a Function that is unreported, or reported under a key carrying a
+                // revision, needs the lookup below to find out which it is.
+                if (alreadyReported(p.processorId, activeFunctionCode, null)) {
+                    continue;
+                }
                 FunctionRepositoryResponseParams.ShortFunctionConfig shortFunctionConfig = toShortFunctionConfig(activeFunctionCode);
                 if (shortFunctionConfig == null) {
                     log.warn("479.040 Function wasn't found for code " + activeFunctionCode);
@@ -139,6 +150,9 @@ public class FunctionRepositoryDispatcherService {
                         continue;
                     }
                     for (GitInfo git : pinned) {
+                        if (alreadyReported(p.processorId, activeFunctionCode, git.commit)) {
+                            continue;
+                        }
                         final FunctionRepositoryResponseParams.ShortFunctionConfig resolved =
                             new FunctionRepositoryResponseParams.ShortFunctionConfig();
                         resolved.code = shortFunctionConfig.code;
@@ -148,12 +162,22 @@ public class FunctionRepositoryDispatcherService {
                     }
                     continue;
                 }
+                if (shortFunctionConfig.sourcing==EnumsApi.FunctionSourcing.git && shortFunctionConfig.git!=null
+                        && alreadyReported(p.processorId, activeFunctionCode, shortFunctionConfig.git.commit)) {
+                    continue;
+                }
                 r.functions.add(shortFunctionConfig);
             }
         }
 
         String response = FunctionRepositoryResponseParamsUtils.UTILS.toString(r);
         return response;
+    }
+
+    /** Whether this Processor has already said it holds exactly this Function at exactly this revision. */
+    private boolean alreadyReported(@Nullable Long processorId, String functionCode, @Nullable String commit) {
+        return processorId!=null
+                && executionGateService.isProcessorReady(ExecutionGateService.readinessKey(functionCode, commit), processorId);
     }
 
     /**
@@ -229,11 +253,13 @@ public class FunctionRepositoryDispatcherService {
             return false;
         }
         boolean anyNew = false;
-        for (String functionCode : p.functionCodes) {
-            if (!isActiveFunction(functionCode)) {
+        for (String readinessKey : p.functionCodes) {
+            // the report is keyed - plain code for dispatcher sourcing, code+revision for git - so the
+            // activeness check has to look at the code inside it, while the record keeps the whole key
+            if (!isActiveFunction(ExecutionGateService.functionCodeOfReadinessKey(readinessKey))) {
                 continue;
             }
-            if (executionGateService.recordFunctionReadiness(functionCode, p.processorId)) {
+            if (executionGateService.recordFunctionReadiness(readinessKey, p.processorId)) {
                 anyNew = true;
             }
         }

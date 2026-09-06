@@ -239,8 +239,22 @@ public class ExecutionGateService {
 
     /** The same key, for the two sides that hold a code and a sha rather than a whole FunctionConfig. */
     public static String readinessKey(String functionCode, @Nullable String commit) {
-        return S.b(commit) ? functionCode : functionCode + "@" + commit;
+        return S.b(commit) ? functionCode : functionCode + KEY_SEPARATOR + commit;
     }
+
+    /**
+     * The Function code inside a readiness key.
+     *
+     * <p>❗ Needed because a report arrives as keys, and anything asking "is this Function still active"
+     * is asking about the code. A git key carries a revision the code itself never contains, so the two
+     * must not be compared directly - that mismatch silently drops every git readiness report.
+     */
+    public static String functionCodeOfReadinessKey(String key) {
+        final int idx = key.lastIndexOf(KEY_SEPARATOR);
+        return idx<0 ? key : key.substring(0, idx);
+    }
+
+    private static final char KEY_SEPARATOR = '@';
 
     private boolean isProcessorReadyLogged(String functionCode, Long processorId) {
         final boolean ready = isProcessorReady(functionCode, processorId);
