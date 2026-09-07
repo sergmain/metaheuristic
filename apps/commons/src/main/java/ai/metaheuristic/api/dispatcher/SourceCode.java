@@ -57,4 +57,9 @@ public interface SourceCode {
 
     void setLatch(@Nullable String latch);
 
+    /**
+     * the 'type' declared in this SourceCode's own .mhsc/.yaml source, or null when none was declared.
+     */
+    @Nullable String getScType();
+
 }

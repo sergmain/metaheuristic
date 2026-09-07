@@ -418,7 +418,8 @@ CREATE TABLE MH_SOURCE_CODE
     CREATED_ON      bigint NOT NULL,
     PARAMS          TEXT not null,
     IS_VALID        BOOLEAN not null default false,
-    LATCH           varchar(50)
+    LATCH           varchar(50),
+    SC_TYPE         varchar(50)
 );
 
 CREATE INDEX MH_SOURCE_CODE_COMPANY_ID_IDX

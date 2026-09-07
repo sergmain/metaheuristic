@@ -64,6 +64,15 @@ public class SourceCodeImpl implements Serializable, SourceCode {
     @Column(name = "LATCH")
     public String latch;
 
+    /**
+     * the 'type' which this SourceCode declares in its own .mhsc/.yaml source, denormalized out of PARAMS
+     * so that listing pages don't have to parse the stored params of every row.
+     * null for a SourceCode which declares no type, and for every row created before this column existed.
+     */
+    @Nullable
+    @Column(name = "SC_TYPE")
+    public String scType;
+
     @Column(name = "PARAMS")
     private String params;
 

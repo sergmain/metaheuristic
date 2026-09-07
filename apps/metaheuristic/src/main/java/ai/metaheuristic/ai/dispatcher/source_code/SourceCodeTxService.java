@@ -236,6 +236,8 @@ public class SourceCodeTxService {
         sourceCode.companyId = companyUniqueId;
         sourceCode.createdOn = System.currentTimeMillis();
         sourceCode.uid = uid;
+        // denormalized copy of scspy.type, so that listing pages read a column instead of parsing PARAMS per row
+        sourceCode.scType = type;
         sourceCode = sourceCodeCache.save(sourceCode);
 
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
