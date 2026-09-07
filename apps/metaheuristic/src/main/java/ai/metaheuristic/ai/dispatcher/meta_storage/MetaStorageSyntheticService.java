@@ -95,6 +95,26 @@ public class MetaStorageSyntheticService {
         return metaStorageSyntheticTxService.upsert(companyId, writes, nextGeneration(companyId), System.currentTimeMillis());
     }
 
+    /**
+     * Delete the one record addressed by the natural key {@code (companyId, type, recKey)}.
+     * Returns 1 when a row was removed, 0 when the key matched nothing.
+     *
+     * <p>❗ The resolution happens HERE, outside any transaction, and only the resolved row id
+     * crosses into the tx service - the same rule {@link #upsert} follows, per SPRING-TX-RULES.md §1.
+     *
+     * <p>A key that matches nothing is a no-op rather than an error, so a replayed delete does not
+     * fail on its second pass. That is the same idempotency property the natural key gives upsert,
+     * and it matters for the same reason: a write from inside a task is an irreversible effect.
+     */
+    public int deleteByNaturalKey(Long companyId, String type, String recKey) {
+        final MetaStorageSynthetic existing = metaStorageSyntheticRepository.findByNaturalKey(companyId, type, recKey);
+        if (existing==null) {
+            return 0;
+        }
+        metaStorageSyntheticTxService.deleteByIds(List.of(existing.id));
+        return 1;
+    }
+
     /** Key list only, for the selection step feeding a batch splitter. Bodies stay unread. */
     public List<String> listKeys(Long companyId, String type) {
         return metaStorageSyntheticRepository.findRecKeysByCompanyIdAndType(companyId, type);

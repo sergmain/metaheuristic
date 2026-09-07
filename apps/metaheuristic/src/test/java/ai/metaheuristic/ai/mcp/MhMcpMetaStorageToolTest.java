@@ -69,6 +69,15 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MhMcpMetaStorageToolTest extends MhSharedItTest {
 
     private static final String TOOL_NAME = "mh_get_meta_storage_record";
+    private static final String SELECT_TOOL = "mh_select_meta_storage_record";
+    private static final String DELETE_TOOL = "mh_delete_meta_storage_record";
+
+    /** Map.of takes no varargs past a point and the flag is the only part that varies per call. */
+    private static Map<String, Object> withSynthetic(Map<String, Object> key, boolean synthetic) {
+        final Map<String, Object> arguments = new java.util.HashMap<>(key);
+        arguments.put("synthetic", synthetic);
+        return arguments;
+    }
 
     @Autowired private MetaStorageService metaStorageService;
     @Autowired private MetaStorageSyntheticService metaStorageSyntheticService;
@@ -76,14 +85,18 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
     @Autowired private MetaStorageSyntheticRepository metaStorageSyntheticRepository;
 
     private CallToolResult call(Map<String, Object> arguments) {
+        return call(TOOL_NAME, arguments);
+    }
+
+    private CallToolResult call(String toolName, Map<String, Object> arguments) {
         final MhMcpToolDefinitions definitions = new MhMcpToolDefinitions(
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                metaStorageRepository, metaStorageSyntheticRepository);
+                metaStorageRepository, metaStorageSyntheticRepository, metaStorageService, metaStorageSyntheticService);
         final McpServerFeatures.SyncToolSpecification spec = definitions.getAllToolSpecifications().stream()
-                .filter(s -> TOOL_NAME.equals(s.tool().name()))
+                .filter(s -> toolName.equals(s.tool().name()))
                 .findFirst()
-                .orElseThrow(() -> new AssertionError(TOOL_NAME + " is not registered"));
-        return spec.callHandler().apply(null, new CallToolRequest(TOOL_NAME, arguments));
+                .orElseThrow(() -> new AssertionError(toolName + " is not registered"));
+        return spec.callHandler().apply(null, new CallToolRequest(toolName, arguments));
     }
 
     private static String textOf(CallToolResult result) {
@@ -159,6 +172,94 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         assertEquals(Boolean.TRUE, synthetic.isError(), "PHASE #2: an absent id is an error result");
         assertTrue(textOf(synthetic).contains("MH_META_STORAGE_SYNTHETIC"),
                 "PHASE #2: names the table: " + textOf(synthetic));
+    }
+
+    /**
+     * The natural key is what a caller normally holds, so the select tool must reach the same row the
+     * id tool does - and must respect the table flag while doing it.
+     */
+    @Test
+    public void test_selectByNaturalKeyReachesTheSameRowAsTheIdForm() {
+
+        final Long companyId = SharedItEnv.uniqueLong();
+        final String type = "mcp-tool";
+        final String recKey = SharedItEnv.uniqueCode("natural") + "@example.com";
+
+        // PHASE #1: one row in each table under the SAME natural key, different bodies
+        metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(type, recKey, "plain-by-key")));
+        metaStorageSyntheticService.upsert(companyId, List.of(new MetaStorageData.Record(type, recKey, "synthetic-by-key")));
+
+        // PHASE #2: the key selects the table, exactly as the id form does
+        final Map<String, Object> key = Map.of("companyId", companyId, "type", type, "recKey", recKey);
+        final CallToolResult plain = call(SELECT_TOOL, withSynthetic(key, false));
+        assertEquals(Boolean.FALSE, plain.isError(), "PHASE #2: " + textOf(plain));
+        assertTrue(textOf(plain).contains("\"body\" : \"plain-by-key\""),
+                "PHASE #2: synthetic=false must read MH_META_STORAGE: " + textOf(plain));
+
+        final CallToolResult synth = call(SELECT_TOOL, withSynthetic(key, true));
+        assertEquals(Boolean.FALSE, synth.isError(), "PHASE #3: " + textOf(synth));
+        assertTrue(textOf(synth).contains("\"body\" : \"synthetic-by-key\""),
+                "PHASE #3: synthetic=true must read MH_META_STORAGE_SYNTHETIC: " + textOf(synth));
+
+        // PHASE #4: the row id it reports must be the id the by-id tool answers to - that round trip is
+        // the whole reason this tool returns an id at all
+        final MetaStorage row = metaStorageRepository.findByNaturalKey(companyId, type, recKey);
+        assertNotNull(row, "PHASE #4: the row must exist");
+        assertTrue(textOf(plain).contains("\"id\" : " + row.id), "PHASE #4: reported id: " + textOf(plain));
+        final CallToolResult byId = call(Map.of("id", row.id, "synthetic", false));
+        assertEquals(Boolean.FALSE, byId.isError(), "PHASE #4: " + textOf(byId));
+        assertTrue(textOf(byId).contains("\"body\" : \"plain-by-key\""),
+                "PHASE #4: the id from the key form addresses the same row: " + textOf(byId));
+
+        // PHASE #5: an absent key is an error naming the table searched, not an empty success
+        final CallToolResult absent = call(SELECT_TOOL,
+                Map.of("companyId", companyId, "type", type, "recKey", "no-such-key", "synthetic", false));
+        assertEquals(Boolean.TRUE, absent.isError(), "PHASE #5: an unmatched key is an error result");
+        assertTrue(textOf(absent).contains("MH_META_STORAGE"), "PHASE #5: names the table: " + textOf(absent));
+    }
+
+    /**
+     * Delete removes the addressed row and nothing else - in particular not its twin in the other
+     * table, which carries an identical natural key.
+     */
+    @Test
+    public void test_deleteByNaturalKeyRemovesOnlyTheAddressedRow() {
+
+        final Long companyId = SharedItEnv.uniqueLong();
+        final String type = "mcp-tool";
+        final String recKey = SharedItEnv.uniqueCode("delete") + "@example.com";
+        final Map<String, Object> key = Map.of("companyId", companyId, "type", type, "recKey", recKey);
+
+        // PHASE #1: the same natural key in both tables
+        metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(type, recKey, "plain-doomed")));
+        metaStorageSyntheticService.upsert(companyId, List.of(new MetaStorageData.Record(type, recKey, "synthetic-survivor")));
+        assertNotNull(metaStorageRepository.findByNaturalKey(companyId, type, recKey), "PHASE #1: plain row exists");
+        assertNotNull(metaStorageSyntheticRepository.findByNaturalKey(companyId, type, recKey), "PHASE #1: synthetic row exists");
+
+        // PHASE #2: delete the plain one
+        final CallToolResult deleted = call(DELETE_TOOL, withSynthetic(key, false));
+        assertEquals(Boolean.FALSE, deleted.isError(), "PHASE #2: " + textOf(deleted));
+        assertTrue(textOf(deleted).contains("\"ok\" : true"), "PHASE #2: " + textOf(deleted));
+
+        // PHASE #3: it is gone from the table addressed, and ONLY from that table. The twin sharing the
+        // key is what would fail here if the flag were ignored on the write path.
+        assertNull(metaStorageRepository.findByNaturalKey(companyId, type, recKey),
+                "PHASE #3: the addressed row must be gone");
+        assertNotNull(metaStorageSyntheticRepository.findByNaturalKey(companyId, type, recKey),
+                "PHASE #3: the synthetic twin must survive a delete aimed at the plain table");
+
+        // PHASE #4: a repeated delete matches nothing and reports it, rather than failing - the same
+        // idempotency the natural key gives upsert
+        final CallToolResult again = call(DELETE_TOOL, withSynthetic(key, false));
+        assertEquals(Boolean.FALSE, again.isError(), "PHASE #4: a no-op delete is not a transport error");
+        assertTrue(textOf(again).contains("\"ok\" : false"), "PHASE #4: " + textOf(again));
+        assertTrue(textOf(again).contains("nothing was deleted"), "PHASE #4: " + textOf(again));
+
+        // PHASE #5: and the survivor can still be deleted through its own flag
+        final CallToolResult synth = call(DELETE_TOOL, withSynthetic(key, true));
+        assertEquals(Boolean.FALSE, synth.isError(), "PHASE #5: " + textOf(synth));
+        assertNull(metaStorageSyntheticRepository.findByNaturalKey(companyId, type, recKey),
+                "PHASE #5: the synthetic row is gone once addressed with synthetic=true");
     }
 
     /**

@@ -38,6 +38,8 @@ import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageService;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageSyntheticService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
@@ -88,7 +90,7 @@ import java.util.stream.Stream;
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
- * 16 tools total — read-mostly access to MH internals plus a few control operations:
+ * 18 tools total — read-mostly access to MH internals plus a few control operations:
  *
  *   mh_get_variable_info               — metadata for an internal Variable by id
  *   mh_get_variable_content            — content of an internal Variable, truncated to N bytes
@@ -106,6 +108,8 @@ import java.util.stream.Stream;
  *   mh_get_source_code                 — full SourceCode by id, including params YAML (truncated to maxParamsBytes)
  *   mh_import_bundle_from_git          — import a bundle straight from a git repo url + path
  *   mh_get_meta_storage_record         — one meta storage record by row id, from MH_META_STORAGE or MH_META_STORAGE_SYNTHETIC
+ *   mh_select_meta_storage_record      — the same record addressed by its natural key (companyId, type, recKey)
+ *   mh_delete_meta_storage_record      — delete one record addressed by its natural key
  *
  * <p>Error code prefix: {@code 01.260.} (unique to this class).
  *
@@ -140,6 +144,8 @@ public class MhMcpToolDefinitions {
     private final GateMonitoring gateMonitoring;
     private final MetaStorageRepository metaStorageRepository;
     private final MetaStorageSyntheticRepository metaStorageSyntheticRepository;
+    private final MetaStorageService metaStorageService;
+    private final MetaStorageSyntheticService metaStorageSyntheticService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -431,7 +437,9 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(LIST_SOURCE_CODES_TOOL, this::handleListSourceCodes),
                 new McpServerFeatures.SyncToolSpecification(GET_SOURCE_CODE_TOOL, this::handleGetSourceCode),
                 new McpServerFeatures.SyncToolSpecification(IMPORT_BUNDLE_FROM_GIT_TOOL, this::handleImportBundleFromGit),
-                new McpServerFeatures.SyncToolSpecification(GET_META_STORAGE_RECORD_TOOL, this::handleGetMetaStorageRecord)
+                new McpServerFeatures.SyncToolSpecification(GET_META_STORAGE_RECORD_TOOL, this::handleGetMetaStorageRecord),
+                new McpServerFeatures.SyncToolSpecification(SELECT_META_STORAGE_RECORD_TOOL, this::handleSelectMetaStorageRecord),
+                new McpServerFeatures.SyncToolSpecification(DELETE_META_STORAGE_RECORD_TOOL, this::handleDeleteMetaStorageRecord)
         ).map(MhMcpToolDefinitions::transportGuarded).toList();
     }
 
@@ -951,8 +959,11 @@ public class MhMcpToolDefinitions {
                 : metaStorageRepository.findById(id).map(MhMcpToolDefinitions::toDto);
 
         return dto.map(this::toCallToolResult)
-                .orElseGet(() -> errorResult("Record #" + id + " not found in "
-                        + (synthetic ? "MH_META_STORAGE_SYNTHETIC" : "MH_META_STORAGE")));
+                .orElseGet(() -> errorResult("Record #" + id + " not found in " + tableName(synthetic)));
+    }
+
+    private static String tableName(boolean synthetic) {
+        return synthetic ? "MH_META_STORAGE_SYNTHETIC" : "MH_META_STORAGE";
     }
 
     private static MetaStorageRecordDto toDto(MetaStorage m) {
@@ -961,6 +972,99 @@ public class MhMcpToolDefinitions {
 
     private static MetaStorageRecordDto toDto(MetaStorageSynthetic m) {
         return new MetaStorageRecordDto(true, m.id, m.version, m.companyId, m.type, m.recKey, m.gen, m.updatedAt, m.body);
+    }
+
+    // ==================== Tool 18: select one record by its natural key ====================
+
+    private static final Tool SELECT_META_STORAGE_RECORD_TOOL = Tool.builder("mh_select_meta_storage_record",
+                    objectSchema(
+                            Map.of("companyId", Map.of("type", "integer",
+                                            "description", "Owning company id - the COMPANY_ID column, and the first segment of the natural key"),
+                                    "type", Map.of("type", "string",
+                                            "description", "Entity kind - the TYPE column. A column value, never an enum; opaque to MH."),
+                                    "recKey", Map.of("type", "string",
+                                            "description", "Natural key within (companyId, type) - the REC_KEY column. Opaque to MH."),
+                                    "synthetic", Map.of("type", "boolean",
+                                            "description", "Which table to address: true -> MH_META_STORAGE_SYNTHETIC, false -> MH_META_STORAGE. Required, no default.")),
+                            List.of("companyId", "type", "recKey", "synthetic")))
+            .title("Select Meta Storage Record")
+            .description("Get one meta storage record addressed by its natural key (companyId, type, recKey) - the "
+                    + "same row mh_get_meta_storage_record returns, reached the way a caller normally knows it. "
+                    + "\u2757 Prefer this over the id form: (COMPANY_ID, TYPE, REC_KEY) is what the schema declares "
+                    + "UNIQUE and what an upsert lands on, so it is stable, while a row id is an internal allocation "
+                    + "from mh_gen_ids that nothing outside the table refers to. 'synthetic' chooses the table and has "
+                    + "no default. Returns the whole row including the row id, which is what makes this the way to "
+                    + "discover an id for the other tools. \u2757 'body' is opaque - returned exactly as stored, never "
+                    + "parsed by MH.")
+            .build();
+
+    private CallToolResult handleSelectMetaStorageRecord(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final Long companyId = getRequiredLong(arguments, "companyId");
+        final String type = getRequiredString(arguments, "type");
+        final String recKey = getRequiredString(arguments, "recKey");
+        final boolean synthetic = getRequiredBoolean(arguments, "synthetic");
+        log.info("01.260.460 MCP selectMetaStorageRecord(companyId={}, type={}, recKey={}, synthetic={})",
+                companyId, type, recKey, synthetic);
+
+        final MetaStorageRecordDto dto;
+        if (synthetic) {
+            final MetaStorageSynthetic row = metaStorageSyntheticRepository.findByNaturalKey(companyId, type, recKey);
+            dto = row==null ? null : toDto(row);
+        }
+        else {
+            final MetaStorage row = metaStorageRepository.findByNaturalKey(companyId, type, recKey);
+            dto = row==null ? null : toDto(row);
+        }
+        if (dto==null) {
+            return errorResult("No record for (companyId=" + companyId + ", type=" + type + ", recKey=" + recKey
+                    + ") in " + tableName(synthetic));
+        }
+        return toCallToolResult(dto);
+    }
+
+    // ==================== Tool 19: delete one record by its natural key ====================
+
+    private static final Tool DELETE_META_STORAGE_RECORD_TOOL = Tool.builder("mh_delete_meta_storage_record",
+                    objectSchema(
+                            Map.of("companyId", Map.of("type", "integer",
+                                            "description", "Owning company id - the COMPANY_ID column, and the first segment of the natural key"),
+                                    "type", Map.of("type", "string",
+                                            "description", "Entity kind - the TYPE column. A column value, never an enum; opaque to MH."),
+                                    "recKey", Map.of("type", "string",
+                                            "description", "Natural key within (companyId, type) - the REC_KEY column. Opaque to MH."),
+                                    "synthetic", Map.of("type", "boolean",
+                                            "description", "Which table to address: true -> MH_META_STORAGE_SYNTHETIC, false -> MH_META_STORAGE. Required, no default.")),
+                            List.of("companyId", "type", "recKey", "synthetic")))
+            .title("Delete Meta Storage Record")
+            .description("Delete the one meta storage record addressed by its natural key (companyId, type, recKey). "
+                    + "\u2757 This DESTROYS data and there is no undo - MH keeps no history of a meta storage row, so a "
+                    + "deleted body is gone. Deleting by natural key rather than by row id is deliberate: the key is "
+                    + "what the caller reasoned about, whereas a stale row id could address a different record. "
+                    + "'synthetic' chooses the table and has no default. A key matching nothing is reported as "
+                    + "ok=false and changes nothing, so a repeated delete is safe. Goes through the same transactional "
+                    + "path a pipeline write uses.")
+            .build();
+
+    private CallToolResult handleDeleteMetaStorageRecord(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final Long companyId = getRequiredLong(arguments, "companyId");
+        final String type = getRequiredString(arguments, "type");
+        final String recKey = getRequiredString(arguments, "recKey");
+        final boolean synthetic = getRequiredBoolean(arguments, "synthetic");
+        log.info("01.260.480 MCP deleteMetaStorageRecord(companyId={}, type={}, recKey={}, synthetic={})",
+                companyId, type, recKey, synthetic);
+
+        // \u2757 Through the orchestrator, never the repository: it resolves the key to a row id OUTSIDE the
+        // transaction and hands only the id to the tx service, which is the rule every other write here follows.
+        final int deleted = synthetic
+                ? metaStorageSyntheticService.deleteByNaturalKey(companyId, type, recKey)
+                : metaStorageService.deleteByNaturalKey(companyId, type, recKey);
+
+        final String key = "(companyId=" + companyId + ", type=" + type + ", recKey=" + recKey + ") in " + tableName(synthetic);
+        return toCallToolResult(new OperationResultDto(deleted > 0, deleted > 0
+                ? "Deleted the record " + key
+                : "No record for " + key + " - nothing was deleted"));
     }
 
     // ==================== Utility methods ====================
