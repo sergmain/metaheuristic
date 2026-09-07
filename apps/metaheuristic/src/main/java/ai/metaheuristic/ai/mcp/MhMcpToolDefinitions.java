@@ -90,7 +90,7 @@ import java.util.stream.Stream;
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
- * 18 tools total — read-mostly access to MH internals plus a few control operations:
+ * 19 tools total — read-mostly access to MH internals plus a few control operations:
  *
  *   mh_get_variable_info               — metadata for an internal Variable by id
  *   mh_get_variable_content            — content of an internal Variable, truncated to N bytes
@@ -110,6 +110,7 @@ import java.util.stream.Stream;
  *   mh_get_meta_storage_record         — one meta storage record by row id, from MH_META_STORAGE or MH_META_STORAGE_SYNTHETIC
  *   mh_select_meta_storage_record      — the same record addressed by its natural key (companyId, type, recKey)
  *   mh_delete_meta_storage_record      — delete one record addressed by its natural key
+ *   mh_list_meta_storage_rec_keys      — every recKey for one (companyId, type), bodies unread
  *
  * <p>Error code prefix: {@code 01.260.} (unique to this class).
  *
@@ -347,6 +348,21 @@ public class MhMcpToolDefinitions {
     ) {}
 
     /**
+     * The recKeys of one {@code (companyId, type)}, and nothing else.
+     *
+     * <p>❗ Carries no bodies by design. This is the selection step that feeds a batch splitter: the
+     * caller decides which keys it wants and fetches those payloads afterwards, so shipping every
+     * body here would defeat the point of the query.
+     */
+    public record MetaStorageRecKeysDto(
+            boolean synthetic,
+            Long companyId,
+            String type,
+            int count,
+            List<String> recKeys
+    ) {}
+
+    /**
      * Transport-boundary guard - applied to EVERY tool spec in {@link #getAllToolSpecifications()}.
      *
      * <p>The MCP SDK builds the JSON-RPC error frame straight from a thrown exception's
@@ -439,7 +455,8 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(IMPORT_BUNDLE_FROM_GIT_TOOL, this::handleImportBundleFromGit),
                 new McpServerFeatures.SyncToolSpecification(GET_META_STORAGE_RECORD_TOOL, this::handleGetMetaStorageRecord),
                 new McpServerFeatures.SyncToolSpecification(SELECT_META_STORAGE_RECORD_TOOL, this::handleSelectMetaStorageRecord),
-                new McpServerFeatures.SyncToolSpecification(DELETE_META_STORAGE_RECORD_TOOL, this::handleDeleteMetaStorageRecord)
+                new McpServerFeatures.SyncToolSpecification(DELETE_META_STORAGE_RECORD_TOOL, this::handleDeleteMetaStorageRecord),
+                new McpServerFeatures.SyncToolSpecification(LIST_META_STORAGE_REC_KEYS_TOOL, this::handleListMetaStorageRecKeys)
         ).map(MhMcpToolDefinitions::transportGuarded).toList();
     }
 
@@ -1065,6 +1082,41 @@ public class MhMcpToolDefinitions {
         return toCallToolResult(new OperationResultDto(deleted > 0, deleted > 0
                 ? "Deleted the record " + key
                 : "No record for " + key + " - nothing was deleted"));
+    }
+
+    // ==================== Tool 20: every recKey of one (companyId, type) ====================
+
+    private static final Tool LIST_META_STORAGE_REC_KEYS_TOOL = Tool.builder("mh_list_meta_storage_rec_keys",
+                    objectSchema(
+                            Map.of("companyId", Map.of("type", "integer",
+                                            "description", "Owning company id - the COMPANY_ID column"),
+                                    "type", Map.of("type", "string",
+                                            "description", "Entity kind - the TYPE column. A column value, never an enum; opaque to MH."),
+                                    "synthetic", Map.of("type", "boolean",
+                                            "description", "Which table to read: true -> MH_META_STORAGE_SYNTHETIC, false -> MH_META_STORAGE. Required, no default.")),
+                            List.of("companyId", "type", "synthetic")))
+            .title("List Meta Storage Rec Keys")
+            .description("List every recKey stored under one (companyId, type), ordered by recKey so a run is "
+                    + "reproducible. \u2757 Bodies are NOT read - this is the selection step, and the payload for a "
+                    + "chosen key is fetched afterwards with mh_select_meta_storage_record. Use it to discover what a "
+                    + "type actually holds before addressing anything: the store enumerates itself, so no registry "
+                    + "lists these keys anywhere else. A (companyId, type) that has never been written is an empty "
+                    + "list with count 0, not an error - a type only exists by virtue of something having been "
+                    + "written under it.")
+            .build();
+
+    private CallToolResult handleListMetaStorageRecKeys(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final Long companyId = getRequiredLong(arguments, "companyId");
+        final String type = getRequiredString(arguments, "type");
+        final boolean synthetic = getRequiredBoolean(arguments, "synthetic");
+        log.info("01.260.500 MCP listMetaStorageRecKeys(companyId={}, type={}, synthetic={})", companyId, type, synthetic);
+
+        final List<String> recKeys = synthetic
+                ? metaStorageSyntheticService.listKeys(companyId, type)
+                : metaStorageService.listKeys(companyId, type);
+
+        return toCallToolResult(new MetaStorageRecKeysDto(synthetic, companyId, type, recKeys.size(), recKeys));
     }
 
     // ==================== Utility methods ====================

@@ -71,6 +71,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
     private static final String TOOL_NAME = "mh_get_meta_storage_record";
     private static final String SELECT_TOOL = "mh_select_meta_storage_record";
     private static final String DELETE_TOOL = "mh_delete_meta_storage_record";
+    private static final String KEYS_TOOL = "mh_list_meta_storage_rec_keys";
 
     /** Map.of takes no varargs past a point and the flag is the only part that varies per call. */
     private static Map<String, Object> withSynthetic(Map<String, Object> key, boolean synthetic) {
@@ -260,6 +261,74 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         assertEquals(Boolean.FALSE, synth.isError(), "PHASE #5: " + textOf(synth));
         assertNull(metaStorageSyntheticRepository.findByNaturalKey(companyId, type, recKey),
                 "PHASE #5: the synthetic row is gone once addressed with synthetic=true");
+    }
+
+    /**
+     * The key listing is the selection step a batch splitter runs on, so what it must get right is the
+     * SET it returns: scoped to one (companyId, type), scoped to one table, ordered, and empty rather
+     * than absent when the type has never been written.
+     */
+    @Test
+    public void test_listRecKeysIsScopedOrderedAndBodyFree() {
+
+        final Long companyId = SharedItEnv.uniqueLong();
+        final String type = "mcp-keys";
+        // prefixes make the expected ORDER BY recKey outcome deterministic while the suffix keeps
+        // the keys unique on the shared DB
+        final String first = "a-" + SharedItEnv.uniqueCode("keys") + "@example.com";
+        final String second = "b-" + SharedItEnv.uniqueCode("keys") + "@example.com";
+        final String otherTypeKey = "c-" + SharedItEnv.uniqueCode("keys") + "@example.com";
+        final String syntheticOnly = "d-" + SharedItEnv.uniqueCode("keys") + "@example.com";
+
+        // PHASE #1: two records of the type asked about, one of a neighbouring type, and one that
+        // exists only in the other table
+        metaStorageService.upsert(companyId, List.of(
+                new MetaStorageData.Record(type, second, "body-2"),
+                new MetaStorageData.Record(type, first, "body-1"),
+                new MetaStorageData.Record("mcp-keys-other", otherTypeKey, "body-3")));
+        metaStorageSyntheticService.upsert(companyId, List.of(new MetaStorageData.Record(type, syntheticOnly, "body-4")));
+
+        // PHASE #2: exactly the two keys of that type in that table
+        final CallToolResult plain = call(KEYS_TOOL, Map.of("companyId", companyId, "type", type, "synthetic", false));
+        assertEquals(Boolean.FALSE, plain.isError(), "PHASE #2: " + textOf(plain));
+        final String plainJson = textOf(plain);
+        assertTrue(plainJson.contains("\"count\" : 2"), "PHASE #2: two keys of this type: " + plainJson);
+        assertTrue(plainJson.contains(first), "PHASE #2: first key present: " + plainJson);
+        assertTrue(plainJson.contains(second), "PHASE #2: second key present: " + plainJson);
+        assertFalse(plainJson.contains(otherTypeKey),
+                "PHASE #2: a neighbouring type must not leak in: " + plainJson);
+        assertFalse(plainJson.contains(syntheticOnly),
+                "PHASE #2: the synthetic table must not leak in: " + plainJson);
+
+        // PHASE #3: ordered by recKey - the repository does it, and a run being reproducible depends on it
+        assertTrue(plainJson.indexOf(first) < plainJson.indexOf(second),
+                "PHASE #3: keys must come back ordered by recKey: " + plainJson);
+
+        // PHASE #4: bodies stay unread. That is the whole point of the query - shipping them here would
+        // make the selection step as expensive as the fetch it exists to avoid.
+        assertFalse(plainJson.contains("body-1"), "PHASE #4: no bodies in a key listing: " + plainJson);
+        assertFalse(plainJson.contains("body-2"), "PHASE #4: no bodies in a key listing: " + plainJson);
+
+        // PHASE #5: the flag scopes the listing the same way it scopes every other tool here
+        final CallToolResult synthetic = call(KEYS_TOOL, Map.of("companyId", companyId, "type", type, "synthetic", true));
+        assertEquals(Boolean.FALSE, synthetic.isError(), "PHASE #5: " + textOf(synthetic));
+        assertTrue(textOf(synthetic).contains("\"count\" : 1"), "PHASE #5: " + textOf(synthetic));
+        assertTrue(textOf(synthetic).contains(syntheticOnly), "PHASE #5: " + textOf(synthetic));
+        assertFalse(textOf(synthetic).contains(first), "PHASE #5: the plain table must not leak in: " + textOf(synthetic));
+
+        // PHASE #6: a type never written is an empty list, NOT an error - a type exists only by virtue
+        // of something having been written under it, so asking about one is a legitimate empty answer
+        final CallToolResult never = call(KEYS_TOOL,
+                Map.of("companyId", companyId, "type", "never-written", "synthetic", false));
+        assertEquals(Boolean.FALSE, never.isError(), "PHASE #6: an empty listing is not an error");
+        assertTrue(textOf(never).contains("\"count\" : 0"), "PHASE #6: " + textOf(never));
+
+        // PHASE #7: and another company sees none of it
+        final CallToolResult otherCompany = call(KEYS_TOOL,
+                Map.of("companyId", SharedItEnv.uniqueLong(), "type", type, "synthetic", false));
+        assertEquals(Boolean.FALSE, otherCompany.isError(), "PHASE #7: " + textOf(otherCompany));
+        assertTrue(textOf(otherCompany).contains("\"count\" : 0"),
+                "PHASE #7: companies are isolated: " + textOf(otherCompany));
     }
 
     /**
