@@ -23,6 +23,8 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
+import ai.metaheuristic.ai.dispatcher.beans.MetaStorage;
+import ai.metaheuristic.ai.dispatcher.beans.MetaStorageSynthetic;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -39,6 +41,8 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageSyntheticRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
@@ -84,7 +88,7 @@ import java.util.stream.Stream;
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
- * 15 tools total — read-mostly access to MH internals plus a few control operations:
+ * 16 tools total — read-mostly access to MH internals plus a few control operations:
  *
  *   mh_get_variable_info               — metadata for an internal Variable by id
  *   mh_get_variable_content            — content of an internal Variable, truncated to N bytes
@@ -101,6 +105,7 @@ import java.util.stream.Stream;
  *   mh_execution_gate_status           — what work is being withheld from Processors, and why
  *   mh_get_source_code                 — full SourceCode by id, including params YAML (truncated to maxParamsBytes)
  *   mh_import_bundle_from_git          — import a bundle straight from a git repo url + path
+ *   mh_get_meta_storage_record         — one meta storage record by row id, from MH_META_STORAGE or MH_META_STORAGE_SYNTHETIC
  *
  * <p>Error code prefix: {@code 01.260.} (unique to this class).
  *
@@ -133,6 +138,8 @@ public class MhMcpToolDefinitions {
     private final UserContextService userContextService;
     private final ExecutionGateService executionGateService;
     private final GateMonitoring gateMonitoring;
+    private final MetaStorageRepository metaStorageRepository;
+    private final MetaStorageSyntheticRepository metaStorageSyntheticRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -312,6 +319,28 @@ public class MhMcpToolDefinitions {
     ) {}
 
     /**
+     * One meta storage row, from either table.
+     *
+     * <p>{@code synthetic} reports which table it was read from, so a result copied out of its call
+     * still names its own source - the two tables carry identical columns and independent id
+     * sequences, so the row alone cannot say where it came from.
+     *
+     * <p>❗ {@code body} is returned exactly as stored. MH never parsed it on the way in and does not
+     * parse it here: its encoding belongs to whoever wrote the record.
+     */
+    public record MetaStorageRecordDto(
+            boolean synthetic,
+            Long id,
+            @Nullable Integer version,
+            @Nullable Long companyId,
+            @Nullable String type,
+            @Nullable String recKey,
+            long gen,
+            long updatedAt,
+            @Nullable String body
+    ) {}
+
+    /**
      * Transport-boundary guard - applied to EVERY tool spec in {@link #getAllToolSpecifications()}.
      *
      * <p>The MCP SDK builds the JSON-RPC error frame straight from a thrown exception's
@@ -401,7 +430,8 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(GET_EXEC_CONTEXT_VARIABLE_STATE_TOOL, this::handleGetExecContextVariableState),
                 new McpServerFeatures.SyncToolSpecification(LIST_SOURCE_CODES_TOOL, this::handleListSourceCodes),
                 new McpServerFeatures.SyncToolSpecification(GET_SOURCE_CODE_TOOL, this::handleGetSourceCode),
-                new McpServerFeatures.SyncToolSpecification(IMPORT_BUNDLE_FROM_GIT_TOOL, this::handleImportBundleFromGit)
+                new McpServerFeatures.SyncToolSpecification(IMPORT_BUNDLE_FROM_GIT_TOOL, this::handleImportBundleFromGit),
+                new McpServerFeatures.SyncToolSpecification(GET_META_STORAGE_RECORD_TOOL, this::handleGetMetaStorageRecord)
         ).map(MhMcpToolDefinitions::transportGuarded).toList();
     }
 
@@ -888,6 +918,51 @@ public class MhMcpToolDefinitions {
         ));
     }
 
+    // ==================== Tool 17: get one meta storage record by row id ====================
+
+    private static final Tool GET_META_STORAGE_RECORD_TOOL = Tool.builder("mh_get_meta_storage_record",
+                    objectSchema(
+                            Map.of("id", Map.of("type", "integer",
+                                            "description", "Numeric row id of the record - the ID column of whichever table 'synthetic' selects"),
+                                    "synthetic", Map.of("type", "boolean",
+                                            "description", "Which table to read: true -> MH_META_STORAGE_SYNTHETIC, false -> MH_META_STORAGE. Required, no default.")),
+                            List.of("id", "synthetic")))
+            .title("Get Meta Storage Record")
+            .description("Get one meta storage record by its row id. 'synthetic' chooses the table and has no default: "
+                    + "true reads MH_META_STORAGE_SYNTHETIC, false reads MH_META_STORAGE. The two tables carry identical "
+                    + "columns and allocate ids from independent sequences, so the same id addresses a DIFFERENT row in "
+                    + "each - a wrong flag returns another record rather than an error, which is why the returned object "
+                    + "repeats the flag back. Returns the whole row: companyId, type, recKey, body, gen, version and "
+                    + "updatedAt. \u2757 'body' is opaque - it is returned exactly as stored and was never parsed by MH, "
+                    + "so its encoding is whatever the writer chose. The natural key of a record is (companyId, type, "
+                    + "recKey); this tool addresses by row id, which is what a log line or a foreign reference carries.")
+            .build();
+
+    private CallToolResult handleGetMetaStorageRecord(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final Long id = getRequiredLong(arguments, "id");
+        final boolean synthetic = getRequiredBoolean(arguments, "synthetic");
+        log.info("01.260.440 MCP getMetaStorageRecord(id={}, synthetic={})", id, synthetic);
+
+        // MetaStorage and MetaStorageSynthetic share every column but no supertype, so the branch maps
+        // each on its own side and nothing after this line has to know which table was read.
+        final Optional<MetaStorageRecordDto> dto = synthetic
+                ? metaStorageSyntheticRepository.findById(id).map(MhMcpToolDefinitions::toDto)
+                : metaStorageRepository.findById(id).map(MhMcpToolDefinitions::toDto);
+
+        return dto.map(this::toCallToolResult)
+                .orElseGet(() -> errorResult("Record #" + id + " not found in "
+                        + (synthetic ? "MH_META_STORAGE_SYNTHETIC" : "MH_META_STORAGE")));
+    }
+
+    private static MetaStorageRecordDto toDto(MetaStorage m) {
+        return new MetaStorageRecordDto(false, m.id, m.version, m.companyId, m.type, m.recKey, m.gen, m.updatedAt, m.body);
+    }
+
+    private static MetaStorageRecordDto toDto(MetaStorageSynthetic m) {
+        return new MetaStorageRecordDto(true, m.id, m.version, m.companyId, m.type, m.recKey, m.gen, m.updatedAt, m.body);
+    }
+
     // ==================== Utility methods ====================
 
     private static String getRequiredString(Map<String, Object> arguments, String key) {
@@ -919,6 +994,29 @@ public class MhMcpToolDefinitions {
             return n.intValue();
         }
         return Integer.parseInt(value.toString());
+    }
+
+    /**
+     * \u2757 Deliberately NOT {@code Boolean.parseBoolean}, which answers false to everything that is not
+     * the word "true" - a typo would silently become "read the non-synthetic table" and the caller
+     * would get a real record from the wrong place. An unrecognized value is rejected by name instead.
+     */
+    private static boolean getRequiredBoolean(Map<String, Object> arguments, String key) {
+        Object value = arguments.get(key);
+        if (value == null) {
+            throw new IllegalArgumentException("Required parameter '" + key + "' is missing");
+        }
+        if (value instanceof Boolean b) {
+            return b;
+        }
+        final String s = value.toString().strip();
+        if ("true".equalsIgnoreCase(s)) {
+            return true;
+        }
+        if ("false".equalsIgnoreCase(s)) {
+            return false;
+        }
+        throw new IllegalArgumentException("Parameter '" + key + "' must be a boolean, was: " + value);
     }
 
     private static Map<String, Object> objectSchema(Map<String, Object> properties, List<String> required) {
