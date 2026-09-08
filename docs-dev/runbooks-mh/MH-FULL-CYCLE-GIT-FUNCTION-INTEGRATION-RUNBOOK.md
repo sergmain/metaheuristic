@@ -126,11 +126,24 @@ validates — a malformed envelope fails with `01.942.170`, a nonsensical body d
 therefore drift with no consequence, and the `.mhsc` is authoritative. The python below writes the type
 anyway, because a reader of the payload should not have to know that rule to understand the file.
 
-### 1.3 The name of the type — `mh-verify.git-cycle`
+### 1.3 What a meta-table is, and the name of this one
 
-The `TYPE` column of `MH_META_STORAGE` is `VARCHAR(50)`, and it is a **column value, never an enum**: a
-new kind of thing is a new string, with no DDL, no recompile and no restart. A type exists by virtue of
-something having been written under it, so choosing one is naming, not registration.
+❗ **A meta-table is the record or records in `MH_META_STORAGE` carrying one specific value of `TYPE`.
+`TYPE` is the name of the meta-table.**
+
+That is the whole definition, and everything awkward about the term follows from it. There is no table
+object anywhere: no DDL creates a meta-table, no registry lists one, nothing is dropped when the last
+row goes. A meta-table begins to exist the moment a row is written under its name and stops existing
+when the last such row is deleted — which is why `mh_list_meta_storage_rec_keys` answers a name nothing
+has ever used with an empty list and count 0 rather than an error. Inside one company, `REC_KEY` is the
+key of the meta-table and `BODY` is its single, opaque column.
+
+💡 So "create the meta-table" is not an action anyone performs, and "the meta-table is empty" and "the
+meta-table does not exist" are the same sentence. The only operations are writing a row under a name and
+reading the rows that carry it.
+
+The `TYPE` column is `VARCHAR(50)`, and it is a **column value, never an enum**: a new kind of thing is
+a new string, with no DDL, no recompile and no restart. Choosing one is naming, not registration.
 
 This runbook writes under:
 
