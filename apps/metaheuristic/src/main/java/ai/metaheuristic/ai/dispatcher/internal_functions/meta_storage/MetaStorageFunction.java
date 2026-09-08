@@ -60,7 +60,11 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
  *   keys        input variable holding one recKey per line   (optional, action=select)
  *   output      name of the output variable                  (required, action=select)
  *   content     input variable holding what to write         (required, action=upsert)
+ *   synthetic   true -> MH_META_STORAGE_SYNTHETIC             (optional, both actions)
  * </pre>
+ *
+ * <p>{@code synthetic} routes BOTH actions to the same table. Omitting it on one of a store/select
+ * pair is the way to get a well-formed empty answer out of a store that really does hold the record.
  *
  * <p><b>Wire format.</b> {@code select} writes a JSON array of {@code {type, recKey, body}} and
  * {@code upsert} reads the same shape. ❗ {@code body} stays a STRING throughout - MH transports it
@@ -157,8 +161,16 @@ public class MetaStorageFunction implements InternalFunction {
             throw new InternalFunctionException(meta_not_found, "01.942.080 meta '" + OUTPUT + "' wasn't found or it's blank");
         }
 
+        final boolean synthetic = MetaUtils.isTrue(taskParamsYaml.task.metas, SYNTHETIC);
         final List<String> recKeys = readKeys(simpleExecContext, taskContextId, taskParamsYaml);
-        final List<MetaStorageData.Record> records = metaStorageService.select(simpleExecContext.companyId, type, recKeys);
+        // The same meta that routes an upsert routes the read, and for the same reason: the two
+        // tables carry identical columns and allocate ids independently, so nothing in a recKey or a
+        // type distinguishes them. Only the process says which store it meant. Reading the other one
+        // is not an error at any layer below - it returns a well-formed answer out of the wrong
+        // table, or an empty one - so the branch has to be here.
+        final List<MetaStorageData.Record> records = synthetic
+            ? metaStorageSyntheticService.select(simpleExecContext.companyId, type, recKeys)
+            : metaStorageService.select(simpleExecContext.companyId, type, recKeys);
 
         final TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.stream()
             .filter(o -> o.name.equals(outputName))
@@ -170,7 +182,7 @@ public class MetaStorageFunction implements InternalFunction {
         VariableSyncService.getWithSyncVoid(outputVariable.id,
             () -> variableTxService.storeStringInVariable(simpleExecContext.execContextId, taskId, outputVariable, json));
 
-        log.info("01.942.120 select type: {}, keys: {}, records: {}", type, recKeys==null ? "<all>" : recKeys.size(), records.size());
+        log.info("01.942.120 select type: {}, synthetic: {}, keys: {}, records: {}", type, synthetic, recKeys==null ? "<all>" : recKeys.size(), records.size());
     }
 
     private void processUpsert(

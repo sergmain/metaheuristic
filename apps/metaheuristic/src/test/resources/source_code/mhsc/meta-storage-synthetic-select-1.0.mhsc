@@ -1,0 +1,11 @@
+source "test-meta-storage-synthetic-select-1.0" {
+    fetch := internal mh.meta-storage {
+        name "select every record of one type from the synthetic store"
+        meta action = "select",
+             type = "test.meta-storage-synthetic",
+             synthetic = "true",
+             output = "fetched"
+        -> fetched: ext=".json"
+        timeout 60
+    }
+}
