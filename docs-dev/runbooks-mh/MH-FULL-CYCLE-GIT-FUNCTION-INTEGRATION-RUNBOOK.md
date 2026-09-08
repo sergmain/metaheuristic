@@ -55,6 +55,17 @@ reconnects, and a tool whose arguments changed is still validated against the OL
 so a call can be rejected before it is ever sent, or an argument the server no longer reads can be
 demanded. Neither is a Dispatcher problem and no amount of restarting MH fixes it.
 
+⚠️ **The tool list can also vanish MID-RUN.** Observed: `mh_import_bundle_from_git` answered *"not
+available in this turn"* between scenario #1 finishing and scenario #2 starting, and every later attempt
+to resolve any `mh_*` tool came back empty. Nothing on the Dispatcher had changed, and nothing was left
+half-written.
+
+❗ What that costs is bounded, and knowing so is the point: everything the runbook has already done is
+persisted OUTSIDE the session. The bundle is pushed, the Functions are registered, a FINISHED
+ExecContext stays FINISHED, the meta storage row is written. ✅ Reconnect the client and resume at the
+next unrun step. ❌ Do NOT restart from §2 for a scenario that already passed — re-importing forces a
+code bump §4.1 says is not owed, and for scenario #2 it destroys the very property §5.3 measures.
+
 ❗ **Check the Processor's envs BEFORE authoring anything.** The `env` in `mh-function.yaml` must be a
 code the Processor's `env.yaml` defines. `python` and `python-3` are different codes, and getting this
 wrong costs a full round trip — see §6.
@@ -406,7 +417,7 @@ verify-git-cycle/payload/fn-check-git/
 ```yaml
 version: 3
 function:
-  code: mh-verify.hello-git_1.3
+  code: mh-verify.hello-git_1.2
   type: mh-verify.hello
   env: python-3
   sourcing: git
@@ -426,7 +437,7 @@ function:
 ```yaml
 version: 3
 function:
-  code: mh-verify.check-git_1.3
+  code: mh-verify.check-git_1.0
   type: mh-verify.check
   env: python-3
   sourcing: git
@@ -457,10 +468,11 @@ meta-storage leg is unchanged — same function, same metas, same type:
 ```
 source "mh-verify-git-cycle-2-1.2" {
 
-    hello := mh-verify.hello-git_1.3 {
+    hello := mh-verify.hello-git_1.2 {
         name "External Function #1 — produce the response"
         -> response: ext=".json",
-           recKeys: ext=".txt"
+           recKeys: ext=".txt",
+           payloadRev: ext=".txt"
         timeout 60
     }
 
@@ -484,7 +496,7 @@ source "mh-verify-git-cycle-2-1.2" {
         timeout 60
     }
 
-    check := mh-verify.check-git_1.3 {
+    check := mh-verify.check-git_1.0 {
         name "External Function #2 — consume output#2"
         <- output2
         -> verdict: ext=".txt"
@@ -493,7 +505,47 @@ source "mh-verify-git-cycle-2-1.2" {
 }
 ```
 
-The two payload scripts are scenario #1's, with `scenario-1-` replaced by `scenario-2-` in the producer.
+The two payload scripts are scenario #1's, with `scenario-1-` replaced by `scenario-2-` in the producer,
+plus one addition in the producer that scenario #1 has no use for — a hard-coded revision marker and a
+third output variable carrying it:
+
+```python
+# ❗ THE REVISION MARKER — bump this literal before every scenario #2 run.
+PAYLOAD_MARKER = 'rev-1'
+
+...
+
+with open(artifact('payloadRev'), 'w', encoding='utf-8') as f:
+    f.write(PAYLOAD_MARKER)
+```
+
+❗ **The script knows NOTHING about its own sourcing, and must not.** It does not read the sha, does not
+inspect the path it was materialized into, and cannot tell git delivery from a bundle. A Task on the
+Processor is never told how its Function was sourced — that is correct behaviour, not a gap to be
+patched. The marker is opaque payload content: a value that changes when the file changes, and nothing
+more.
+
+💡 Which is exactly why it proves the thing. An inference the script drew about its own origin would be
+the script's claim; a literal it merely copies out is evidence. If a new value reaches the Dispatcher,
+the only way it got there is that the new commit ran.
+
+❗ **These two Function codes are registered ONCE and never move again.** That is not a convention of
+this runbook — it is the property scenario #2 exists to demonstrate, stated in
+`java/legal/docs/descriptions/MH-GIT-DELIVERY-FUNCTION-DESCRIPTION.md` §5: a git-sourced Function keeps
+one `functionCode` forever, changes arrive as scripts rather than as `mh-function.yaml`, and **no
+version-bump treadmill arises**.
+
+Which is why `mh-verify.hello-git_1.2` keeps the code it already carried while scenario #1 moved to
+`_1.3`: its descriptor did not change, so its registration did not either — even though its payload
+script was rewritten from top to bottom in the same commit. `mh-verify.check-git_1.0` is a first
+registration, and should still read `_1.0` after any number of iterations.
+
+❗ **Bumping these codes between iterations does not merely waste effort — it destroys the test.** A
+fresh code each round proves only that a NEW git-sourced Function runs. The claim scenario #2 is making
+is stronger and is only observable when the code stays put: that an EXISTING, untouched registration
+follows the repo. Change a payload script, push, create a new ExecContext, and the same registered code
+must run the new sha. If that step ever needs a re-import, something is wrong with the system, not with
+the naming.
 
 ---
 
@@ -515,9 +567,67 @@ checker still requires the SourceCode uid to move, because the `.mhsc` that name
 is itself a new document — so in practice a change anywhere costs a uid bump plus the code bump of
 whichever Function actually changed.
 
+❗ **Everything above is scenario #1's iteration loop.** Scenario #2 has a different and much shorter
+one, because a git-sourced payload is not part of what was published. §4.1 states both.
+
 ❗ For a git-sourced Function, editing the payload script alone changes nothing that MH can see: the
 descriptor pins `HEAD`, `HEAD` is resolved per ExecContext, and the code did not move. A **new
 ExecContext** picks up the new sha; a re-import does not, and a re-run of the old ExecContext does not.
+
+### 4.1 ❗ What actually forces a bump
+
+Two qualifications on the rule above, both easy to over-apply into busywork.
+
+**"Published" means published to THIS Dispatcher, not committed to git.** Immutability is a property of
+the row the Dispatcher already holds. A code or a uid that has never been imported here is free however
+many times it appears in the repo's history, and re-using it is ordinary iteration on an unpublished
+artifact rather than a violation. ❗ Check rather than assume — `mh_list_source_codes` is the whole
+answer for a uid, and a `560.300` that cannot fire is not a constraint.
+
+**What forces a CODE bump depends on `sourcing`, because the two sourcings publish different artifacts.**
+
+| | sourcing | what is published | payload-script edit | `mh-function.yaml` edit |
+|---|---|---|---|---|
+| **scenario #1** | `dispatcher` | descriptor **and** payload — the script travels inside the bundle zip | ❗ forces a bump | forces a bump |
+| **scenario #2** | `git` | descriptor **only** — the payload is never packaged | no bump; a NEW ExecContext picks up the new sha | ❗ forces a bump |
+
+The loops that follow from that are different lengths, and this is the practical form of the whole rule:
+
+| to change a Function's script | scenario #1 (`dispatcher`) | scenario #2 (`git`) |
+|---|---|---|
+| edit the script | ✅ | ✅ |
+| bump `code` in `mh-function.yaml` | ✅ required | ❌ **never** |
+| update the `.mhsc` to name the new code | ✅ required | ❌ never |
+| bump the SourceCode uid | ✅ required | ❌ never |
+| `git push` | ✅ | ✅ |
+| re-import the bundle | ✅ required | ❌ **never** |
+| create a NEW ExecContext | ✅ | ✅ — this is what picks up the new sha |
+
+⚠️ **So the two scenarios are not symmetric, and reading them as symmetric is the mistake to avoid.**
+Rewriting the producer script obliges scenario #1 to bump, because for a dispatcher-sourced Function the
+script IS part of what was published. It obliges scenario #2 to nothing — its payload was never in a
+bundle. Scenario #2 moves only when its own `mh-function.yaml` moves.
+
+The repo's own history holds one bump of each kind, and telling them apart is the whole of this rule:
+
+- `_1.0` -> `_1.1`, commit *"env is python-3"* — an `env: python` -> `python-3` correction, which is an
+  `mh-function.yaml` edit. ✅ **Owed by both scenarios.** A descriptor change is the one thing that does
+  force a git-sourced Function to move.
+- `_1.1` -> `_1.2`, commit *"for a clean re-run"* — nothing changed but the code itself. ❌ **Owed by
+  neither**, and by scenario #2 least of all. It is the reflex this section exists to interrupt: a bump
+  performed because the previous one was, rather than because something published actually changed.
+
+❗ **Do NOT bump the two scenarios in step, and do not reach for symmetry here.** An earlier revision of
+this section called a matching bump harmless — *"a fresh code always imports"* — and that was wrong in
+the way that matters most. Registering a fresh code each iteration means scenario #2 only ever
+demonstrates that a NEW git-sourced Function runs. It never demonstrates the claim the scenario is FOR:
+that an existing, untouched registration follows the repo across a push. That claim is observable only
+while the code stays put, so a cosmetic bump silently converts the strongest test in this runbook into
+the weakest one — and leaves it green either way, which is why nothing catches it.
+
+💡 The two scenarios therefore drift apart over iterations, by design. Scenario #1's codes climb every
+time its script changes; scenario #2's stay where they were first registered. ❗ Codes that no longer
+match across the scenarios is the CORRECT steady state, not drift to be tidied up.
 
 ---
 
@@ -534,9 +644,16 @@ cannot be imported into the management company (#1), where SourceCodes are commo
 appear on no ordinary company's source-codes page.
 
 ```
-mh_list_source_codes                            -> note the id of the new uid
-mh_create_exec_context(sourceCodeId=<id>)       -> returns execContextId, stateName STARTED
+mh_list_source_codes    -> note the id AND the companyId of the row carrying the new uid
+
+mh_create_exec_context(companyId=<companyId>, sourceCodeId=<id>)
+                        -> returns execContextId, stateName STARTED
 ```
+
+❗ `companyId` is REQUIRED on `mh_create_exec_context` and has no default. Take it from
+`mh_list_source_codes`, which carries it on every row; `mh_import_bundle_from_git` also echoes it back in
+its own answer. ⚠️ It cannot come from `mh_get_exec_context_info` — that call needs an execContextId,
+which does not exist until this one has already succeeded.
 
 `createExecContextAndStart` already leaves it STARTED;
 `mh_exec_context_target_state(execContextId=<id>, state="STARTED")` is only for one that isn't. Then poll:
@@ -546,14 +663,26 @@ mh_get_exec_context_info(execContextId=<id>)          -> stateName, completedOn,
 mh_get_exec_context_task_state(execContextTaskStateId=<id from above>)
 ```
 
-✅ **Pass:** `stateName: FINISHED` and every entry in `states:` is `OK`. Nothing in `ERROR`. Four Tasks,
-not one — a run that finishes with fewer has skipped part of the chain.
+✅ **Pass:** `stateName: FINISHED` and every entry in `states:` is `OK`. Nothing in `ERROR`. **Five**
+entries, not one — the four processes of the chain plus one more. A run that finishes with fewer has
+skipped part of the chain.
+
+💡 The fifth entry is not declared anywhere in the `.mhsc`: MH appends its own finishing Task, and
+`mh_get_task_info` on it reports `functionCode: mh.finish` with `coreId: null`. Like the two
+meta-storage Tasks it runs inside the Dispatcher, and it is what carries the ExecContext to `FINISHED`.
+Counting the processes in the `.mhsc` and expecting that many Tasks is therefore off by one, every time.
+
+⚠️ **Poll more than once before reading anything into a partial result.** A measured scenario #1 run
+reached `FINISHED` about 38 seconds after creation; at the 20-second mark it read
+`1: OK, 2: OK, 3: OK, 4: NONE, 5: PRE_INIT`, because the Processor was still fetching the checker
+Function. ❗ `NONE` on a Task whose Function has just been published is the ordinary shape of a run in
+progress, not a gate problem — §6 is for a `NONE` that PERSISTS across several polls.
 
 ⚠️ `mh_get_exec_context_task_state` takes the **execContextTaskStateId** from the previous call, not the
 execContextId. They happen to be equal on a clean database, which hides a wrong argument until they
 diverge.
 
-💡 Keep the `companyId` from `mh_get_exec_context_info`. Every meta-storage tool takes it, and it is the
+💡 Keep the `companyId`. Every meta-storage tool takes it, and it is the
 first segment of the natural key — reading the wrong company's store returns an empty list rather than
 an error.
 
@@ -594,8 +723,15 @@ mh_get_task_info(taskId=<id>)
 For scenario #1 that path is under the unpacked bundle:
 
 ```
-processor\resources\<dispatcher>\function\mh-verify.hello-dispatcher_1.3\src\mh_verify_hello.py
+processor\resources\<dispatcher>\function\mh-verify.hello-dispatcher__1.3\src\mh_verify_hello.py
 ```
+
+❗ **Note the DOUBLED underscore, and do not correct it.** The directory is not the Function code — it is
+`ArtifactCommonUtils.normalizeCode` of the code. That mapping doubles an underscore and turns a colon
+into a single one (`a_b` -> `a__b`, `a:b` -> `a_b`), so the two can never collide on disk; it is pinned by
+`ArtifactCommonUtilsTest.test_normalizeCodeDoublesAnUnderscore`. Reading a path back, halve the
+underscores: `mh-verify.hello-dispatcher__1.3` is the Function `mh-verify.hello-dispatcher_1.3`.
+⚠️ Grepping the console for the code as written in `mh-function.yaml` therefore misses the path.
 
 For scenario #2 it is under the materialized commit, and the sha in it must be the revision pushed in
 §4 — that is the whole claim of git sourcing, that a payload never packaged into any bundle ran from a
@@ -605,13 +741,66 @@ pinned revision:
 processor\resources\git\<repo-code>\commits\<sha>\verify-git-cycle\payload\fn-hello-git\src\mh_verify_hello_git.py
 ```
 
-✅ Check the checker too: `mh-verify.check-git_1.3` must report the **same** `<sha>` as
-`mh-verify.hello-git_1.3`. Two shas in one ExecContext would mean `HEAD` was resolved per Task rather
+✅ Check the checker too: `mh-verify.check-git_1.0` must report the **same** `<sha>` as
+`mh-verify.hello-git_1.2`. Two shas in one ExecContext would mean `HEAD` was resolved per Task rather
 than per ExecContext.
 
 ⚠️ The two internal Tasks have no console of this kind — an internal Function runs inside the
 Dispatcher, so its evidence is the Dispatcher log (`01.942.120 select ...`, `01.942.220 upsert ...`) and
 the row itself, not a script path.
+
+### 5.3 ❗ Scenario #2 only: prove a NEW commit was used, with NOTHING re-registered
+
+§5.2 shows a sha in a path. This step shows that the sha **moved on its own** — which is the claim
+scenario #2 exists for and the one thing §5 and §5.2 cannot demonstrate from a single run. It needs two
+ExecContexts and one push between them.
+
+| | do | expect |
+|---|---|---|
+| 1 | run scenario #2 as per §5 | `payloadRev` = `rev-1` |
+| 2 | edit ONLY `PAYLOAD_MARKER` in `payload/fn-hello-git/src/mh_verify_hello_git.py` to `rev-2`; `git push` | — |
+| 3 | ❗ import NOTHING. Touch no `mh-function.yaml`, no `.mhsc`, no uid. | — |
+| 4 | `mh_create_exec_context` on the SAME sourceCodeId as step 1 | `payloadRev` = `rev-2` |
+
+✅ **Pass:** step 4 emits `rev-2` while `mh-verify.hello-git_1.2` is the same registered Function code
+throughout, never re-imported. `mh_get_task_info` on the two `hello` Tasks shows two different shas, and
+the second is what `git rev-parse HEAD` returns after step 2.
+
+❌ **Fail:** step 4 emits `rev-1`. The ExecContext resolved a stale revision — `HEAD` was pinned once and
+cached rather than resolved per ExecContext, and every later run of this SourceCode is running dead code.
+⚠️ Note this failure is otherwise INVISIBLE: the ExecContext is green, all five Tasks are `OK`, the
+meta-storage round trip passes, and §5.2 still shows a plausible sha. Only the marker separates the two
+outcomes.
+
+❗ **Read the stored VARIABLE, not the console.** Both carry the value, and they are different claims:
+the console is what the Function SAID about itself, the variable is what the Dispatcher RECEIVED and
+STORED. Only the second closes the loop, and it is the one to assert on.
+
+```
+mh_get_exec_context_info(execContextId=<id>)          -> execContextVariableStateId
+mh_get_exec_context_variable_state(execContextVariableStateId=<id>)
+        -> find the `hello` task, then the entry in `outs` with `nm: payloadRev` -> its `id`
+mh_get_variable_content(variableId=<id>)              -> content
+```
+
+A confirmed run of the second ExecContext:
+
+```
+outs: [{"id":10,"nm":"response",...},{"id":11,"nm":"recKeys",...},{"id":12,"nm":"payloadRev","i":true,"n":false}]
+mh_get_variable_content(variableId=12)  ->  content: "rev-2", returnedBytes: 5, truncated: false
+```
+
+💡 `i` (inited) and `n` (nullified) are worth reading on the way past: a variable that exists but was
+never written shows `i: false`, which is a different failure from one holding a stale value.
+
+⚠️ The console remains useful as corroboration — the Function prints `payloadRev=<value>` and the
+`functionExecResultsExcerpt` of the §5.2 `mh_get_task_info` call carries it with no extra lookup. Use it
+to cross-check, not as the assertion.
+
+💡 Step 3 is the whole point and is worth stating as a prohibition rather than an omission. Every
+instinct from scenario #1 says to bump and re-import; doing so here would make the run pass for the
+wrong reason — a freshly registered Function obviously runs its own code, which proves nothing about
+whether an untouched one follows the repo. §4.1 is the rule this step enforces.
 
 Repeat §5 for `verify-git-cycle/scenario-2`.
 
