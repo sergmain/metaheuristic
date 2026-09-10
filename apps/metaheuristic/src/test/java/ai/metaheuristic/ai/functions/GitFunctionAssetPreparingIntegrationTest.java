@@ -68,6 +68,11 @@ public class GitFunctionAssetPreparingIntegrationTest {
      * The bytes on disk are produced by {@code git archive}, which applies git's own end-of-line
      * conversion - so on a box where git delivers CRLF the extracted Function carries CRLF, and a
      * hard-coded LF makes the whole scenario fail for a reason that has nothing to do with what it tests.
+     *
+     * <p>That conversion is pinned off in setUp by a committed {@code .gitattributes} carrying
+     * {@code * -text}, which travels with the tree through fetch and archive. The extracted bytes are
+     * therefore exactly the bytes written here whatever {@code core.autocrlf} says on the host, and this
+     * constant is simply the content the test writes and expects - not a guess at what git will deliver.
      */
     private static final String EOL = System.lineSeparator();
 
@@ -92,6 +97,11 @@ public class GitFunctionAssetPreparingIntegrationTest {
             final StoredConfig cfg = git.getRepository().getConfig();
             cfg.setBoolean("uploadpack", null, "allowAnySHA1InWant", true);
             cfg.save();
+
+            // `git archive` honours the tree's own .gitattributes, so `* -text` disables git's EOL
+            // conversion for this repo on every host - core.autocrlf can then no longer decide what the
+            // Processor extracts, which is the one thing this scenario must not be at the mercy of
+            Files.writeString(origin.resolve(".gitattributes"), "* -text" + EOL);
 
             for (int i = 1; i <= 2; i++) {
                 final Path fnDir = origin.resolve(PATH_IN_REPO);
