@@ -64,6 +64,13 @@ public class GitFunctionAssetPreparingIntegrationTest {
     private static final String PATH_IN_REPO = "fn";
     private static final String FUNCTION_FILE = "run.py";
 
+    /**
+     * The bytes on disk are produced by {@code git archive}, which applies git's own end-of-line
+     * conversion - so on a box where git delivers CRLF the extracted Function carries CRLF, and a
+     * hard-coded LF makes the whole scenario fail for a reason that has nothing to do with what it tests.
+     */
+    private static final String EOL = System.lineSeparator();
+
     private static Path root;
     private static String repoUrl;
     private static final List<String> shas = new ArrayList<>();
@@ -89,8 +96,8 @@ public class GitFunctionAssetPreparingIntegrationTest {
             for (int i = 1; i <= 2; i++) {
                 final Path fnDir = origin.resolve(PATH_IN_REPO);
                 Files.createDirectories(fnDir);
-                Files.writeString(fnDir.resolve(FUNCTION_FILE), "print('revision " + i + "')\n");
-                Files.writeString(origin.resolve("README.md"), "readme " + i + "\n");
+                Files.writeString(fnDir.resolve(FUNCTION_FILE), "print('revision " + i + "')" + EOL);
+                Files.writeString(origin.resolve("README.md"), "readme " + i + EOL);
                 git.add().addFilepattern(".").call();
                 final RevCommit c = git.commit().setMessage("commit " + i).setSign(false).call();
                 shas.add(c.getName());
@@ -167,18 +174,18 @@ public class GitFunctionAssetPreparingIntegrationTest {
         awaitReady(task1);
 
         assertTrue(Files.exists(assetFileOf(shas.get(0))), "the file to launch must exist once ready");
-        assertEquals("print('revision 1')\n", read(assetFileOf(shas.get(0))));
+        assertEquals("print('revision 1')" + EOL, read(assetFileOf(shas.get(0))));
 
         // --- the repo moves on and Task #2 arrives pinned to the newer commit ---
         assertFalse(service.isReady(task2), "the newer revision has not been prepared by the older Task");
         service.addTask(task2);
         awaitReady(task2);
 
-        assertEquals("print('revision 2')\n", read(assetFileOf(shas.get(1))));
+        assertEquals("print('revision 2')" + EOL, read(assetFileOf(shas.get(1))));
 
         // --- and Task #1 is still runnable, on its own revision ---
         assertTrue(service.isReady(task1), "preparing a newer revision must not un-prepare an older one");
-        assertEquals("print('revision 1')\n", read(assetFileOf(shas.get(0))),
+        assertEquals("print('revision 1')" + EOL, read(assetFileOf(shas.get(0))),
             "this is what one shared working tree got wrong: checkout of 456 rewrote what 123 was running");
 
         // --- both revisions coexist as separate cache entries ---
@@ -221,8 +228,8 @@ public class GitFunctionAssetPreparingIntegrationTest {
         copyAsTaskProcessorWould(shas.get(0), asset1);
         copyAsTaskProcessorWould(shas.get(1), asset2);
 
-        assertEquals("print('revision 1')\n", read(asset1.resolve(FUNCTION_FILE)));
-        assertEquals("print('revision 2')\n", read(asset2.resolve(FUNCTION_FILE)),
+        assertEquals("print('revision 1')" + EOL, read(asset1.resolve(FUNCTION_FILE)));
+        assertEquals("print('revision 2')" + EOL, read(asset2.resolve(FUNCTION_FILE)),
             "two Tasks of two ExecContexts must each run the revision they were pinned to");
     }
 
@@ -234,13 +241,13 @@ public class GitFunctionAssetPreparingIntegrationTest {
 
         final Path asset = root.resolve("task-home-rerun").resolve("asset");
         copyAsTaskProcessorWould(shas.get(0), asset);
-        Files.writeString(asset.resolve(FUNCTION_FILE), "print('vandalised')\n");
+        Files.writeString(asset.resolve(FUNCTION_FILE), "print('vandalised')" + EOL);
 
         // cleaningPolicy=ASSETS removes the dir when the Task finishes; the next attempt copies again
         org.apache.commons.io.file.PathUtils.deleteDirectory(asset);
         copyAsTaskProcessorWould(shas.get(0), asset);
 
-        assertEquals("print('revision 1')\n", read(asset.resolve(FUNCTION_FILE)),
+        assertEquals("print('revision 1')" + EOL, read(asset.resolve(FUNCTION_FILE)),
             "a re-run must not inherit the damage the previous attempt did to its own copy");
     }
 
@@ -256,12 +263,12 @@ public class GitFunctionAssetPreparingIntegrationTest {
 
         final Path taskAsset = root.resolve("task-home-1").resolve("asset");
         GitCommitCache.copyToTask(entry, PATH_IN_REPO, taskAsset);
-        assertEquals("print('revision 1')\n", read(taskAsset.resolve(FUNCTION_FILE)));
+        assertEquals("print('revision 1')" + EOL, read(taskAsset.resolve(FUNCTION_FILE)));
 
         // an external Function is free to rewrite the scripts it was handed - that is why it gets a copy
-        Files.writeString(taskAsset.resolve(FUNCTION_FILE), "print('vandalised')\n");
+        Files.writeString(taskAsset.resolve(FUNCTION_FILE), "print('vandalised')" + EOL);
 
-        assertEquals("print('revision 1')\n", read(assetFileOf(shas.get(0))),
+        assertEquals("print('revision 1')" + EOL, read(assetFileOf(shas.get(0))),
             "a Function damaged the cache entry, so every later Task would inherit the damage");
         assertTrue(service.isReady(task), "the Function is still reported ready after a Task damaged its own copy");
     }
