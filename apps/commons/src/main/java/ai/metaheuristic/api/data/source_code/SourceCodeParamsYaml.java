@@ -60,16 +60,12 @@ public class SourceCodeParamsYaml implements BaseParams {
             // pre/post Functions are no longer supported. The fields survive on this class ONLY so that a
             // SourceCode still carrying them is REJECTED here with a clear message, instead of parsing
             // cleanly and then silently dropping functions the author expected to run.
-            if (process.preFunctions!=null && !process.preFunctions.isEmpty()) {
-                throw new CheckIntegrityFailedException(
-                    "01.608.100 preFunctions are not supported anymore, found " + process.preFunctions.size() +
-                    " in process '" + process.code + "'");
-            }
-            if (process.postFunctions!=null && !process.postFunctions.isEmpty()) {
-                throw new CheckIntegrityFailedException(
-                    "01.608.120 postFunctions are not supported anymore, found " + process.postFunctions.size() +
-                    " in process '" + process.code + "'");
-            }
+            // ^ Superseded: the fields are GONE from this class now. Keeping them here as empty lists
+            //   meant every serialized SourceCode emitted "preFunctions: []", which then failed to
+            //   deserialize into ExecContextParamsYaml$Process - that class dropped the field - with
+            //   "560.180 ... does not have member field 'java.util.List preFunctions'". Rejection moved
+            //   upstream to the parsers, which see the author's text: SourceCodeGraphLanguageMhsc
+            //   (01.564.500 / 01.564.520) for .mhsc, and the V6 upgrade path for stored sources.
             if (StringUtils.containsAny(process.tag, ',', ' ')) {
                 throw new CheckIntegrityFailedException("608.080 process.tag can't contain comma or space and must be handled as single tag");
             }
@@ -194,10 +190,6 @@ public class SourceCodeParamsYaml implements BaseParams {
         public String name;
         public String code;
         public FunctionDefForSourceCode function;
-        @Nullable
-        public List<FunctionDefForSourceCode> preFunctions = new ArrayList<>();
-        @Nullable
-        public List<FunctionDefForSourceCode> postFunctions = new ArrayList<>();
 
         /**
          * Timeout before terminating a process with function

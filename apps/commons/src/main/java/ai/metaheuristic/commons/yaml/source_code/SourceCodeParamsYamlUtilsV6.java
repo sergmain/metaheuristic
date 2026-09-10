@@ -88,12 +88,7 @@ public class SourceCodeParamsYamlUtilsV6
         toVariable(o.inputs, pr.inputs);
         toVariable(o.outputs, pr.outputs);
         pr.function = new SourceCodeParamsYaml.FunctionDefForSourceCode(o.function.code, o.function.params, o.function.context, o.function.refType);
-        if (o.preFunctions!=null) {
-            pr.preFunctions = o.preFunctions.stream().map(d -> new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context, o.function.refType)).collect(Collectors.toList());
-        }
-        if (o.postFunctions!=null) {
-            pr.postFunctions = o.postFunctions.stream().map(d -> new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context, o.function.refType)).collect(Collectors.toList());
-        }
+        // pre/post Functions are not supported anymore and no longer exist on SourceCodeParamsYaml.
         pr.metas = o.metas;
         if (o.cache!=null) {
             pr.cache = new SourceCodeParamsYaml.Cache(o.cache.enabled, o.cache.omitInline, o.cache.cacheMeta);

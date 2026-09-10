@@ -16,6 +16,11 @@
 
 package ai.metaheuristic.ai.source_code;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import java.util.stream.Collectors;
+import java.util.Set;
+import java.util.Arrays;
+import java.lang.reflect.Field;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -45,16 +50,6 @@ public class TestSourceCodeParamsYamlCloning {
         p.name = "name";
         p.code = "code";
         p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode("function-code", "function-params", EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code);
-        p.preFunctions = List.of(
-                new SourceCodeParamsYaml.FunctionDefForSourceCode("pre1-code", "pre1-params", EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code),
-                new SourceCodeParamsYaml.FunctionDefForSourceCode("pre2-code", "pre2-params", EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code)
-        );
-        p.postFunctions = List.of(
-                new SourceCodeParamsYaml.FunctionDefForSourceCode("post1-code", "post1-params", EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code),
-                new SourceCodeParamsYaml.FunctionDefForSourceCode("post2-code", "post2-params", EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code),
-                new SourceCodeParamsYaml.FunctionDefForSourceCode("post3-code", "post3-params", EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code)
-        ) ;
-
         p.timeoutBeforeTerminate = 120L;
 
         p.outputs.add( new SourceCodeParamsYaml.Variable("output-code"));
@@ -67,16 +62,6 @@ public class TestSourceCodeParamsYamlCloning {
         assertNotNull(p1.function);
         assertEquals("function-code", p1.function.code);
         assertEquals("function-params", p1.function.params);
-
-        assertNotNull(p1.preFunctions);
-        assertEquals(2, p1.preFunctions.size());
-        assertEquals("pre1-code", p1.preFunctions.get(0).code);
-        assertEquals("pre1-params", p1.preFunctions.get(0).params);
-        assertEquals("pre2-code", p1.preFunctions.get(1).code);
-        assertEquals("pre2-params", p1.preFunctions.get(1).params);
-
-        assertNotNull(p1.postFunctions);
-        assertEquals(3, p1.postFunctions.size());
 
         assertNotNull(p1.timeoutBeforeTerminate);
         assertEquals(120L, (long)p1.timeoutBeforeTerminate);
@@ -91,5 +76,28 @@ public class TestSourceCodeParamsYamlCloning {
         assertNotNull(p.metas);
         assertEquals(1, p1.metas.size());
         assertEquals("value", Objects.requireNonNull(MetaUtils.getMeta(p1.metas, "key")).getValue());
+    }
+
+    /**
+     * pre/post Functions were dropped. Keeping them on this class as empty lists was not harmless:
+     * every serialized SourceCode emitted "preFunctions: []", which then failed to deserialize into
+     * ExecContextParamsYaml$Process - that class dropped the field first - with
+     * "560.180 ... does not have member field 'java.util.List preFunctions'", killing SourceCode
+     * creation for every test that builds an ExecContext.
+     *
+     * <p>The field must therefore be ABSENT, not merely empty. Versioned classes V1..V6 keep theirs;
+     * this asserts only on the version-less one.
+     */
+    @Test
+    public void processHasNoPreOrPostFunctionFields() {
+        final Set<String> names = Arrays.stream(SourceCodeParamsYaml.Process.class.getFields())
+                .map(Field::getName)
+                .collect(Collectors.toSet());
+
+        assertFalse(names.contains("preFunctions"),
+                "SourceCodeParamsYaml.Process must not declare preFunctions - an empty list still "
+                        + "serializes and breaks ExecContextParamsYaml$Process deserialization");
+        assertFalse(names.contains("postFunctions"),
+                "SourceCodeParamsYaml.Process must not declare postFunctions - same reason");
     }
 }
