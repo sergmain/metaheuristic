@@ -50,7 +50,7 @@ public class MhMcpTransportGuardTest {
 
     private static McpServerFeatures.SyncToolSpecification spec(
             String name, BiFunction<McpSyncServerExchange, CallToolRequest, CallToolResult> handler) {
-        Tool tool = Tool.builder().name(name).inputSchema(Map.of("type", "object")).build();
+        Tool tool = Tool.builder(name, Map.of("type", "object")).build();
         return new McpServerFeatures.SyncToolSpecification(tool, handler);
     }
 
@@ -118,8 +118,8 @@ public class MhMcpTransportGuardTest {
     /** Tool metadata must survive decoration, otherwise registration silently changes. */
     @Test
     public void test_toolMetadataIsPreserved() {
-        Tool tool = Tool.builder().name("mh_stop_exec_context").title("Stop ExecContext")
-                .inputSchema(Map.of("type", "object")).build();
+        Tool tool = Tool.builder("mh_stop_exec_context", Map.of("type", "object"))
+                .title("Stop ExecContext").build();
         var original = new McpServerFeatures.SyncToolSpecification(tool, (e, r) -> null);
 
         var guarded = transportGuarded(original);
