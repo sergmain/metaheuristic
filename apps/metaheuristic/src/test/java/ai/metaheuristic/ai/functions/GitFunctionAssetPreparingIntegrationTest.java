@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.utils.GitCommitCache;
 import ai.metaheuristic.commons.utils.StrUtils;
+import org.apache.commons.io.file.StandardDeleteOption;
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -137,7 +138,7 @@ public class GitFunctionAssetPreparingIntegrationTest {
     @AfterAll
     public static void tearDown() throws Exception {
         if (root!=null && Files.exists(root)) {
-            org.apache.commons.io.file.PathUtils.deleteDirectory(root);
+            org.apache.commons.io.file.PathUtils.deleteDirectory(root, StandardDeleteOption.OVERRIDE_READ_ONLY);
         }
     }
 

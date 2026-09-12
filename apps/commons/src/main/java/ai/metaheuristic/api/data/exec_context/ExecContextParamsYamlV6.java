@@ -74,7 +74,7 @@ public class ExecContextParamsYamlV6 implements BaseParams {
         @Nullable
         private Boolean nullable;
 
-        // This field is used for creating a download link as extension
+        // This field is used as an extension for creating a download link
         @Nullable
         public String ext;
 

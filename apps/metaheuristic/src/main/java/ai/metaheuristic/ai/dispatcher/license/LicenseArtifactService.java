@@ -58,7 +58,6 @@ import java.time.Instant;
  *
  * @author Serge
  */
-@Service
 /**
  * ❗ Bound to the presence of an OFFLINE backend, not to a single profile name.
  *
@@ -79,6 +78,7 @@ import java.time.Instant;
  * configuration that declares the source. The open-set concern it was chosen for is now met by
  * naming the backend family once in {@link ai.metaheuristic.ai.Consts#SIGNED_FILE_LM_PROFILE}.
  */
+@Service
 @Profile(Consts.SIGNED_FILE_LM_PROFILE)
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})

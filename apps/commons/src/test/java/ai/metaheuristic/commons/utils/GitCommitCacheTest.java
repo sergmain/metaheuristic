@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.utils;
 
+import org.apache.commons.io.file.StandardDeleteOption;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -36,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -66,7 +68,7 @@ public class GitCommitCacheTest {
 
     @BeforeAll
     public static void setUp() throws Exception {
-        root = Files.createTempDirectory("mh-git-cache-test-");
+        root = Objects.requireNonNull(DirUtils.createMhTempPath("mh-git-cache-test-"));
         repoDir = root.resolve("origin");
         Files.createDirectories(repoDir);
         git = Git.init().setDirectory(repoDir.toFile()).setInitialBranch("main").call();
@@ -89,7 +91,7 @@ public class GitCommitCacheTest {
             git.close();
         }
         if (root!=null && Files.exists(root)) {
-            org.apache.commons.io.file.PathUtils.deleteDirectory(root);
+            org.apache.commons.io.file.PathUtils.deleteDirectory(root, StandardDeleteOption.OVERRIDE_READ_ONLY);
         }
     }
 
