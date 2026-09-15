@@ -69,6 +69,7 @@ public class MhMcpToolWiringTest {
         put("mh_select_meta_storage_record", "companyId");
         put("mh_delete_meta_storage_record", "companyId");
         put("mh_list_meta_storage_rec_keys", "companyId");
+        put("mh_upsert_meta_storage_record", "companyId");
         // not an id: this one is resolved from a repo url, and 'repo' is the first argument its handler asks for
         put("mh_import_bundle_from_git", "repo");
     }};

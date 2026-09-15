@@ -38,6 +38,7 @@ import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageSyntheticService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
@@ -80,6 +81,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
@@ -90,7 +93,7 @@ import java.util.stream.Stream;
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
- * 19 tools total — read-mostly access to MH internals plus a few control operations:
+ * 20 tools total — read-mostly access to MH internals plus a few control operations:
  *
  *   mh_get_variable_info               — metadata for an internal Variable by id
  *   mh_get_variable_content            — content of an internal Variable, truncated to N bytes
@@ -111,6 +114,7 @@ import java.util.stream.Stream;
  *   mh_select_meta_storage_record      — the same record addressed by its natural key (companyId, type, recKey)
  *   mh_delete_meta_storage_record      — delete one record addressed by its natural key
  *   mh_list_meta_storage_rec_keys      — every recKey for one (companyId, type), bodies unread
+ *   mh_upsert_meta_storage_record      — insert or update one record, addressed by its natural key
  *
  * <p>Error code prefix: {@code 01.260.} (unique to this class).
  *
@@ -363,6 +367,37 @@ public class MhMcpToolDefinitions {
     ) {}
 
     /**
+     * The outcome of one write, reported from the record as it now stands rather than from the request.
+     *
+     * <p>{@code created} says which of the two things happened - true when the natural key matched
+     * nothing and a record was inserted, false when an existing one was overwritten. It is the only
+     * place that information survives: MH keeps no history, so by the time this is read the previous
+     * body is already gone, and a caller that asked for {@code UPSERT} has no other way to learn which
+     * way it went.
+     *
+     * <p>{@code id}, {@code gen} and {@code updatedAt} are read back AFTER the write, so they are what
+     * was stored rather than what was intended.
+     *
+     * <p>❗ {@code body} is deliberately not echoed - the caller supplied it and it can be large.
+     * {@code bodyChars} is its length in chars, not bytes: nothing here encodes the body, so a byte
+     * count would be a claim about a charset this tool never applied.
+     */
+    public record MetaStorageWriteResultDto(
+            boolean ok,
+            boolean synthetic,
+            String mode,
+            boolean created,
+            Long id,
+            Long companyId,
+            String type,
+            String recKey,
+            long gen,
+            long updatedAt,
+            int bodyChars,
+            String message
+    ) {}
+
+    /**
      * Transport-boundary guard - applied to EVERY tool spec in {@link #getAllToolSpecifications()}.
      *
      * <p>The MCP SDK builds the JSON-RPC error frame straight from a thrown exception's
@@ -456,7 +491,8 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(GET_META_STORAGE_RECORD_TOOL, this::handleGetMetaStorageRecord),
                 new McpServerFeatures.SyncToolSpecification(SELECT_META_STORAGE_RECORD_TOOL, this::handleSelectMetaStorageRecord),
                 new McpServerFeatures.SyncToolSpecification(DELETE_META_STORAGE_RECORD_TOOL, this::handleDeleteMetaStorageRecord),
-                new McpServerFeatures.SyncToolSpecification(LIST_META_STORAGE_REC_KEYS_TOOL, this::handleListMetaStorageRecKeys)
+                new McpServerFeatures.SyncToolSpecification(LIST_META_STORAGE_REC_KEYS_TOOL, this::handleListMetaStorageRecKeys),
+                new McpServerFeatures.SyncToolSpecification(UPSERT_META_STORAGE_RECORD_TOOL, this::handleUpsertMetaStorageRecord)
         ).map(MhMcpToolDefinitions::transportGuarded).toList();
     }
 
@@ -991,6 +1027,21 @@ public class MhMcpToolDefinitions {
         return new MetaStorageRecordDto(true, m.id, m.version, m.companyId, m.type, m.recKey, m.gen, m.updatedAt, m.body);
     }
 
+    /**
+     * The same mapping, lifted to a nullable lookup result so the table branch can be taken ONCE and
+     * the rest of a handler written against a single {@code Supplier}. Two overloads rather than one
+     * generic method because {@link MetaStorage} and {@link MetaStorageSynthetic} share no supertype.
+     */
+    @Nullable
+    private static MetaStorageRecordDto toDtoNullable(@Nullable MetaStorage m) {
+        return m==null ? null : toDto(m);
+    }
+
+    @Nullable
+    private static MetaStorageRecordDto toDtoNullable(@Nullable MetaStorageSynthetic m) {
+        return m==null ? null : toDto(m);
+    }
+
     // ==================== Tool 18: select one record by its natural key ====================
 
     private static final Tool SELECT_META_STORAGE_RECORD_TOOL = Tool.builder("mh_select_meta_storage_record",
@@ -1119,6 +1170,100 @@ public class MhMcpToolDefinitions {
         return toCallToolResult(new MetaStorageRecKeysDto(synthetic, companyId, type, recKeys.size(), recKeys));
     }
 
+    // ==================== Tool 21: insert or update one record by its natural key ====================
+
+    /**
+     * Declared here rather than beside the other constants because static initializers run in textual
+     * order and {@link #UPSERT_META_STORAGE_RECORD_TOOL} reads this while building its schema.
+     */
+    private static final List<String> WRITE_MODES = List.of("INSERT", "UPDATE", "UPSERT");
+
+    private static final Tool UPSERT_META_STORAGE_RECORD_TOOL = Tool.builder("mh_upsert_meta_storage_record",
+                    objectSchema(
+                            Map.of("companyId", Map.of("type", "integer",
+                                            "description", "Owning company id - the COMPANY_ID column, and the first segment of the natural key"),
+                                    "type", Map.of("type", "string",
+                                            "description", "Entity kind - the TYPE column. A column value, never an enum; opaque to MH."),
+                                    "recKey", Map.of("type", "string",
+                                            "description", "Natural key within (companyId, type) - the REC_KEY column. Opaque to MH."),
+                                    "body", Map.of("type", "string",
+                                            "description", "The payload, stored verbatim in the BODY column. Opaque to MH: not parsed, not validated, not trimmed."),
+                                    "mode", Map.of("type", "string", "enum", WRITE_MODES,
+                                            "description", "INSERT refuses an occupied key, UPDATE refuses an empty one, UPSERT accepts either. Required, no default."),
+                                    "synthetic", Map.of("type", "boolean",
+                                            "description", "Which table to address: true -> MH_META_STORAGE_SYNTHETIC, false -> MH_META_STORAGE. Required, no default.")),
+                            List.of("companyId", "type", "recKey", "body", "mode", "synthetic")))
+            .title("Upsert Meta Storage Record")
+            .description("Insert or update the one meta storage record addressed by its natural key (companyId, "
+                    + "type, recKey) - the write side of mh_select_meta_storage_record. \u2757 'mode' has no default "
+                    + "and is what stands between a caller and a silent overwrite: MH keeps no history of a meta "
+                    + "storage record, so a write landing on an occupied key destroys the previous body outright. "
+                    + "INSERT refuses when the key is already taken, UPDATE refuses when it is not, UPSERT accepts "
+                    + "either - and a refusal writes nothing at all. \u26a0\ufe0f That check runs before the write "
+                    + "and outside the transaction, so two callers racing on one key can both pass it; the UNIQUE "
+                    + "constraint on (COMPANY_ID, TYPE, REC_KEY) is the real backstop and the loser gets a "
+                    + "constraint violation. 'body' is stored VERBATIM - never parsed, never validated, never "
+                    + "trimmed, so what a later read returns is exactly the string that arrived here. 'synthetic' "
+                    + "chooses the table and has no default. Every write takes the next generation for the whole "
+                    + "company - gen counts writes per company across all types, it is not a per-record revision - "
+                    + "and stamps updatedAt. The result reports the record as it now stands, row id included, so "
+                    + "nothing needs selecting afterwards.")
+            .build();
+
+    private CallToolResult handleUpsertMetaStorageRecord(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final Long companyId = getRequiredLong(arguments, "companyId");
+        final String type = getRequiredString(arguments, "type");
+        final String recKey = getRequiredString(arguments, "recKey");
+        final String body = getRequiredOpaqueString(arguments, "body");
+        final String mode = getRequiredMode(arguments, "mode");
+        final boolean synthetic = getRequiredBoolean(arguments, "synthetic");
+        log.info("01.260.520 MCP upsertMetaStorageRecord(companyId={}, type={}, recKey={}, mode={}, synthetic={}, bodyChars={})",
+                companyId, type, recKey, mode, synthetic, body.length());
+
+        // The table is chosen once, here, and everything below is written against these two. The
+        // alternative - branching again at the existence check, again at the write and again at the
+        // read-back - is three chances for one of them to address the other table.
+        final Supplier<@Nullable MetaStorageRecordDto> find = synthetic
+                ? () -> toDtoNullable(metaStorageSyntheticRepository.findByNaturalKey(companyId, type, recKey))
+                : () -> toDtoNullable(metaStorageRepository.findByNaturalKey(companyId, type, recKey));
+
+        // ❗ Through the orchestrator, never the repository: it resolves the key to a row id OUTSIDE the
+        // transaction and hands only the id to the tx service, which is the rule every other write here
+        // follows. It also allocates gen and stamps updatedAt - neither is the tool's to decide.
+        final IntSupplier write = synthetic
+                ? () -> metaStorageSyntheticService.upsert(companyId, List.of(new MetaStorageData.Record(type, recKey, body)))
+                : () -> metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(type, recKey, body)));
+
+        final String key = "(companyId=" + companyId + ", type=" + type + ", recKey=" + recKey + ") in " + tableName(synthetic);
+        final MetaStorageRecordDto before = find.get();
+
+        // ❗ The gate is the whole reason 'mode' exists. The underlying store offers only upsert, so
+        // without this an INSERT that was meant to create lands on an occupied key and overwrites a body
+        // nothing can recover. A refused mode writes nothing - that is what makes refusing worth doing.
+        // ⚠️ Checked outside the transaction, so it is a guard against a mistaken caller, not against a
+        // concurrent one; the UNIQUE constraint remains the backstop for the race.
+        if ("INSERT".equals(mode) && before!=null) {
+            return errorResult("mode=INSERT but a record already exists for " + key
+                    + " - use mode=UPDATE to overwrite it deliberately, or mode=UPSERT to accept either outcome");
+        }
+        if ("UPDATE".equals(mode) && before==null) {
+            return errorResult("mode=UPDATE but no record exists for " + key
+                    + " - use mode=INSERT to create it, or mode=UPSERT to accept either outcome");
+        }
+
+        final int written = write.getAsInt();
+        final MetaStorageRecordDto stored = find.get();
+        if (written!=1 || stored==null) {
+            return errorResult("The write reported " + written + " record(s) and the record read back "
+                    + (stored==null ? "as absent" : "as present") + " for " + key);
+        }
+        return toCallToolResult(new MetaStorageWriteResultDto(
+                true, synthetic, mode, before==null, stored.id(), companyId, type, recKey,
+                stored.gen(), stored.updatedAt(), body.length(),
+                (before==null ? "Inserted " : "Updated ") + key + ", gen " + stored.gen()));
+    }
+
     // ==================== Utility methods ====================
 
     private static String getRequiredString(Map<String, Object> arguments, String key) {
@@ -1173,6 +1318,42 @@ public class MhMcpToolDefinitions {
             return false;
         }
         throw new IllegalArgumentException("Parameter '" + key + "' must be a boolean, was: " + value);
+    }
+
+    /**
+     * ❗ Deliberately NOT {@link #getRequiredString}, which strips. A body is opaque - MH never parses
+     * it, so it has no way to know that trimming is safe, and for a YAML document or a hashed payload
+     * it is not: the trailing newline is part of what the caller sent and part of what it will compare
+     * against later. A non-String is rejected by name rather than run through {@code toString()},
+     * because a number arriving in this position is a caller bug rather than a body.
+     */
+    private static String getRequiredOpaqueString(Map<String, Object> arguments, String key) {
+        final Object value = arguments.get(key);
+        if (value == null) {
+            throw new IllegalArgumentException("Required parameter '" + key + "' is missing");
+        }
+        if (!(value instanceof String s)) {
+            throw new IllegalArgumentException(
+                    "Parameter '" + key + "' must be a string, was: " + value.getClass().getSimpleName());
+        }
+        return s;
+    }
+
+    /**
+     * ❗ An unrecognized mode is rejected rather than defaulted, on the same grounds as
+     * {@link #getRequiredBoolean}: each value names a different expectation about the record already
+     * there, and the permissive one destroys a body MH keeps no history of. Matching is
+     * {@code equalsIgnoreCase} rather than an upper-casing comparison so no locale gets a say.
+     */
+    private static String getRequiredMode(Map<String, Object> arguments, String key) {
+        final String value = getRequiredString(arguments, key);
+        for (String mode : WRITE_MODES) {
+            if (mode.equalsIgnoreCase(value)) {
+                return mode;
+            }
+        }
+        throw new IllegalArgumentException(
+                "Parameter '" + key + "' must be one of " + String.join(", ", WRITE_MODES) + ", was: " + value);
     }
 
     private static Map<String, Object> objectSchema(Map<String, Object> properties, List<String> required) {

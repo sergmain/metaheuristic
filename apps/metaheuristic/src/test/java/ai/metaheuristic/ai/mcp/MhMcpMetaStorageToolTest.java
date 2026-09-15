@@ -72,11 +72,21 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
     private static final String SELECT_TOOL = "mh_select_meta_storage_record";
     private static final String DELETE_TOOL = "mh_delete_meta_storage_record";
     private static final String KEYS_TOOL = "mh_list_meta_storage_rec_keys";
+    private static final String UPSERT_TOOL = "mh_upsert_meta_storage_record";
 
     /** Map.of takes no varargs past a point and the flag is the only part that varies per call. */
     private static Map<String, Object> withSynthetic(Map<String, Object> key, boolean synthetic) {
         final Map<String, Object> arguments = new java.util.HashMap<>(key);
         arguments.put("synthetic", synthetic);
+        return arguments;
+    }
+
+    /** The write tool varies in three arguments past the key, so its arguments are assembled here. */
+    private static Map<String, Object> write(Map<String, Object> key, String mode, boolean synthetic, String body) {
+        final Map<String, Object> arguments = new java.util.HashMap<>(key);
+        arguments.put("mode", mode);
+        arguments.put("synthetic", synthetic);
+        arguments.put("body", body);
         return arguments;
     }
 
@@ -359,5 +369,132 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         final CallToolResult asString = call(Map.of("id", row.id, "synthetic", "false"));
         assertEquals(Boolean.FALSE, asString.isError(), "PHASE #4: " + textOf(asString));
         assertTrue(textOf(asString).contains("\"body\" : \"body\""), "PHASE #4: " + textOf(asString));
+    }
+
+    /**
+     * The write side. INSERT creates, UPDATE overwrites the same record, and both land in exactly the
+     * table the flag names - the twin under an identical natural key in the other table is what would
+     * move if the branch were wrong, and only two real tables can show that.
+     */
+    @Test
+    public void test_upsertInsertsUpdatesAndStoresTheBodyVerbatim() {
+
+        final Long companyId = SharedItEnv.uniqueLong();
+        final String type = "mcp-tool";
+        final String recKey = SharedItEnv.uniqueCode("upsert") + "@example.com";
+        final Map<String, Object> key = Map.of("companyId", companyId, "type", type, "recKey", recKey);
+
+        // PHASE #1: a twin in the synthetic table under the same natural key
+        metaStorageSyntheticService.upsert(companyId,
+                List.of(new MetaStorageData.Record(type, recKey, "synthetic-untouched")));
+
+        // PHASE #2: INSERT creates the record in the plain table and reports it as created
+        final CallToolResult inserted = call(UPSERT_TOOL, write(key, "INSERT", false, "first-body"));
+        assertEquals(Boolean.FALSE, inserted.isError(), "PHASE #2: " + textOf(inserted));
+        assertTrue(textOf(inserted).contains("\"created\" : true"), "PHASE #2: " + textOf(inserted));
+
+        final MetaStorage afterInsert = metaStorageRepository.findByNaturalKey(companyId, type, recKey);
+        assertNotNull(afterInsert, "PHASE #2: the record must exist after an INSERT");
+        assertEquals("first-body", afterInsert.body, "PHASE #2: the body as stored");
+        assertTrue(textOf(inserted).contains("\"id\" : " + afterInsert.id),
+                "PHASE #2: the result reports the stored row id: " + textOf(inserted));
+        assertTrue(textOf(inserted).contains("\"gen\" : " + afterInsert.gen),
+                "PHASE #2: the result reports the stored gen: " + textOf(inserted));
+
+        // PHASE #3: UPDATE overwrites that same record rather than adding a second one
+        final CallToolResult updated = call(UPSERT_TOOL, write(key, "UPDATE", false, " second-body\n"));
+        assertEquals(Boolean.FALSE, updated.isError(), "PHASE #3: " + textOf(updated));
+        assertTrue(textOf(updated).contains("\"created\" : false"), "PHASE #3: " + textOf(updated));
+
+        final MetaStorage afterUpdate = metaStorageRepository.findByNaturalKey(companyId, type, recKey);
+        assertNotNull(afterUpdate, "PHASE #3: the record must still exist");
+        assertEquals(afterInsert.id, afterUpdate.id, "PHASE #3: UPDATE writes the same record, it does not add one");
+
+        // PHASE #4: the body is stored verbatim - a leading space and a trailing newline both survive.
+        // MH never parses a body, so it has no grounds to trim one.
+        assertEquals(" second-body\n", afterUpdate.body, "PHASE #4: the body must not be trimmed");
+
+        // PHASE #5: every write takes the next generation, and the twin in the other table never moved
+        assertTrue(afterUpdate.gen > afterInsert.gen,
+                "PHASE #5: gen must advance, was " + afterInsert.gen + ", now " + afterUpdate.gen);
+        final MetaStorageSynthetic twin = metaStorageSyntheticRepository.findByNaturalKey(companyId, type, recKey);
+        assertNotNull(twin, "PHASE #5: the synthetic twin must survive a write aimed at the plain table");
+        assertEquals("synthetic-untouched", twin.body, "PHASE #5: and must keep its own body");
+
+        // PHASE #6: UPSERT accepts either outcome - here the record exists, so it is an update
+        final CallToolResult upserted = call(UPSERT_TOOL, write(key, "UPSERT", false, "third-body"));
+        assertEquals(Boolean.FALSE, upserted.isError(), "PHASE #6: " + textOf(upserted));
+        assertTrue(textOf(upserted).contains("\"created\" : false"), "PHASE #6: " + textOf(upserted));
+        final MetaStorage afterUpsert = metaStorageRepository.findByNaturalKey(companyId, type, recKey);
+        assertNotNull(afterUpsert, "PHASE #6: the record must exist");
+        assertEquals("third-body", afterUpsert.body, "PHASE #6: " + textOf(upserted));
+    }
+
+    /**
+     * The mode gate. Each mode states a different expectation about the record already there, and the
+     * point of stating one is that a wrong guess writes NOTHING - MH keeps no history, so an overwrite
+     * the caller did not intend cannot be undone afterwards.
+     */
+    @Test
+    public void test_upsertModeGateRefusesTheWrongDirectionAndWritesNothing() {
+
+        final Long companyId = SharedItEnv.uniqueLong();
+        final String type = "mcp-tool";
+        final String existingKey = SharedItEnv.uniqueCode("gate-existing") + "@example.com";
+        final String absentKey = SharedItEnv.uniqueCode("gate-absent") + "@example.com";
+        final Map<String, Object> existing = Map.of("companyId", companyId, "type", type, "recKey", existingKey);
+        final Map<String, Object> absent = Map.of("companyId", companyId, "type", type, "recKey", absentKey);
+
+        // PHASE #1: one key that is occupied, one that is not
+        metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(type, existingKey, "original")));
+
+        // PHASE #2: INSERT onto an occupied key is refused
+        final CallToolResult insertOnExisting = call(UPSERT_TOOL, write(existing, "INSERT", false, "overwrite-attempt"));
+        assertEquals(Boolean.TRUE, insertOnExisting.isError(), "PHASE #2: INSERT onto an occupied key is an error");
+        assertTrue(textOf(insertOnExisting).contains("already exists"), "PHASE #2: " + textOf(insertOnExisting));
+
+        // PHASE #3: and it wrote nothing - the body it would have destroyed is still there
+        final MetaStorage untouched = metaStorageRepository.findByNaturalKey(companyId, type, existingKey);
+        assertNotNull(untouched, "PHASE #3: the record must still exist");
+        assertEquals("original", untouched.body, "PHASE #3: a refused INSERT must not have written");
+
+        // PHASE #4: UPDATE of a key that matches nothing is refused
+        final CallToolResult updateOnAbsent = call(UPSERT_TOOL, write(absent, "UPDATE", false, "body"));
+        assertEquals(Boolean.TRUE, updateOnAbsent.isError(), "PHASE #4: UPDATE of an absent key is an error");
+        assertTrue(textOf(updateOnAbsent).contains("no record exists"), "PHASE #4: " + textOf(updateOnAbsent));
+
+        // PHASE #5: and it created nothing - a refused UPDATE is not a quiet insert
+        assertNull(metaStorageRepository.findByNaturalKey(companyId, type, absentKey),
+                "PHASE #5: a refused UPDATE must not have created the record");
+
+        // PHASE #6: the gate is scoped to the table the flag names. The same INSERT is legal against the
+        // synthetic table, where that key is free.
+        final CallToolResult insertSynthetic = call(UPSERT_TOOL, write(existing, "INSERT", true, "synthetic-body"));
+        assertEquals(Boolean.FALSE, insertSynthetic.isError(), "PHASE #6: " + textOf(insertSynthetic));
+        final MetaStorageSynthetic synth = metaStorageSyntheticRepository.findByNaturalKey(companyId, type, existingKey);
+        assertNotNull(synth, "PHASE #6: the synthetic record must have been created");
+        assertEquals("synthetic-body", synth.body, "PHASE #6: " + textOf(insertSynthetic));
+
+        // PHASE #7: 'mode' has no default - a missing one is an error, not the permissive UPSERT
+        final CallToolResult missingMode = call(UPSERT_TOOL,
+                Map.of("companyId", companyId, "type", type, "recKey", absentKey, "body", "b", "synthetic", false));
+        assertEquals(Boolean.TRUE, missingMode.isError(), "PHASE #7: a missing 'mode' is an error");
+        assertTrue(textOf(missingMode).contains("Required parameter 'mode' is missing"),
+                "PHASE #7: " + textOf(missingMode));
+
+        // PHASE #8: and an unrecognized one is rejected by name rather than read as something
+        final CallToolResult bogusMode = call(UPSERT_TOOL, write(absent, "REPLACE", false, "b"));
+        assertEquals(Boolean.TRUE, bogusMode.isError(), "PHASE #8: 'REPLACE' is not a mode");
+        assertTrue(textOf(bogusMode).contains("must be one of INSERT, UPDATE, UPSERT"),
+                "PHASE #8: " + textOf(bogusMode));
+
+        // PHASE #9: a body is stored, never coerced - a number in that position is a caller bug
+        final CallToolResult numericBody = call(UPSERT_TOOL,
+                Map.of("companyId", companyId, "type", type, "recKey", absentKey,
+                        "body", 42, "mode", "INSERT", "synthetic", false));
+        assertEquals(Boolean.TRUE, numericBody.isError(), "PHASE #9: a non-string body is an error");
+        assertTrue(textOf(numericBody).contains("must be a string"), "PHASE #9: " + textOf(numericBody));
+        assertNull(metaStorageRepository.findByNaturalKey(companyId, type, absentKey),
+                "PHASE #9: a rejected body must not have created the record");
     }
 }
