@@ -478,6 +478,7 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(LIST_PROCESSORS_TOOL, this::handleListProcessors),
                 new McpServerFeatures.SyncToolSpecification(EXECUTION_GATE_STATUS_TOOL, this::handleExecutionGateStatus),
                 new McpServerFeatures.SyncToolSpecification(CREATE_EXEC_CONTEXT_TOOL, this::handleCreateExecContext),
+                new McpServerFeatures.SyncToolSpecification(CREATE_EXEC_CONTEXT_WITH_VARIABLES_TOOL, this::handleCreateExecContextWithVariables),
                 new McpServerFeatures.SyncToolSpecification(EXEC_CONTEXT_TARGET_STATE_TOOL, this::handleExecContextTargetState),
                 new McpServerFeatures.SyncToolSpecification(GET_TASK_INFO_TOOL, this::handleGetTaskInfo),
                 new McpServerFeatures.SyncToolSpecification(RESET_TASK_TOOL, this::handleResetTask),
@@ -699,6 +700,73 @@ public class MhMcpToolDefinitions {
                 errors, result.getInfoMessagesAsList()));
     }
 
+    // ==================== Tool 24: create execContext with initialized input variables ====================
+
+    private static final Tool CREATE_EXEC_CONTEXT_WITH_VARIABLES_TOOL = Tool.builder("mh_create_exec_context_with_variables",
+                    objectSchema(
+                            Map.of(
+                                    "sourceCodeId", Map.of("type", "integer",
+                                            "description", "Numeric id of the SourceCode to instantiate. Use mh_list_source_codes to discover it."),
+                                    "companyId", Map.of("type", "integer",
+                                            "description", "Unique id of the company owning the SourceCode"),
+                                    "variables", Map.of("type", "object",
+                                            "additionalProperties", Map.of("type", "string"),
+                                            "description", "Values for the SourceCode's source-level input variables, as name -> value. "
+                                                    + "Every declared input must appear and no undeclared name may: both are errors, because a "
+                                                    + "mistyped name would otherwise leave the real input uninitialized and surface much later."),
+                                    "accountId", Map.of("type", "integer",
+                                            "description", "Optional account id recorded as the creator. Defaults to 0.")),
+                            List.of("sourceCodeId", "companyId", "variables")))
+            .title("Create ExecContext with variables")
+            .description("Create an ExecContext from a SourceCode that declares source-level input variables, "
+                    + "initialize those variables, and produce its Tasks - the three steps in the one order they work in. "
+                    + "Use this for any REUSABLE workflow: one that takes its subject at run time rather than having it "
+                    + "written into the .mhsc, which is every well-formed deterministic workflow. mh_create_exec_context "
+                    + "refuses such a SourceCode (562.120) because it has no way to supply the values. "
+                    + "Values are stored as text in the top-level context, exactly as an uploaded input variable would be.")
+            .build();
+
+    private CallToolResult handleCreateExecContextWithVariables(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final Long sourceCodeId = getRequiredLong(arguments, "sourceCodeId");
+        final UserContext userContext = userContextOf(exchange);
+        final Long companyId = userContext.getCompanyId();
+
+        final Object raw = arguments.get("variables");
+        if (!(raw instanceof Map<?, ?> rawMap) || rawMap.isEmpty()) {
+            return errorResult("01.260.360 Parameter 'variables' must be a non-empty object of name -> value");
+        }
+        final Map<String, String> inputVariables = new HashMap<>();
+        for (Map.Entry<?, ?> e : rawMap.entrySet()) {
+            if (e.getValue()==null) {
+                return errorResult("01.260.362 Value of variable '" + e.getKey() + "' is null");
+            }
+            inputVariables.put(String.valueOf(e.getKey()), String.valueOf(e.getValue()));
+        }
+
+        log.info("01.260.364 MCP createExecContextWithVariables(sourceCodeId={}, companyId={}, variables={})",
+                sourceCodeId, companyId, inputVariables.keySet());
+
+        final ExecContextApiData.UserExecContext context =
+                new ExecContextApiData.UserExecContext(userContext.getAccountId(), companyId);
+
+        final ExecContextCreatorService.ExecContextCreationResult result =
+                execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context, true, null,
+                        new ExecContextData.ExecContextCreationInfo("by mh_create_exec_context_with_variables"), inputVariables);
+
+        final List<String> errors = result.getErrorMessagesAsList();
+        final ExecContextImpl ec = result.execContext;
+        if (ec == null) {
+            return toCallToolResult(new CreateExecContextResultDto(false, null, sourceCodeId, companyId,
+                    result.sourceCode == null ? null : result.sourceCode.uid, null, null,
+                    errors.isEmpty() ? List.of("01.260.366 ExecContext wasn't created and no error was reported") : errors,
+                    result.getInfoMessagesAsList()));
+        }
+        return toCallToolResult(new CreateExecContextResultDto(errors.isEmpty(), ec.id, sourceCodeId, companyId,
+                result.sourceCode == null ? null : result.sourceCode.uid,
+                ec.state, EnumsApi.ExecContextState.toState(ec.state).name(),
+                errors, result.getInfoMessagesAsList()));
+    }
     // ==================== Tool 3: set an ExecContext's target state ====================
 
     private static final Tool EXEC_CONTEXT_TARGET_STATE_TOOL = Tool.builder("mh_exec_context_target_state",

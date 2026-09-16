@@ -34,6 +34,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import java.util.Map;
+
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -72,6 +74,25 @@ public class ExecContextCreatorTopLevelService {
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
             Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks,
             ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo) {
+        return createExecContextAndStart(sourceCodeId, context, isProduceTasks, rootAndParent, execContextCreationInfo, null);
+    }
+
+    /**
+     * The same, carrying values for the SourceCode's source-level input variables.
+     *
+     * <p>A SourceCode that declares inputs cannot have its Tasks produced until those inputs hold
+     * something. That made a REUSABLE workflow - one taking its subject at run time instead of having it
+     * written into the .mhsc - unlaunchable by any caller with no way to pass values, which is why the
+     * subject kept getting inlined and the SourceCode kept becoming single-use.
+     *
+     * <p>The map is name -> value, one entry per declared input. It is carried unchanged into the tx
+     * method and applied there, in the one window between creating the ExecContext and producing its
+     * Tasks. Null means "no values", which is the behaviour every existing caller had.
+     */
+    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
+            Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks,
+            ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo,
+            @Nullable Map<String, String> inputVariables) {
         final ExecContextCreatorService.ExecContextCreationResult withSyncForCreation = SourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
             () -> {
                 try {
@@ -86,7 +107,7 @@ public class ExecContextCreatorTopLevelService {
                     functionRepositoryDispatcherService.registerResolvedGitRevisions(gitSources);
 
                     ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(
-                        sourceCodeId, context, isProduceTasks, rootAndParent, execContextCreationInfo, gitSources);
+                        sourceCodeId, context, isProduceTasks, rootAndParent, execContextCreationInfo, gitSources, inputVariables);
                     return result;
                 } catch (CommonRollbackException e) {
                     return new ExecContextCreatorService.ExecContextCreationResult(e.messages);

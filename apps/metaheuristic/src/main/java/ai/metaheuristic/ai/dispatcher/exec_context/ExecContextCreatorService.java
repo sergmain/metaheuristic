@@ -52,6 +52,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.commons.CommonConsts;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -59,7 +61,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus.ERROR;
 
@@ -84,6 +90,7 @@ public class ExecContextCreatorService {
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextVariableStateTxService execContextVariableStateCache;
     private final ApplicationEventPublisher eventPublisher;
+    private final VariableTxService variableTxService;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -121,7 +128,7 @@ public class ExecContextCreatorService {
     public ExecContextCreationResult createExecContextAndStart(
             Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks,
             ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo,
-            ExecContextParamsYaml.@Nullable GitSources gitSources) {
+            ExecContextParamsYaml.@Nullable GitSources gitSources, @Nullable Map<String, String> inputVariables) {
 
         SourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
@@ -145,7 +152,10 @@ public class ExecContextCreatorService {
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
         SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
         if (!scg.variables.inputs.isEmpty()) {
-            throw new IllegalStateException("562.120 Tasks can't be created with execContext because SourceCode has input variable(s). Task must be created after initializing SourceCode input variables.");
+            if (creationResult.execContext==null) {
+                throw new IllegalStateException("562.118 ExecContext wasn't created, so its input variables can't be initialized");
+            }
+            initInputVariables(scg.variables.inputs, inputVariables, creationResult.execContext.id);
         }
 
         if (CollectionUtils.isNotEmpty(creationResult.getErrorMessages())) {
@@ -276,6 +286,46 @@ public class ExecContextCreatorService {
         return ec;
     }
 
+    /**
+     * Initializes every source-level input the SourceCode declares, from the values the caller supplied.
+     *
+     * <p>This runs between creating the ExecContext and producing its Tasks, which is the only window it
+     * can run in: a Task is produced against variables that already exist, and a variable needs an
+     * ExecContext to belong to. There is exactly one moment in between, and this is it.
+     *
+     * <p>Both halves of the match are enforced. A declared input with no value fails - that is the old
+     * refusal, unchanged for every caller that passes nothing. A value for a name the SourceCode does not
+     * declare fails too, and that half is not pedantry: a typo in a variable name would otherwise leave
+     * the real input uninitialized and surface far away as a null variable at whichever Task read it.
+     */
+    private void initInputVariables(
+            List<ExecContextParamsYaml.Variable> inputs, @Nullable Map<String, String> inputVariables, Long execContextId) {
+
+        final Map<String, String> values = inputVariables==null ? Map.of() : inputVariables;
+
+        final List<String> missing = new ArrayList<>();
+        for (ExecContextParamsYaml.Variable input : inputs) {
+            if (!values.containsKey(input.name)) {
+                missing.add(input.name);
+            }
+        }
+        if (!missing.isEmpty()) {
+            throw new IllegalStateException("562.120 Tasks can't be created with execContext because SourceCode has "
+                + "input variable(s) which weren't initialized: " + String.join(", ", missing)
+                + ". Supply a value for each of them, or initialize them before producing Tasks.");
+        }
+        final List<String> declared = inputs.stream().map(v -> v.name).toList();
+        final List<String> unknown = values.keySet().stream().filter(name -> !declared.contains(name)).toList();
+        if (!unknown.isEmpty()) {
+            throw new IllegalStateException("562.122 Value(s) supplied for name(s) which the SourceCode doesn't "
+                + "declare as an input variable: " + String.join(", ", unknown) + ", declared: " + String.join(", ", declared));
+        }
+        for (ExecContextParamsYaml.Variable input : inputs) {
+            final byte[] bytes = values.get(input.name).getBytes(StandardCharsets.UTF_8);
+            variableTxService.createInitializedTx(new ByteArrayInputStream(bytes), bytes.length, input.name, null,
+                execContextId, CommonConsts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.text);
+        }
+    }
     private static void copyToParams(ExecContextData.@Nullable ExecContextCreationInfo info, ExecContextParamsYaml ecpy) {
         if (info == null) {
             return;
