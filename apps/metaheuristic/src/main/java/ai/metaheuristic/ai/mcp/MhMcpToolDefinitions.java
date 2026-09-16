@@ -49,6 +49,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageSyntheticRepositor
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRegistryRepository;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageRegistryTxService;
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorageRegistry;
 import ai.metaheuristic.api.data.meta_storage.MetaStorageRegistryParams;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
@@ -160,6 +161,7 @@ public class MhMcpToolDefinitions {
     private final SourceCodeTxService sourceCodeTxService;
     private final ExecContextRepository execContextRepository;
     private final MetaStorageRegistryRepository metaStorageRegistryRepository;
+    private final MetaStorageRegistryTxService metaStorageRegistryTxService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -905,14 +907,11 @@ public class MhMcpToolDefinitions {
         // The descriptor's lifetime is the table's lifetime. A descriptor left behind for a type that
         // no longer exists is worse than none, because it is the one artifact a reader has decided to
         // trust - so the drop takes it in the same act rather than leaving it to be noticed later.
-        final MetaStorageRegistry descriptor = metaStorageRegistryRepository.findByMetaTableAndProd(type, !synthetic);
-        if (descriptor!=null) {
-            metaStorageRegistryRepository.delete(descriptor);
-        }
+        final boolean hadDescriptor = metaStorageRegistryTxService.deleteByMetaTableAndProd(type, !synthetic);
 
         return toCallToolResult(new DropMetaStorageTableDto(true, !synthetic, companyId, type, deleted,
                 "Removed " + deleted + " record(s) of type '" + type + "' from " + tableName(synthetic)
-                        + (descriptor!=null ? ", and its registry descriptor" : ", which had no registry descriptor")));
+                        + (hadDescriptor ? ", and its registry descriptor" : ", which had no registry descriptor")));
     }
 
     // ==================== Tool 27: list the types a meta storage table holds ====================
@@ -1078,17 +1077,7 @@ public class MhMcpToolDefinitions {
         final boolean prod = !syntheticFromProduction(arguments);
         log.info("01.260.640 MCP upsertMetaStorageRegistry(companyId={}, metaTable={}, prod={})", companyId, metaTable, prod);
 
-        MetaStorageRegistry r = metaStorageRegistryRepository.findByMetaTableAndProd(metaTable, prod);
-        final boolean created = r==null;
-        if (created) {
-            r = new MetaStorageRegistry();
-            r.companyId = companyId;
-            r.metaTable = metaTable;
-            r.prod = prod;
-            // stamped once. An update is a correction of the description, not a new registration, and
-            // moving this forward would erase the one fact that answers "how old is this table?"
-            r.createdOn = System.currentTimeMillis();
-        }
+        final boolean created = metaStorageRegistryRepository.findByMetaTableAndProd(metaTable, prod)==null;
 
         final MetaStorageRegistryParams p = new MetaStorageRegistryParams();
         p.desc = getRequiredString(arguments, "desc");
@@ -1099,9 +1088,10 @@ public class MhMcpToolDefinitions {
         p.execContextId = ecId==null ? null : Long.valueOf(String.valueOf(ecId).strip());
         p.function = optionalString(arguments, "function");
         p.consumer = optionalString(arguments, "consumer");
-        r.updateParams(p);
-
-        final MetaStorageRegistry saved = metaStorageRegistryRepository.save(r);
+        // through the same service the internal Function mh.meta-storage-registry uses: a descriptor
+        // written from a pipeline and one written by hand must mean the same thing, and the way to
+        // guarantee that is for one place to decide what writing means
+        final MetaStorageRegistry saved = metaStorageRegistryTxService.upsert(companyId, metaTable, prod, p);
         return toCallToolResult(new UpsertMetaStorageRegistryResultDto(true, created, toDto(saved)));
     }
     // ==================== Tool 3: set an ExecContext's target state ====================

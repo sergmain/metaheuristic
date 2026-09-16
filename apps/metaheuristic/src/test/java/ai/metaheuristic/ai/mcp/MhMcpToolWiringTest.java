@@ -78,7 +78,7 @@ public class MhMcpToolWiringTest {
     private static final Set<String> NO_ARG_TOOLS = Set.of("mh_list_source_codes", "mh_list_processors", "mh_execution_gate_status");
 
     private static List<McpServerFeatures.SyncToolSpecification> specs() {
-        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
+        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
                 .getAllToolSpecifications();
     }
 

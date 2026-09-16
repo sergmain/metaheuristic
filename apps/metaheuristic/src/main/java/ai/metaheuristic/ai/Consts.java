@@ -146,6 +146,7 @@ public class Consts {
     public static final String MH_ENHANCE_TEXT_FUNCTION = "mh.enhance-text";
     public static final String MH_ACCEPTANCE_TEST_FUNCTION = "mh.acceptance-test";
     public static final String MH_META_STORAGE_FUNCTION = "mh.meta-storage";
+    public static final String MH_META_STORAGE_REGISTRY_FUNCTION = "mh.meta-storage-registry";
 
     public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(CommonConsts.MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 
