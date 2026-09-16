@@ -48,6 +48,9 @@ import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageSyntheticRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRegistryRepository;
+import ai.metaheuristic.ai.dispatcher.beans.MetaStorageRegistry;
+import ai.metaheuristic.api.data.meta_storage.MetaStorageRegistryParams;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
@@ -156,6 +159,7 @@ public class MhMcpToolDefinitions {
     private final MetaStorageSyntheticService metaStorageSyntheticService;
     private final SourceCodeTxService sourceCodeTxService;
     private final ExecContextRepository execContextRepository;
+    private final MetaStorageRegistryRepository metaStorageRegistryRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -487,6 +491,8 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(ARCHIVE_SOURCE_CODE_TOOL, this::handleArchiveSourceCode),
                 new McpServerFeatures.SyncToolSpecification(DROP_META_STORAGE_TABLE_TOOL, this::handleDropMetaStorageTable),
                 new McpServerFeatures.SyncToolSpecification(LIST_META_STORAGE_TYPES_TOOL, this::handleListMetaStorageTypes),
+                new McpServerFeatures.SyncToolSpecification(LIST_META_STORAGE_REGISTRY_TOOL, this::handleListMetaStorageRegistry),
+                new McpServerFeatures.SyncToolSpecification(GET_META_STORAGE_REGISTRY_TOOL, this::handleGetMetaStorageRegistry),
                 new McpServerFeatures.SyncToolSpecification(EXEC_CONTEXT_TARGET_STATE_TOOL, this::handleExecContextTargetState),
                 new McpServerFeatures.SyncToolSpecification(GET_TASK_INFO_TOOL, this::handleGetTaskInfo),
                 new McpServerFeatures.SyncToolSpecification(RESET_TASK_TOOL, this::handleResetTask),
@@ -930,6 +936,85 @@ public class MhMcpToolDefinitions {
                 : metaStorageService.listTypes(companyId);
 
         return toCallToolResult(new MetaStorageTypesDto(!synthetic, companyId, types.size(), types));
+    }
+    // ==================== Tool 28: read the meta table registry ====================
+
+    public record MetaStorageRegistryEntryDto(
+            Long id, Long companyId, String metaTable, boolean production, long createdOn,
+            String desc, String producer, String recKeyFormat, String bodyFormat,
+            Long execContextId, String function, String consumer) {}
+
+    private static MetaStorageRegistryEntryDto toDto(MetaStorageRegistry r) {
+        final MetaStorageRegistryParams p = r.getMetaStorageRegistryParams();
+        return new MetaStorageRegistryEntryDto(r.id, r.companyId, r.metaTable, r.prod, r.createdOn,
+                p.desc, p.producer, p.recKeyFormat, p.bodyFormat, p.execContextId, p.function, p.consumer);
+    }
+
+    private static final Tool LIST_META_STORAGE_REGISTRY_TOOL = Tool.builder("mh_list_meta_storage_registry",
+                    objectSchema(
+                            Map.of(
+                                    "companyId", Map.of("type", "integer",
+                                            "description", "Owning company id - the COMPANY_ID column"),
+                                    "production", Map.of("type", "boolean",
+                                            "description", "Optional filter. true lists descriptors of tables in MH_META_STORAGE, false those in MH_META_STORAGE_SYNTHETIC. OMIT IT to list both, which is what tells you a type name exists in each store.")),
+                            List.of("companyId")))
+            .title("List meta table descriptors")
+            .description("What every registered meta storage table is FOR: one descriptor per table, carrying the "
+                    + "description, the SourceCode that wrote it, the recKey and body formats, and the ExecContext "
+                    + "behind it. A meta storage type is an opaque string that exists only because something was "
+                    + "written under it, so a bare type listing answers with names and nothing else - this is where "
+                    + "the meaning lives. Unlike the other meta-storage tools, 'production' here is a FILTER and may "
+                    + "be omitted: the same type name can be registered in both stores, and those are two tables.")
+            .build();
+
+    private CallToolResult handleListMetaStorageRegistry(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final Long companyId = getRequiredLong(arguments, "companyId");
+        final Object raw = arguments.get("production");
+        log.info("01.260.580 MCP listMetaStorageRegistry(companyId={}, production={})", companyId, raw);
+
+        final List<MetaStorageRegistry> rows = raw==null
+                ? metaStorageRegistryRepository.findAllByCompanyId(companyId)
+                : metaStorageRegistryRepository.findAllByCompanyIdAndProd(companyId,
+                        Boolean.TRUE.equals(raw) || "true".equals(String.valueOf(raw).strip()));
+
+        return toCallToolResult(rows.stream().map(MhMcpToolDefinitions::toDto).toList());
+    }
+
+    // ==================== Tool 29: read one meta table descriptor ====================
+
+    private static final Tool GET_META_STORAGE_REGISTRY_TOOL = Tool.builder("mh_get_meta_storage_registry",
+                    objectSchema(
+                            Map.of(
+                                    "metaTable", Map.of("type", "string",
+                                            "description", "The described table's name - a TYPE value in whichever store 'production' selects"),
+                                    "production", Map.of("type", "boolean",
+                                            "description", "Optional. true describes a table in MH_META_STORAGE; absent or false one in MH_META_STORAGE_SYNTHETIC.")),
+                            List.of("metaTable")))
+            .title("Get one meta table descriptor")
+            .description("The descriptor for ONE meta storage table, addressed by (META_TABLE, PROD) - the pair the "
+                    + "unique index declares and the only pair a caller actually knows. Answers what the table holds, "
+                    + "how to read a record and who wrote it, before anything is read out of the table itself. "
+                    + "A table with no descriptor returns ok=false rather than an error: a descriptor is a convention "
+                    + "the writer follows, not something the database enforces, so its absence is a fact about that "
+                    + "table rather than a failure of this call.")
+            .build();
+
+    public record MetaStorageRegistryEntryResultDto(
+            boolean ok, String metaTable, boolean production, MetaStorageRegistryEntryDto entry, String message) {}
+
+    private CallToolResult handleGetMetaStorageRegistry(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final String metaTable = getRequiredString(arguments, "metaTable");
+        final boolean prod = !syntheticFromProduction(arguments);
+        log.info("01.260.600 MCP getMetaStorageRegistry(metaTable={}, prod={})", metaTable, prod);
+
+        final MetaStorageRegistry r = metaStorageRegistryRepository.findByMetaTableAndProd(metaTable, prod);
+        if (r==null) {
+            return toCallToolResult(new MetaStorageRegistryEntryResultDto(false, metaTable, prod, null,
+                    "01.260.620 No descriptor registered for '" + metaTable + "' in " + tableName(!prod)));
+        }
+        return toCallToolResult(new MetaStorageRegistryEntryResultDto(true, metaTable, prod, toDto(r), null));
     }
     // ==================== Tool 3: set an ExecContext's target state ====================
 
