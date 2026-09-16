@@ -74,6 +74,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -484,6 +485,8 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(CREATE_EXEC_CONTEXT_TOOL, this::handleCreateExecContext),
                 new McpServerFeatures.SyncToolSpecification(CREATE_EXEC_CONTEXT_WITH_VARIABLES_TOOL, this::handleCreateExecContextWithVariables),
                 new McpServerFeatures.SyncToolSpecification(ARCHIVE_SOURCE_CODE_TOOL, this::handleArchiveSourceCode),
+                new McpServerFeatures.SyncToolSpecification(DROP_META_STORAGE_TABLE_TOOL, this::handleDropMetaStorageTable),
+                new McpServerFeatures.SyncToolSpecification(LIST_META_STORAGE_TYPES_TOOL, this::handleListMetaStorageTypes),
                 new McpServerFeatures.SyncToolSpecification(EXEC_CONTEXT_TARGET_STATE_TOOL, this::handleExecContextTargetState),
                 new McpServerFeatures.SyncToolSpecification(GET_TASK_INFO_TOOL, this::handleGetTaskInfo),
                 new McpServerFeatures.SyncToolSpecification(RESET_TASK_TOOL, this::handleResetTask),
@@ -828,6 +831,106 @@ public class MhMcpToolDefinitions {
         return toCallToolResult(new ArchiveSourceCodeResultDto(
                 errors.isEmpty(), sourceCodeId, true, stopped, errors));
     }
+    // ==================== Tool 26: drop a whole meta storage type ====================
+
+    /**
+     * The production flag as the BUSINESS EDGE states it, converted to the synthetic flag the store
+     * speaks internally.
+     *
+     * <p>The edge and the internals name this differently on purpose. A caller reasons about intent -
+     * "is this the real thing?" - and answers it once, explicitly. The store reasons about which
+     * physical table a row lands in. This method is the single place one becomes the other, so nothing
+     * downstream has to remember which way round it is.
+     *
+     * <p>Absent means development. Production is never the default of an omission: a row written to
+     * MH_META_STORAGE cannot be un-written by re-running, while a row in the synthetic table costs one
+     * re-run, so the expensive mistake is the one that has to be asked for.
+     */
+    private static boolean syntheticFromProduction(Map<String, Object> arguments) {
+        final Object raw = arguments.get("production");
+        if (raw==null) {
+            return true;
+        }
+        if (raw instanceof Boolean b) {
+            return !b;
+        }
+        return !"true".equals(String.valueOf(raw).strip());
+    }
+
+    private static final Tool DROP_META_STORAGE_TABLE_TOOL = Tool.builder("mh_drop_meta_storage_table",
+                    objectSchema(
+                            Map.of(
+                                    "companyId", Map.of("type", "integer",
+                                            "description", "Owning company id - the COMPANY_ID column"),
+                                    "type", Map.of("type", "string",
+                                            "description", "Entity kind - the TYPE column. EVERY record under it is removed."),
+                                    "production", Map.of("type", "boolean",
+                                            "description", "Optional. true drops from the PRODUCTION table MH_META_STORAGE; absent or false drops from MH_META_STORAGE_SYNTHETIC.")),
+                            List.of("companyId", "type")))
+            .title("Drop a meta storage type")
+            .description("Remove EVERY record stored under one (companyId, type). This DESTROYS data and there is no "
+                    + "undo - MH keeps no history of a meta storage row. It exists because a type is how a run "
+                    + "addresses its own queue, so retiring a run means retiring a type, and deleting one natural key "
+                    + "at a time stops being a serious option once a type holds hundreds of records. A type holding "
+                    + "nothing is reported as deleted=0 rather than as an error, so a repeated drop is safe.")
+            .build();
+
+    public record DropMetaStorageTableDto(
+            boolean ok, boolean production, Long companyId, String type, int deleted, String message) {}
+
+    private CallToolResult handleDropMetaStorageTable(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final Long companyId = getRequiredLong(arguments, "companyId");
+        final String type = getRequiredString(arguments, "type");
+        final boolean synthetic = syntheticFromProduction(arguments);
+        log.info("01.260.540 MCP dropMetaStorageTable(companyId={}, type={}, synthetic={})", companyId, type, synthetic);
+
+        final List<String> recKeys = synthetic
+                ? metaStorageSyntheticService.listKeys(companyId, type)
+                : metaStorageService.listKeys(companyId, type);
+
+        int deleted = 0;
+        for (String recKey : recKeys) {
+            deleted += synthetic
+                    ? metaStorageSyntheticService.deleteByNaturalKey(companyId, type, recKey)
+                    : metaStorageService.deleteByNaturalKey(companyId, type, recKey);
+        }
+        return toCallToolResult(new DropMetaStorageTableDto(true, !synthetic, companyId, type, deleted,
+                "Removed " + deleted + " record(s) of type '" + type + "' from " + tableName(synthetic)));
+    }
+
+    // ==================== Tool 27: list the types a meta storage table holds ====================
+
+    private static final Tool LIST_META_STORAGE_TYPES_TOOL = Tool.builder("mh_list_meta_storage_types",
+                    objectSchema(
+                            Map.of(
+                                    "companyId", Map.of("type", "integer",
+                                            "description", "Owning company id - the COMPANY_ID column"),
+                                    "production", Map.of("type", "boolean",
+                                            "description", "Optional. true reads the PRODUCTION table MH_META_STORAGE; absent or false reads MH_META_STORAGE_SYNTHETIC.")),
+                            List.of("companyId")))
+            .title("List meta storage types")
+            .description("Every distinct TYPE a company holds records under, in one table - the enumeration step "
+                    + "nothing else provides. A type exists only by virtue of something having been written under it, "
+                    + "so there is no registry to consult: without this, a caller can only ask about types whose names "
+                    + "it already knew. Use it before mh_list_meta_storage_rec_keys, which needs a type, or before "
+                    + "mh_drop_meta_storage_table, to see what is actually there.")
+            .build();
+
+    public record MetaStorageTypesDto(boolean production, Long companyId, int count, List<String> types) {}
+
+    private CallToolResult handleListMetaStorageTypes(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final Long companyId = getRequiredLong(arguments, "companyId");
+        final boolean synthetic = syntheticFromProduction(arguments);
+        log.info("01.260.560 MCP listMetaStorageTypes(companyId={}, synthetic={})", companyId, synthetic);
+
+        final List<String> types = synthetic
+                ? metaStorageSyntheticService.listTypes(companyId)
+                : metaStorageService.listTypes(companyId);
+
+        return toCallToolResult(new MetaStorageTypesDto(!synthetic, companyId, types.size(), types));
+    }
     // ==================== Tool 3: set an ExecContext's target state ====================
 
     private static final Tool EXEC_CONTEXT_TARGET_STATE_TOOL = Tool.builder("mh_exec_context_target_state",
@@ -1039,17 +1142,35 @@ public class MhMcpToolDefinitions {
     // ==================== Tool 10: list source codes ====================
 
     private static final Tool LIST_SOURCE_CODES_TOOL = Tool.builder("mh_list_source_codes",
-                    objectSchema(Map.of(), List.of()))
+                    objectSchema(
+                            Map.of("archived", Map.of("type", "boolean",
+                                    "description", "Optional. Absent or false lists ACTIVE SourceCodes; true lists the archived ones instead.")),
+                            List.of()))
             .title("List SourceCodes")
-            .description("List all SourceCodes in the database with general info: id, uid, "
-                    + "companyId, latch, and valid flag. Returns all rows across all companies "
-                    + "(no companyId filter). Use this to discover available SourceCodes and their "
+            .description("List SourceCodes with general info: id, uid, companyId and valid flag. "
+                    + "Active by default; pass archived=true for the retired ones. The two sets are disjoint, so a "
+                    + "version retired with mh_archive_source_code leaves the default listing and appears in the "
+                    + "archived one - which is what makes the default listing answer 'which version is current?'. "
+                    + "Scoped to the calling account's company. Use this to discover available SourceCodes and their "
                     + "uids before calling tools that require a sourceCodeUidPrefix.")
             .build();
 
+    public record SourceCodeListDto(Long id, String uid, Long companyId, boolean valid) {}
+
     private CallToolResult handleListSourceCodes(McpSyncServerExchange exchange, CallToolRequest request) {
-        log.info("260.250 MCP listSourceCodes()");
-        List<SourceCodeData.SourceCodeListItem> items = sourceCodeRepository.findAllAsListItems();
+        final Object raw = request.arguments().get("archived");
+        final boolean archived = Boolean.TRUE.equals(raw) || "true".equals(String.valueOf(raw).strip());
+        log.info("260.250 MCP listSourceCodes(archived={})", archived);
+
+        // The same call the REST endpoints make - /source-codes for active, /source-codes-archived-only
+        // for the rest - so the two surfaces cannot drift apart about what archived means. Reading the
+        // flag here instead would be a second implementation of the same predicate.
+        final SourceCodeApiData.SourceCodesResult result = sourceCodeTxService.getSourceCodes(
+                PageRequest.of(0, 1000), archived, userContextOf(exchange));
+
+        final List<SourceCodeListDto> items = result.items.getContent().stream()
+                .map(sc -> new SourceCodeListDto(sc.getId(), sc.getUid(), sc.getCompanyId(), sc.isValid()))
+                .toList();
         return toCallToolResult(items);
     }
 
@@ -1114,9 +1235,9 @@ public class MhMcpToolDefinitions {
                     objectSchema(
                             Map.of("id", Map.of("type", "integer",
                                             "description", "Numeric row id of the record - the ID column of whichever table 'synthetic' selects"),
-                                    "synthetic", Map.of("type", "boolean",
-                                            "description", "Which table to read: true -> MH_META_STORAGE_SYNTHETIC, false -> MH_META_STORAGE. Required, no default.")),
-                            List.of("id", "synthetic")))
+                                    "production", Map.of("type", "boolean",
+                                            "description", "Optional. true addresses the PRODUCTION table MH_META_STORAGE; absent or false addresses MH_META_STORAGE_SYNTHETIC. Production is asked for EXPLICITLY - a caller that says nothing gets the synthetic table, because a row written to production cannot be un-written by re-running.")),
+                            List.of("id")))
             .title("Get Meta Storage Record")
             .description("Get one meta storage record by its row id. 'synthetic' chooses the table and has no default: "
                     + "true reads MH_META_STORAGE_SYNTHETIC, false reads MH_META_STORAGE. The two tables carry identical "
@@ -1131,7 +1252,7 @@ public class MhMcpToolDefinitions {
     private CallToolResult handleGetMetaStorageRecord(McpSyncServerExchange exchange, CallToolRequest request) {
         final Map<String, Object> arguments = request.arguments();
         final Long id = getRequiredLong(arguments, "id");
-        final boolean synthetic = getRequiredBoolean(arguments, "synthetic");
+        final boolean synthetic = syntheticFromProduction(arguments);
         log.info("01.260.440 MCP getMetaStorageRecord(id={}, synthetic={})", id, synthetic);
 
         // MetaStorage and MetaStorageSynthetic share every column but no supertype, so the branch maps
@@ -1181,9 +1302,9 @@ public class MhMcpToolDefinitions {
                                             "description", "Entity kind - the TYPE column. A column value, never an enum; opaque to MH."),
                                     "recKey", Map.of("type", "string",
                                             "description", "Natural key within (companyId, type) - the REC_KEY column. Opaque to MH."),
-                                    "synthetic", Map.of("type", "boolean",
-                                            "description", "Which table to address: true -> MH_META_STORAGE_SYNTHETIC, false -> MH_META_STORAGE. Required, no default.")),
-                            List.of("companyId", "type", "recKey", "synthetic")))
+                                    "production", Map.of("type", "boolean",
+                                            "description", "Optional. true addresses the PRODUCTION table MH_META_STORAGE; absent or false addresses MH_META_STORAGE_SYNTHETIC. Production is asked for EXPLICITLY - a caller that says nothing gets the synthetic table, because a row written to production cannot be un-written by re-running.")),
+                            List.of("companyId", "type", "recKey")))
             .title("Select Meta Storage Record")
             .description("Get one meta storage record addressed by its natural key (companyId, type, recKey) - the "
                     + "same row mh_get_meta_storage_record returns, reached the way a caller normally knows it. "
@@ -1200,7 +1321,7 @@ public class MhMcpToolDefinitions {
         final Long companyId = getRequiredLong(arguments, "companyId");
         final String type = getRequiredString(arguments, "type");
         final String recKey = getRequiredString(arguments, "recKey");
-        final boolean synthetic = getRequiredBoolean(arguments, "synthetic");
+        final boolean synthetic = syntheticFromProduction(arguments);
         log.info("01.260.460 MCP selectMetaStorageRecord(companyId={}, type={}, recKey={}, synthetic={})",
                 companyId, type, recKey, synthetic);
 
@@ -1230,9 +1351,9 @@ public class MhMcpToolDefinitions {
                                             "description", "Entity kind - the TYPE column. A column value, never an enum; opaque to MH."),
                                     "recKey", Map.of("type", "string",
                                             "description", "Natural key within (companyId, type) - the REC_KEY column. Opaque to MH."),
-                                    "synthetic", Map.of("type", "boolean",
-                                            "description", "Which table to address: true -> MH_META_STORAGE_SYNTHETIC, false -> MH_META_STORAGE. Required, no default.")),
-                            List.of("companyId", "type", "recKey", "synthetic")))
+                                    "production", Map.of("type", "boolean",
+                                            "description", "Optional. true addresses the PRODUCTION table MH_META_STORAGE; absent or false addresses MH_META_STORAGE_SYNTHETIC. Production is asked for EXPLICITLY - a caller that says nothing gets the synthetic table, because a row written to production cannot be un-written by re-running.")),
+                            List.of("companyId", "type", "recKey")))
             .title("Delete Meta Storage Record")
             .description("Delete the one meta storage record addressed by its natural key (companyId, type, recKey). "
                     + "\u2757 This DESTROYS data and there is no undo - MH keeps no history of a meta storage row, so a "
@@ -1248,7 +1369,7 @@ public class MhMcpToolDefinitions {
         final Long companyId = getRequiredLong(arguments, "companyId");
         final String type = getRequiredString(arguments, "type");
         final String recKey = getRequiredString(arguments, "recKey");
-        final boolean synthetic = getRequiredBoolean(arguments, "synthetic");
+        final boolean synthetic = syntheticFromProduction(arguments);
         log.info("01.260.480 MCP deleteMetaStorageRecord(companyId={}, type={}, recKey={}, synthetic={})",
                 companyId, type, recKey, synthetic);
 
@@ -1272,9 +1393,9 @@ public class MhMcpToolDefinitions {
                                             "description", "Owning company id - the COMPANY_ID column"),
                                     "type", Map.of("type", "string",
                                             "description", "Entity kind - the TYPE column. A column value, never an enum; opaque to MH."),
-                                    "synthetic", Map.of("type", "boolean",
-                                            "description", "Which table to read: true -> MH_META_STORAGE_SYNTHETIC, false -> MH_META_STORAGE. Required, no default.")),
-                            List.of("companyId", "type", "synthetic")))
+                                    "production", Map.of("type", "boolean",
+                                            "description", "Optional. true addresses the PRODUCTION table MH_META_STORAGE; absent or false addresses MH_META_STORAGE_SYNTHETIC. Production is asked for EXPLICITLY - a caller that says nothing gets the synthetic table, because a row written to production cannot be un-written by re-running.")),
+                            List.of("companyId", "type")))
             .title("List Meta Storage Rec Keys")
             .description("List every recKey stored under one (companyId, type), ordered by recKey so a run is "
                     + "reproducible. \u2757 Bodies are NOT read - this is the selection step, and the payload for a "
@@ -1289,7 +1410,7 @@ public class MhMcpToolDefinitions {
         final Map<String, Object> arguments = request.arguments();
         final Long companyId = getRequiredLong(arguments, "companyId");
         final String type = getRequiredString(arguments, "type");
-        final boolean synthetic = getRequiredBoolean(arguments, "synthetic");
+        final boolean synthetic = syntheticFromProduction(arguments);
         log.info("01.260.500 MCP listMetaStorageRecKeys(companyId={}, type={}, synthetic={})", companyId, type, synthetic);
 
         final List<String> recKeys = synthetic
@@ -1319,9 +1440,9 @@ public class MhMcpToolDefinitions {
                                             "description", "The payload, stored verbatim in the BODY column. Opaque to MH: not parsed, not validated, not trimmed."),
                                     "mode", Map.of("type", "string", "enum", WRITE_MODES,
                                             "description", "INSERT refuses an occupied key, UPDATE refuses an empty one, UPSERT accepts either. Required, no default."),
-                                    "synthetic", Map.of("type", "boolean",
-                                            "description", "Which table to address: true -> MH_META_STORAGE_SYNTHETIC, false -> MH_META_STORAGE. Required, no default.")),
-                            List.of("companyId", "type", "recKey", "body", "mode", "synthetic")))
+                                    "production", Map.of("type", "boolean",
+                                            "description", "Optional. true addresses the PRODUCTION table MH_META_STORAGE; absent or false addresses MH_META_STORAGE_SYNTHETIC. Production is asked for EXPLICITLY - a caller that says nothing gets the synthetic table, because a row written to production cannot be un-written by re-running.")),
+                            List.of("companyId", "type", "recKey", "body", "mode")))
             .title("Upsert Meta Storage Record")
             .description("Insert or update the one meta storage record addressed by its natural key (companyId, "
                     + "type, recKey) - the write side of mh_select_meta_storage_record. \u2757 'mode' has no default "
@@ -1346,7 +1467,7 @@ public class MhMcpToolDefinitions {
         final String recKey = getRequiredString(arguments, "recKey");
         final String body = getRequiredOpaqueString(arguments, "body");
         final String mode = getRequiredMode(arguments, "mode");
-        final boolean synthetic = getRequiredBoolean(arguments, "synthetic");
+        final boolean synthetic = syntheticFromProduction(arguments);
         log.info("01.260.520 MCP upsertMetaStorageRecord(companyId={}, type={}, recKey={}, mode={}, synthetic={}, bodyChars={})",
                 companyId, type, recKey, mode, synthetic, body.length());
 
