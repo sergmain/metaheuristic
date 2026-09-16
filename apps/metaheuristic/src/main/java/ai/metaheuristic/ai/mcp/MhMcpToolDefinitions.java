@@ -47,6 +47,8 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepos
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageSyntheticRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskResetService;
@@ -151,6 +153,8 @@ public class MhMcpToolDefinitions {
     private final MetaStorageSyntheticRepository metaStorageSyntheticRepository;
     private final MetaStorageService metaStorageService;
     private final MetaStorageSyntheticService metaStorageSyntheticService;
+    private final SourceCodeTxService sourceCodeTxService;
+    private final ExecContextRepository execContextRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -479,6 +483,7 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(EXECUTION_GATE_STATUS_TOOL, this::handleExecutionGateStatus),
                 new McpServerFeatures.SyncToolSpecification(CREATE_EXEC_CONTEXT_TOOL, this::handleCreateExecContext),
                 new McpServerFeatures.SyncToolSpecification(CREATE_EXEC_CONTEXT_WITH_VARIABLES_TOOL, this::handleCreateExecContextWithVariables),
+                new McpServerFeatures.SyncToolSpecification(ARCHIVE_SOURCE_CODE_TOOL, this::handleArchiveSourceCode),
                 new McpServerFeatures.SyncToolSpecification(EXEC_CONTEXT_TARGET_STATE_TOOL, this::handleExecContextTargetState),
                 new McpServerFeatures.SyncToolSpecification(GET_TASK_INFO_TOOL, this::handleGetTaskInfo),
                 new McpServerFeatures.SyncToolSpecification(RESET_TASK_TOOL, this::handleResetTask),
@@ -766,6 +771,62 @@ public class MhMcpToolDefinitions {
                 result.sourceCode == null ? null : result.sourceCode.uid,
                 ec.state, EnumsApi.ExecContextState.toState(ec.state).name(),
                 errors, result.getInfoMessagesAsList()));
+    }
+    // ==================== Tool 25: archive a SourceCode ====================
+
+    private static final Tool ARCHIVE_SOURCE_CODE_TOOL = Tool.builder("mh_archive_source_code",
+                    objectSchema(
+                            Map.of(
+                                    "sourceCodeId", Map.of("type", "integer",
+                                            "description", "Numeric id of the SourceCode version to retire"),
+                                    "companyId", Map.of("type", "integer",
+                                            "description", "Unique id of the company owning the SourceCode")),
+                            List.of("sourceCodeId", "companyId")))
+            .title("Archive a SourceCode")
+            .description("Retire one SourceCode version: mark it archived, then stop every ExecContext still running "
+                    + "against it. A SourceCode is immutable, so editing a .mhsc means registering a NEW uid - this is "
+                    + "what closes the OLD one, and without it both versions stay launchable and nothing says which is "
+                    + "current. The order is deliberate: archive first so nothing new starts against it, then stop what "
+                    + "is already running, because the reverse leaves a window in which a run can be admitted between "
+                    + "the two steps. Stopping cascades to related ExecContexts; already-terminal ones are left alone. "
+                    + "Refused while the dispatcher's asset mode is 'replicated'. Reports every ExecContext it stopped.")
+            .build();
+
+    public record ArchiveSourceCodeResultDto(
+            boolean ok, Long sourceCodeId, boolean archived, List<Long> stoppedExecContextIds,
+            List<String> errorMessages) {}
+
+    private CallToolResult handleArchiveSourceCode(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Long sourceCodeId = getRequiredLong(request.arguments(), "sourceCodeId");
+        final UserContext userContext = userContextOf(exchange);
+        log.info("01.260.380 MCP archiveSourceCode({})", sourceCodeId);
+
+        // Archive BEFORE stopping. The other order leaves a window in which the SourceCode is still
+        // live while its ExecContexts are being stopped one at a time, and a run admitted inside that
+        // window would survive the very operation meant to end it.
+        final OperationStatusRest archiveStatus = sourceCodeTxService.archiveSourceCodeById(sourceCodeId, userContext);
+        if (archiveStatus.status!=EnumsApi.OperationStatus.OK) {
+            return toCallToolResult(new ArchiveSourceCodeResultDto(
+                    false, sourceCodeId, false, List.of(), archiveStatus.getErrorMessagesAsList()));
+        }
+
+        final List<Long> stopped = new ArrayList<>();
+        final List<String> errors = new ArrayList<>();
+        for (ExecContextImpl ec : execContextRepository.findBySourceCodeId(sourceCodeId)) {
+            if (EnumsApi.ExecContextState.isFinishedState(ec.state)) {
+                continue;
+            }
+            final OperationStatusRest stopStatus =
+                    execContextTopLevelService.changeExecContextState("STOPPED", ec.id, userContext);
+            if (stopStatus.status==EnumsApi.OperationStatus.OK) {
+                stopped.add(ec.id);
+            }
+            else {
+                errors.addAll(stopStatus.getErrorMessagesAsList());
+            }
+        }
+        return toCallToolResult(new ArchiveSourceCodeResultDto(
+                errors.isEmpty(), sourceCodeId, true, stopped, errors));
     }
     // ==================== Tool 3: set an ExecContext's target state ====================
 

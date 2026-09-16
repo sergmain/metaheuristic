@@ -1,0 +1,14 @@
+// Two source-level input variables, both consumed, so Task production really depends on them
+// having been initialized. Used by CreateExecContextWithInputVariablesTest.
+source "test-exec-context-input-variables-1.0" {
+
+    variables {
+        <- alpha, beta
+    }
+
+    consume := internal mh.nop {
+        name "consume both inputs"
+        <- alpha, beta
+        timeout 60
+    }
+}
