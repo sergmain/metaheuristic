@@ -56,7 +56,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
  * <p><b>metas</b>
  * <pre>
  *   action      select | upsert            (required)
- *   type        entity kind, a free string (required)
+ *   type        INPUT VARIABLE holding the entity kind      (required)
  *   keys        input variable holding one recKey per line   (optional, action=select)
  *   output      name of the output variable                  (required, action=select)
  *   content     input variable holding what to write         (required, action=upsert)
@@ -122,10 +122,22 @@ public class MetaStorageFunction implements InternalFunction {
         if (S.b(action)) {
             throw new InternalFunctionException(meta_not_found, "01.942.020 meta '" + ACTION + "' wasn't found or it's blank");
         }
-        final String type = MetaUtils.getValue(taskParamsYaml.task.metas, TYPE);
-        if (S.b(type)) {
+        final String typeVarName = MetaUtils.getValue(taskParamsYaml.task.metas, TYPE);
+        if (S.b(typeVarName)) {
             throw new InternalFunctionException(meta_not_found, "01.942.040 meta '" + TYPE + "' wasn't found or it's blank");
         }
+        // The meta names a VARIABLE and the variable holds the type. A type minted at runtime - one
+        // per ExecContext, per subject, per batch of work - cannot travel in a meta, because a meta is
+        // fixed when the .mhsc is authored and this function used to overwrite every record with it.
+        // Naming the variable instead is the indirection the RG functions already use for their
+        // inputs: meta says which name, the variable says which value.
+        final String typeFromVariable = internalFunctionVariableService.getValueOfVariable(
+            simpleExecContext.execContextId, taskContextId, typeVarName);
+        if (S.b(typeFromVariable)) {
+            throw new InternalFunctionException(data_not_found,
+                "01.942.042 variable '" + typeVarName + "' is empty, it must hold the meta storage type");
+        }
+        final String type = typeFromVariable.strip();
         try {
             switch (action) {
                 case ACTION_SELECT -> processSelect(simpleExecContext, taskId, taskContextId, taskParamsYaml, type);
@@ -220,7 +232,7 @@ public class MetaStorageFunction implements InternalFunction {
             if (r.body()==null) {
                 throw new InternalFunctionException(source_code_is_broken, "01.942.200 body is null, recKey: " + r.recKey());
             }
-            // the 'type' meta wins over whatever a record carries - the .mhsc declares the kind
+            // the resolved type wins over whatever a record carries - the process declares the kind
             records.add(new MetaStorageData.Record(type, r.recKey(), r.body()));
         }
 

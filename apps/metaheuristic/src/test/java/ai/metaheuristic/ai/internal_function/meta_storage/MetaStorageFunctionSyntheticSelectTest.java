@@ -77,7 +77,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class MetaStorageFunctionSyntheticSelectTest extends PreparingSourceCode {
 
-    /** Must match the {@code type} meta in the .mhsc - the process declares the kind, not the test. */
+    /** Must match the inline {@code typeName} in the .mhsc - the process declares the kind, not the test. */
     private static final String TYPE = "test.meta-storage-synthetic";
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;

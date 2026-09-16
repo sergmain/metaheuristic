@@ -1,10 +1,28 @@
 source "test-meta-storage-synthetic-select-1.0" {
+
+    // The type is a VARIABLE, not a meta: a type minted per run cannot be written into a meta.
+    // Here it is a constant lifted into a variable, which is the cheapest producer available to a
+    // test; a real pipeline gets it from whichever Function computed it.
+    variables {
+        inline mst {
+            typeName = "test.meta-storage-synthetic"
+        }
+    }
+
+    typeVar := internal mh.string-as-variable {
+        name "lift the meta storage type out of inline and into a variable"
+        meta mapping = "mapping: [{key: mst, name: typeName, output: metaType}]"
+        -> metaType: ext=".txt"
+        timeout 60
+    }
+
     fetch := internal mh.meta-storage {
         name "select every record of one type from the synthetic store"
         meta action = "select",
-             type = "test.meta-storage-synthetic",
+             type = "metaType",
              synthetic = "true",
              output = "fetched"
+        <- metaType
         -> fetched: ext=".json"
         timeout 60
     }
