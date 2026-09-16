@@ -60,10 +60,15 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
  *   keys        input variable holding one recKey per line   (optional, action=select)
  *   output      name of the output variable                  (required, action=select)
  *   content     input variable holding what to write         (required, action=upsert)
- *   synthetic   true -> MH_META_STORAGE_SYNTHETIC             (optional, both actions)
+ *   synthetic   INPUT VARIABLE holding true or false         (optional, both actions)
  * </pre>
  *
- * <p>{@code synthetic} routes BOTH actions to the same table. Omitting it on one of a store/select
+ * <p>{@code synthetic} names a VARIABLE, the same indirection {@code type} uses and for the same
+ * reason: which table a run writes to is a property of the RUN, and a meta is fixed when the .mhsc
+ * is authored. A development trial belongs in MH_META_STORAGE_SYNTHETIC and the real thing in
+ * MH_META_STORAGE, and nothing about that is decidable at authoring time.
+ *
+ * <p>It routes BOTH actions to the same table. Omitting it on one of a store/select
  * pair is the way to get a well-formed empty answer out of a store that really does hold the record.
  *
  * <p><b>Wire format.</b> {@code select} writes a JSON array of {@code {type, recKey, body}} and
@@ -164,6 +169,29 @@ public class MetaStorageFunction implements InternalFunction {
         }
     }
 
+    /**
+     * The synthetic flag, read from the VARIABLE that the {@code synthetic} meta names.
+     *
+     * <p>Same indirection as {@code type}, for the same reason: which table a run writes to is a
+     * property of the RUN rather than of the pipeline, and a meta is fixed when the .mhsc is authored.
+     *
+     * <p>An absent meta means false, which is the PRODUCTION table. That keeps every .mhsc written
+     * before this change working, but note which way that default fails: a pipeline which says nothing
+     * writes production rows. The discipline that prevents it lives in the .mhsc - each one names a
+     * variable here - and not in this default, which is why the default is worth knowing rather than
+     * relying on.
+     */
+    private boolean resolveSynthetic(
+        ExecContextApiData.SimpleExecContext simpleExecContext, String taskContextId, TaskParamsYaml taskParamsYaml) {
+
+        final String varName = MetaUtils.getValue(taskParamsYaml.task.metas, SYNTHETIC);
+        if (S.b(varName)) {
+            return false;
+        }
+        final String value = internalFunctionVariableService.getValueOfVariable(
+            simpleExecContext.execContextId, taskContextId, varName);
+        return value!=null && "true".equalsIgnoreCase(value.strip());
+    }
     private void processSelect(
         ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
         TaskParamsYaml taskParamsYaml, String type) {
@@ -173,7 +201,7 @@ public class MetaStorageFunction implements InternalFunction {
             throw new InternalFunctionException(meta_not_found, "01.942.080 meta '" + OUTPUT + "' wasn't found or it's blank");
         }
 
-        final boolean synthetic = MetaUtils.isTrue(taskParamsYaml.task.metas, SYNTHETIC);
+        final boolean synthetic = resolveSynthetic(simpleExecContext, taskContextId, taskParamsYaml);
         final List<String> recKeys = readKeys(simpleExecContext, taskContextId, taskParamsYaml);
         // The same meta that routes an upsert routes the read, and for the same reason: the two
         // tables carry identical columns and allocate ids independently, so nothing in a recKey or a
@@ -201,7 +229,7 @@ public class MetaStorageFunction implements InternalFunction {
         ExecContextApiData.SimpleExecContext simpleExecContext, String taskContextId,
         TaskParamsYaml taskParamsYaml, String type) {
 
-        final boolean synthetic = MetaUtils.isTrue(taskParamsYaml.task.metas, SYNTHETIC);
+        final boolean synthetic = resolveSynthetic(simpleExecContext, taskContextId, taskParamsYaml);
         final String contentName = MetaUtils.getValue(taskParamsYaml.task.metas, CONTENT);
         if (S.b(contentName)) {
             throw new InternalFunctionException(meta_not_found, "01.942.140 meta '" + CONTENT + "' wasn't found or it's blank");
