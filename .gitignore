@@ -47,3 +47,5 @@ mh-tests.txt
 t1.bat
 t2.bat
 t3.bat
+
+__pycache__/
