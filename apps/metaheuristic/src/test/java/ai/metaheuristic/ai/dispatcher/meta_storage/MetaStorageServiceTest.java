@@ -297,4 +297,54 @@ public class MetaStorageServiceTest extends MhSharedItTest {
         assertEquals("B's table", rowB.getMetaStorageRegistryParams().desc,
                 "PHASE #4: B's descriptor carries B's own description");
     }
+
+    /**
+     * A malformed meta table name is refused at the write paths, not discovered later.
+     *
+     * <p>❗ Nothing downstream would catch it: there is no CREATE TABLE, so an unnoticed typo does not
+     * fail - it quietly opens a SECOND table beside the intended one, and the records land somewhere
+     * nobody will look.
+     */
+    @Test
+    public void test_aMalformedMetaTableNameIsRefusedAndWritesNothing() {
+
+        final Long companyId = SharedItEnv.uniqueLong();
+        final String goodType = SharedItEnv.uniqueCode("good");
+        final String badType = goodType + " ";
+
+        // PHASE #1: the production store refuses it
+        assertThrows(IllegalArgumentException.class,
+                () -> metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(badType, "k-1", "b"))),
+                "PHASE #1: a trailing space must not reach the store");
+
+        // PHASE #2: the synthetic store refuses it too - it is where new names arrive first
+        assertThrows(IllegalArgumentException.class,
+                () -> metaStorageSyntheticService.upsert(companyId, List.of(new MetaStorageData.Record(badType, "k-1", "b"))),
+                "PHASE #2: the synthetic store applies the same rule");
+
+        // PHASE #3: a batch is refused WHOLE - the valid record ahead of the bad one is not written
+        assertThrows(IllegalArgumentException.class,
+                () -> metaStorageService.upsert(companyId, List.of(
+                        new MetaStorageData.Record(goodType, "k-1", "body-1"),
+                        new MetaStorageData.Record(badType, "k-2", "body-2"))),
+                "PHASE #3: the batch is rejected");
+        assertEquals(List.of(), metaStorageService.listKeys(companyId, goodType),
+                "PHASE #3: the valid record of the rejected batch was not written either");
+
+        // PHASE #4: and the registry refuses to describe a table that could not exist
+        final MetaStorageRegistryParams params = new MetaStorageRegistryParams();
+        params.desc = "d";
+        params.producer = "p";
+        params.recKeyFormat = "f";
+        params.bodyFormat = "json";
+        assertThrows(IllegalArgumentException.class,
+                () -> metaStorageRegistryTxService.upsert(companyId, badType, true, params),
+                "PHASE #4: no descriptor for an unaddressable table");
+
+        // PHASE #5: the same name without the defect goes through, so the rule rejects the typo
+        // rather than the shape of the name
+        assertEquals(1, metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(goodType, "k-1", "body-1"))),
+                "PHASE #5: the corrected name is accepted");
+        assertEquals(List.of("k-1"), metaStorageService.listKeys(companyId, goodType));
+    }
 }

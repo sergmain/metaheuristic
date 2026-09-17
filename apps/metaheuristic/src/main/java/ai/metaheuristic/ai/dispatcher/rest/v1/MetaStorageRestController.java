@@ -124,6 +124,71 @@ public class MetaStorageRestController {
     }
 
     /**
+     * The record keys of one meta table.
+     *
+     * <p>{@code companyId} is honoured ONLY for a caller entitled to the whole installation, and
+     * ignored for everyone else in favour of the principal's own company. ❗ That asymmetry is the
+     * whole of the tenant isolation on this endpoint: an ADMIN who adds another company's id to the
+     * query string gets their OWN company's data - not an error, and not the other company's.
+     */
+    @GetMapping("/meta-tables/{metaTable}/rec-keys")
+    public MetaStorageViewData.MetaTableRecordsResult recKeys(
+            Authentication authentication,
+            @PathVariable("metaTable") String metaTable,
+            @RequestParam(name = "companyId", required = false) @Nullable Long companyId,
+            @RequestParam(name = "production", required = false, defaultValue = "true") boolean production) {
+
+        final Long scopedCompanyId = scopeCompanyId(authentication, companyId);
+        final List<String> recKeys = production
+                ? metaStorageService.listKeys(scopedCompanyId, metaTable)
+                : metaStorageSyntheticService.listKeys(scopedCompanyId, metaTable);
+
+        return new MetaStorageViewData.MetaTableRecordsResult(scopedCompanyId, metaTable, production, recKeys);
+    }
+
+    /**
+     * One record's body, fetched when the reader opens it rather than with the list.
+     *
+     * <p>❗ The body is returned verbatim. MH never parses or validates a body, so this endpoint does
+     * not either - it is supposed to be JSON and may not be, and turning a malformed body into an
+     * error here would make the one screen that could show you the problem the one screen that
+     * refuses to.
+     */
+    @GetMapping("/meta-tables/{metaTable}/record")
+    public MetaStorageViewData.MetaTableRecordResult record(
+            Authentication authentication,
+            @PathVariable("metaTable") String metaTable,
+            @RequestParam(name = "recKey") String recKey,
+            @RequestParam(name = "companyId", required = false) @Nullable Long companyId,
+            @RequestParam(name = "production", required = false, defaultValue = "true") boolean production) {
+
+        final Long scopedCompanyId = scopeCompanyId(authentication, companyId);
+        final List<MetaStorageData.Record> records = production
+                ? metaStorageService.select(scopedCompanyId, metaTable, List.of(recKey))
+                : metaStorageSyntheticService.select(scopedCompanyId, metaTable, List.of(recKey));
+
+        return records.isEmpty()
+                ? new MetaStorageViewData.MetaTableRecordResult(scopedCompanyId, metaTable, production, recKey, false, null)
+                : new MetaStorageViewData.MetaTableRecordResult(scopedCompanyId, metaTable, production, recKey, true,
+                        records.get(0).body());
+    }
+
+    /**
+     * Which company's data the caller is actually allowed to read.
+     *
+     * <p>A requested companyId is a REQUEST, honoured only for a caller entitled across companies.
+     * For everyone else the principal's own company wins silently rather than raising - an ADMIN
+     * following a stale link carrying someone else's id should see their own table, not a refusal
+     * that confirms the other company's id meant something.
+     */
+    private Long scopeCompanyId(Authentication authentication, @Nullable Long requestedCompanyId) {
+        if (requestedCompanyId!=null && isMainAdmin(authentication)) {
+            return requestedCompanyId;
+        }
+        return userContextService.getContext(authentication).getCompanyId();
+    }
+
+    /**
      * Descriptions keyed by (companyId, metaTable) - the same pair the listing is keyed by, and the
      * one the registry's unique index declares.
      *

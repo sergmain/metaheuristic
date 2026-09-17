@@ -82,10 +82,18 @@ public class MetaStorageSyntheticService {
      * handed to the tx service. Per SPRING-TX-RULES.md §1 a {@code @Transactional} method must not
      * perform the existence check its caller could have done - purity outranks avoiding the extra
      * query.
+     *
+     * <p>❗ Names are validated before ANY row is resolved, so a batch carrying one malformed name
+     * writes nothing at all. The synthetic store is where a capability under development writes, so
+     * this is the path a new and untested name reaches first - it needs the check more than the
+     * production one does, not less.
      */
     public int upsert(Long companyId, List<MetaStorageData.Record> records) {
         if (records.isEmpty()) {
             return 0;
+        }
+        for (MetaStorageData.Record r : records) {
+            MetaStorageNameUtils.validateMetaTableName(r.type());
         }
         final List<MetaStorageData.ResolvedWrite> writes = new ArrayList<>(records.size());
         for (MetaStorageData.Record r : records) {

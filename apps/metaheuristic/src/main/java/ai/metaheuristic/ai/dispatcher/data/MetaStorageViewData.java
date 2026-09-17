@@ -53,4 +53,29 @@ public class MetaStorageViewData {
      *                    parameter, and it is what tells the UI to render the owner-company column.
      */
     public record MetaTablesResult(boolean production, boolean showCompany, List<MetaTableItem> tables) {}
+
+    /**
+     * The record keys of one meta table - ❗ keys only, never bodies.
+     *
+     * <p>A body is fetched one at a time, when the reader asks to see it. Sending every body with the
+     * list would move an unbounded amount of data to render a screen that shows none of it, and the
+     * bodies are MEDIUMTEXT.
+     *
+     * @param companyId the partition the listed table lives in, resolved server-side
+     * @param metaTable echoed back, so a response overtaken by navigation can be recognised as stale
+     */
+    public record MetaTableRecordsResult(
+            Long companyId, String metaTable, boolean production, List<String> recKeys) {}
+
+    /**
+     * One record's body, fetched on demand.
+     *
+     * @param found false when the key matched nothing - a record deleted between listing and opening
+     *              is an ordinary outcome, not an error
+     * @param body the stored string, verbatim. ❗ MH never parsed or validated a body, so this is
+     *             whatever was written: it is supposed to be JSON and may not be. Deciding what it is
+     *             belongs to the reader.
+     */
+    public record MetaTableRecordResult(
+            Long companyId, String metaTable, boolean production, String recKey, boolean found, @Nullable String body) {}
 }

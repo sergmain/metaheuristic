@@ -53,9 +53,14 @@ public class MetaStorageRegistryTxService {
      * first had already used resolved to the first company's row and overwrote its description in
      * place - silently, and with COMPANY_ID still naming the original registrant, so nothing in the
      * result showed that anything had been lost.
+     *
+     * <p>The name is validated first. A descriptor is supposed to be the one artifact a reader can
+     * trust about a table, so a descriptor registered under a name no table can ever carry is worse
+     * than no descriptor: it describes something that does not and cannot exist.
      */
     @Transactional
     public MetaStorageRegistry upsert(Long companyId, String metaTable, boolean prod, MetaStorageRegistryParams params) {
+        MetaStorageNameUtils.validateMetaTableName(metaTable);
         MetaStorageRegistry r = metaStorageRegistryRepository.findByCompanyIdAndMetaTableAndProd(companyId, metaTable, prod);
         if (r==null) {
             r = new MetaStorageRegistry();

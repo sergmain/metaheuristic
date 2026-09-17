@@ -82,10 +82,18 @@ public class MetaStorageService {
      * handed to the tx service. Per SPRING-TX-RULES.md §1 a {@code @Transactional} method must not
      * perform the existence check its caller could have done - purity outranks avoiding the extra
      * query.
+     *
+     * <p>❗ Names are validated before ANY row is resolved, so a batch carrying one malformed name
+     * writes nothing at all. Validating per-record as the loop went would leave the records before
+     * the bad one already resolved and, on a partial failure, half a batch in the store under a name
+     * the caller never meant to use.
      */
     public int upsert(Long companyId, List<MetaStorageData.Record> records) {
         if (records.isEmpty()) {
             return 0;
+        }
+        for (MetaStorageData.Record r : records) {
+            MetaStorageNameUtils.validateMetaTableName(r.type());
         }
         final List<MetaStorageData.ResolvedWrite> writes = new ArrayList<>(records.size());
         for (MetaStorageData.Record r : records) {
