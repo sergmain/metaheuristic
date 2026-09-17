@@ -39,7 +39,7 @@ import java.util.List;
  * up, or decides anything - transactional purity takes precedence over avoiding the duplicated
  * lookup in the orchestrator.
  *
- * <p>Error code prefix: {@code 01.940.} (unique to this class).
+ * <p>Error code prefix: {@code 01.948.} (unique to this class).
  *
  * @author Serge
  */
@@ -74,7 +74,7 @@ public class MetaStorageSyntheticTxService {
                 }
                 else {
                     row = metaStorageSyntheticRepository.findById(w.existingId()).orElseThrow(
-                            () -> new IllegalStateException("01.940.020 record disappeared between resolution and write, id: " + w.existingId()));
+                            () -> new IllegalStateException("01.948.020 record disappeared between resolution and write, id: " + w.existingId()));
                 }
                 row.body = w.record().body();
                 row.gen = gen;
@@ -82,7 +82,7 @@ public class MetaStorageSyntheticTxService {
                 metaStorageSyntheticRepository.save(row);
                 count++;
             }
-            log.info("01.940.040 upsert companyId: {}, records: {}, gen: {}", companyId, count, gen);
+            log.info("01.948.040 upsert companyId: {}, records: {}, gen: {}", companyId, count, gen);
             return count;
         } catch (Throwable th) {
             throw new CommonRollbackException(th.getMessage(), EnumsApi.OperationStatus.ERROR);
@@ -93,7 +93,7 @@ public class MetaStorageSyntheticTxService {
     public void deleteByIds(List<Long> ids) {
         try {
             metaStorageSyntheticRepository.deleteAllById(ids);
-            log.info("01.940.060 deleted {} records", ids.size());
+            log.info("01.948.060 deleted {} records", ids.size());
         }
         catch (Throwable th) {
             throw new CommonRollbackException(th.getMessage(), EnumsApi.OperationStatus.ERROR);

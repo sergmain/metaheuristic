@@ -154,4 +154,54 @@ public class MetaStorageNameUtilsTest {
                 () -> MetaStorageNameUtils.validateMetaTableName(null));
         assertTrue(e.getMessage().startsWith("01.946.020"), e.getMessage());
     }
+
+    // ---------- the length bound ----------
+
+    private static String nameOfLength(int length) {
+        return "a".repeat(length);
+    }
+
+    @Test
+    public void test_acceptsANameExactlyAtTheColumnWidth() {
+        assertEquals(50, MetaStorageNameUtils.META_TABLE_NAME_MAX_LENGTH,
+                "the bound is the VARCHAR width of TYPE and META_TABLE - the two are one fact");
+        assertTrue(MetaStorageNameUtils.isValidMetaTableName(
+                nameOfLength(MetaStorageNameUtils.META_TABLE_NAME_MAX_LENGTH)));
+    }
+
+    @Test
+    public void test_rejectsANameOneCharacterOverTheColumnWidth() {
+        // one over is the case that matters: it is the one that would reach the database
+        assertFalse(MetaStorageNameUtils.isValidMetaTableName(
+                nameOfLength(MetaStorageNameUtils.META_TABLE_NAME_MAX_LENGTH + 1)));
+    }
+
+    @Test
+    public void test_acceptsTheDocumentedExampleWhichSitsWellUnderTheBound() {
+        // mh.asset.dir-batch-for-requirements.12 from MH-GIT-DELIVERY 5.10 - the headroom is real
+        // but not large, which is why the bound has to be stated rather than discovered
+        final String documented = "mh.asset.dir-batch-for-requirements.12";
+        assertTrue(documented.length() < MetaStorageNameUtils.META_TABLE_NAME_MAX_LENGTH);
+        assertTrue(MetaStorageNameUtils.isValidMetaTableName(documented));
+    }
+
+    @Test
+    public void test_aTooLongNameIsReportedAsTooLongRatherThanAsMalformed() {
+        final IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> MetaStorageNameUtils.validateMetaTableName(nameOfLength(60)));
+
+        assertTrue(e.getMessage().startsWith("01.946.040"),
+                "a length failure gets its own code, not the charset one: " + e.getMessage());
+        assertTrue(e.getMessage().contains("60"), "the actual length is named: " + e.getMessage());
+        assertTrue(e.getMessage().contains("50"), "and so is the limit: " + e.getMessage());
+    }
+
+    @Test
+    public void test_aNameBreakingBothRulesIsReportedOnTheCharsetRule() {
+        // the character defect is the more fundamental one - fixing the length would not make a name
+        // with a space in it valid, so reporting length first would send the caller the wrong way
+        final IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> MetaStorageNameUtils.validateMetaTableName(nameOfLength(60) + " "));
+        assertTrue(e.getMessage().startsWith("01.946.020"), e.getMessage());
+    }
 }

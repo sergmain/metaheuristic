@@ -346,5 +346,21 @@ public class MetaStorageServiceTest extends MhSharedItTest {
         assertEquals(1, metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(goodType, "k-1", "body-1"))),
                 "PHASE #5: the corrected name is accepted");
         assertEquals(List.of("k-1"), metaStorageService.listKeys(companyId, goodType));
+
+        // PHASE #6: and a name that is legal character by character but wider than the column is
+        // refused here rather than at the database, where MySQL outside strict mode would TRUNCATE it
+        // and put the records under a name the caller never used
+        final String tooLong = "a".repeat(MetaStorageNameUtils.META_TABLE_NAME_MAX_LENGTH + 1);
+        assertTrue(MetaStorageNameUtils.META_TABLE_NAME_PATTERN.matcher(tooLong).matches(),
+                "PHASE #6: the charset rule alone would have let this through");
+        assertThrows(IllegalArgumentException.class,
+                () -> metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(tooLong, "k-1", "b"))),
+                "PHASE #6: the production store refuses it");
+        assertThrows(IllegalArgumentException.class,
+                () -> metaStorageSyntheticService.upsert(companyId, List.of(new MetaStorageData.Record(tooLong, "k-1", "b"))),
+                "PHASE #6: and so does the synthetic store");
+        assertThrows(IllegalArgumentException.class,
+                () -> metaStorageRegistryTxService.upsert(companyId, tooLong, true, params),
+                "PHASE #6: and the registry");
     }
 }

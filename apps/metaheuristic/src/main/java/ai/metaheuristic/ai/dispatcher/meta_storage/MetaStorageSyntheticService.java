@@ -38,7 +38,7 @@ import java.util.List;
  * <p>❗ MH never parses a body. {@code select} returns the stored strings; {@code upsert} stores the
  * strings it is given. The encoding and the structure of a body belong to whoever owns the data.
  *
- * <p>Error code prefix: {@code 01.941.} (unique to this class).
+ * <p>Error code prefix: {@code 01.947.} (unique to this class).
  *
  * @author Serge
  */
@@ -149,7 +149,7 @@ public class MetaStorageSyntheticService {
         for (MetaStorageSynthetic row : rows) {
             if (row.body==null) {
                 throw new IllegalStateException(
-                        "01.941.020 BODY is null, which the NOT NULL constraint should have prevented, recKey: " + row.recKey);
+                        "01.947.020 BODY is null, which the NOT NULL constraint should have prevented, recKey: " + row.recKey);
             }
             result.add(new MetaStorageData.Record(row.type, row.recKey, row.body));
         }

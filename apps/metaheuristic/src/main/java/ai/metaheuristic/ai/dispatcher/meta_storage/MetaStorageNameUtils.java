@@ -49,15 +49,40 @@ public final class MetaStorageNameUtils {
     /**
      * ❗ Anchored at both ends. An unanchored pattern with {@code find()} semantics would accept a
      * name that merely CONTAINS something legal, which is the opposite of what is wanted here.
+     *
+     * <p>Deliberately says nothing about length - {@link #META_TABLE_NAME_MAX_LENGTH} does, separately,
+     * so a rejection can say WHICH of the two rules was broken. Folding {@code {0,49}} in here would
+     * make a too-long name and an illegal character the same failure to the caller.
      */
     public static final Pattern META_TABLE_NAME_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9\\-_.]*$");
+
+    /**
+     * The width of every column that stores a meta table name: {@code MH_META_STORAGE.TYPE},
+     * {@code MH_META_STORAGE_SYNTHETIC.TYPE} and {@code MH_META_STORAGE_REGISTRY.META_TABLE} are all
+     * {@code VARCHAR(50)}. ❗ Widening those columns means changing this, and vice versa - the two
+     * numbers are one fact.
+     *
+     * <p>Why the check is here and not left to the database: the dialects disagree about what happens
+     * next, and one of the answers is silent. H2 and PostgreSQL reject the insert; MySQL, outside
+     * strict mode, TRUNCATES. A truncated name is the bad case - the records go in under the first 50
+     * characters, the descriptor goes in under the same truncated name, and nothing anywhere reports
+     * that the name the caller used is not the name the data is under.
+     *
+     * <p>⚠️ VARCHAR counts characters rather than bytes in these engines, and this check counts
+     * characters too. That is only safe because the pattern above already excludes everything
+     * non-ASCII, so one character is one byte here and the two measures cannot diverge. Relax the
+     * charset and this bound stops matching the column.
+     */
+    public static final int META_TABLE_NAME_MAX_LENGTH = 50;
 
     private MetaStorageNameUtils() {
     }
 
     /** Null and blank are invalid rather than exceptional - they arrive from the same callers. */
     public static boolean isValidMetaTableName(@Nullable String name) {
-        return name!=null && META_TABLE_NAME_PATTERN.matcher(name).matches();
+        return name!=null
+                && name.length() <= META_TABLE_NAME_MAX_LENGTH
+                && META_TABLE_NAME_PATTERN.matcher(name).matches();
     }
 
     /**
@@ -70,10 +95,16 @@ public final class MetaStorageNameUtils {
      * and a message that paraphrased it would hide exactly the thing to look at.
      */
     public static void validateMetaTableName(@Nullable String name) {
-        if (!isValidMetaTableName(name)) {
+        if (name==null || !META_TABLE_NAME_PATTERN.matcher(name).matches()) {
             throw new IllegalArgumentException(
                     "01.946.020 Invalid meta table name: '" + name + "'. A name must start with a latin letter and "
                             + "may contain only latin letters, digits, hyphen, underscore and dot.");
+        }
+        // Checked second, so a name that breaks both rules is reported on the more fundamental one.
+        if (name.length() > META_TABLE_NAME_MAX_LENGTH) {
+            throw new IllegalArgumentException(
+                    "01.946.040 Meta table name is too long: '" + name + "' is " + name.length()
+                            + " characters, the maximum is " + META_TABLE_NAME_MAX_LENGTH + ".");
         }
     }
 }
