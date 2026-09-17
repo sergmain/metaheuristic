@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorage;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData;
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -61,6 +63,21 @@ public interface MetaStorageRepository extends JpaRepository<MetaStorage, Long> 
     @Transactional(readOnly = true)
     @Query("SELECT m.recKey FROM MetaStorage m WHERE m.companyId=:companyId AND m.type=:type ORDER BY m.recKey")
     List<String> findRecKeysByCompanyIdAndType(@Param("companyId") Long companyId, @Param("type") String type);
+
+    /**
+     * One page of key list, for the browse screen.
+     *
+     * <p>❗ The count query is spelled out rather than derived. Spring Data builds one by rewriting the
+     * select clause, and a rewrite of a scalar projection carrying ORDER BY is exactly the shape that
+     * goes wrong quietly - a wrong total is not a failure, it is a Next button that stops working.
+     *
+     * <p>Ordering by recKey rather than by id: a page boundary has to fall in the same place on every
+     * request, and a consumer deletes keys as it drains, so insertion order is not stable here.
+     */
+    @Transactional(readOnly = true)
+    @Query(value="SELECT m.recKey FROM MetaStorage m WHERE m.companyId=:companyId AND m.type=:type ORDER BY m.recKey",
+           countQuery="SELECT COUNT(m) FROM MetaStorage m WHERE m.companyId=:companyId AND m.type=:type")
+    Page<String> findRecKeyPageByCompanyIdAndType(Pageable pageable, @Param("companyId") Long companyId, @Param("type") String type);
 
     @Nullable
     @Transactional(readOnly = true)

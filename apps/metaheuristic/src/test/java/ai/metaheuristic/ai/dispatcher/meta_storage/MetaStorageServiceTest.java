@@ -28,6 +28,10 @@ import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageSyntheticRepositor
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorageRegistry;
 import ai.metaheuristic.api.data.meta_storage.MetaStorageRegistryParams;
 import ai.metaheuristic.api.dispatcher.InternalFunction;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import java.util.ArrayList;
+import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -362,5 +366,54 @@ public class MetaStorageServiceTest extends MhSharedItTest {
         assertThrows(IllegalArgumentException.class,
                 () -> metaStorageRegistryTxService.upsert(companyId, tooLong, true, params),
                 "PHASE #6: and the registry");
+    }
+
+    /**
+     * Paging the key list: the page number is the caller's, the page size is not.
+     */
+    @Test
+    public void test_recKeyPagingClampsTheSizeAndReportsTheRealTotal() {
+
+        final Long companyId = SharedItEnv.uniqueLong();
+        final String type = SharedItEnv.uniqueCode("paged");
+        final int total = MetaStorageService.ROWS_IN_TABLE + 7;
+
+        // PHASE #1: one full page plus a short one
+        final List<MetaStorageData.Record> records = new ArrayList<>();
+        for (int i = 0; i < total; i++) {
+            // zero-padded so lexical order by recKey is also numeric order, which the asserts rely on
+            records.add(new MetaStorageData.Record(type, String.format("k-%03d", i), "body-" + i));
+        }
+        assertEquals(total, metaStorageService.upsert(companyId, records));
+
+        // PHASE #2: page 0 is a full page, and the total is the REAL total - not the page's own size.
+        // ❗ This is the assertion that catches the failure mode: with total==size, totalPages is 1
+        // and the UI disables Next forever.
+        final Page<String> first = metaStorageService.listKeys(companyId, type, PageRequest.of(0, MetaStorageService.ROWS_IN_TABLE));
+        assertEquals(MetaStorageService.ROWS_IN_TABLE, first.getContent().size(), "PHASE #2: a full page");
+        assertEquals(total, first.getTotalElements(), "PHASE #2: the real total, not the page size");
+        assertEquals(2, first.getTotalPages(), "PHASE #2: so there IS a second page");
+        assertEquals("k-000", first.getContent().get(0), "PHASE #2: ordered by recKey");
+
+        // PHASE #3: page 1 holds the remainder, and no key appears on both pages
+        final Page<String> second = metaStorageService.listKeys(companyId, type, PageRequest.of(1, MetaStorageService.ROWS_IN_TABLE));
+        assertEquals(7, second.getContent().size(), "PHASE #3: the short final page");
+        assertEquals(total, second.getTotalElements());
+        assertTrue(Collections.disjoint(first.getContent(), second.getContent()),
+                "PHASE #3: the two pages do not overlap");
+
+        // PHASE #4: a forged size is ignored. Asking for a million must not read the whole store,
+        // and asking for 1 must not be honoured either - the size is the server's, both ways.
+        final Page<String> forgedLarge = metaStorageService.listKeys(companyId, type, PageRequest.of(0, 1_000_000));
+        assertEquals(MetaStorageService.ROWS_IN_TABLE, forgedLarge.getContent().size(), "PHASE #4: clamped down");
+        assertEquals(MetaStorageService.ROWS_IN_TABLE, forgedLarge.getSize(), "PHASE #4: and reports the clamped size");
+
+        final Page<String> forgedSmall = metaStorageService.listKeys(companyId, type, PageRequest.of(0, 1));
+        assertEquals(MetaStorageService.ROWS_IN_TABLE, forgedSmall.getContent().size(), "PHASE #4: clamped up too");
+
+        // PHASE #5: the synthetic store pages on its own contents - nothing was written there
+        final Page<String> synthetic = metaStorageSyntheticService.listKeys(companyId, type, PageRequest.of(0, MetaStorageService.ROWS_IN_TABLE));
+        assertEquals(0, synthetic.getTotalElements(), "PHASE #5: a production write is not paged by the synthetic store");
+        assertEquals(0, synthetic.getTotalPages());
     }
 }

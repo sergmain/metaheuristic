@@ -55,7 +55,21 @@ public class MetaStorageViewData {
     public record MetaTablesResult(boolean production, boolean showCompany, List<MetaTableItem> tables) {}
 
     /**
-     * The record keys of one meta table - ❗ keys only, never bodies.
+     * Where one page sits in the whole result.
+     *
+     * <p>❗ Shaped as {@code {size, number, totalElements, totalPages}} to match what the UI's shared
+     * pagination component reads, and built by hand rather than by serialising a Spring
+     * {@code Page<T>}: Spring's page JSON has two shapes depending on a serialization-mode property,
+     * and a screen should not break because an unrelated property was flipped.
+     *
+     * @param totalElements the REAL total from the count query, not the size of the page in hand.
+     *                      Reporting the page's own size here makes totalPages 1 forever, which
+     *                      silently disables Next.
+     */
+    public record PageInfo(int size, int number, long totalElements, int totalPages) {}
+
+    /**
+     * One page of the record keys of one meta table - ❗ keys only, never bodies.
      *
      * <p>A body is fetched one at a time, when the reader asks to see it. Sending every body with the
      * list would move an unbounded amount of data to render a screen that shows none of it, and the
@@ -63,9 +77,11 @@ public class MetaStorageViewData {
      *
      * @param companyId the partition the listed table lives in, resolved server-side
      * @param metaTable echoed back, so a response overtaken by navigation can be recognised as stale
+     * @param content this page's keys, named {@code content} because that is what the UI's pagination
+     *                contract calls it
      */
     public record MetaTableRecordsResult(
-            Long companyId, String metaTable, boolean production, List<String> recKeys) {}
+            Long companyId, String metaTable, boolean production, List<String> content, PageInfo page) {}
 
     /**
      * One record's body, fetched on demand.

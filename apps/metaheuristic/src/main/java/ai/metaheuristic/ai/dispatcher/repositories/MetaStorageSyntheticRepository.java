@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.dispatcher.beans.MetaStorage;
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorageSynthetic;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData;
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -62,6 +64,16 @@ public interface MetaStorageSyntheticRepository extends JpaRepository<MetaStorag
     @Transactional(readOnly = true)
     @Query("SELECT m.recKey FROM MetaStorageSynthetic m WHERE m.companyId=:companyId AND m.type=:type ORDER BY m.recKey")
     List<String> findRecKeysByCompanyIdAndType(@Param("companyId") Long companyId, @Param("type") String type);
+
+    /**
+     * One page of key list, for the browse screen. The synthetic twin of
+     * {@code MetaStorageRepository#findRecKeyPageByCompanyIdAndType}, and the reasoning there - the
+     * explicit count query, the ordering - applies here unchanged.
+     */
+    @Transactional(readOnly = true)
+    @Query(value="SELECT m.recKey FROM MetaStorageSynthetic m WHERE m.companyId=:companyId AND m.type=:type ORDER BY m.recKey",
+           countQuery="SELECT COUNT(m) FROM MetaStorageSynthetic m WHERE m.companyId=:companyId AND m.type=:type")
+    Page<String> findRecKeyPageByCompanyIdAndType(Pageable pageable, @Param("companyId") Long companyId, @Param("type") String type);
 
     @Nullable
     @Transactional(readOnly = true)

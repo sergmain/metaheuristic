@@ -18,11 +18,14 @@ package ai.metaheuristic.ai.dispatcher.meta_storage;
 
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorage;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRepository;
+import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -53,6 +56,9 @@ public class MetaStorageService {
      * keeps a caller passing a whole key list at once degrading instead of failing.
      */
     public static final int MAX_KEYS_PER_QUERY = 500;
+
+    /** Rows per page on the browse screen, and the only page size this service will serve. */
+    public static final int ROWS_IN_TABLE = 50;
 
     private final MetaStorageRepository metaStorageRepository;
     private final MetaStorageTxService metaStorageTxService;
@@ -126,6 +132,19 @@ public class MetaStorageService {
     /** Key list only, for the selection step feeding a batch splitter. Bodies stay unread. */
     public List<String> listKeys(Long companyId, String type) {
         return metaStorageRepository.findRecKeysByCompanyIdAndType(companyId, type);
+    }
+
+    /**
+     * One page of key list, for the browse screen.
+     *
+     * <p>❗ {@link PageUtils#fixPageSize} forces the size to {@link #ROWS_IN_TABLE} whatever the
+     * request asked for. The page NUMBER comes from the client; the SIZE never does. A request is a
+     * URL, so a size taken from one is a client-chosen bound on a query - and a table can hold any
+     * number of records, so {@code ?size=1000000} would be a read of the whole store on demand.
+     */
+    public Page<String> listKeys(Long companyId, String type, Pageable pageable) {
+        return metaStorageRepository.findRecKeyPageByCompanyIdAndType(
+                PageUtils.fixPageSize(ROWS_IN_TABLE, pageable), companyId, type);
     }
 
     /** The types this company has ever written. The store enumerates itself - no registry needed. */

@@ -34,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -130,20 +132,31 @@ public class MetaStorageRestController {
      * ignored for everyone else in favour of the principal's own company. ❗ That asymmetry is the
      * whole of the tenant isolation on this endpoint: an ADMIN who adds another company's id to the
      * query string gets their OWN company's data - not an error, and not the other company's.
+     *
+     * <p>❗ The page SIZE is not taken from the request. {@code Pageable} carries whatever {@code
+     * ?size=} said, and the services clamp it to their own constant before it reaches a query - a
+     * meta table can hold any number of records, so an unclamped size is a whole-store read on
+     * demand. Only the page NUMBER is the caller's to choose.
      */
     @GetMapping("/meta-tables/{metaTable}/rec-keys")
     public MetaStorageViewData.MetaTableRecordsResult recKeys(
             Authentication authentication,
+            Pageable pageable,
             @PathVariable("metaTable") String metaTable,
             @RequestParam(name = "companyId", required = false) @Nullable Long companyId,
             @RequestParam(name = "production", required = false, defaultValue = "true") boolean production) {
 
         final Long scopedCompanyId = scopeCompanyId(authentication, companyId);
-        final List<String> recKeys = production
-                ? metaStorageService.listKeys(scopedCompanyId, metaTable)
-                : metaStorageSyntheticService.listKeys(scopedCompanyId, metaTable);
+        final Page<String> recKeys = production
+                ? metaStorageService.listKeys(scopedCompanyId, metaTable, pageable)
+                : metaStorageSyntheticService.listKeys(scopedCompanyId, metaTable, pageable);
 
-        return new MetaStorageViewData.MetaTableRecordsResult(scopedCompanyId, metaTable, production, recKeys);
+        // getTotalElements(), never getContent().size() - the count query already ran, and passing
+        // the page's own size here would make totalPages 1 and disable Next on every full page.
+        return new MetaStorageViewData.MetaTableRecordsResult(scopedCompanyId, metaTable, production,
+                recKeys.getContent(),
+                new MetaStorageViewData.PageInfo(recKeys.getSize(), recKeys.getNumber(),
+                        recKeys.getTotalElements(), recKeys.getTotalPages()));
     }
 
     /**
