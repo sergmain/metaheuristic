@@ -33,11 +33,23 @@ import java.io.Serializable;
  * Nothing in MH records what a type means, so a reader enumerating types sees names and nothing more.
  * This table is where that meaning lives.
  *
- * <p>{@code PROD} says WHICH store the described table is in: true means MH_META_STORAGE, false means
- * MH_META_STORAGE_SYNTHETIC. It is part of the unique key rather than a plain attribute because the
- * same type name legitimately exists in both stores - a capability under development writes the
- * synthetic one and the same capability in production writes the other - and those are two different
- * tables needing two different descriptions.
+ * <p>The unique key is {@code (COMPANY_ID, META_TABLE, PROD)}. Each of the three is in it because
+ * each one, varied on its own, names a DIFFERENT table:
+ *
+ * <ul>
+ *   <li>{@code COMPANY_ID} - the store is partitioned by company ({@code MH_META_STORAGE} is unique
+ *       on {@code (COMPANY_ID, TYPE, REC_KEY)}), so two companies holding a type of the same name
+ *       hold two tables over two unrelated sets of records.</li>
+ *   <li>{@code META_TABLE} - the type name itself.</li>
+ *   <li>{@code PROD} - WHICH store: true means MH_META_STORAGE, false MH_META_STORAGE_SYNTHETIC. The
+ *       same type name legitimately exists in both, a capability under development writing the
+ *       synthetic one and the same capability in production writing the other.</li>
+ * </ul>
+ *
+ * <p>❗ {@code COMPANY_ID} is therefore part of the identity, not a note about who registered the
+ * descriptor. It was once outside the key, and the consequence was that a second company registering
+ * an already-used type name overwrote the first company's description in place while COMPANY_ID kept
+ * naming the first registrant.
  *
  * <p>There is deliberately NO foreign key to MH_META_STORAGE. A type is not a row there and cannot be
  * referenced as one; it is a column value shared by however many records carry it, and it stops

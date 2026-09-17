@@ -27,8 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Reads of MH_META_STORAGE_REGISTRY. Addressed by (META_TABLE, PROD), which is what the unique index
- * declares and what a caller actually knows - a row id here is an internal allocation nothing refers to.
+ * Reads of MH_META_STORAGE_REGISTRY. Addressed by (COMPANY_ID, META_TABLE, PROD), which is what the
+ * unique index declares and what a caller actually knows - a row id here is an internal allocation
+ * nothing refers to.
  *
  * @author Serge
  */
@@ -37,10 +38,19 @@ import java.util.List;
 @Profile("dispatcher")
 public interface MetaStorageRegistryRepository extends JpaRepository<MetaStorageRegistry, Long> {
 
+    /**
+     * The one descriptor addressed by the natural key.
+     *
+     * <p>❗ COMPANY_ID is part of that key because the described table is per-company: MH_META_STORAGE
+     * is unique on {@code (COMPANY_ID, TYPE, REC_KEY)}, so two companies holding a type of the same
+     * name hold two tables over two unrelated sets of records, and each needs its own description.
+     * Addressing a descriptor without a company would hand one company the other's answer.
+     */
     @Nullable
     @Transactional(readOnly = true)
-    @Query("SELECT m FROM MetaStorageRegistry m WHERE m.metaTable=:metaTable AND m.prod=:prod")
-    MetaStorageRegistry findByMetaTableAndProd(@Param("metaTable") String metaTable, @Param("prod") boolean prod);
+    @Query("SELECT m FROM MetaStorageRegistry m WHERE m.companyId=:companyId AND m.metaTable=:metaTable AND m.prod=:prod")
+    MetaStorageRegistry findByCompanyIdAndMetaTableAndProd(@Param("companyId") Long companyId,
+                                                           @Param("metaTable") String metaTable, @Param("prod") boolean prod);
 
     @Transactional(readOnly = true)
     @Query("SELECT m FROM MetaStorageRegistry m WHERE m.companyId=:companyId AND m.prod=:prod ORDER BY m.metaTable")
@@ -49,4 +59,16 @@ public interface MetaStorageRegistryRepository extends JpaRepository<MetaStorage
     @Transactional(readOnly = true)
     @Query("SELECT m FROM MetaStorageRegistry m WHERE m.companyId=:companyId ORDER BY m.prod, m.metaTable")
     List<MetaStorageRegistry> findAllByCompanyId(@Param("companyId") Long companyId);
+
+    /**
+     * Every descriptor for one store, across every company, in one read.
+     *
+     * <p>❗ Deliberately unfiltered by company: this feeds the management-company index screen, which
+     * lists every company's meta tables on one tab and would otherwise issue one lookup per table.
+     * A caller scoped to a single company uses {@link #findAllByCompanyIdAndProd} instead - the
+     * scoping decision belongs to the caller that knows the entitlement, not to this query.
+     */
+    @Transactional(readOnly = true)
+    @Query("SELECT m FROM MetaStorageRegistry m WHERE m.prod=:prod ORDER BY m.metaTable")
+    List<MetaStorageRegistry> findAllByProd(@Param("prod") boolean prod);
 }

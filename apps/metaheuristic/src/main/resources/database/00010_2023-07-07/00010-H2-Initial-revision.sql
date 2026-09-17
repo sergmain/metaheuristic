@@ -877,7 +877,7 @@ CREATE TABLE MH_META_STORAGE_REGISTRY
     PROD        boolean DEFAULT false
 );
 
-CREATE UNIQUE INDEX mh_meta_storage_registry_table_prod_idx ON MH_META_STORAGE_REGISTRY (META_TABLE, PROD);
+CREATE UNIQUE INDEX mh_meta_storage_registry_company_table_prod_idx ON MH_META_STORAGE_REGISTRY (COMPANY_ID, META_TABLE, PROD);
 
 insert into mh_gen_ids
 (SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)

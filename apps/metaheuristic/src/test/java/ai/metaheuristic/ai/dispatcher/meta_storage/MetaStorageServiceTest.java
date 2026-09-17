@@ -23,6 +23,10 @@ import ai.metaheuristic.ai.SharedItEnv;
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorage;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRegistryRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageSyntheticRepository;
+import ai.metaheuristic.ai.dispatcher.beans.MetaStorageRegistry;
+import ai.metaheuristic.api.data.meta_storage.MetaStorageRegistryParams;
 import ai.metaheuristic.api.dispatcher.InternalFunction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -56,6 +60,10 @@ public class MetaStorageServiceTest extends MhSharedItTest {
 
     @Autowired private MetaStorageService metaStorageService;
     @Autowired private MetaStorageRepository metaStorageRepository;
+    @Autowired private MetaStorageSyntheticService metaStorageSyntheticService;
+    @Autowired private MetaStorageSyntheticRepository metaStorageSyntheticRepository;
+    @Autowired private MetaStorageRegistryTxService metaStorageRegistryTxService;
+    @Autowired private MetaStorageRegistryRepository metaStorageRegistryRepository;
     @Autowired private InternalFunctionRegisterService internalFunctionRegisterService;
 
     @Test
@@ -168,5 +176,125 @@ public class MetaStorageServiceTest extends MhSharedItTest {
         assertNotNull(fn, "mh.meta-storage must be registered as an internal function");
         assertEquals(Consts.MH_META_STORAGE_FUNCTION, fn.getCode(), "getCode()");
         assertEquals("mh.meta-storage", Consts.MH_META_STORAGE_FUNCTION, "the function code is a stable contract");
+    }
+
+    /**
+     * The cross-company enumeration the index screen runs for a MAIN_ADMIN, and the registry read it
+     * joins against.
+     *
+     * <p>❗ On the shared DB these are GLOBAL-scope reads - every other test's data is in the result
+     * too - so every assertion filters to the identifiers this test minted, per harness §0.4.6. The
+     * absolute size of either list is not this test's business and asserting on it would make the
+     * test fail for reasons that have nothing to do with it.
+     */
+    @Test
+    public void test_findAllTypeRefsEnumeratesEveryCompanyAndRegistryReadsByStore() {
+
+        final Long companyA = SharedItEnv.uniqueLong();
+        final Long companyB = SharedItEnv.uniqueLong();
+        final String sharedType = SharedItEnv.uniqueCode("shared");
+        final String onlyA = SharedItEnv.uniqueCode("only-a");
+
+        // PHASE #1: two companies write a table of the SAME name, and company A writes one more.
+        // Same name under two companies is the case the pair projection exists for.
+        metaStorageService.upsert(companyA, List.of(new MetaStorageData.Record(sharedType, "k-1", "a-body")));
+        metaStorageService.upsert(companyB, List.of(new MetaStorageData.Record(sharedType, "k-1", "b-body")));
+        metaStorageService.upsert(companyA, List.of(
+                new MetaStorageData.Record(onlyA, "k-1", "body-1"),
+                new MetaStorageData.Record(onlyA, "k-2", "body-2")));
+
+        // PHASE #2: the production enumeration reports three (companyId, type) pairs for these two
+        // companies - NOT two. The pair is the identity, so the shared name is two tables.
+        final List<MetaStorageData.TypeRef> mine = metaStorageRepository.findAllTypeRefs().stream()
+                .filter(r -> companyA.equals(r.companyId()) || companyB.equals(r.companyId()))
+                .toList();
+        assertEquals(3, mine.size(), "PHASE #2: (A,shared), (B,shared) and (A,onlyA)");
+        assertTrue(mine.contains(new MetaStorageData.TypeRef(companyA, sharedType)), "PHASE #2: (A,shared)");
+        assertTrue(mine.contains(new MetaStorageData.TypeRef(companyB, sharedType)), "PHASE #2: (B,shared)");
+        assertTrue(mine.contains(new MetaStorageData.TypeRef(companyA, onlyA)), "PHASE #2: (A,onlyA)");
+
+        // PHASE #3: GROUP BY collapses the two records of onlyA into one entry - the listing is of
+        // tables, not of records
+        assertEquals(1, mine.stream().filter(r -> onlyA.equals(r.type())).count(),
+                "PHASE #3: two records of one type are one table");
+
+        // PHASE #4: the synthetic store is a different table and enumerates separately. Nothing was
+        // written there under these ids, so nothing comes back for them.
+        assertTrue(metaStorageSyntheticRepository.findAllTypeRefs().stream()
+                        .noneMatch(r -> companyA.equals(r.companyId()) || companyB.equals(r.companyId())),
+                "PHASE #4: a production write must not surface in the synthetic enumeration");
+
+        final String syntheticType = SharedItEnv.uniqueCode("synth");
+        metaStorageSyntheticService.upsert(companyA, List.of(new MetaStorageData.Record(syntheticType, "k-1", "s-body")));
+        assertTrue(metaStorageSyntheticRepository.findAllTypeRefs()
+                        .contains(new MetaStorageData.TypeRef(companyA, syntheticType)),
+                "PHASE #4: and the synthetic enumeration reports what was written to it");
+
+        // PHASE #5: the descriptor read the index joins against is by STORE, not by company - the
+        // unique index on MH_META_STORAGE_REGISTRY is (META_TABLE, PROD)
+        final MetaStorageRegistryParams params = new MetaStorageRegistryParams();
+        params.desc = "what " + sharedType + " is for";
+        metaStorageRegistryTxService.upsert(companyA, sharedType, true, params);
+
+        final List<MetaStorageRegistry> prodDescriptors = metaStorageRegistryRepository.findAllByProd(true).stream()
+                .filter(r -> sharedType.equals(r.metaTable))
+                .toList();
+        assertEquals(1, prodDescriptors.size(), "PHASE #5: exactly one descriptor for the production table");
+        assertEquals("what " + sharedType + " is for", prodDescriptors.get(0).getMetaStorageRegistryParams().desc,
+                "PHASE #5: and it carries the description the index renders");
+
+        assertTrue(metaStorageRegistryRepository.findAllByProd(false).stream()
+                        .noneMatch(r -> sharedType.equals(r.metaTable)),
+                "PHASE #5: a production descriptor must not surface on the synthetic tab");
+    }
+
+    /**
+     * Two companies registering a descriptor for a table of the same name.
+     *
+     * <p>The described tables are genuinely different - MH_META_STORAGE is keyed
+     * {@code (COMPANY_ID, TYPE, REC_KEY)}, so company A's {@code drone-reqs} and company B's hold
+     * unrelated records - so each needs its own description.
+     */
+    @Test
+    public void test_twoCompaniesRegisteringTheSameTableNameGetTheirOwnDescriptor() {
+
+        final Long companyA = SharedItEnv.uniqueLong();
+        final Long companyB = SharedItEnv.uniqueLong();
+        final String metaTable = SharedItEnv.uniqueCode("shared-desc");
+
+        // PHASE #1: company A registers first
+        final MetaStorageRegistryParams pA = new MetaStorageRegistryParams();
+        pA.desc = "A's table";
+        pA.producer = "sc-a";
+        pA.recKeyFormat = "a-NNN";
+        pA.bodyFormat = "json";
+        metaStorageRegistryTxService.upsert(companyA, metaTable, true, pA);
+
+        // PHASE #2: company B registers a table that happens to carry the same name
+        final MetaStorageRegistryParams pB = new MetaStorageRegistryParams();
+        pB.desc = "B's table";
+        pB.producer = "sc-b";
+        pB.recKeyFormat = "b-NNN";
+        pB.bodyFormat = "csv";
+        metaStorageRegistryTxService.upsert(companyB, metaTable, true, pB);
+
+        final List<MetaStorageRegistry> rows = metaStorageRegistryRepository.findAllByProd(true).stream()
+                .filter(r -> metaTable.equals(r.metaTable))
+                .toList();
+
+        // PHASE #3: two descriptors, one per company - the described tables are two tables
+        assertEquals(2, rows.size(), "PHASE #3: one descriptor per company, not one shared by both");
+
+        // PHASE #4: and each one says what ITS company registered, owned by that company
+        final MetaStorageRegistry rowA = rows.stream()
+                .filter(r -> companyA.equals(r.companyId)).findFirst().orElse(null);
+        final MetaStorageRegistry rowB = rows.stream()
+                .filter(r -> companyB.equals(r.companyId)).findFirst().orElse(null);
+        assertNotNull(rowA, "PHASE #4: company A owns a descriptor");
+        assertNotNull(rowB, "PHASE #4: company B owns a descriptor");
+        assertEquals("A's table", rowA.getMetaStorageRegistryParams().desc,
+                "PHASE #4: B's registration must not have overwritten A's description");
+        assertEquals("B's table", rowB.getMetaStorageRegistryParams().desc,
+                "PHASE #4: B's descriptor carries B's own description");
     }
 }

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorage;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData;
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -74,4 +75,21 @@ public interface MetaStorageRepository extends JpaRepository<MetaStorage, Long> 
     @Transactional(readOnly = true)
     @Query("SELECT DISTINCT m.type FROM MetaStorage m WHERE m.companyId=:companyId ORDER BY m.type")
     List<String> findDistinctTypes(@Param("companyId") Long companyId);
+
+    /**
+     * Every meta table in this store, across every company - the management-company enumeration.
+     *
+     * <p>❗ Deliberately NOT {@link #findDistinctTypes}. That one answers "what does THIS company
+     * hold" and returns bare names, which is all a single-company caller can use. A caller entitled
+     * to the whole installation needs the partition alongside the name, or two companies holding a
+     * table of the same name are indistinguishable in the result.
+     *
+     * <p>{@code GROUP BY} rather than {@code SELECT DISTINCT}: with a constructor expression the two
+     * mean the same thing here, and only one of them states plainly which columns the grouping is
+     * over.
+     */
+    @Transactional(readOnly = true)
+    @Query("SELECT new ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData$TypeRef(m.companyId, m.type) " +
+           "FROM MetaStorage m GROUP BY m.companyId, m.type ORDER BY m.companyId, m.type")
+    List<MetaStorageData.TypeRef> findAllTypeRefs();
 }

@@ -40,4 +40,18 @@ public class MetaStorageData {
      * smallest possible scope.
      */
     public record ResolvedWrite(@Nullable Long existingId, Record record) {}
+
+    /**
+     * One meta table, identified the only way a meta table can be identified.
+     *
+     * <p>A type is not a row anywhere - it exists by virtue of records carrying it - so enumerating
+     * the tables a store holds means grouping it by {@code (COMPANY_ID, TYPE)}. ❗ The PAIR is the
+     * identity, not the name: the store is partitioned by company, so the same name under two
+     * companies is two tables holding two unrelated sets of records, and a listing that collapsed
+     * them would be reporting something that does not exist.
+     *
+     * <p>Used as a JPQL constructor target by the cross-company enumerations on
+     * {@code MetaStorageRepository} and {@code MetaStorageSyntheticRepository}.
+     */
+    public record TypeRef(Long companyId, String type) {}
 }

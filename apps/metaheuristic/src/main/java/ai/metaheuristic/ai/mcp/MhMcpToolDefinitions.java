@@ -907,7 +907,10 @@ public class MhMcpToolDefinitions {
         // The descriptor's lifetime is the table's lifetime. A descriptor left behind for a type that
         // no longer exists is worse than none, because it is the one artifact a reader has decided to
         // trust - so the drop takes it in the same act rather than leaving it to be noticed later.
-        final boolean hadDescriptor = metaStorageRegistryTxService.deleteByMetaTableAndProd(type, !synthetic);
+        // Scoped to this company: another company may hold a table of the same name, and its
+        // descriptor is not ours to remove.
+        final boolean hadDescriptor = metaStorageRegistryTxService
+                .deleteByCompanyIdAndMetaTableAndProd(companyId, type, !synthetic);
 
         return toCallToolResult(new DropMetaStorageTableDto(true, !synthetic, companyId, type, deleted,
                 "Removed " + deleted + " record(s) of type '" + type + "' from " + tableName(synthetic)
@@ -995,14 +998,16 @@ public class MhMcpToolDefinitions {
     private static final Tool GET_META_STORAGE_REGISTRY_TOOL = Tool.builder("mh_get_meta_storage_registry",
                     objectSchema(
                             Map.of(
+                                    "companyId", Map.of("type", "integer",
+                                            "description", "Owning company id - the COMPANY_ID column. Part of the key: the same type name under two companies is two tables and gets two descriptors."),
                                     "metaTable", Map.of("type", "string",
                                             "description", "The described table's name - a TYPE value in whichever store 'production' selects"),
                                     "production", Map.of("type", "boolean",
                                             "description", "Optional. true describes a table in MH_META_STORAGE; absent or false one in MH_META_STORAGE_SYNTHETIC.")),
-                            List.of("metaTable")))
+                            List.of("companyId", "metaTable")))
             .title("Get one meta table descriptor")
-            .description("The descriptor for ONE meta storage table, addressed by (META_TABLE, PROD) - the pair the "
-                    + "unique index declares and the only pair a caller actually knows. Answers what the table holds, "
+            .description("The descriptor for ONE meta storage table, addressed by (COMPANY_ID, META_TABLE, PROD) - the "
+                    + "triple the unique index declares and the only one a caller actually knows. Answers what the table holds, "
                     + "how to read a record and who wrote it, before anything is read out of the table itself. "
                     + "A table with no descriptor returns ok=false rather than an error: a descriptor is a convention "
                     + "the writer follows, not something the database enforces, so its absence is a fact about that "
@@ -1010,20 +1015,23 @@ public class MhMcpToolDefinitions {
             .build();
 
     public record MetaStorageRegistryEntryResultDto(
-            boolean ok, String metaTable, boolean production, MetaStorageRegistryEntryDto entry, String message) {}
+            boolean ok, Long companyId, String metaTable, boolean production, MetaStorageRegistryEntryDto entry, String message) {}
 
     private CallToolResult handleGetMetaStorageRegistry(McpSyncServerExchange exchange, CallToolRequest request) {
         final Map<String, Object> arguments = request.arguments();
+        final Long companyId = getRequiredLong(arguments, "companyId");
         final String metaTable = getRequiredString(arguments, "metaTable");
         final boolean prod = !syntheticFromProduction(arguments);
-        log.info("01.260.600 MCP getMetaStorageRegistry(metaTable={}, prod={})", metaTable, prod);
+        log.info("01.260.600 MCP getMetaStorageRegistry(companyId={}, metaTable={}, prod={})", companyId, metaTable, prod);
 
-        final MetaStorageRegistry r = metaStorageRegistryRepository.findByMetaTableAndProd(metaTable, prod);
+        final MetaStorageRegistry r = metaStorageRegistryRepository
+                .findByCompanyIdAndMetaTableAndProd(companyId, metaTable, prod);
         if (r==null) {
-            return toCallToolResult(new MetaStorageRegistryEntryResultDto(false, metaTable, prod, null,
-                    "01.260.620 No descriptor registered for '" + metaTable + "' in " + tableName(!prod)));
+            return toCallToolResult(new MetaStorageRegistryEntryResultDto(false, companyId, metaTable, prod, null,
+                    "01.260.620 No descriptor registered by company " + companyId + " for '" + metaTable
+                            + "' in " + tableName(!prod)));
         }
-        return toCallToolResult(new MetaStorageRegistryEntryResultDto(true, metaTable, prod, toDto(r), null));
+        return toCallToolResult(new MetaStorageRegistryEntryResultDto(true, companyId, metaTable, prod, toDto(r), null));
     }
     // ==================== Tool 30: register what a meta storage table is for ====================
 
@@ -1031,7 +1039,7 @@ public class MhMcpToolDefinitions {
                     objectSchema(
                             Map.of(
                                     "companyId", Map.of("type", "integer",
-                                            "description", "Owning company id - the COMPANY_ID column"),
+                                            "description", "Owning company id - the COMPANY_ID column. Part of the key: the same type name under two companies is two tables and gets two descriptors."),
                                     "metaTable", Map.of("type", "string",
                                             "description", "The described table's name - a TYPE value in whichever store 'production' selects"),
                                     "production", Map.of("type", "boolean",
@@ -1056,8 +1064,9 @@ public class MhMcpToolDefinitions {
                     + "inside the described table. Two reasons it lives apart: a consumer's protocol is list the keys, "
                     + "take one, do the work, delete it, so a descriptor among the work items would be handed out as "
                     + "work; and a table can then be understood without reading anything out of it. "
-                    + "Addressed by (metaTable, production), so re-registering the same table overwrites its "
-                    + "descriptor rather than accumulating copies - a re-run of the same workflow is safe. "
+                    + "Addressed by (companyId, metaTable, production), so re-registering the same table overwrites its "
+                    + "descriptor rather than accumulating copies - a re-run of the same workflow is safe - while another "
+                    + "company using the same type name gets a descriptor of its own rather than overwriting this one. "
                     + "createdOn is stamped on first registration and preserved by later updates.")
             .build();
 
@@ -1077,7 +1086,8 @@ public class MhMcpToolDefinitions {
         final boolean prod = !syntheticFromProduction(arguments);
         log.info("01.260.640 MCP upsertMetaStorageRegistry(companyId={}, metaTable={}, prod={})", companyId, metaTable, prod);
 
-        final boolean created = metaStorageRegistryRepository.findByMetaTableAndProd(metaTable, prod)==null;
+        final boolean created = metaStorageRegistryRepository
+                .findByCompanyIdAndMetaTableAndProd(companyId, metaTable, prod)==null;
 
         final MetaStorageRegistryParams p = new MetaStorageRegistryParams();
         p.desc = getRequiredString(arguments, "desc");

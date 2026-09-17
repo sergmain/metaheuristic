@@ -90,6 +90,7 @@ class VaultTxServiceTest {
         @Override public void deleteById(Long id) { throw new UnsupportedOperationException(); }
         @Override public Page<Company> findAll(Pageable pageable) { throw new UnsupportedOperationException(); }
         @Override public Page<ai.metaheuristic.ai.dispatcher.data.SimpleCompany> findAllAsSimple(Pageable pageable) { throw new UnsupportedOperationException(); }
+        @Override public List<ai.metaheuristic.ai.dispatcher.data.SimpleCompany> findAllAsSimpleByUniqueIds(List<Long> uniqueIds) { throw new UnsupportedOperationException(); }
         @Override public Long getMaxUniqueIdValue() { throw new UnsupportedOperationException(); }
         @Override public List<Long> findAllUniqueIds() { throw new UnsupportedOperationException(); }
         @Override public <S extends Company> Iterable<S> saveAll(Iterable<S> entities) { throw new UnsupportedOperationException(); }

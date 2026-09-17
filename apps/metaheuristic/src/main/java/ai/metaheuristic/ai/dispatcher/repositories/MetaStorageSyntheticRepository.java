@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorage;
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorageSynthetic;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData;
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -75,4 +76,14 @@ public interface MetaStorageSyntheticRepository extends JpaRepository<MetaStorag
     @Transactional(readOnly = true)
     @Query("SELECT DISTINCT m.type FROM MetaStorageSynthetic m WHERE m.companyId=:companyId ORDER BY m.type")
     List<String> findDistinctTypes(@Param("companyId") Long companyId);
+
+    /**
+     * Every meta table in this store, across every company - the management-company enumeration.
+     * The synthetic twin of {@code MetaStorageRepository#findAllTypeRefs}, and the reasoning there
+     * applies here unchanged.
+     */
+    @Transactional(readOnly = true)
+    @Query("SELECT new ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData$TypeRef(m.companyId, m.type) " +
+           "FROM MetaStorageSynthetic m GROUP BY m.companyId, m.type ORDER BY m.companyId, m.type")
+    List<MetaStorageData.TypeRef> findAllTypeRefs();
 }

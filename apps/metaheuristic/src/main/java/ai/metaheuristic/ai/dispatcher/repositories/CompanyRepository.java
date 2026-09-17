@@ -68,6 +68,17 @@ public interface CompanyRepository extends CrudRepository<Company, Long> {
                  " order by a.uniqueId")
     Page<SimpleCompany> findAllAsSimple(Pageable pageable);
 
+    // Names for a KNOWN set of companies - the ones a listing actually mentions. The paged
+    // findAllAsSimple is the wrong tool for that: it would have to be walked to completion to
+    // guarantee a name is present, and its page size has nothing to do with how many companies
+    // the listing touches.
+    @Transactional(readOnly = true)
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.data.SimpleCompany(a.id, a.uniqueId, r.name)" +
+                 " from Company a, CompanyRevision r" +
+                 " where r.id = a.headRevisionId and a.uniqueId in :uniqueIds" +
+                 " order by a.uniqueId")
+    List<SimpleCompany> findAllAsSimpleByUniqueIds(List<Long> uniqueIds);
+
     @Transactional(readOnly = true)
     @Query(value="select max(c.uniqueId) from Company c")
     Long getMaxUniqueIdValue();
@@ -76,4 +87,3 @@ public interface CompanyRepository extends CrudRepository<Company, Long> {
     @Query(value="select c.uniqueId from Company c")
     List<Long> findAllUniqueIds();
 }
-

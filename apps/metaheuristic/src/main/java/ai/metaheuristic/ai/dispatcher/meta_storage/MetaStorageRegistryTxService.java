@@ -42,15 +42,21 @@ public class MetaStorageRegistryTxService {
     private final MetaStorageRegistryRepository metaStorageRegistryRepository;
 
     /**
-     * Register or correct the descriptor of one meta storage table, addressed by (metaTable, prod).
+     * Register or correct the descriptor of one meta storage table, addressed by
+     * (companyId, metaTable, prod).
      *
      * <p>createdOn is stamped on first registration and preserved afterwards: an update is a correction
      * of the description, not a new registration, and moving it forward would erase the one field that
      * answers how old the table is.
+     *
+     * <p>❗ The lookup includes companyId. Without it, a second company registering a type name the
+     * first had already used resolved to the first company's row and overwrote its description in
+     * place - silently, and with COMPANY_ID still naming the original registrant, so nothing in the
+     * result showed that anything had been lost.
      */
     @Transactional
     public MetaStorageRegistry upsert(Long companyId, String metaTable, boolean prod, MetaStorageRegistryParams params) {
-        MetaStorageRegistry r = metaStorageRegistryRepository.findByMetaTableAndProd(metaTable, prod);
+        MetaStorageRegistry r = metaStorageRegistryRepository.findByCompanyIdAndMetaTableAndProd(companyId, metaTable, prod);
         if (r==null) {
             r = new MetaStorageRegistry();
             r.companyId = companyId;
@@ -62,10 +68,15 @@ public class MetaStorageRegistryTxService {
         return metaStorageRegistryRepository.save(r);
     }
 
-    /** Returns true when a descriptor existed and was removed. A missing one is not an error. */
+    /**
+     * Returns true when a descriptor existed and was removed. A missing one is not an error.
+     *
+     * <p>❗ Scoped to one company for the same reason the write is: dropping a table must take that
+     * company's descriptor and no other company's, however the type name is spelled.
+     */
     @Transactional
-    public boolean deleteByMetaTableAndProd(String metaTable, boolean prod) {
-        final MetaStorageRegistry r = metaStorageRegistryRepository.findByMetaTableAndProd(metaTable, prod);
+    public boolean deleteByCompanyIdAndMetaTableAndProd(Long companyId, String metaTable, boolean prod) {
+        final MetaStorageRegistry r = metaStorageRegistryRepository.findByCompanyIdAndMetaTableAndProd(companyId, metaTable, prod);
         if (r==null) {
             return false;
         }
