@@ -66,7 +66,7 @@ public class SignalBusRestController {
 
         long n = __pollN.incrementAndGet();
         long t0 = System.nanoTime();
-        log.warn("SIG-DBG poll#{} ENTER afterRev={} kinds={} topics={} max={} principal={}",
+        log.info("SIG-DBG poll#{} ENTER afterRev={} kinds={} topics={} max={} principal={}",
             n, afterRev, kinds, topics, max, authentication.getName());
 
         UserContext ctx = userContextService.getContext(authentication);
@@ -90,7 +90,7 @@ public class SignalBusRestController {
             qr.serverRev(), Instant.now(), capped, truncated);
         parsed.warnings.forEach(response::addInfoMessage);
 
-        log.warn("SIG-DBG poll#{} EXIT companyId={} serverRev={} signals={} truncated={} warnings={} dtMs={}",
+        log.info("SIG-DBG poll#{} EXIT companyId={} serverRev={} signals={} truncated={} warnings={} dtMs={}",
             n, dctx.getCompanyId(), qr.serverRev(), capped.size(), truncated,
             parsed.warnings.size(), (System.nanoTime() - t0) / 1_000_000);
         return response;
