@@ -478,6 +478,33 @@ public class Schedulers {
         }
     }
 
+    // Drains the sealed-secret fetch queue. TaskProcessor enqueues a fetch whenever a Task's Function declares
+    // api.keyCode and the key isn't cached yet (100.140), and nothing else ever takes it out: without this
+    // scheduler such a Task is skipped on every launch cycle and never runs. Same cadence as the variable
+    // download - both are a Processor fetching what a Task needs from its dispatcher before the launch.
+    @Configuration
+    @EnableScheduling
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
+    @Slf4j @SuppressWarnings("DuplicatedCode")
+    @Profile("processor")
+    public static class DownloadSealedSecretActorSchedulingConfig implements SchedulingConfigurer {
+        private final Globals globals;
+        private final ai.metaheuristic.ai.processor.actors.DownloadSealedSecretService downloadSealedSecretService;
+
+        @Override
+        public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
+            taskRegistrar.addTriggerTask( this::downloadSealedSecretService, context -> getInstant(context, globals.processor.timeout.getDownloadResource()));
+        }
+
+        public void downloadSealedSecretService() {
+            if (globals.testing || !globals.processor.enabled) {
+                return;
+            }
+            downloadSealedSecretService.process();
+        }
+    }
+
     @Configuration
     @EnableScheduling
     @RequiredArgsConstructor(onConstructor_={@Autowired})
