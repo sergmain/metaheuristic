@@ -72,13 +72,15 @@ public class MhMcpToolWiringTest {
         put("mh_upsert_meta_storage_record", "companyId");
         // not an id: this one is resolved from a repo url, and 'repo' is the first argument its handler asks for
         put("mh_import_bundle_from_git", "repo");
+        // the company whose Key Vault is checked - the only argument it takes
+        put("mh_vault_status", "companyId");
     }};
 
     /** Take no arguments, so the probe above cannot reach them. */
     private static final Set<String> NO_ARG_TOOLS = Set.of("mh_list_source_codes", "mh_list_processors", "mh_execution_gate_status");
 
     private static List<McpServerFeatures.SyncToolSpecification> specs() {
-        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
+        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
                 .getAllToolSpecifications();
     }
 

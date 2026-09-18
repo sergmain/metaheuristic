@@ -115,6 +115,7 @@ import java.util.stream.Stream;
  *   mh_list_source_codes               — list all SourceCodes with general info (id, uid, companyId, latch, valid)
  *   mh_list_processors                 — list Processors with liveness, blacklist reason and declared envs
  *   mh_execution_gate_status           — what work is being withheld from Processors, and why
+ *   mh_vault_status                    — whether one company's Key Vault is UNLOCKED or LOCKED in this Dispatcher
  *   mh_get_source_code                 — full SourceCode by id, including params YAML (truncated to maxParamsBytes)
  *   mh_import_bundle_from_git          — import a bundle straight from a git repo url + path
  *   mh_get_meta_storage_record         — one meta storage record by row id, from MH_META_STORAGE or MH_META_STORAGE_SYNTHETIC
@@ -162,6 +163,7 @@ public class MhMcpToolDefinitions {
     private final ExecContextRepository execContextRepository;
     private final MetaStorageRegistryRepository metaStorageRegistryRepository;
     private final MetaStorageRegistryTxService metaStorageRegistryTxService;
+    private final ai.metaheuristic.ai.dispatcher.vault.VaultService vaultService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -488,6 +490,7 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(GET_VARIABLE_CONTENT_TOOL, this::handleGetVariableContent),
                 new McpServerFeatures.SyncToolSpecification(LIST_PROCESSORS_TOOL, this::handleListProcessors),
                 new McpServerFeatures.SyncToolSpecification(EXECUTION_GATE_STATUS_TOOL, this::handleExecutionGateStatus),
+                new McpServerFeatures.SyncToolSpecification(VAULT_STATUS_TOOL, this::handleVaultStatus),
                 new McpServerFeatures.SyncToolSpecification(CREATE_EXEC_CONTEXT_TOOL, this::handleCreateExecContext),
                 new McpServerFeatures.SyncToolSpecification(CREATE_EXEC_CONTEXT_WITH_VARIABLES_TOOL, this::handleCreateExecContextWithVariables),
                 new McpServerFeatures.SyncToolSpecification(ARCHIVE_SOURCE_CODE_TOOL, this::handleArchiveSourceCode),
@@ -625,6 +628,31 @@ public class MhMcpToolDefinitions {
                         .toList());
         return toCallToolResult(status);
     }
+
+    // ==================== Tool 31: vault status ====================
+
+    private static final Tool VAULT_STATUS_TOOL = Tool.builder("mh_vault_status",
+                    objectSchema(
+                            Map.of("companyId", Map.of("type", "integer", "description",
+                                    "Unique id of the company (MH_COMPANY.UNIQUE_ID) whose Key Vault is checked")),
+                            List.of("companyId")))
+            .title("Check status of Key Vault")
+            .description("Whether one company's Key Vault is UNLOCKED or LOCKED in this Dispatcher. The master "
+                    + "passphrase is never persisted, so a Dispatcher restart locks every vault. While a company's "
+                    + "vault is LOCKED no key of that company can be sealed for a Processor, so a Task whose Function "
+                    + "declares api.keyCode cannot receive its key. A company that has no vault at all is LOCKED. "
+                    + "Check this before running a Function that declares api.keyCode.")
+            .build();
+
+    private CallToolResult handleVaultStatus(McpSyncServerExchange exchange, CallToolRequest request) {
+        Long companyId = getRequiredLong(request.arguments(), "companyId");
+        log.info("01.260.660 MCP vaultStatus({})", companyId);
+        // isOpened() is true only while the company's vault is unlocked in this Dispatcher's memory; a company that
+        // has no vault can never be unlocked, so it answers LOCKED as well
+        return toCallToolResult(new VaultStatusDto(companyId, vaultService.isOpened(companyId) ? "UNLOCKED" : "LOCKED"));
+    }
+
+    public record VaultStatusDto(long companyId, String status) {}
 
     // ==================== Tool 15: list processors ====================
 
