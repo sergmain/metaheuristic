@@ -408,6 +408,30 @@ public class GitCommitCacheTest {
         assertTrue(e.getMessage().startsWith("01.923.040"), e.getMessage());
     }
 
+    /**
+     * One Task, launched twice into the same Task dir. The first launch cycle copied the payload and was
+     * then skipped - the Processor's secret plan answers AWAITING after the copy, while the sealed key is
+     * fetched - and in between the copy may have been rewritten (a Function is free to rewrite what it was
+     * handed) or gained files. The next launch must get the commit's content, and nothing else.
+     */
+    @Test
+    public void test_copyToTaskIntoATaskDirThatAlreadyHoldsACopy() throws Exception {
+        final Path cache = freshCacheRoot("copy-relaunch");
+        final String sha = shas.get(0);
+        final Path entry = GitCommitCache.get(cache, sha, t -> extract(sha, t));
+
+        final Path taskAsset = root.resolve("task-relaunch").resolve("asset");
+        GitCommitCache.copyToTask(entry, "fn", taskAsset);
+        Files.writeString(taskAsset.resolve("run.py"), "print('damaged')\n");
+        Files.writeString(taskAsset.resolve("leftover.txt"), "from the previous launch cycle");
+
+        GitCommitCache.copyToTask(entry, "fn", taskAsset);
+        assertEquals(Files.readString(entry.resolve("fn").resolve("run.py")), Files.readString(taskAsset.resolve("run.py")),
+            "the relaunch must get the commit's content, not the previous cycle's rewrite");
+        assertFalse(Files.exists(taskAsset.resolve("leftover.txt")), "nothing from the previous launch cycle may survive");
+        assertTrue(Files.exists(taskAsset.resolve("version.txt")));
+    }
+
     // ------------------------------------------------------------------ janitor
 
     @Test

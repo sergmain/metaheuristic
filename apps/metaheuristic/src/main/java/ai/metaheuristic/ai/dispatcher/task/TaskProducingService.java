@@ -73,7 +73,7 @@ public class TaskProducingService {
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
-            ExecContextParamsYaml execContextParamsYaml, Long execContextId, @Nullable Long companyId, ExecContextData.GraphAndStates graphAndStates,
+            ExecContextParamsYaml execContextParamsYaml, Long execContextId, Long companyId, ExecContextData.GraphAndStates graphAndStates,
             List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
         // Default: taskContextId is the Process's static internalContextId.
         return produceTaskForProcess(process, execContextParamsYaml, execContextId, companyId, graphAndStates,
@@ -90,7 +90,7 @@ public class TaskProducingService {
      */
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
-            ExecContextParamsYaml execContextParamsYaml, Long execContextId, @Nullable Long companyId, ExecContextData.GraphAndStates graphAndStates,
+            ExecContextParamsYaml execContextParamsYaml, Long execContextId, Long companyId, ExecContextData.GraphAndStates graphAndStates,
             List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState,
             java.util.function.Function<ExecContextParamsYaml.Process, String> taskContextIdResolver) {
         TxUtils.checkTxExists();
@@ -254,7 +254,7 @@ public class TaskProducingService {
     }
 
     private TaskImpl createTaskHelper(
-        Long execContextId, @Nullable Long companyId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process,
+        Long execContextId, Long companyId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process,
         String taskContextId, @Nullable Map<String, Map<String, String>> inlines, List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
 
         TxUtils.checkTxExists();
@@ -264,7 +264,9 @@ public class TaskProducingService {
         // TaskSecretPlan reads it before anything else and treats 0 as "no company, no API keys", so a task
         // produced without it never receives the key its Function declares in api.keyCode - the Function
         // is launched with no secretPort / checkCode, and nothing says why.
-        taskParams.companyId = companyId==null ? 0L : companyId;
+        // No fallback for a null: MH_EXEC_CONTEXT.COMPANY_ID is NOT NULL in every dialect, so a null here is a
+        // defect upstream - and mapping it to 0 would reproduce exactly that silent launch. Unboxing fails loudly.
+        taskParams.companyId = companyId;
         taskParams.task.execContextId = execContextId;
         taskParams.task.taskContextId = taskContextId;
         taskParams.task.processCode = process.processCode;
