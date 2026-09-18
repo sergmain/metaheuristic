@@ -73,10 +73,10 @@ public class TaskProducingService {
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
-            ExecContextParamsYaml execContextParamsYaml, Long execContextId, ExecContextData.GraphAndStates graphAndStates,
+            ExecContextParamsYaml execContextParamsYaml, Long execContextId, @Nullable Long companyId, ExecContextData.GraphAndStates graphAndStates,
             List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
         // Default: taskContextId is the Process's static internalContextId.
-        return produceTaskForProcess(process, execContextParamsYaml, execContextId, graphAndStates,
+        return produceTaskForProcess(process, execContextParamsYaml, execContextId, companyId, graphAndStates,
                 parentTaskIds, taskExecState, p -> p.internalContextId);
     }
 
@@ -90,7 +90,7 @@ public class TaskProducingService {
      */
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
-            ExecContextParamsYaml execContextParamsYaml, Long execContextId, ExecContextData.GraphAndStates graphAndStates,
+            ExecContextParamsYaml execContextParamsYaml, Long execContextId, @Nullable Long companyId, ExecContextData.GraphAndStates graphAndStates,
             List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState,
             java.util.function.Function<ExecContextParamsYaml.Process, String> taskContextIdResolver) {
         TxUtils.checkTxExists();
@@ -102,7 +102,7 @@ public class TaskProducingService {
         final String taskContextId = taskContextIdResolver.apply(process);
 
         // for external Functions internalContextId==process.internalContextId
-        TaskImpl t = createTaskHelper(execContextId, execContextParamsYaml, process, taskContextId,
+        TaskImpl t = createTaskHelper(execContextId, companyId, execContextParamsYaml, process, taskContextId,
                 execContextParamsYaml.variables.inline, parentTaskIds, taskExecState);
 //        if (t == null) {
 //            return new TaskData.ProduceTaskResult(
@@ -226,7 +226,7 @@ public class TaskProducingService {
                     throw new BreakFromLambdaException("375.060 only the 'sequential' and 'and' logics are supported");
             };
 
-            t = createTaskHelper(simpleExecContext.execContextId, execContextParamsYaml, p, actualProcessContextId, inlines, List.of(parentTaskId), EnumsApi.TaskExecState.PRE_INIT);
+            t = createTaskHelper(simpleExecContext.execContextId, simpleExecContext.companyId, execContextParamsYaml, p, actualProcessContextId, inlines, List.of(parentTaskId), EnumsApi.TaskExecState.PRE_INIT);
 
             final EnumsApi.TaskExecState targetState = EnumsApi.TaskExecState.from(t.execState);
             if (targetState.value!=t.execState) {
@@ -254,12 +254,17 @@ public class TaskProducingService {
     }
 
     private TaskImpl createTaskHelper(
-        Long execContextId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process,
+        Long execContextId, @Nullable Long companyId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process,
         String taskContextId, @Nullable Map<String, Map<String, String>> inlines, List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
 
         TxUtils.checkTxExists();
 
         TaskParamsYaml taskParams = new TaskParamsYaml();
+        // Stage 5 (vault secret handoff): the company that owns this task's ExecContext. The Processor's
+        // TaskSecretPlan reads it before anything else and treats 0 as "no company, no API keys", so a task
+        // produced without it never receives the key its Function declares in api.keyCode - the Function
+        // is launched with no secretPort / checkCode, and nothing says why.
+        taskParams.companyId = companyId==null ? 0L : companyId;
         taskParams.task.execContextId = execContextId;
         taskParams.task.taskContextId = taskContextId;
         taskParams.task.processCode = process.processCode;

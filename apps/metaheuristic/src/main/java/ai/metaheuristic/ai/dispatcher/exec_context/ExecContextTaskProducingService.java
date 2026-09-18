@@ -167,7 +167,7 @@ public class ExecContextTaskProducingService {
 
             final ExecContextParamsYaml.Process process = p;
             TaskData.ProduceTaskResult result = taskProducingService.produceTaskForProcess(
-                process, execContextParamsYaml, execContext.id,
+                process, execContextParamsYaml, execContext.id, execContext.companyId,
                 graphAndStates, parentTaskIds,
                 parentProcesses.isEmpty() ? EnumsApi.TaskExecState.INIT : EnumsApi.TaskExecState.PRE_INIT);
 
