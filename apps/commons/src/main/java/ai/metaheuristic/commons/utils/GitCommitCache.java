@@ -150,6 +150,13 @@ public class GitCommitCache {
         if (!Files.isDirectory(src)) {
             throw new IOException("01.923.040 path '" + pathInRepo + "' isn't present in the cached commit at " + cacheEntry.toAbsolutePath());
         }
+        // Replace, never merge. A Task dir can already hold a copy: the launch cycle that made it may have been
+        // skipped afterwards (TaskProcessor's secret plan answers AWAITING after this copy, while the sealed key
+        // is fetched), and a re-run reuses the Task dir. A Function is free to rewrite what it was handed, so
+        // whatever is there goes first - every launch gets the commit's content and nothing else.
+        if (Files.exists(taskAssetDir)) {
+            PathUtils.deleteDirectory(taskAssetDir);
+        }
         Files.createDirectories(taskAssetDir);
         PathUtils.copyDirectory(src, taskAssetDir);
     }
