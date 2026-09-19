@@ -74,6 +74,8 @@ import java.util.Base64;
  * <p>Error-code prefix {@code 812.} is unique to this class.
  *
  * @author Sergio Lissner
+ *
+ * <p>Error code prefix: {@code 01.812.} (unique to this class).
  */
 @Service
 @Slf4j
@@ -107,16 +109,16 @@ public class DownloadSealedSecretService
         // Pre-flight (same shape as DownloadVariableService).
         ProcessorCoreTask processorTask = processorTaskService.findByIdForCore(task.core, task.taskId);
         if (processorTask == null) {
-            log.info("812.005 Task #{} wasn't found, skip sealed-secret fetch", task.taskId);
+            log.info("01.812.005 Task #{} wasn't found, skip sealed-secret fetch", task.taskId);
             return;
         }
         if (processorTask.finishedOn != null) {
-            log.info("812.007 Task #{} was already finished, skip sealed-secret fetch", task.taskId);
+            log.info("01.812.007 Task #{} was already finished, skip sealed-secret fetch", task.taskId);
             return;
         }
         EnumsApi.ExecContextState state = currentExecState.getState(task.core.dispatcherUrl, processorTask.execContextId);
         if (state != EnumsApi.ExecContextState.STARTED) {
-            log.info("812.009 ExecContext #{} is stopped, delete task #{}", processorTask.execContextId, task.taskId);
+            log.info("01.812.009 ExecContext #{} is stopped, delete task #{}", processorTask.execContextId, task.taskId);
             processorTaskService.delete(task.core, task.taskId);
             return;
         }
@@ -124,7 +126,7 @@ public class DownloadSealedSecretService
         // Skip-if-already-have: a previous task's fetch (or push refresh) may
         // have populated the cache between enqueue and this poll.
         if (sealedSecretCache.get(task.companyId, task.keyCode) != null) {
-            log.debug("812.011 Cache already populated for companyId={}, keyCode={}; skip fetch",
+            log.debug("01.812.011 Cache already populated for companyId={}, keyCode={}; skip fetch",
                     task.companyId, task.keyCode);
             return;
         }
@@ -156,63 +158,63 @@ public class DownloadSealedSecretService
                 return;
             }
             if (statusCode == HttpServletResponse.SC_UNAUTHORIZED) {
-                log.warn("812.020 Unauthorized fetching sealed secret for companyId={}, keyCode={}",
+                log.warn("01.812.020 Unauthorized fetching sealed secret for companyId={}, keyCode={}",
                         task.companyId, task.keyCode);
                 return;
             }
             if (statusCode == HttpServletResponse.SC_NOT_FOUND) {
-                log.info("812.030 Processor not yet enrolled (no publicKeySpki) for sealed-secret fetch, companyId={}, keyCode={}; retry next cycle",
+                log.info("01.812.030 Processor not yet enrolled (no publicKeySpki) for sealed-secret fetch, companyId={}, keyCode={}; retry next cycle",
                         task.companyId, task.keyCode);
                 return;
             }
             if (statusCode == HttpServletResponse.SC_GONE) {
                 String es = String.format(
-                        "812.040 Vault has no entry for companyId=%d, keyCode=%s. Task #%d is finished with error.",
+                        "01.812.040 Vault has no entry for companyId=%d, keyCode=%s. Task #%d is finished with error.",
                         task.companyId, task.keyCode, task.taskId);
                 log.warn(es);
                 processorTaskService.markAsFinishedWithError(task.core, task.taskId, es);
                 return;
             }
             if (statusCode == HttpServletResponse.SC_BAD_GATEWAY) {
-                log.warn("812.050 BAD_GATEWAY fetching sealed secret for companyId={}, keyCode={}; retry next cycle",
+                log.warn("01.812.050 BAD_GATEWAY fetching sealed secret for companyId={}, keyCode={}; retry next cycle",
                         task.companyId, task.keyCode);
                 return;
             }
-            log.error("812.060 Unexpected http status code: {} while fetching sealed secret for companyId={}, keyCode={}",
+            log.error("01.812.060 Unexpected http status code: {} while fetching sealed secret for companyId={}, keyCode={}",
                     statusCode, task.companyId, task.keyCode);
         } catch (HttpResponseException e) {
             // HttpClient fluent throws HttpResponseException for >= 300 in some configurations.
             final int sc = e.getStatusCode();
             if (sc == HttpServletResponse.SC_GONE) {
                 String es = String.format(
-                        "812.041 Vault has no entry for companyId=%d, keyCode=%s. Task #%d is finished with error.",
+                        "01.812.041 Vault has no entry for companyId=%d, keyCode=%s. Task #%d is finished with error.",
                         task.companyId, task.keyCode, task.taskId);
                 log.warn(es);
                 processorTaskService.markAsFinishedWithError(task.core, task.taskId, es);
                 return;
             }
             if (sc == HttpServletResponse.SC_NOT_FOUND) {
-                log.info("812.031 Processor not yet enrolled (HttpResponseException), companyId={}, keyCode={}",
+                log.info("01.812.031 Processor not yet enrolled (HttpResponseException), companyId={}, keyCode={}",
                         task.companyId, task.keyCode);
                 return;
             }
             if (sc == HttpServletResponse.SC_BAD_GATEWAY) {
-                log.warn("812.051 BAD_GATEWAY (HttpResponseException) fetching sealed secret, companyId={}, keyCode={}",
+                log.warn("01.812.051 BAD_GATEWAY (HttpResponseException) fetching sealed secret, companyId={}, keyCode={}",
                         task.companyId, task.keyCode);
                 return;
             }
-            log.error("812.065 HttpResponseException status={}, companyId={}, keyCode={}",
+            log.error("01.812.065 HttpResponseException status={}, companyId={}, keyCode={}",
                     sc, task.companyId, task.keyCode, e);
         } catch (HttpHostConnectException e) {
-            log.error("812.085 HttpHostConnectException, uri: {}, {}", uri, e.getMessage());
+            log.error("01.812.085 HttpHostConnectException, uri: {}, {}", uri, e.getMessage());
         } catch (SocketTimeoutException e) {
-            log.error("812.070 SocketTimeoutException, uri: {}, {}", uri, e.getMessage());
+            log.error("01.812.070 SocketTimeoutException, uri: {}, {}", uri, e.getMessage());
         } catch (ConnectException e) {
-            log.error("812.080 ConnectException, uri: {}, {}", uri, e.getMessage());
+            log.error("01.812.080 ConnectException, uri: {}, {}", uri, e.getMessage());
         } catch (IOException e) {
-            log.error("812.090 IOException, uri: {}", uri, e);
+            log.error("01.812.090 IOException, uri: {}", uri, e);
         } catch (Throwable th) {
-            log.error("812.099 Throwable, uri: " + uri, th);
+            log.error("01.812.099 Throwable, uri: " + uri, th);
         }
     }
 
@@ -224,14 +226,14 @@ public class DownloadSealedSecretService
         final SealedSecretData.FetchResponse resp =
                 JsonUtils.getMapper().readValue(json, SealedSecretData.FetchResponse.class);
         if (resp.sealed() == null || resp.sealed().isBlank()) {
-            log.error("812.100 200 response with empty 'sealed' field for companyId={}, keyCode={}",
+            log.error("01.812.100 200 response with empty 'sealed' field for companyId={}, keyCode={}",
                     task.companyId, task.keyCode);
             return;
         }
         final byte[] sealedBytes = Base64.getDecoder().decode(resp.sealed());
         final SealedSecret sealed = SealedSecretCodec.fromBytes(sealedBytes);
         sealedSecretCache.put(task.companyId, task.keyCode, sealed, resp.fingerprint(), resp.notAfter());
-        log.info("812.110 Cached sealed secret for companyId={}, keyCode={}, notAfter={}",
+        log.info("01.812.110 Cached sealed secret for companyId={}, keyCode={}, notAfter={}",
                 task.companyId, task.keyCode, resp.notAfter());
     }
 }
