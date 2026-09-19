@@ -17,9 +17,11 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.commons.utils.JsonUtils;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.SneakyThrows;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -52,6 +54,15 @@ public class CacheData {
         public final Map<String, Map<String, String>> inline = new HashMap<>();
         public final List<Sha256PlusLength> inputs = new ArrayList<>();
         public final List<Sha256PlusLength> metas = new ArrayList<>();
+
+        /**
+         * Which code a git-sourced Function ran: {@code repo@revision:path}, the revision being the sha its
+         * ExecContext pinned. Null for a Function that is not git-sourced - and then left out of {@link #asString()}
+         * entirely, so the key of every such Function stays byte for byte what it was before this field existed,
+         * and its cached results stay reachable.
+         */
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public @Nullable String gitRevision;
 
         public FullKey(String functionCode, String funcParams) {
             this.functionCode = functionCode;
