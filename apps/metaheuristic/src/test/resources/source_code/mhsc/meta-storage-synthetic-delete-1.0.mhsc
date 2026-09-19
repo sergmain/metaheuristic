@@ -1,0 +1,32 @@
+source "test-meta-storage-synthetic-delete-1.0" {
+
+    // The type, the key to delete and the synthetic flag are VARIABLES, not metas: none of them is
+    // decidable when the .mhsc is authored. Here they are constants lifted into variables, which is the
+    // cheapest producer available to a test; a real pipeline gets them from whichever Function computed them.
+    variables {
+        inline msd {
+            typeName = "test.meta-storage-synthetic-delete"
+            doomedKey = "doomed"
+            syntheticFlag = "true"
+        }
+    }
+
+    liftVars := internal mh.string-as-variable {
+        name "lift the type, the key and the synthetic flag out of inline and into variables"
+        meta mapping = "mapping: [{key: msd, name: typeName, output: metaType}, {key: msd, name: doomedKey, output: keysVar}, {key: msd, name: syntheticFlag, output: syntheticVar}]"
+        -> metaType: ext=".txt",
+           keysVar: ext=".txt",
+           syntheticVar: ext=".txt"
+        timeout 60
+    }
+
+    deleteDoomed := internal mh.meta-storage {
+        name "delete one named record of one type from the synthetic store"
+        meta action = "delete",
+             type = "metaType",
+             keys = "keysVar",
+             synthetic = "syntheticVar"
+        <- metaType, keysVar, syntheticVar
+        timeout 60
+    }
+}

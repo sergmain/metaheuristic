@@ -43,6 +43,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 
@@ -61,6 +63,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
  *   output      name of the output variable                  (required, action=select)
  *   content     input variable holding what to write         (required, action=upsert)
  *   synthetic   INPUT VARIABLE holding true or false         (optional, both actions)
+ *   (action=delete: keys and synthetic are both REQUIRED, see "delete" below)
  * </pre>
  *
  * <p>{@code synthetic} names a VARIABLE, the same indirection {@code type} uses and for the same
@@ -79,6 +82,14 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
  * step that feeds {@code mh.batch-line-splitter}. With {@code keys} it returns exactly those
  * records, which is the per-batch payload fetch. Payloads are only ever materialised for a batch;
  * a key list is what travels whole.
+ *
+ * <p><b>delete</b> removes the records {@code keys} names from the table {@code synthetic} names - the
+ * step that takes a record off a queue once the work it stood for is done. Both metas are REQUIRED
+ * here, unlike for the other actions, because a delete has no undo: a missing {@code keys} is never
+ * read as "every record of the type", and the {@code synthetic} variable must hold exactly true or
+ * false, so production records are removed only when a run said false in as many words. Nothing is
+ * removed until both are resolved. A key that matches no record is skipped, so a replayed delete
+ * succeeds. It writes no output variable.
  *
  * <p>Error code prefix: {@code 01.942.} (unique to this class).
  *
@@ -99,6 +110,7 @@ public class MetaStorageFunction implements InternalFunction {
 
     private static final String ACTION_SELECT = "select";
     private static final String ACTION_UPSERT = "upsert";
+    private static final String ACTION_DELETE = "delete";
 
     private final MetaStorageService metaStorageService;
     private final MetaStorageSyntheticService metaStorageSyntheticService;
@@ -147,8 +159,9 @@ public class MetaStorageFunction implements InternalFunction {
             switch (action) {
                 case ACTION_SELECT -> processSelect(simpleExecContext, taskId, taskContextId, taskParamsYaml, type);
                 case ACTION_UPSERT -> processUpsert(simpleExecContext, taskContextId, taskParamsYaml, type);
+                case ACTION_DELETE -> processDelete(simpleExecContext, taskContextId, taskParamsYaml, type);
                 default -> throw new InternalFunctionException(source_code_is_broken,
-                    "01.942.060 unknown action '" + action + "', supported: " + ACTION_SELECT + ", " + ACTION_UPSERT);
+                    "01.942.060 unknown action '" + action + "', supported: " + ACTION_SELECT + ", " + ACTION_UPSERT + ", " + ACTION_DELETE);
             }
         }
         catch (InternalFunctionException e) {
@@ -272,6 +285,91 @@ public class MetaStorageFunction implements InternalFunction {
             rows = metaStorageService.upsert(simpleExecContext.companyId, records);
         }
         log.info("01.942.220 upsert type: {}, records: {}, rows: {}", type, records.size(), rows);
+    }
+
+    /**
+     * Action {@code delete}: remove the records {@code keys} names from the table {@code synthetic} names.
+     *
+     * <p>Both arguments are resolved and checked BEFORE the first record is removed. MH keeps no history
+     * of a meta storage record, so a Task that is going to fail on its arguments has to fail while the
+     * store is still untouched - never half way through a key list.
+     *
+     * <p>Each key goes through {@code deleteByNaturalKey}, which resolves the row outside any transaction
+     * and treats a key that matches nothing as a no-op: a replayed delete succeeds instead of failing on
+     * the records its first pass already removed.
+     */
+    private void processDelete(
+        ExecContextApiData.SimpleExecContext simpleExecContext, String taskContextId,
+        TaskParamsYaml taskParamsYaml, String type) {
+
+        final Function<String, @Nullable String> valueOf = varName ->
+            internalFunctionVariableService.getValueOfVariable(simpleExecContext.execContextId, taskContextId, varName);
+        final boolean synthetic = syntheticForDelete(MetaUtils.getValue(taskParamsYaml.task.metas, SYNTHETIC), valueOf);
+        final List<String> recKeys = keysForDelete(MetaUtils.getValue(taskParamsYaml.task.metas, KEYS),
+            readKeys(simpleExecContext, taskContextId, taskParamsYaml));
+
+        // the same branch processSelect and processUpsert make: the two tables carry identical columns and
+        // allocate ids independently, so only the process says which store it meant
+        final ToIntFunction<String> deleteOne = synthetic
+            ? recKey -> metaStorageSyntheticService.deleteByNaturalKey(simpleExecContext.companyId, type, recKey)
+            : recKey -> metaStorageService.deleteByNaturalKey(simpleExecContext.companyId, type, recKey);
+        final int deleted = recKeys.stream().mapToInt(deleteOne).sum();
+
+        log.info("01.942.280 delete type: {}, synthetic: {}, keys: {}, deleted: {}", type, synthetic, recKeys.size(), deleted);
+    }
+
+    /**
+     * The table a {@code delete} addresses - deliberately stricter than {@code resolveSynthetic}.
+     *
+     * <p>{@code resolveSynthetic} reads an absent meta, and any value other than {@code true}, as the
+     * PRODUCTION table. That keeps older pipelines working for select and upsert, and it is the wrong
+     * default for an operation with no undo: a pipeline that forgot to say, or said {@code ture}, would
+     * remove production records. So a delete requires the meta, requires its variable to hold exactly
+     * {@code true} or {@code false} (case and surrounding whitespace aside), and fails on anything else.
+     *
+     * @param syntheticVarName the value of meta {@code synthetic} - the NAME of the variable holding the flag
+     * @param valueOf reads a variable's value by name, null when the variable holds nothing
+     */
+    static boolean syntheticForDelete(@Nullable String syntheticVarName, Function<String, @Nullable String> valueOf) {
+        if (S.b(syntheticVarName)) {
+            throw new InternalFunctionException(meta_not_found,
+                "01.942.240 meta '" + SYNTHETIC + "' is required for action '" + ACTION_DELETE
+                + "', it names the variable that says which table the records are deleted from");
+        }
+        final String value = valueOf.apply(syntheticVarName);
+        final String flag = value==null ? "" : value.strip();
+        if ("true".equalsIgnoreCase(flag)) {
+            return true;
+        }
+        if ("false".equalsIgnoreCase(flag)) {
+            return false;
+        }
+        throw new InternalFunctionException(general_business_error,
+            "01.942.250 variable '" + syntheticVarName + "' must hold true or false for action '" + ACTION_DELETE
+            + "', got '" + flag + "'");
+    }
+
+    /**
+     * The keys a {@code delete} removes - required, and never empty.
+     *
+     * <p>{@code select} reads a missing {@code keys} as "every record of the type". A delete that read it
+     * the same way would empty the type, so here a missing meta is an error rather than a wildcard, and so
+     * is a key list with nothing in it: both mean the process did not say what to delete.
+     *
+     * @param keysVarName the value of meta {@code keys} - the NAME of the variable holding the recKeys
+     * @param recKeys what {@code readKeys} returned for that meta - null when the meta is absent
+     */
+    static List<String> keysForDelete(@Nullable String keysVarName, @Nullable List<String> recKeys) {
+        if (S.b(keysVarName) || recKeys==null) {
+            throw new InternalFunctionException(meta_not_found,
+                "01.942.260 meta '" + KEYS + "' is required for action '" + ACTION_DELETE
+                + "', without it a key list means every record of the type, and a delete never means that");
+        }
+        if (recKeys.isEmpty()) {
+            throw new InternalFunctionException(data_not_found,
+                "01.942.270 variable '" + keysVarName + "' holds no recKey, there is nothing to delete");
+        }
+        return recKeys;
     }
 
     /**
