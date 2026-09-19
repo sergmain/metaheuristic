@@ -60,6 +60,7 @@ public class CacheUtils {
         String params = initParas(tpy, functionParams);
 
         CacheData.FullKey fullKey = new CacheData.FullKey(tpy.task.function.code, params);
+        fullKey.gitRevision = gitRevision(tpy.task.function);
 
         collectInlines(tpy, fullKey);
         addMetasIfNeeded(tpy, fullKey);
@@ -68,6 +69,27 @@ public class CacheUtils {
         fullKey.inputs.sort(CacheData.SHA_256_PLUS_LENGTH_COMPARATOR);
         fullKey.metas.sort(CacheData.SHA_256_PLUS_LENGTH_COMPARATOR);
         return fullKey;
+    }
+
+    /**
+     * Which code a git-sourced Function runs in this Task: the repo, the revision its ExecContext pinned, and the
+     * payload's path inside the repo - or null for a Function that is not git-sourced.
+     *
+     * <p>Without it the key sees only the Function's code and its inputs, and a descriptor declaring
+     * {@code commit: HEAD} keeps one code across every push: the first Task after a push would be answered with
+     * what the previous revision computed. With the pinned sha in the key, the Tasks of one ExecContext still share
+     * an entry, and a push separates the Tasks before it from the Tasks after it. The branch is left out - the sha
+     * already names the content.
+     *
+     * <p>A Task whose ExecContext pinned nothing (one created before pinning existed) still carries the
+     * descriptor's own {@code HEAD}, which names no revision, so such a Task keeps sharing its entry across pushes.
+     */
+    @Nullable
+    public static String gitRevision(TaskParamsYaml.FunctionConfig function) {
+        if (function.sourcing != EnumsApi.FunctionSourcing.git || function.git == null) {
+            return null;
+        }
+        return function.git.repo + '@' + function.git.commit + ':' + function.git.path;
     }
 
     public static final String NULL_VARIABLE = "<null-variable>";
