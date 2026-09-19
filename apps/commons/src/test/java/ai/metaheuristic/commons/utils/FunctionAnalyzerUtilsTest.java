@@ -217,6 +217,54 @@ public class FunctionAnalyzerUtilsTest {
         assertNull(FunctionAnalyzerUtils.firstHitInExecResults(null, fe));
     }
 
+    // ---- the "Vault has no entry" rule -------------------------------------------------------
+    //
+    // A Dispatcher restart LOCKS every company's Vault (the master passphrase is never persisted), and a
+    // Processor fetching a sealed secret against a locked Vault gets the same 410/GONE as a genuinely absent
+    // key - reported as "01.812.040 / 01.812.041 Vault has no entry ...". Retrying does not help either case: a
+    // locked Vault clears only when a human unlocks it, and a missing key clears only when it is added. So the
+    // rule that matches this console gives a FREE retry (incrementTries=false) and, at api scope, withholds
+    // exactly the Functions needing that (companyId, keyCode) until the block lifts. This is the console the
+    // rule must match, taken verbatim from DownloadSealedSecretService (01.812.040 and its HttpResponseException
+    // twin 01.812.041 - the codes migrated to the 01.812.NNN scheme; the (01\.)? in the regex keeps a legacy
+    // 812.04x matching too).
+
+    /** The rule as application.properties ships it: api scope, free retry, matching either Vault-missing code. */
+    private static FunctionConfigYaml.Analyzer vaultMissingAnalyzer() {
+        return analyzer("vault locked or key missing", EnumsApi.GateScope.api, "2min", "(01\\.)?812\\.04[01] Vault has no entry");
+    }
+
+    @Test
+    public void test_vaultMissingRule_matchesBothEmittedCodes() {
+        final FunctionConfigYaml.Analyzer a = vaultMissingAnalyzer();
+
+        assertSame(a, FunctionAnalyzerUtils.firstHit(List.of(a),
+                "01.812.040 Vault has no entry for companyId=2, keyCode=RG_API_AUTH. Task #429 is finished with error."));
+        assertSame(a, FunctionAnalyzerUtils.firstHit(List.of(a),
+                "01.812.041 Vault has no entry for companyId=2, keyCode=RG_API_AUTH. Task #430 is finished with error."));
+    }
+
+    @Test
+    public void test_vaultMissingRule_isAFreeRetryAtApiScope() {
+        final FunctionConfigYaml.Analyzer a = vaultMissingAnalyzer();
+
+        // a locked Vault is never the Task's fault, so its retry must not be spent
+        assertFalse(a.incrementTries, "a locked Vault or a missing key is never the Task's fault");
+        // api scope so the block covers everything needing that credential, not one Function and not the whole Processor
+        assertEquals(EnumsApi.GateScope.api, a.scope);
+        // short, because unlike a timed CC limit a locked Vault clears only on a human unlock: re-probe soon after
+        assertEquals(Duration.ofMinutes(2), FunctionAnalyzerUtils.parseTimeout(a.timeout));
+    }
+
+    @Test
+    public void test_vaultMissingRule_doesNotFireOnAnUnrelatedVaultLogLine() {
+        // an ordinary informational line that merely says "Vault" must not withhold work
+        assertNull(FunctionAnalyzerUtils.firstHit(List.of(vaultMissingAnalyzer()),
+                "01.812.020 Unauthorized fetching sealed secret for companyId=2, keyCode=RG_API_AUTH"));
+        assertNull(FunctionAnalyzerUtils.firstHit(List.of(vaultMissingAnalyzer()),
+                "01.812.050 BAD_GATEWAY fetching sealed secret for companyId=2, keyCode=RG_API_AUTH; retry next cycle"));
+    }
+
     private static FunctionApiData.SystemExecResult result(String console) {
         return new FunctionApiData.SystemExecResult("fn:1.0", false, 1, console);
     }
