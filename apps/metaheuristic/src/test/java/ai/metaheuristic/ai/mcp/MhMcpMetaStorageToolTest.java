@@ -58,6 +58,17 @@ import static org.junit.jupiter.api.Assertions.*;
  * nothing is programmed and nothing is asserted on them; reaching one would be an NPE reported as a
  * tool error, which is itself the wiring failure {@link MhMcpToolWiringTest} pins.
  *
+ * <p>❗ The parameter the BUSINESS EDGE states is {@code production}, not {@code synthetic}: a caller
+ * reasons about intent ("is this the real thing?"), the store reasons about which physical table a
+ * record lands in, and the tool converts once. {@code production} is OPTIONAL and absent means
+ * development, so every call below that wants MH_META_STORAGE asks for it explicitly. The RESULT
+ * still reports {@code synthetic}, which is why the assertions read one word and the arguments the
+ * other.
+ *
+ * <p>❗ "Asks for it explicitly" is literal: only an exact {@code true} selects MH_META_STORAGE.
+ * Everything else - absent, {@code false}, "TRUE", a typo - is a development run.
+ * {@link #test_onlyAnExplicitTrueMeansProduction} is where that rule is pinned.
+ *
  * <p>❗ {@code companyId} comes from {@link SharedItEnv#uniqueLong()} - never {@code 1L}, which is
  * reserved for the MH management company. Isolation on the shared DB is by unique identifiers.
  *
@@ -75,17 +86,20 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
     private static final String UPSERT_TOOL = "mh_upsert_meta_storage_record";
 
     /** Map.of takes no varargs past a point and the flag is the only part that varies per call. */
-    private static Map<String, Object> withSynthetic(Map<String, Object> key, boolean synthetic) {
+    /** ❗ The value is Object, not boolean: several phases below hand this the string forms and the
+     *  malformed forms a JSON-RPC client can send, which is the whole subject of
+     *  {@link #test_onlyAnExplicitTrueMeansProduction}. */
+    private static Map<String, Object> withProduction(Map<String, Object> key, Object production) {
         final Map<String, Object> arguments = new java.util.HashMap<>(key);
-        arguments.put("synthetic", synthetic);
+        arguments.put("production", production);
         return arguments;
     }
 
     /** The write tool varies in three arguments past the key, so its arguments are assembled here. */
-    private static Map<String, Object> write(Map<String, Object> key, String mode, boolean synthetic, String body) {
+    private static Map<String, Object> write(Map<String, Object> key, String mode, boolean production, String body) {
         final Map<String, Object> arguments = new java.util.HashMap<>(key);
         arguments.put("mode", mode);
-        arguments.put("synthetic", synthetic);
+        arguments.put("production", production);
         arguments.put("body", body);
         return arguments;
     }
@@ -122,7 +136,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
      * reading the wrong table cannot accidentally produce the right answer.
      */
     @Test
-    public void test_syntheticFlagSelectsTheTable() {
+    public void test_productionFlagSelectsTheTable() {
 
         final Long companyId = SharedItEnv.uniqueLong();
         final String type = "mcp-tool";
@@ -138,11 +152,12 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         assertNotNull(synth, "PHASE #1: the MH_META_STORAGE_SYNTHETIC row must exist");
 
         // PHASE #2: synthetic=false reads MH_META_STORAGE
-        final CallToolResult fromPlain = call(Map.of("id", plain.id, "synthetic", false));
+        //          -> at the edge that is stated as production=true
+        final CallToolResult fromPlain = call(Map.of("id", plain.id, "production", true));
         assertEquals(Boolean.FALSE, fromPlain.isError(), "PHASE #2: " + textOf(fromPlain));
         final String plainJson = textOf(fromPlain);
         assertTrue(plainJson.contains("\"body\" : \"body-from-plain\""),
-                "PHASE #2: synthetic=false must read MH_META_STORAGE, got: " + plainJson);
+                "PHASE #2: production=true must read MH_META_STORAGE, got: " + plainJson);
         assertTrue(plainJson.contains("\"synthetic\" : false"),
                 "PHASE #2: the result must report the table it came from: " + plainJson);
         assertTrue(plainJson.contains("\"recKey\" : \"" + recKey + "\""),
@@ -152,11 +167,12 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
 
         // PHASE #3: synthetic=true reads MH_META_STORAGE_SYNTHETIC. The two tables allocate ids from
         // independent sequences, so this is a different id addressing an equally real row.
-        final CallToolResult fromSynthetic = call(Map.of("id", synth.id, "synthetic", true));
+        //          -> at the edge that is stated as production=false
+        final CallToolResult fromSynthetic = call(Map.of("id", synth.id, "production", false));
         assertEquals(Boolean.FALSE, fromSynthetic.isError(), "PHASE #3: " + textOf(fromSynthetic));
         final String syntheticJson = textOf(fromSynthetic);
         assertTrue(syntheticJson.contains("\"body\" : \"body-from-synthetic\""),
-                "PHASE #3: synthetic=true must read MH_META_STORAGE_SYNTHETIC, got: " + syntheticJson);
+                "PHASE #3: production=false must read MH_META_STORAGE_SYNTHETIC, got: " + syntheticJson);
         assertTrue(syntheticJson.contains("\"synthetic\" : true"),
                 "PHASE #3: the result must report the table it came from: " + syntheticJson);
 
@@ -165,6 +181,13 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         assertTrue(syntheticJson.contains("\"gen\" : " + synth.gen), "PHASE #4: gen: " + syntheticJson);
         assertTrue(syntheticJson.contains("\"version\" : " + synth.version), "PHASE #4: version: " + syntheticJson);
         assertTrue(syntheticJson.contains("\"updatedAt\" : " + synth.updatedAt), "PHASE #4: updatedAt: " + syntheticJson);
+
+        // PHASE #5: and omitting the flag entirely is the same as asking for development. Production is
+        // never the default of an omission - a record in MH_META_STORAGE cannot be un-written by re-running.
+        final CallToolResult omitted = call(Map.of("id", synth.id));
+        assertEquals(Boolean.FALSE, omitted.isError(), "PHASE #5: " + textOf(omitted));
+        assertTrue(textOf(omitted).contains("\"body\" : \"body-from-synthetic\""),
+                "PHASE #5: an absent 'production' reads MH_META_STORAGE_SYNTHETIC: " + textOf(omitted));
     }
 
     /** An absent id reports which table was searched, so the caller can tell a wrong flag from a wrong id. */
@@ -174,13 +197,13 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         // no @TableGenerator allocation will ever reach this, in either table
         final long absentId = Long.MAX_VALUE;
 
-        final CallToolResult plain = call(Map.of("id", absentId, "synthetic", false));
+        final CallToolResult plain = call(Map.of("id", absentId, "production", true));
         assertEquals(Boolean.TRUE, plain.isError(), "PHASE #1: an absent id is an error result");
         assertTrue(textOf(plain).contains("MH_META_STORAGE"), "PHASE #1: names the table: " + textOf(plain));
         assertFalse(textOf(plain).contains("MH_META_STORAGE_SYNTHETIC"),
-                "PHASE #1: synthetic=false must not name the synthetic table: " + textOf(plain));
+                "PHASE #1: production=true must not name the synthetic table: " + textOf(plain));
 
-        final CallToolResult synthetic = call(Map.of("id", absentId, "synthetic", true));
+        final CallToolResult synthetic = call(Map.of("id", absentId, "production", false));
         assertEquals(Boolean.TRUE, synthetic.isError(), "PHASE #2: an absent id is an error result");
         assertTrue(textOf(synthetic).contains("MH_META_STORAGE_SYNTHETIC"),
                 "PHASE #2: names the table: " + textOf(synthetic));
@@ -203,29 +226,29 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
 
         // PHASE #2: the key selects the table, exactly as the id form does
         final Map<String, Object> key = Map.of("companyId", companyId, "type", type, "recKey", recKey);
-        final CallToolResult plain = call(SELECT_TOOL, withSynthetic(key, false));
+        final CallToolResult plain = call(SELECT_TOOL, withProduction(key, true));
         assertEquals(Boolean.FALSE, plain.isError(), "PHASE #2: " + textOf(plain));
         assertTrue(textOf(plain).contains("\"body\" : \"plain-by-key\""),
-                "PHASE #2: synthetic=false must read MH_META_STORAGE: " + textOf(plain));
+                "PHASE #2: production=true must read MH_META_STORAGE: " + textOf(plain));
 
-        final CallToolResult synth = call(SELECT_TOOL, withSynthetic(key, true));
+        final CallToolResult synth = call(SELECT_TOOL, withProduction(key, false));
         assertEquals(Boolean.FALSE, synth.isError(), "PHASE #3: " + textOf(synth));
         assertTrue(textOf(synth).contains("\"body\" : \"synthetic-by-key\""),
-                "PHASE #3: synthetic=true must read MH_META_STORAGE_SYNTHETIC: " + textOf(synth));
+                "PHASE #3: production=false must read MH_META_STORAGE_SYNTHETIC: " + textOf(synth));
 
         // PHASE #4: the row id it reports must be the id the by-id tool answers to - that round trip is
         // the whole reason this tool returns an id at all
         final MetaStorage row = metaStorageRepository.findByNaturalKey(companyId, type, recKey);
         assertNotNull(row, "PHASE #4: the row must exist");
         assertTrue(textOf(plain).contains("\"id\" : " + row.id), "PHASE #4: reported id: " + textOf(plain));
-        final CallToolResult byId = call(Map.of("id", row.id, "synthetic", false));
+        final CallToolResult byId = call(Map.of("id", row.id, "production", true));
         assertEquals(Boolean.FALSE, byId.isError(), "PHASE #4: " + textOf(byId));
         assertTrue(textOf(byId).contains("\"body\" : \"plain-by-key\""),
                 "PHASE #4: the id from the key form addresses the same row: " + textOf(byId));
 
         // PHASE #5: an absent key is an error naming the table searched, not an empty success
         final CallToolResult absent = call(SELECT_TOOL,
-                Map.of("companyId", companyId, "type", type, "recKey", "no-such-key", "synthetic", false));
+                Map.of("companyId", companyId, "type", type, "recKey", "no-such-key", "production", true));
         assertEquals(Boolean.TRUE, absent.isError(), "PHASE #5: an unmatched key is an error result");
         assertTrue(textOf(absent).contains("MH_META_STORAGE"), "PHASE #5: names the table: " + textOf(absent));
     }
@@ -249,7 +272,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         assertNotNull(metaStorageSyntheticRepository.findByNaturalKey(companyId, type, recKey), "PHASE #1: synthetic row exists");
 
         // PHASE #2: delete the plain one
-        final CallToolResult deleted = call(DELETE_TOOL, withSynthetic(key, false));
+        final CallToolResult deleted = call(DELETE_TOOL, withProduction(key, true));
         assertEquals(Boolean.FALSE, deleted.isError(), "PHASE #2: " + textOf(deleted));
         assertTrue(textOf(deleted).contains("\"ok\" : true"), "PHASE #2: " + textOf(deleted));
 
@@ -262,16 +285,16 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
 
         // PHASE #4: a repeated delete matches nothing and reports it, rather than failing - the same
         // idempotency the natural key gives upsert
-        final CallToolResult again = call(DELETE_TOOL, withSynthetic(key, false));
+        final CallToolResult again = call(DELETE_TOOL, withProduction(key, true));
         assertEquals(Boolean.FALSE, again.isError(), "PHASE #4: a no-op delete is not a transport error");
         assertTrue(textOf(again).contains("\"ok\" : false"), "PHASE #4: " + textOf(again));
         assertTrue(textOf(again).contains("nothing was deleted"), "PHASE #4: " + textOf(again));
 
         // PHASE #5: and the survivor can still be deleted through its own flag
-        final CallToolResult synth = call(DELETE_TOOL, withSynthetic(key, true));
+        final CallToolResult synth = call(DELETE_TOOL, withProduction(key, false));
         assertEquals(Boolean.FALSE, synth.isError(), "PHASE #5: " + textOf(synth));
         assertNull(metaStorageSyntheticRepository.findByNaturalKey(companyId, type, recKey),
-                "PHASE #5: the synthetic row is gone once addressed with synthetic=true");
+                "PHASE #5: the synthetic row is gone once addressed with production=false");
     }
 
     /**
@@ -300,7 +323,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         metaStorageSyntheticService.upsert(companyId, List.of(new MetaStorageData.Record(type, syntheticOnly, "body-4")));
 
         // PHASE #2: exactly the two keys of that type in that table
-        final CallToolResult plain = call(KEYS_TOOL, Map.of("companyId", companyId, "type", type, "synthetic", false));
+        final CallToolResult plain = call(KEYS_TOOL, Map.of("companyId", companyId, "type", type, "production", true));
         assertEquals(Boolean.FALSE, plain.isError(), "PHASE #2: " + textOf(plain));
         final String plainJson = textOf(plain);
         assertTrue(plainJson.contains("\"count\" : 2"), "PHASE #2: two keys of this type: " + plainJson);
@@ -321,7 +344,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         assertFalse(plainJson.contains("body-2"), "PHASE #4: no bodies in a key listing: " + plainJson);
 
         // PHASE #5: the flag scopes the listing the same way it scopes every other tool here
-        final CallToolResult synthetic = call(KEYS_TOOL, Map.of("companyId", companyId, "type", type, "synthetic", true));
+        final CallToolResult synthetic = call(KEYS_TOOL, Map.of("companyId", companyId, "type", type, "production", false));
         assertEquals(Boolean.FALSE, synthetic.isError(), "PHASE #5: " + textOf(synthetic));
         assertTrue(textOf(synthetic).contains("\"count\" : 1"), "PHASE #5: " + textOf(synthetic));
         assertTrue(textOf(synthetic).contains(syntheticOnly), "PHASE #5: " + textOf(synthetic));
@@ -330,13 +353,13 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         // PHASE #6: a type never written is an empty list, NOT an error - a type exists only by virtue
         // of something having been written under it, so asking about one is a legitimate empty answer
         final CallToolResult never = call(KEYS_TOOL,
-                Map.of("companyId", companyId, "type", "never-written", "synthetic", false));
+                Map.of("companyId", companyId, "type", "never-written", "production", true));
         assertEquals(Boolean.FALSE, never.isError(), "PHASE #6: an empty listing is not an error");
         assertTrue(textOf(never).contains("\"count\" : 0"), "PHASE #6: " + textOf(never));
 
         // PHASE #7: and another company sees none of it
         final CallToolResult otherCompany = call(KEYS_TOOL,
-                Map.of("companyId", SharedItEnv.uniqueLong(), "type", type, "synthetic", false));
+                Map.of("companyId", SharedItEnv.uniqueLong(), "type", type, "production", true));
         assertEquals(Boolean.FALSE, otherCompany.isError(), "PHASE #7: " + textOf(otherCompany));
         assertTrue(textOf(otherCompany).contains("\"count\" : 0"),
                 "PHASE #7: companies are isolated: " + textOf(otherCompany));
@@ -345,31 +368,81 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
     /**
      * 'synthetic' has no default. Defaulting it would make a missing flag silently mean "the plain
      * table", and the caller would get a real record from a place it never asked for.
+     *
+     * <p>❗ That is no longer the contract, and the replacement is not a two-sided flag at all. The edge
+     * parameter is 'production' and the rule is ONE-SIDED: production happens when the caller writes
+     * exactly {@code true}, and nothing else does. Absence, {@code false}, an upper-cased "TRUE", a
+     * typo, a number - every one of them means development, so the synthetic table.
+     *
+     * <p>❗ The asymmetry is the whole design and it is why no value here is ever rejected. A record in
+     * the synthetic table costs one re-run; a record in MH_META_STORAGE cannot be un-written at all. So
+     * the expensive outcome is the one that has to be ASKED for, in one exact spelling, and the cheap
+     * side absorbs every ambiguity instead of turning it into an error the caller has to handle.
      */
     @Test
-    public void test_syntheticIsRequiredAndMustBeABoolean() {
+    public void test_onlyAnExplicitTrueMeansProduction() {
 
         final Long companyId = SharedItEnv.uniqueLong();
+        final String type = "mcp-tool";
         final String recKey = SharedItEnv.uniqueCode("required") + "@example.com";
-        metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record("mcp-tool", recKey, "body")));
-        final MetaStorage row = metaStorageRepository.findByNaturalKey(companyId, "mcp-tool", recKey);
-        assertNotNull(row, "PHASE #1: the row must exist");
+        final Map<String, Object> key = Map.of("companyId", companyId, "type", type, "recKey", recKey);
 
-        final CallToolResult missing = call(Map.of("id", row.id));
-        assertEquals(Boolean.TRUE, missing.isError(), "PHASE #2: a missing 'synthetic' is an error");
-        assertTrue(textOf(missing).contains("Required parameter 'synthetic' is missing"),
-                "PHASE #2: " + textOf(missing));
+        // PHASE #1: the same natural key in both tables, so every answer below names, through its body,
+        // the table it was actually read from - no phase can pass by landing on nothing
+        metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(type, recKey, "plain-body")));
+        metaStorageSyntheticService.upsert(companyId, List.of(new MetaStorageData.Record(type, recKey, "synthetic-body")));
 
-        // PHASE #3: an unrecognized value is rejected rather than read as false - Boolean.parseBoolean
-        // would have turned this typo into a successful read of the wrong table
-        final CallToolResult typo = call(Map.of("id", row.id, "synthetic", "yes"));
-        assertEquals(Boolean.TRUE, typo.isError(), "PHASE #3: 'yes' is not a boolean");
-        assertTrue(textOf(typo).contains("must be a boolean"), "PHASE #3: " + textOf(typo));
+        // PHASE #2: an omitted 'production' is development, and is NOT an error
+        final CallToolResult omitted = call(SELECT_TOOL, key);
+        assertEquals(Boolean.FALSE, omitted.isError(), "PHASE #2: an absent 'production' is not an error: " + textOf(omitted));
+        assertTrue(textOf(omitted).contains("\"body\" : \"synthetic-body\""),
+                "PHASE #2: absent means development: " + textOf(omitted));
 
-        // PHASE #4: the string forms a JSON-RPC client may send still work
-        final CallToolResult asString = call(Map.of("id", row.id, "synthetic", "false"));
-        assertEquals(Boolean.FALSE, asString.isError(), "PHASE #4: " + textOf(asString));
-        assertTrue(textOf(asString).contains("\"body\" : \"body\""), "PHASE #4: " + textOf(asString));
+        // PHASE #3: an unrecognized value. It is not a boolean, so it names no table, and a tool that
+        // routes on it cannot know which of the two the caller meant.
+        //          -> and that is precisely why it is NOT an error: not naming production IS the answer
+        final CallToolResult typo = call(SELECT_TOOL, withProduction(key, "yes"));
+        assertEquals(Boolean.FALSE, typo.isError(), "PHASE #3: an unrecognized value is not an error: " + textOf(typo));
+        assertTrue(textOf(typo).contains("\"body\" : \"synthetic-body\""),
+                "PHASE #3: 'yes' is not the word that asks for production, so it is development: " + textOf(typo));
+
+        // PHASE #4: the same word a client may well upper-case on the way out
+        //          -> ❗ matching is EXACT, so "TRUE" is not that word either and lands on development.
+        //             Only one spelling can ever reach MH_META_STORAGE.
+        final CallToolResult upper = call(SELECT_TOOL, withProduction(key, "TRUE"));
+        assertEquals(Boolean.FALSE, upper.isError(), "PHASE #4: " + textOf(upper));
+        assertTrue(textOf(upper).contains("\"body\" : \"synthetic-body\""),
+                "PHASE #4: \"TRUE\" is not the exact word, so it is development: " + textOf(upper));
+
+        // PHASE #5: the string forms a JSON-RPC client may send still work
+        final CallToolResult asStringTrue = call(SELECT_TOOL, withProduction(key, "true"));
+        assertEquals(Boolean.FALSE, asStringTrue.isError(), "PHASE #5: " + textOf(asStringTrue));
+        assertTrue(textOf(asStringTrue).contains("\"body\" : \"plain-body\""),
+                "PHASE #5: the string \"true\" names MH_META_STORAGE: " + textOf(asStringTrue));
+
+        final CallToolResult asStringFalse = call(SELECT_TOOL, withProduction(key, "false"));
+        assertEquals(Boolean.FALSE, asStringFalse.isError(), "PHASE #6: " + textOf(asStringFalse));
+        assertTrue(textOf(asStringFalse).contains("\"body\" : \"synthetic-body\""),
+                "PHASE #6: the string \"false\" names MH_META_STORAGE_SYNTHETIC: " + textOf(asStringFalse));
+
+        // PHASE #7: and the same word on the false side, cased differently
+        //          -> it reaches development like everything else that is not exactly "true"; the false
+        //             side has no exactness to get wrong
+        final CallToolResult mixedFalse = call(SELECT_TOOL, withProduction(key, "False"));
+        assertEquals(Boolean.FALSE, mixedFalse.isError(), "PHASE #7: " + textOf(mixedFalse));
+        assertTrue(textOf(mixedFalse).contains("\"body\" : \"synthetic-body\""),
+                "PHASE #7: \"False\" names MH_META_STORAGE_SYNTHETIC: " + textOf(mixedFalse));
+
+        // PHASE #8: the JSON booleans themselves, which is what a well-behaved client sends
+        final CallToolResult asBooleanTrue = call(SELECT_TOOL, withProduction(key, true));
+        assertEquals(Boolean.FALSE, asBooleanTrue.isError(), "PHASE #8: " + textOf(asBooleanTrue));
+        assertTrue(textOf(asBooleanTrue).contains("\"body\" : \"plain-body\""),
+                "PHASE #8: " + textOf(asBooleanTrue));
+
+        final CallToolResult asBooleanFalse = call(SELECT_TOOL, withProduction(key, false));
+        assertEquals(Boolean.FALSE, asBooleanFalse.isError(), "PHASE #8: " + textOf(asBooleanFalse));
+        assertTrue(textOf(asBooleanFalse).contains("\"body\" : \"synthetic-body\""),
+                "PHASE #8: " + textOf(asBooleanFalse));
     }
 
     /**
@@ -390,7 +463,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
                 List.of(new MetaStorageData.Record(type, recKey, "synthetic-untouched")));
 
         // PHASE #2: INSERT creates the record in the plain table and reports it as created
-        final CallToolResult inserted = call(UPSERT_TOOL, write(key, "INSERT", false, "first-body"));
+        final CallToolResult inserted = call(UPSERT_TOOL, write(key, "INSERT", true, "first-body"));
         assertEquals(Boolean.FALSE, inserted.isError(), "PHASE #2: " + textOf(inserted));
         assertTrue(textOf(inserted).contains("\"created\" : true"), "PHASE #2: " + textOf(inserted));
 
@@ -403,7 +476,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
                 "PHASE #2: the result reports the stored gen: " + textOf(inserted));
 
         // PHASE #3: UPDATE overwrites that same record rather than adding a second one
-        final CallToolResult updated = call(UPSERT_TOOL, write(key, "UPDATE", false, " second-body\n"));
+        final CallToolResult updated = call(UPSERT_TOOL, write(key, "UPDATE", true, " second-body\n"));
         assertEquals(Boolean.FALSE, updated.isError(), "PHASE #3: " + textOf(updated));
         assertTrue(textOf(updated).contains("\"created\" : false"), "PHASE #3: " + textOf(updated));
 
@@ -423,7 +496,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         assertEquals("synthetic-untouched", twin.body, "PHASE #5: and must keep its own body");
 
         // PHASE #6: UPSERT accepts either outcome - here the record exists, so it is an update
-        final CallToolResult upserted = call(UPSERT_TOOL, write(key, "UPSERT", false, "third-body"));
+        final CallToolResult upserted = call(UPSERT_TOOL, write(key, "UPSERT", true, "third-body"));
         assertEquals(Boolean.FALSE, upserted.isError(), "PHASE #6: " + textOf(upserted));
         assertTrue(textOf(upserted).contains("\"created\" : false"), "PHASE #6: " + textOf(upserted));
         final MetaStorage afterUpsert = metaStorageRepository.findByNaturalKey(companyId, type, recKey);
@@ -450,7 +523,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(type, existingKey, "original")));
 
         // PHASE #2: INSERT onto an occupied key is refused
-        final CallToolResult insertOnExisting = call(UPSERT_TOOL, write(existing, "INSERT", false, "overwrite-attempt"));
+        final CallToolResult insertOnExisting = call(UPSERT_TOOL, write(existing, "INSERT", true, "overwrite-attempt"));
         assertEquals(Boolean.TRUE, insertOnExisting.isError(), "PHASE #2: INSERT onto an occupied key is an error");
         assertTrue(textOf(insertOnExisting).contains("already exists"), "PHASE #2: " + textOf(insertOnExisting));
 
@@ -460,7 +533,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         assertEquals("original", untouched.body, "PHASE #3: a refused INSERT must not have written");
 
         // PHASE #4: UPDATE of a key that matches nothing is refused
-        final CallToolResult updateOnAbsent = call(UPSERT_TOOL, write(absent, "UPDATE", false, "body"));
+        final CallToolResult updateOnAbsent = call(UPSERT_TOOL, write(absent, "UPDATE", true, "body"));
         assertEquals(Boolean.TRUE, updateOnAbsent.isError(), "PHASE #4: UPDATE of an absent key is an error");
         assertTrue(textOf(updateOnAbsent).contains("no record exists"), "PHASE #4: " + textOf(updateOnAbsent));
 
@@ -470,7 +543,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
 
         // PHASE #6: the gate is scoped to the table the flag names. The same INSERT is legal against the
         // synthetic table, where that key is free.
-        final CallToolResult insertSynthetic = call(UPSERT_TOOL, write(existing, "INSERT", true, "synthetic-body"));
+        final CallToolResult insertSynthetic = call(UPSERT_TOOL, write(existing, "INSERT", false, "synthetic-body"));
         assertEquals(Boolean.FALSE, insertSynthetic.isError(), "PHASE #6: " + textOf(insertSynthetic));
         final MetaStorageSynthetic synth = metaStorageSyntheticRepository.findByNaturalKey(companyId, type, existingKey);
         assertNotNull(synth, "PHASE #6: the synthetic record must have been created");
@@ -478,13 +551,13 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
 
         // PHASE #7: 'mode' has no default - a missing one is an error, not the permissive UPSERT
         final CallToolResult missingMode = call(UPSERT_TOOL,
-                Map.of("companyId", companyId, "type", type, "recKey", absentKey, "body", "b", "synthetic", false));
+                Map.of("companyId", companyId, "type", type, "recKey", absentKey, "body", "b", "production", true));
         assertEquals(Boolean.TRUE, missingMode.isError(), "PHASE #7: a missing 'mode' is an error");
         assertTrue(textOf(missingMode).contains("Required parameter 'mode' is missing"),
                 "PHASE #7: " + textOf(missingMode));
 
         // PHASE #8: and an unrecognized one is rejected by name rather than read as something
-        final CallToolResult bogusMode = call(UPSERT_TOOL, write(absent, "REPLACE", false, "b"));
+        final CallToolResult bogusMode = call(UPSERT_TOOL, write(absent, "REPLACE", true, "b"));
         assertEquals(Boolean.TRUE, bogusMode.isError(), "PHASE #8: 'REPLACE' is not a mode");
         assertTrue(textOf(bogusMode).contains("must be one of INSERT, UPDATE, UPSERT"),
                 "PHASE #8: " + textOf(bogusMode));
@@ -492,7 +565,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         // PHASE #9: a body is stored, never coerced - a number in that position is a caller bug
         final CallToolResult numericBody = call(UPSERT_TOOL,
                 Map.of("companyId", companyId, "type", type, "recKey", absentKey,
-                        "body", 42, "mode", "INSERT", "synthetic", false));
+                        "body", 42, "mode", "INSERT", "production", true));
         assertEquals(Boolean.TRUE, numericBody.isError(), "PHASE #9: a non-string body is an error");
         assertTrue(textOf(numericBody).contains("must be a string"), "PHASE #9: " + textOf(numericBody));
         assertNull(metaStorageRepository.findByNaturalKey(companyId, type, absentKey),

@@ -1752,6 +1752,23 @@ public class MhMcpToolDefinitions {
      * \u2757 Deliberately NOT {@code Boolean.parseBoolean}, which answers false to everything that is not
      * the word "true" - a typo would silently become "read the non-synthetic table" and the caller
      * would get a real record from the wrong place. An unrecognized value is rejected by name instead.
+     *
+     * <p>❗ SCOPE - this rule does NOT govern {@code production}, and without saying so the file holds
+     * two opposite ❗ rules for reading a flag with nothing stating which applies where. Strict
+     * rejection is right when the two values name two different DESTRUCTIVE outcomes, so there is no
+     * safe side to guess onto: {@code mode} in {@link #getRequiredMode}, where a wrong guess overwrites
+     * a body MH keeps no history of.
+     *
+     * <p>{@code production} is the opposite shape and is read by {@link #syntheticFromProduction},
+     * one-sidedly and on purpose: only an exact {@code true} selects MH_META_STORAGE, while absence,
+     * {@code false}, an upper-cased {@code "TRUE"} and every typo alike mean a development run - none
+     * of them rejected. ❗ That is the rule in force, NOT this method's strictness having been dropped
+     * on the way there. A record in the synthetic table costs one re-run and a record in
+     * MH_META_STORAGE cannot be un-written at all, so a safe side does exist, and an ambiguous request
+     * belongs on it rather than coming back as an error the caller has to handle.
+     *
+     * <p>⚠️ No caller at present - the meta storage tools were moved onto {@code production}. Kept for
+     * the rule above, which {@link #getRequiredMode} cites.
      */
     private static boolean getRequiredBoolean(Map<String, Object> arguments, String key) {
         Object value = arguments.get(key);
