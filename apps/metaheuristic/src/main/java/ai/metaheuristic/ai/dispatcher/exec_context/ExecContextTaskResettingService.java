@@ -93,6 +93,25 @@ public class ExecContextTaskResettingService {
 
                 ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
                 ectspy.triesWasMade.put(status.taskId, status.triesWasMade);
+                // A Task state lives in two stores, and assignment reads the GRAPH one:
+                // ExecContextGraphService.findAllForAssigning() returns only NONE / CHECK_CACHE vertices.
+                // resetTask() above writes the DB state and the task queue but not the graph, so without
+                // this line the vertex keeps ERROR_WITH_RECOVERY and the Task the DB now calls ready is
+                // never a candidate for assignment again - the ExecContext stalls with no error anywhere.
+                // The ERROR branch above needs no equivalent: finishWithError() publishes
+                // UpdateTaskExecStatesInExecContextTxEvent, which carries its state into the graph.
+                // Both stores move inside this one transaction, so nothing can observe them disagreeing.
+                ectspy.states.put(status.taskId, status.targetState);
+
+                // A Task's state lives in two stores, and assignment reads the GRAPH one:
+                // ExecContextGraphService.findAllForAssigning() returns only NONE / CHECK_CACHE vertices.
+                // resetTask() above writes the DB state and the task queue but not the graph, so without
+                // this line the vertex keeps ERROR_WITH_RECOVERY and the Task the DB now calls ready is
+                // never a candidate for assignment again - the ExecContext stalls with no error anywhere.
+                // The ERROR branch above needs no equivalent: finishWithError() publishes
+                // UpdateTaskExecStatesInExecContextTxEvent, which carries its state into the graph.
+                // Both stores move inside this one transaction, so nothing can observe them disagreeing.
+                ectspy.states.put(status.taskId, status.targetState);
 
                 execContextTaskState.updateParams(ectspy);
                 execContextTaskStateRepository.save(execContextTaskState);
