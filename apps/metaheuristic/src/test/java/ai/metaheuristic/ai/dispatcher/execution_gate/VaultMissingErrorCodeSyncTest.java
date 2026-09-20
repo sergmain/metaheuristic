@@ -60,13 +60,16 @@ public class VaultMissingErrorCodeSyncTest {
     private static final Path EMITTER = Path.of(
             "src/main/java/ai/metaheuristic/ai/processor/actors/DownloadSealedSecretService.java");
 
-    private static final String REGEX_KEY = "mh.dispatcher.execution-gate.analyzers[0].regex[0]";
+    // Two rules now, not one: analyzer[0] covers a LOCKED Vault (transient, free retry) and
+    // analyzer[1] covers a MISSING ENTRY (permanent, charges a try so the Task can reach ERROR).
+    private static final String LOCKED_REGEX_KEY = "mh.dispatcher.execution-gate.analyzers[0].regex[0]";
+    private static final String MISSING_REGEX_KEY = "mh.dispatcher.execution-gate.analyzers[1].regex[0]";
 
     /** The value of the analyzer regex key, with the properties-file's doubled backslashes un-doubled to a real regex. */
-    private static String analyzerRegexFromProperties() throws IOException {
+    private static String analyzerRegexFromProperties(String regexKey) throws IOException {
         for (String line : Files.readAllLines(PROPERTIES, StandardCharsets.UTF_8)) {
             final String trimmed = line.strip();
-            if (trimmed.startsWith("#") || !trimmed.startsWith(REGEX_KEY)) {
+            if (trimmed.startsWith("#") || !trimmed.startsWith(regexKey)) {
                 continue;
             }
             final int eq = trimmed.indexOf('=');
@@ -74,7 +77,7 @@ public class VaultMissingErrorCodeSyncTest {
             // in a .properties value a regex backslash is written doubled; Spring un-doubles it before use
             return trimmed.substring(eq + 1).strip().replace("\\\\", "\\");
         }
-        return fail("property '" + REGEX_KEY + "' not found in " + PROPERTIES);
+        return fail("property '" + regexKey + "' not found in " + PROPERTIES);
     }
 
     /** Every "01.812.04x Vault has no entry ..." message literal the emitter actually prints, with its code prefix. */
@@ -103,7 +106,7 @@ public class VaultMissingErrorCodeSyncTest {
 
     @Test
     public void test_theConfiguredRegexMatchesEveryVaultMissingLineTheEmitterPrints() throws IOException {
-        final Pattern regex = Pattern.compile(analyzerRegexFromProperties());
+        final Pattern regex = Pattern.compile(analyzerRegexFromProperties(MISSING_REGEX_KEY));
 
         for (String message : vaultMissingMessagesFromEmitter()) {
             assertTrue(regex.matcher(message).find(),
@@ -113,9 +116,42 @@ public class VaultMissingErrorCodeSyncTest {
         }
     }
 
+    /** Every "01.812.04x Vault is locked ..." message literal the emitter prints, with its code prefix. */
+    private static List<String> vaultLockedMessagesFromEmitter() throws IOException {
+        final String source = Files.readString(EMITTER, StandardCharsets.UTF_8);
+        final Matcher m = Pattern.compile("\"((?:\\d{2}\\.)?\\d{3}\\.\\d{3} Vault is locked[^\"%]*)").matcher(source);
+        final List<String> found = new ArrayList<>();
+        while (m.find()) {
+            found.add(m.group(1));
+        }
+        return found;
+    }
+
+    /**
+     * The two rules must stay disjoint. If either started matching the other rule lines, the split
+     * would silently undo itself: a missing entry would get the free retry back and livelock again,
+     * or a lock would start charging tries and fail Tasks over a condition a human is about to clear.
+     */
+    @Test
+    public void test_eachRuleMatchesItsOwnEmittedLinesAndNeverTheOthers() throws IOException {
+        final Pattern locked = Pattern.compile(analyzerRegexFromProperties(LOCKED_REGEX_KEY));
+        final Pattern missing = Pattern.compile(analyzerRegexFromProperties(MISSING_REGEX_KEY));
+
+        final List<String> lockedMessages = vaultLockedMessagesFromEmitter();
+        assertEquals(2, lockedMessages.size(), "expected exactly two Vault-is-locked emissions (01.812.042 and 01.812.043), found: " + lockedMessages);
+
+        for (String message : lockedMessages) {
+            assertTrue(locked.matcher(message).find(), "the locked rule no longer matches an emitted line: " + message);
+            assertFalse(missing.matcher(message).find(), "the missing-entry rule must not fire on a locked-Vault line: " + message);
+        }
+        for (String message : vaultMissingMessagesFromEmitter()) {
+            assertFalse(locked.matcher(message).find(), "the locked rule must not fire on a missing-entry line: " + message);
+        }
+    }
+
     @Test
     public void test_theRegexIsForwardCompatibleWithTheMigratedErrorCode() throws IOException {
-        final Pattern regex = Pattern.compile(analyzerRegexFromProperties());
+        final Pattern regex = Pattern.compile(analyzerRegexFromProperties(MISSING_REGEX_KEY));
 
         // legacy (what is emitted today) AND migrated (RULE-ERROR-CODE-SCHEME: MH app segment 01) both match,
         // so migrating DownloadSealedSecretService later needs no change here

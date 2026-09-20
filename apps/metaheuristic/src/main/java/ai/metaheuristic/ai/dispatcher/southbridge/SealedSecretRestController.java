@@ -83,6 +83,10 @@ public class SealedSecretRestController {
                     p.sealed(), p.fingerprint(), p.issuedOn(), p.notAfter()));
             }
             case PROCESSOR_NOT_ENROLLED -> ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            // 423 - the Vault is locked, not empty. Transient by nature: every Vault locks on a Dispatcher
+            // restart and clears on a human unlock, so the Processor may retry free of charge. Kept apart
+            // from 410 precisely because 410 is permanent and must be allowed to exhaust a Task tries.
+            case VAULT_LOCKED          -> ResponseEntity.status(HttpStatus.LOCKED).build();
             case VAULT_ENTRY_MISSING   -> ResponseEntity.status(HttpStatus.GONE).build();
             case INTERNAL_ERROR        -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         };

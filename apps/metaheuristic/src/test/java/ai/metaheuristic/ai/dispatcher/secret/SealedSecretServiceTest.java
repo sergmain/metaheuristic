@@ -29,15 +29,25 @@ import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link SealedSecretService}.
+ *
+ * <p>⚠️ Moved off Mockito, which RULE-NO-MOCKITO prohibits, and the move was forced rather than
+ * tidy-minded: when {@code sealFor} started asking {@code vaultService.isOpened(...)}, the mock
+ * answered {@code false} for a method no test had stubbed, and the happy path silently returned
+ * VAULT_LOCKED instead of OK. That is §3.4b(c) of the rule verbatim — an un-stubbed method answers
+ * with a default the test never considered. The in-memory Vault below cannot do that: it has real
+ * unlock and entry state, seeded through its own API, and every test that touches it uses it
+ * unchanged. Assertions are on what {@code sealFor} returned, never on a double.
  *
  * @author Sergio Lissner
  */
@@ -50,13 +60,13 @@ class SealedSecretServiceTest {
         PublicKey pub = ck.getPublicKey();
         PrivateKey priv = ck.getPrivateKey();
 
-        VaultService vault = mock(VaultService.class);
-        ProcessorKeyResolver resolver = mock(ProcessorKeyResolver.class);
         byte[] plaintext = "sk-test-1234".getBytes(StandardCharsets.UTF_8);
-        when(vault.getKeyBytes(7L, "openai_api_key")).thenReturn(Optional.of(plaintext.clone()));
-        when(resolver.publicKeyFor(42L)).thenReturn(Optional.of(pub));
 
-        SealedSecretService svc = new SealedSecretService(vault, resolver);
+        InMemoryVault vault = new InMemoryVault();
+        vault.unlock(7L);
+        vault.put(7L, "openai_api_key", "sk-test-1234");
+
+        SealedSecretService svc = new SealedSecretService(vault, new Enrolled(pub));
         SealedSecretService.Outcome outcome = svc.sealFor(42L, 7L, "openai_api_key");
 
         assertEquals(SealedSecretService.Outcome.Reason.OK, outcome.reason());
@@ -76,11 +86,11 @@ class SealedSecretServiceTest {
 
     @Test
     void test_sealFor_processorNotEnrolled_returnsReason() {
-        VaultService vault = mock(VaultService.class);
-        ProcessorKeyResolver resolver = mock(ProcessorKeyResolver.class);
-        when(resolver.publicKeyFor(42L)).thenReturn(Optional.empty());
+        InMemoryVault vault = new InMemoryVault();
+        vault.unlock(7L);
+        vault.put(7L, "k", "whatever");
 
-        SealedSecretService svc = new SealedSecretService(vault, resolver);
+        SealedSecretService svc = new SealedSecretService(vault, new NotEnrolled());
         SealedSecretService.Outcome outcome = svc.sealFor(42L, 7L, "k");
 
         assertEquals(SealedSecretService.Outcome.Reason.PROCESSOR_NOT_ENROLLED, outcome.reason());
@@ -90,15 +100,71 @@ class SealedSecretServiceTest {
     @Test
     void test_sealFor_vaultEntryMissing_returnsReason() throws Exception {
         CreateKeys ck = new CreateKeys(2048);
-        VaultService vault = mock(VaultService.class);
-        ProcessorKeyResolver resolver = mock(ProcessorKeyResolver.class);
-        when(resolver.publicKeyFor(42L)).thenReturn(Optional.of(ck.getPublicKey()));
-        when(vault.getKeyBytes(7L, "missing-key")).thenReturn(Optional.empty());
 
-        SealedSecretService svc = new SealedSecretService(vault, resolver);
+        InMemoryVault vault = new InMemoryVault();
+        vault.unlock(7L);
+
+        SealedSecretService svc = new SealedSecretService(vault, new Enrolled(ck.getPublicKey()));
         SealedSecretService.Outcome outcome = svc.sealFor(42L, 7L, "missing-key");
 
         assertEquals(SealedSecretService.Outcome.Reason.VAULT_ENTRY_MISSING, outcome.reason());
         assertNull(outcome.payload());
+    }
+
+    /** A real, if simple, Vault: unlock state and entries, both honest enough to disagree with a test. */
+    static class InMemoryVault extends VaultService {
+        private final Set<Long> opened = new HashSet<>();
+        private final Map<Long, Map<String, String>> entries = new HashMap<>();
+
+        InMemoryVault() {
+            super(null);
+        }
+
+        void unlock(long companyUniqueId) {
+            opened.add(companyUniqueId);
+        }
+
+        void put(long companyUniqueId, String code, String value) {
+            entries.computeIfAbsent(companyUniqueId, k -> new HashMap<>()).put(code, value);
+        }
+
+        @Override
+        public boolean isOpened(long companyUniqueId) {
+            return opened.contains(companyUniqueId);
+        }
+
+        @Override
+        public Optional<byte[]> getKeyBytes(long companyUniqueId, String code) {
+            if (!opened.contains(companyUniqueId)) {
+                return Optional.empty();
+            }
+            return Optional.ofNullable(entries.getOrDefault(companyUniqueId, Map.of()).get(code))
+                    .map(s -> s.getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    static class Enrolled extends ProcessorKeyResolver {
+        private final PublicKey pub;
+
+        Enrolled(PublicKey pub) {
+            super(null);
+            this.pub = pub;
+        }
+
+        @Override
+        public Optional<PublicKey> publicKeyFor(long processorId) {
+            return Optional.of(pub);
+        }
+    }
+
+    static class NotEnrolled extends ProcessorKeyResolver {
+        NotEnrolled() {
+            super(null);
+        }
+
+        @Override
+        public Optional<PublicKey> publicKeyFor(long processorId) {
+            return Optional.empty();
+        }
     }
 }
