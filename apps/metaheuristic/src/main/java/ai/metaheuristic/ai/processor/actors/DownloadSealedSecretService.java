@@ -167,6 +167,19 @@ public class DownloadSealedSecretService
                         task.companyId, task.keyCode);
                 return;
             }
+            // 423 LOCKED - the Vault exists but is locked, a DIFFERENT fact from 410/GONE.
+            // HttpServletResponse has no constant for 423 (a WebDAV code), hence the literal.
+            // Still finished with error, because that is what puts the console in front of the
+            // execution-gate analyzers - but under its own code, so the locked rule can grant a FREE
+            // retry while the missing-entry rule charges a try and lets the Task reach ERROR.
+            if (statusCode == 423) {
+                String es = String.format(
+                        "01.812.042 Vault is locked for companyId=%d, keyCode=%s. Task #%d is finished with error.",
+                        task.companyId, task.keyCode, task.taskId);
+                log.warn(es);
+                processorTaskService.markAsFinishedWithError(task.core, task.taskId, es);
+                return;
+            }
             if (statusCode == HttpServletResponse.SC_GONE) {
                 String es = String.format(
                         "01.812.040 Vault has no entry for companyId=%d, keyCode=%s. Task #%d is finished with error.",
@@ -185,6 +198,15 @@ public class DownloadSealedSecretService
         } catch (HttpResponseException e) {
             // HttpClient fluent throws HttpResponseException for >= 300 in some configurations.
             final int sc = e.getStatusCode();
+            // 423 LOCKED, reached through the HttpResponseException path. Same split as above.
+            if (sc == 423) {
+                String es = String.format(
+                        "01.812.043 Vault is locked for companyId=%d, keyCode=%s. Task #%d is finished with error.",
+                        task.companyId, task.keyCode, task.taskId);
+                log.warn(es);
+                processorTaskService.markAsFinishedWithError(task.core, task.taskId, es);
+                return;
+            }
             if (sc == HttpServletResponse.SC_GONE) {
                 String es = String.format(
                         "01.812.041 Vault has no entry for companyId=%d, keyCode=%s. Task #%d is finished with error.",

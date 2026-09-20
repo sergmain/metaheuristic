@@ -78,12 +78,14 @@ public class SealedSecretService {
         public enum Reason {
             OK,
             PROCESSOR_NOT_ENROLLED,    // 404 — Stage 4 prerequisite not satisfied
+            VAULT_LOCKED,              // 423 - the company's Vault is locked in dispatcher memory
             VAULT_ENTRY_MISSING,       // 410 — Vault has no entry for (companyId, keyCode)
             INTERNAL_ERROR             // 500 — seal/decode failed unexpectedly
         }
         public static Outcome ok(SealedPayload p) { return new Outcome(p, Reason.OK); }
         public static Outcome processorNotEnrolled() { return new Outcome(null, Reason.PROCESSOR_NOT_ENROLLED); }
         public static Outcome vaultEntryMissing() { return new Outcome(null, Reason.VAULT_ENTRY_MISSING); }
+        public static Outcome vaultLocked() { return new Outcome(null, Reason.VAULT_LOCKED); }
         public static Outcome internalError() { return new Outcome(null, Reason.INTERNAL_ERROR); }
     }
 
@@ -110,6 +112,16 @@ public class SealedSecretService {
             return Outcome.processorNotEnrolled();
         }
         PublicKey pubKey = pubKeyOpt.get();
+
+        // A locked Vault and a Vault without this entry both make getKeyBytes answer empty, but they are
+        // opposite conditions: a lock clears when an operator unlocks, a missing entry never clears by itself.
+        // Collapsing them gave both the same free retry downstream, which turned the permanent case into an
+        // unbounded livelock - the Task never spent a try, so it never reached ERROR and nobody was told.
+        // Ask about the lock first, so the two arrive at the execution gate as different reasons.
+        if (!vaultService.isOpened(companyId)) {
+            log.info("0664.015 Vault is locked for companyId={} - answering vaultLocked (keyCode={})", companyId, keyCode);
+            return Outcome.vaultLocked();
+        }
 
         Optional<byte[]> plainOpt = vaultService.getKeyBytes(companyId, keyCode);
         if (plainOpt.isEmpty()) {
