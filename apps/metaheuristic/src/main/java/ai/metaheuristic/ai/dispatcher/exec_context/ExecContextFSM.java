@@ -111,8 +111,16 @@ public class ExecContextFSM {
         if (execContext.state != execState.code) {
             execContext.setState(execState.code);
             execContextCache.save(execContext);
-            publishExecContextStateSignal(execContext, execState);
         }
+        // The signal carries the ExecContext's CURRENT state, not a transition, so a request that found it
+        // already in the target state still has something true to announce - and that announcement is the
+        // only way a consumer holding a stale entry is brought back into agreement. Pressing Start on an
+        // ExecContext already STARTED published nothing, which is what left EC #293 showing STOPPED with no
+        // way to clear it. Only the announcement is unconditional here; the write above stays guarded.
+        // The engine-driven transitions (toState, toStateWithCompletion) keep their guards deliberately:
+        // they fire constantly, and re-announcing an unchanged state there would be noise. This method is
+        // reached only from an explicit target-state request, so the volume is one signal per user action.
+        publishExecContextStateSignal(execContext, execState);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

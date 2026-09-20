@@ -52,10 +52,15 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MhMcpToolWiringTest {
 
     /** Tool name -> the argument its handler must ask for. Kept explicit so a swap is visible here. */
+    // ❗ Each value is the FIRST entry of that tool's own declared 'required' list, read off its
+    // Tool.builder(...) declaration and NOT off the handler. That is what makes the assertion mean
+    // something: the declaration and the handler are two independent statements of one contract, and
+    // this test fails when they disagree. A value copied from the handler would only agree with itself.
     private static final Map<String, String> REQUIRED_ARG = new LinkedHashMap<>() {{
         put("mh_get_variable_info", "variableId");
         put("mh_get_variable_content", "variableId");
         put("mh_create_exec_context", "sourceCodeId");
+        put("mh_create_exec_context_with_variables", "sourceCodeId");
         put("mh_exec_context_target_state", "execContextId");
         put("mh_get_task_info", "taskId");
         put("mh_reset_task", "taskId");
@@ -64,12 +69,21 @@ public class MhMcpToolWiringTest {
         put("mh_get_exec_context_task_state", "execContextTaskStateId");
         put("mh_get_exec_context_variable_state", "execContextVariableStateId");
         put("mh_get_source_code", "sourceCodeId");
+        put("mh_archive_source_code", "sourceCodeId");
         put("mh_get_meta_storage_record", "id");
         // natural-key addressed: companyId is the first segment of the key and the first argument asked for
         put("mh_select_meta_storage_record", "companyId");
         put("mh_delete_meta_storage_record", "companyId");
         put("mh_list_meta_storage_rec_keys", "companyId");
         put("mh_upsert_meta_storage_record", "companyId");
+        // whole-table and registry tools: every one of them is scoped to a company, so companyId leads
+        // their declared key as well - which is why a swap WITHIN this group cannot be caught by the
+        // argument name alone, and test_everyToolIsRegisteredExactlyOnce carries the weight for them
+        put("mh_drop_meta_storage_table", "companyId");
+        put("mh_list_meta_storage_types", "companyId");
+        put("mh_list_meta_storage_registry", "companyId");
+        put("mh_get_meta_storage_registry", "companyId");
+        put("mh_upsert_meta_storage_registry", "companyId");
         // not an id: this one is resolved from a repo url, and 'repo' is the first argument its handler asks for
         put("mh_import_bundle_from_git", "repo");
         // the company whose Key Vault is checked - the only argument it takes
