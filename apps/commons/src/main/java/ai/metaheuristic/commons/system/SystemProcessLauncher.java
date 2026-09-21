@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class SystemProcessLauncher {
@@ -148,14 +149,16 @@ public class SystemProcessLauncher {
             @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines,
             List<Supplier<Boolean>> outerInterrupters, @Nullable Path inputPath,
             @Nullable SecretHandoff secretHandoff) throws IOException, InterruptedException {
-        log.info("Exec info:");
-        log.info("\tcmd: {}", cmd);
-        log.info("\ttaskDir: {}", execDir.toAbsolutePath());
-        log.info("\ttaskDir abs: {}", execDir.toAbsolutePath());
-        log.info("\tconsoleLogFile abs: {}", consoleLogFile.normalize());
-        log.info("\tfunctionCode: {}", functionCode);
-        log.info("\ttimeoutBeforeTerminate (seconds): {}", timeoutBeforeTerminate);
-        log.info("\tschedule: {}", schedule);
+        if (log.isInfoEnabled()) {
+            log.info("Exec info:");
+            log.info("\tcmd: {}", String.join(" ", cmd));
+            log.info("\ttaskDir: {}", execDir.toAbsolutePath());
+            log.info("\ttaskDir abs: {}", execDir.toAbsolutePath());
+            log.info("\tconsoleLogFile abs: {}", consoleLogFile.normalize());
+            log.info("\tfunctionCode: {}", functionCode);
+            log.info("\ttimeoutBeforeTerminate (seconds): {}", timeoutBeforeTerminate);
+            log.info("\tschedule: {}", schedule);
+        }
 
         final AtomicLong timeout = new AtomicLong(0);
         if (timeoutBeforeTerminate!=null && timeoutBeforeTerminate!=0) {
