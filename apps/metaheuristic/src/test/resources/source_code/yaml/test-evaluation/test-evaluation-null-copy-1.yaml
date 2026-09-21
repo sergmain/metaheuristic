@@ -1,0 +1,30 @@
+version: 4
+source:
+  clean: false
+  strictNaming: true
+  instances: 1
+  uid: test-evaluation-null-copy-1.0
+  processes:
+    # makes variable1 NULLIFIED through mh.evaluation's own null path (expression result null)
+    - code: mh.evaluation-set-null
+      name: mh.evaluation-set-null
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: variable1
+          nullable: true
+      metas:
+        - expression: variable1 = null
+
+    # a pure variable-to-variable assignment whose input is nullified: null in -> null out
+    - code: mh.evaluation-copy
+      name: mh.evaluation-copy
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: resultVariable1
+          nullable: true
+      metas:
+        - expression: resultVariable1 = variable1

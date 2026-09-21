@@ -159,6 +159,13 @@ public class EvaluateExpressionLanguage {
                     else {
                         throw new InternalFunctionException(system_error, "509.090 not supported type: " + newValue.getClass());
                     }
+                    // Setting a Variable as null and copying a Variable's content are two different write paths. A
+                    // nullified input has no content to copy (reading it throws 01.171.750), so the output takes the
+                    // set-as-null path - null in, null out - exactly as `output = null` does above.
+                    if (variableHolderInput!=null && variableHolderInput.variable!=null && variableHolderInput.variable.nullified) {
+                        setAsNullFunction.accept(variableHolderOutput.variable);
+                        return;
+                    }
                     try {
                         if (variableHolderInput!=null) {
                             storeToFile(variableHolderOutput, variableHolderInput);
