@@ -116,8 +116,7 @@ public class CreateExecContextWithInputVariablesTest extends PreparingSourceCode
 
     /**
      * An explicit null is a SUPPLIED value, not a missing one: the variable exists, initialized and nullified, and
-     * Task production is unblocked exactly as by a text value. (beta is declared without '?', so this also pins that
-     * the explicit null is accepted for any declared input.)
+     * Task production is unblocked exactly as by a text value. beta is declared NULLABLE ('?').
      */
     @Test
     public void test_nullValue_initializesTheVariableNullifiedAndTasksAreProduced() {
@@ -139,6 +138,23 @@ public class CreateExecContextWithInputVariablesTest extends PreparingSourceCode
 
         assertFalse(taskRepositoryForTestLocal.findByExecContextIdAsList(result.execContext.id).isEmpty(),
                 "PHASE #3: Tasks must have been produced - a nullified input counts as initialized");
+    }
+
+    /**
+     * CT Green-1: characterizes today's behaviour - an explicit null is accepted even for alpha, which is declared
+     * WITHOUT '?' (required, not nullable).
+     * <br>CT Red / Green-3: flipped - a variable declared without '?' is not nullable, so a null for it contradicts
+     * its own declaration and is refused, naming the variable, with nothing left behind.
+     */
+    @Test
+    public void test_nullValueForARequiredInput() {
+        final ExecContextCreatorService.ExecContextCreationResult result =
+                create(Map.of("alpha", v(null), "beta", v("beta-value")));
+
+        final String errors = result.getErrorMessagesAsStr();
+        assertNull(result.execContext, "PHASE #1: a refused null must leave no ExecContext behind");
+        assertTrue(errors.contains("01.562.124"), "PHASE #2: expected 01.562.124, was: " + errors);
+        assertTrue(errors.contains("alpha"), "PHASE #2: the message must name the non-nullable variable, was: " + errors);
     }
 
     private static ExecContextData.VariableValue v(@org.jspecify.annotations.Nullable String value) {

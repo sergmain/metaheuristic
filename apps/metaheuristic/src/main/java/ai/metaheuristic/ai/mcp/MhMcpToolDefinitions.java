@@ -760,7 +760,8 @@ public class MhMcpToolDefinitions {
                                                     + "Every declared input must appear and no undeclared name may: both are errors, because a "
                                                     + "mistyped name would otherwise leave the real input uninitialized and surface much later. "
                                                     + "A JSON null value initializes that variable NULLIFIED (no content) - that is how to pass "
-                                                    + "'no value'; omitting the name is still an error."),
+                                                    + "'no value' - but only for a variable the SourceCode declares nullable ('?'); a null for "
+                                                    + "any other is an error (01.562.124), and omitting the name is still an error."),
                                     "accountId", Map.of("type", "integer",
                                             "description", "Optional account id recorded as the creator. Defaults to 0.")),
                             List.of("sourceCodeId", "companyId", "variables")))
@@ -771,7 +772,7 @@ public class MhMcpToolDefinitions {
                     + "written into the .mhsc, which is every well-formed deterministic workflow. mh_create_exec_context "
                     + "refuses such a SourceCode (562.120) because it has no way to supply the values. "
                     + "Values are stored as text in the top-level context, exactly as an uploaded input variable would be; "
-                    + "a null value creates the variable nullified instead.")
+                    + "a null value creates a nullable ('?') variable nullified instead.")
             .build();
 
     private CallToolResult handleCreateExecContextWithVariables(McpSyncServerExchange exchange, CallToolRequest request) {

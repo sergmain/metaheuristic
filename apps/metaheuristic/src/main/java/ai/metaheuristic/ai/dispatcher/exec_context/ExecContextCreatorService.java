@@ -73,6 +73,8 @@ import static ai.metaheuristic.api.EnumsApi.OperationStatus.ERROR;
  * @author Serge
  * Date: 2/23/2020
  * Time: 10:48 PM
+ *
+ * <p>Error code prefix: {@code 01.562.} (unique to this class).
  */
 @SuppressWarnings("DuplicatedCode")
 @Service
@@ -301,6 +303,8 @@ public class ExecContextCreatorService {
      * <p>A supplied value may itself be null ({@link ExecContextData.VariableValue#value()} == null). That is not a
      * missing value: the variable is initialized NULLIFIED, via the same {@code createInitializedWithNull} that
      * dispatcher-side callers already use, so "no value" can be passed explicitly instead of being encoded as text.
+     * Only for an input the SourceCode declares NULLABLE ('?'): a null for one declared without '?' contradicts its
+     * own declaration and is refused (01.562.124), like a missing value, before anything is written.
      */
     private void initInputVariables(
             List<ExecContextParamsYaml.Variable> inputs, @Nullable Map<String, ExecContextData.VariableValue> inputVariables, Long execContextId) {
@@ -323,6 +327,15 @@ public class ExecContextCreatorService {
         if (!unknown.isEmpty()) {
             throw new IllegalStateException("562.122 Value(s) supplied for name(s) which the SourceCode doesn't "
                 + "declare as an input variable: " + String.join(", ", unknown) + ", declared: " + String.join(", ", declared));
+        }
+        final List<String> nullForNotNullable = inputs.stream()
+                .filter(input -> !input.getNullable() && values.get(input.name).value()==null)
+                .map(input -> input.name)
+                .toList();
+        if (!nullForNotNullable.isEmpty()) {
+            throw new IllegalStateException("01.562.124 Null supplied for input variable(s) which the SourceCode declares "
+                + "as not nullable (no '?'): " + String.join(", ", nullForNotNullable)
+                + ". Supply a value, or declare the variable with '?'.");
         }
         for (ExecContextParamsYaml.Variable input : inputs) {
             final String value = values.get(input.name).value();

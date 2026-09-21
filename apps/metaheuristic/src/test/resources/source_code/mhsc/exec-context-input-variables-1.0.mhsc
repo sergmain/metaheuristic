@@ -1,14 +1,15 @@
 // Two source-level input variables, both consumed, so Task production really depends on them
 // having been initialized. Used by CreateExecContextWithInputVariablesTest.
+// alpha is REQUIRED, beta is NULLABLE ('?'): an explicit null is accepted for beta only.
 source "test-exec-context-input-variables-1.0" {
 
     variables {
-        <- alpha, beta
+        <- alpha, beta?
     }
 
     consume := internal mh.nop {
         name "consume both inputs"
-        <- alpha, beta
+        <- alpha, beta?
         timeout 60
     }
 }
