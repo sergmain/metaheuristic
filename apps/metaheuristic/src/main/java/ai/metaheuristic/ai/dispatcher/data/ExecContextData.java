@@ -39,6 +39,14 @@ public class ExecContextData {
 
     public record ExecContextCreationInfo(String desc){}
 
+    /**
+     * The value supplied for one source-level input variable when an ExecContext is created. A holder rather than
+     * a bare String so that "no value" can be said explicitly: {@code value == null} initializes the variable
+     * NULLIFIED (initialized, no content - the same state MH gives a variable set as null), while an absent map
+     * entry still means "not supplied" and is refused.
+     */
+    public record VariableValue(@Nullable String value){}
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

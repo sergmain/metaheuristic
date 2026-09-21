@@ -755,10 +755,12 @@ public class MhMcpToolDefinitions {
                                     "companyId", Map.of("type", "integer",
                                             "description", "Unique id of the company owning the SourceCode"),
                                     "variables", Map.of("type", "object",
-                                            "additionalProperties", Map.of("type", "string"),
+                                            "additionalProperties", Map.of("type", List.of("string", "null")),
                                             "description", "Values for the SourceCode's source-level input variables, as name -> value. "
                                                     + "Every declared input must appear and no undeclared name may: both are errors, because a "
-                                                    + "mistyped name would otherwise leave the real input uninitialized and surface much later."),
+                                                    + "mistyped name would otherwise leave the real input uninitialized and surface much later. "
+                                                    + "A JSON null value initializes that variable NULLIFIED (no content) - that is how to pass "
+                                                    + "'no value'; omitting the name is still an error."),
                                     "accountId", Map.of("type", "integer",
                                             "description", "Optional account id recorded as the creator. Defaults to 0.")),
                             List.of("sourceCodeId", "companyId", "variables")))
@@ -768,7 +770,8 @@ public class MhMcpToolDefinitions {
                     + "Use this for any REUSABLE workflow: one that takes its subject at run time rather than having it "
                     + "written into the .mhsc, which is every well-formed deterministic workflow. mh_create_exec_context "
                     + "refuses such a SourceCode (562.120) because it has no way to supply the values. "
-                    + "Values are stored as text in the top-level context, exactly as an uploaded input variable would be.")
+                    + "Values are stored as text in the top-level context, exactly as an uploaded input variable would be; "
+                    + "a null value creates the variable nullified instead.")
             .build();
 
     private CallToolResult handleCreateExecContextWithVariables(McpSyncServerExchange exchange, CallToolRequest request) {
@@ -781,12 +784,11 @@ public class MhMcpToolDefinitions {
         if (!(raw instanceof Map<?, ?> rawMap) || rawMap.isEmpty()) {
             return errorResult("01.260.360 Parameter 'variables' must be a non-empty object of name -> value");
         }
-        final Map<String, String> inputVariables = new HashMap<>();
+        final Map<String, ExecContextData.VariableValue> inputVariables = new HashMap<>();
         for (Map.Entry<?, ?> e : rawMap.entrySet()) {
-            if (e.getValue()==null) {
-                return errorResult("01.260.362 Value of variable '" + e.getKey() + "' is null");
-            }
-            inputVariables.put(String.valueOf(e.getKey()), String.valueOf(e.getValue()));
+            // a JSON null is an explicit "no value": the variable is created nullified, not refused
+            inputVariables.put(String.valueOf(e.getKey()),
+                    new ExecContextData.VariableValue(e.getValue()==null ? null : String.valueOf(e.getValue())));
         }
 
         log.info("01.260.364 MCP createExecContextWithVariables(sourceCodeId={}, companyId={}, variables={})",

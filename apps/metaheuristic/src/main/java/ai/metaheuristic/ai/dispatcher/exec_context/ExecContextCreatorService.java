@@ -128,7 +128,7 @@ public class ExecContextCreatorService {
     public ExecContextCreationResult createExecContextAndStart(
             Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks,
             ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo,
-            ExecContextParamsYaml.@Nullable GitSources gitSources, @Nullable Map<String, String> inputVariables) {
+            ExecContextParamsYaml.@Nullable GitSources gitSources, @Nullable Map<String, ExecContextData.VariableValue> inputVariables) {
 
         SourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
@@ -297,11 +297,15 @@ public class ExecContextCreatorService {
      * refusal, unchanged for every caller that passes nothing. A value for a name the SourceCode does not
      * declare fails too, and that half is not pedantry: a typo in a variable name would otherwise leave
      * the real input uninitialized and surface far away as a null variable at whichever Task read it.
+     *
+     * <p>A supplied value may itself be null ({@link ExecContextData.VariableValue#value()} == null). That is not a
+     * missing value: the variable is initialized NULLIFIED, via the same {@code createInitializedWithNull} that
+     * dispatcher-side callers already use, so "no value" can be passed explicitly instead of being encoded as text.
      */
     private void initInputVariables(
-            List<ExecContextParamsYaml.Variable> inputs, @Nullable Map<String, String> inputVariables, Long execContextId) {
+            List<ExecContextParamsYaml.Variable> inputs, @Nullable Map<String, ExecContextData.VariableValue> inputVariables, Long execContextId) {
 
-        final Map<String, String> values = inputVariables==null ? Map.of() : inputVariables;
+        final Map<String, ExecContextData.VariableValue> values = inputVariables==null ? Map.of() : inputVariables;
 
         final List<String> missing = new ArrayList<>();
         for (ExecContextParamsYaml.Variable input : inputs) {
@@ -321,7 +325,13 @@ public class ExecContextCreatorService {
                 + "declare as an input variable: " + String.join(", ", unknown) + ", declared: " + String.join(", ", declared));
         }
         for (ExecContextParamsYaml.Variable input : inputs) {
-            final byte[] bytes = values.get(input.name).getBytes(StandardCharsets.UTF_8);
+            final String value = values.get(input.name).value();
+            if (value==null) {
+                // an explicit null: initialized AND nullified, i.e. supplied without content
+                variableTxService.createInitializedWithNull(input.name, execContextId, CommonConsts.TOP_LEVEL_CONTEXT_ID);
+                continue;
+            }
+            final byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
             variableTxService.createInitializedTx(new ByteArrayInputStream(bytes), bytes.length, input.name, null,
                 execContextId, CommonConsts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.text);
         }

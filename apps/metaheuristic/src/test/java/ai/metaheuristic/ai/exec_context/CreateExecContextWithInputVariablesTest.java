@@ -77,7 +77,7 @@ public class CreateExecContextWithInputVariablesTest extends PreparingSourceCode
     @Test
     public void test_everyInputSupplied_valuesLandAndTasksAreProduced() {
         final ExecContextCreatorService.ExecContextCreationResult result =
-                create(Map.of("alpha", "alpha-value", "beta", "beta-value"));
+                create(Map.of("alpha", v("alpha-value"), "beta", v("beta-value")));
 
         assertTrue(result.getErrorMessagesAsList().isEmpty(),
                 "PHASE #1: creation must succeed, errors: " + result.getErrorMessagesAsStr());
@@ -95,7 +95,7 @@ public class CreateExecContextWithInputVariablesTest extends PreparingSourceCode
 
     @Test
     public void test_missingValue_isRefusedAndNamesTheVariable() {
-        final ExecContextCreatorService.ExecContextCreationResult result = create(Map.of("alpha", "alpha-value"));
+        final ExecContextCreatorService.ExecContextCreationResult result = create(Map.of("alpha", v("alpha-value")));
 
         final String errors = result.getErrorMessagesAsStr();
         assertNull(result.execContext, "PHASE #1: nothing may be left behind when an input was never initialized");
@@ -106,7 +106,7 @@ public class CreateExecContextWithInputVariablesTest extends PreparingSourceCode
     @Test
     public void test_undeclaredName_isRefusedAndNamesIt() {
         final ExecContextCreatorService.ExecContextCreationResult result =
-                create(Map.of("alpha", "alpha-value", "beta", "beta-value", "gamma", "gamma-value"));
+                create(Map.of("alpha", v("alpha-value"), "beta", v("beta-value"), "gamma", v("gamma-value")));
 
         final String errors = result.getErrorMessagesAsStr();
         assertNull(result.execContext, "PHASE #1: a value for an undeclared name is an error, not a warning");
@@ -114,7 +114,38 @@ public class CreateExecContextWithInputVariablesTest extends PreparingSourceCode
         assertTrue(errors.contains("gamma"), "PHASE #2: the message must name the undeclared variable, was: " + errors);
     }
 
-    private ExecContextCreatorService.ExecContextCreationResult create(Map<String, String> inputVariables) {
+    /**
+     * An explicit null is a SUPPLIED value, not a missing one: the variable exists, initialized and nullified, and
+     * Task production is unblocked exactly as by a text value. (beta is declared without '?', so this also pins that
+     * the explicit null is accepted for any declared input.)
+     */
+    @Test
+    public void test_nullValue_initializesTheVariableNullifiedAndTasksAreProduced() {
+        final ExecContextCreatorService.ExecContextCreationResult result =
+                create(Map.of("alpha", v("alpha-value"), "beta", v(null)));
+
+        assertTrue(result.getErrorMessagesAsList().isEmpty(),
+                "PHASE #1: an explicit null must not be refused, errors: " + result.getErrorMessagesAsStr());
+        assertNotNull(result.execContext, "PHASE #1: the ExecContext must exist");
+        setExecContextForTest(result.execContext);
+
+        assertEquals("alpha-value", contentOf("alpha", result.execContext.id), "PHASE #2: alpha keeps its text value");
+        final Variable beta = txSupportForTestingServiceLocal.findVariableInAllInternalContexts(
+                "beta", CommonConsts.TOP_LEVEL_CONTEXT_ID, result.execContext.id);
+        assertNotNull(beta, "PHASE #2: beta must exist in the top-level context");
+        assertTrue(beta.inited, "PHASE #2: beta must be initialized");
+        assertTrue(beta.nullified, "PHASE #2: beta must be nullified - an explicit null, not the text of one");
+        assertNull(beta.variableBlobId, "PHASE #2: a nullified variable has no content");
+
+        assertFalse(taskRepositoryForTestLocal.findByExecContextIdAsList(result.execContext.id).isEmpty(),
+                "PHASE #3: Tasks must have been produced - a nullified input counts as initialized");
+    }
+
+    private static ExecContextData.VariableValue v(@org.jspecify.annotations.Nullable String value) {
+        return new ExecContextData.VariableValue(value);
+    }
+
+    private ExecContextCreatorService.ExecContextCreationResult create(Map<String, ExecContextData.VariableValue> inputVariables) {
         final ExecContextApiData.UserExecContext context =
                 new ExecContextApiData.UserExecContext(getAccount().id, getCompany().getUniqueId());
         return execContextCreatorTopLevelServiceLocal.createExecContextAndStart(

@@ -88,11 +88,14 @@ public class ExecContextCreatorTopLevelService {
      * <p>The map is name -> value, one entry per declared input. It is carried unchanged into the tx
      * method and applied there, in the one window between creating the ExecContext and producing its
      * Tasks. Null means "no values", which is the behaviour every existing caller had.
+     *
+     * <p>Each value is an {@link ExecContextData.VariableValue}; one holding null initializes that input
+     * NULLIFIED rather than as text.
      */
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
             Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks,
             ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo,
-            @Nullable Map<String, String> inputVariables) {
+            @Nullable Map<String, ExecContextData.VariableValue> inputVariables) {
         final ExecContextCreatorService.ExecContextCreationResult withSyncForCreation = SourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
             () -> {
                 try {
