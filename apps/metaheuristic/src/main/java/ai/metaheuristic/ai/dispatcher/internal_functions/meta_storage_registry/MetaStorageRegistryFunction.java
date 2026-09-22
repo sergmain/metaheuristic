@@ -68,9 +68,10 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
  * that names the wrong graph, which is precisely the drift a registry exists to prevent.
  *
  * <p>{@code production} follows the same rule everywhere else: the literal {@code true} means the
- * production store, and every other value - including the {@code mh.null-value} sentinel - means
- * development. An absent or misspelled flag therefore describes a synthetic table, which is the
- * failure a re-run repairs.
+ * production store, and every other value means development - a misspelled flag therefore describes
+ * a synthetic table, which is the failure a re-run repairs. The variable must carry a value, though:
+ * a nullified or blank {@code production} is refused like any other required input, so a development
+ * run passes {@code false}, not null.
  *
  * <p>Error code prefix: {@code 01.943.} (unique to this class).
  *
