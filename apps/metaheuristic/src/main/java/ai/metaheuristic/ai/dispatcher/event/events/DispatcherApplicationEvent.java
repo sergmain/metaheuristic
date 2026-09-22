@@ -35,7 +35,7 @@ public class DispatcherApplicationEvent {
     public final DispatcherEventYaml dispatcherEventYaml;
     public @Nullable Long companyUniqueId;
 
-    public DispatcherApplicationEvent(EnumsApi.DispatcherEventType event, @Nullable Long companyUniqueId, @Nullable String contextId, DispatcherEventYaml.BatchEventData batchEventData) {
+    public DispatcherApplicationEvent(String event, @Nullable Long companyUniqueId, @Nullable String contextId, DispatcherEventYaml.BatchEventData batchEventData) {
         this.companyUniqueId = companyUniqueId;
         DispatcherEventYaml dispatcherEventYaml = new DispatcherEventYaml();
         dispatcherEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
@@ -45,11 +45,27 @@ public class DispatcherApplicationEvent {
         this.dispatcherEventYaml = dispatcherEventYaml;
     }
 
-    public DispatcherApplicationEvent(EnumsApi.DispatcherEventType event, DispatcherEventYaml.TaskEventData taskEventData) {
+    public DispatcherApplicationEvent(String event, DispatcherEventYaml.TaskEventData taskEventData) {
         DispatcherEventYaml dispatcherEventYaml = new DispatcherEventYaml();
         dispatcherEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
         dispatcherEventYaml.event = event;
         dispatcherEventYaml.taskData = taskEventData;
+        this.dispatcherEventYaml = dispatcherEventYaml;
+    }
+
+    /**
+     * Generic event - its type doesn't have to be known to MH, and its payload travels in params.
+     * Neither batchData nor taskData is set.
+     * <p>A literal null as the last argument is ambiguous with the batch constructor,
+     * use a typed value instead, i.e. (String) null
+     */
+    public DispatcherApplicationEvent(String event, @Nullable Long companyUniqueId, @Nullable String contextId, @Nullable String params) {
+        this.companyUniqueId = companyUniqueId;
+        DispatcherEventYaml dispatcherEventYaml = new DispatcherEventYaml();
+        dispatcherEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
+        dispatcherEventYaml.event = event;
+        dispatcherEventYaml.contextId = contextId;
+        dispatcherEventYaml.params = params;
         this.dispatcherEventYaml = dispatcherEventYaml;
     }
 }

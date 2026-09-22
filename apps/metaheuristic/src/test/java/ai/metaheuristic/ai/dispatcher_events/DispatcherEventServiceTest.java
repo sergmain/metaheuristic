@@ -69,7 +69,7 @@ public class DispatcherEventServiceTest extends MhSharedItTest {
         batchEventData.batchId = 42L;
         batchEventData.execContextId = 123L;
 
-        DispatcherApplicationEvent event = new DispatcherApplicationEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, null, null, batchEventData);
+        DispatcherApplicationEvent event = new DispatcherApplicationEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED.name(), null, null, batchEventData);
 
         dispatcherEventService.handleAsync(event);
 

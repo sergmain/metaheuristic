@@ -139,7 +139,7 @@ public class TaskFinishingTxService {
 
             finishTaskAsError(task, console, targetState);
 
-            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.coreId, task.id, task.execContextId,
+            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR.name(), task.coreId, task.id, task.execContextId,
                     taskParamYaml==null ? null : taskParamYaml.task.context, taskParamYaml==null ? null : taskParamYaml.task.function.code );
         } catch (Throwable th) {
             log.warn("319.165 Error while processing the task #{} with internal function. Error: {}", taskId, th.getMessage());

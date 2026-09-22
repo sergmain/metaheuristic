@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@
 package ai.metaheuristic.commons.yaml.event;
 
 import ai.metaheuristic.api.data.event.DispatcherEventYaml;
-import ai.metaheuristic.api.data.event.DispatcherEventYamlV2;
 import ai.metaheuristic.api.data.event.DispatcherEventYamlV3;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
@@ -31,31 +30,31 @@ import org.yaml.snakeyaml.Yaml;
  * Date: 6/17/2019
  * Time: 12:10 AM
  */
-public class DispatcherEventYamlUtilsV2
-        extends AbstractParamsYamlUtils<DispatcherEventYamlV2, DispatcherEventYamlV3, DispatcherEventYamlUtilsV3, Void, Void, Void> {
+public class DispatcherEventYamlUtilsV3
+        extends AbstractParamsYamlUtils<DispatcherEventYamlV3, DispatcherEventYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(DispatcherEventYamlV2.class);
+        return YamlUtils.init(DispatcherEventYamlV3.class);
     }
 
     @NonNull
     @Override
-    public DispatcherEventYamlV3 upgradeTo(@NonNull DispatcherEventYamlV2 src) {
+    public DispatcherEventYaml upgradeTo(@NonNull DispatcherEventYamlV3 src) {
         src.checkIntegrity();
-        DispatcherEventYamlV3 trg = new DispatcherEventYamlV3();
+        DispatcherEventYaml trg = new DispatcherEventYaml();
         trg.createdOn = src.createdOn;
-        // name() is exactly the text which SnakeYAML wrote for the enum
-        trg.event = src.event.name();
+        trg.event = src.event;
         trg.contextId = src.contextId;
+        trg.params = src.params;
         if (src.batchData!=null) {
-            trg.batchData = new DispatcherEventYamlV3.BatchEventDataV3();
+            trg.batchData = new DispatcherEventYaml.BatchEventData();
             trg.batchData.batchId = src.batchData.batchId;
             trg.batchData.execContextId = src.batchData.execContextId;
             trg.batchData.username = src.batchData.username;
@@ -64,7 +63,7 @@ public class DispatcherEventYamlUtilsV2
             trg.batchData.companyId = src.batchData.companyId;
         }
         if (src.taskData!=null) {
-            trg.taskData = new DispatcherEventYamlV3.TaskEventDataV3();
+            trg.taskData = new DispatcherEventYaml.TaskEventData();
             trg.taskData.coreId = src.taskData.coreId;
             trg.taskData.taskId = src.taskData.taskId;
             trg.taskData.execContextId = src.taskData.execContextId;
@@ -82,8 +81,8 @@ public class DispatcherEventYamlUtilsV2
     }
 
     @Override
-    public DispatcherEventYamlUtilsV3 nextUtil() {
-        return (DispatcherEventYamlUtilsV3) DispatcherEventYamlUtils.BASE_YAML_UTILS.getForVersion(3);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -92,18 +91,18 @@ public class DispatcherEventYamlUtilsV2
     }
 
     @Override
-    public String toString(@NonNull DispatcherEventYamlV2 yaml) {
+    public String toString(@NonNull DispatcherEventYamlV3 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public DispatcherEventYamlV2 to(@NonNull String yaml) {
+    public DispatcherEventYamlV3 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
         //noinspection UnnecessaryLocalVariable
-        final DispatcherEventYamlV2 p = getYaml().load(yaml);
+        final DispatcherEventYamlV3 p = getYaml().load(yaml);
         return p;
     }
 

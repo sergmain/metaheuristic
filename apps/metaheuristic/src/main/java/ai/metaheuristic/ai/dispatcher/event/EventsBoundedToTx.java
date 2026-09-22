@@ -56,7 +56,7 @@ public class EventsBoundedToTx {
         if (EnumsApi.TaskExecState.isFinishedState(event.state)) {
             // This is for logging of MH internal event, Doesn't do actual business logic
             dispatcherEventService.publishTaskEvent(
-                event.state == EnumsApi.TaskExecState.ERROR ? EnumsApi.DispatcherEventType.TASK_ERROR : EnumsApi.DispatcherEventType.TASK_FINISHED,
+                (event.state == EnumsApi.TaskExecState.ERROR ? EnumsApi.DispatcherEventType.TASK_ERROR : EnumsApi.DispatcherEventType.TASK_FINISHED).name(),
                     event.coreId, event.taskId,
                     event.execContextId, event.context, event.funcCode);
         }

@@ -110,7 +110,7 @@ public class BatchTxService {
         }
         b.execState = Enums.BatchExecState.Processing.code;
         batchCache.save(b);
-        dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_STARTED, null, null, null, b.id, null, null );
+        dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_STARTED.name(), null, null, null, b.id, null, null );
         eventPublisher.publishEvent(new BatchStateSignalTxEvent(
             b.id, b.execState, new ScopeRef(b.companyId),
             java.util.Map.of(
@@ -212,7 +212,7 @@ public class BatchTxService {
         b = batchCache.save(b);
 
         dispatcherEventService.publishBatchEvent(
-                EnumsApi.DispatcherEventType.BATCH_CREATED, dispatcherContext.getCompanyId(),
+                EnumsApi.DispatcherEventType.BATCH_CREATED.name(), dispatcherContext.getCompanyId(),
                 sourceCode.uid, null, b.id, execContextId, dispatcherContext );
         eventPublisher.publishEvent(new BatchStateSignalTxEvent(
             b.id, b.execState, new ScopeRef(b.companyId),

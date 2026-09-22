@@ -325,7 +325,7 @@ public class BatchTopLevelService {
                 }
             }
 
-            dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, userContext.getCompanyId(), originFilename, file.getSize(), null, null, userContext );
+            dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED.name(), userContext.getCompanyId(), originFilename, file.getSize(), null, null, userContext );
 
             final SourceCodeImpl sc = sourceCodeCache.findById(sourceCode.id);
             if (sc==null) {

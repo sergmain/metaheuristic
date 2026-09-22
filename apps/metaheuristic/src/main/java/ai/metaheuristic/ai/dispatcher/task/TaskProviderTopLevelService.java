@@ -474,7 +474,7 @@ public class TaskProviderTopLevelService {
         }
 
         if (result.task!=null) {
-            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processorAndCoreParams.coreId(), result.task.task.id, result.task.task.execContextId, null, null);
+            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED.name(), processorAndCoreParams.coreId(), result.task.task.id, result.task.task.execContextId, null, null);
         }
 
         return result.task;

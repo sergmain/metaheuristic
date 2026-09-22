@@ -78,12 +78,12 @@ public class DispatcherEventService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public void publishBatchEvent(
-            EnumsApi.DispatcherEventType event, @Nullable Long companyUniqueId, @Nullable String filename,
+            String event, @Nullable Long companyUniqueId, @Nullable String filename,
             @Nullable Long size, @Nullable Long batchId, @Nullable Long execContextId, @Nullable UserContext userContext) {
         if (!globals.eventEnabled) {
             return;
         }
-        if (event==EnumsApi.DispatcherEventType.BATCH_CREATED && (batchId==null || userContext ==null)) {
+        if (EnumsApi.DispatcherEventType.BATCH_CREATED.name().equals(event) && (batchId==null || userContext ==null)) {
             throw new IllegalStateException("Error (event==Enums.DispatcherEventType.BATCH_CREATED && (batchId==null || userContext==null))");
         }
         DispatcherEventYaml.BatchEventData batchEventData = new DispatcherEventYaml.BatchEventData();
@@ -102,7 +102,7 @@ public class DispatcherEventService {
     }
 
     public void publishTaskEvent(
-            EnumsApi.DispatcherEventType event, @Nullable Long coreId, Long taskId, Long execContextId,
+            String event, @Nullable Long coreId, Long taskId, Long execContextId,
             EnumsApi.@Nullable FunctionExecContext context, @Nullable String funcCode) {
         if (!globals.eventEnabled) {
             return;
@@ -126,7 +126,7 @@ public class DispatcherEventService {
             DispatcherEvent le = new DispatcherEvent();
             le.companyId = event.companyUniqueId;
             le.period = getPeriod( LocalDateTime.parse( event.dispatcherEventYaml.createdOn, EVENT_DATE_TIME_FORMATTER) );
-            le.event = event.dispatcherEventYaml.event.toString();
+            le.event = event.dispatcherEventYaml.event;
             le.updateParams(event.dispatcherEventYaml);
             dispatcherEventRepository.save(le);
         } catch (Throwable th) {
@@ -143,7 +143,7 @@ public class DispatcherEventService {
     }
 
     public void publishEventBatchFinished(Long batchId) {
-        publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_FINISHED, null, null, null, batchId, null, null );
+        publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_FINISHED.name(), null, null, null, batchId, null, null );
     }
 
     public static class ListOfEvents {
