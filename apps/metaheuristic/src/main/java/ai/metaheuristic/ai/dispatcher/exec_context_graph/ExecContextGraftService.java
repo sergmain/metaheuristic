@@ -118,7 +118,8 @@ public class ExecContextGraftService {
      *  locks and a tx, so it invokes graftTxService directly rather than re-acquiring locks). */
     public record GraftSetup(ExecContextApiData.SimpleExecContext sec,
                              InternalFunctionData.ExecutionContextData ecd, String lineCtxId,
-                             String rootProcessCode, Long graphId, Long taskStateId, Long varStateId) {}
+                             String rootProcessCode, Long graphId, Long taskStateId, Long varStateId,
+                             String lineBaseCtxId) {}
 
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
@@ -165,7 +166,6 @@ public class ExecContextGraftService {
         GraftSetup s = graftSetup(execContextId, targetTaskId, groupRef);
         final ExecContextApiData.SimpleExecContext sec = s.sec();
         final InternalFunctionData.ExecutionContextData ecd = s.ecd();
-        final String lineCtxId = s.lineCtxId();
         final String rootProcessCode = s.rootProcessCode();
         final Long graphId = s.graphId();
         final Long taskStateId = s.taskStateId();
@@ -175,12 +175,24 @@ public class ExecContextGraftService {
         //      into the shared downstream terminal (line isolation). createTasksForSubProcesses leaves
         //      it PRE_INIT, a state neither the dispatcher nor a test driver advances on its own. ----
         AtomicReference<Long> headRef = new AtomicReference<>();
+        // The fresh line ctx is taken under the same locks that create the line's tasks. graftSetup computes
+        // it lock-free, so two concurrent grafts into one EC could both take the next free sibling ctx before
+        // either had created a task there, and both landed on it.
+        AtomicReference<String> lineCtxRef = new AtomicReference<>();
+        // the ids of the tasks this graft creates - the reset point is one of them
+        final List<Long> createdTaskIds = new ArrayList<>();
         ExecContextSyncService.getWithSyncVoid(execContextId, () ->
                 ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
-                                headRef.set(graftTxService.createGroupTasksTx(
-                                        sec, ecd, targetTaskId, lineCtxId, rootProcessCode, inputBindings, new ArrayList<>())))));
+                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () -> {
+                            final String freshCtxId = ContextUtils.nextSiblingTaskContextId(
+                                    s.lineBaseCtxId(), collectCtxIds(execContextId));
+                            lineCtxRef.set(freshCtxId);
+                            headRef.set(graftTxService.createGroupTasksTx(
+                                    sec, ecd, targetTaskId, freshCtxId, rootProcessCode, inputBindings, new ArrayList<>(),
+                                    createdTaskIds));
+                        })));
         Long headTaskId = headRef.get();
+        final String lineCtxId = lineCtxRef.get();
 
         // ---- Stage 2: WRITE-ONCE materialize the declared outputs at the line ctx + register
         //      ExecContextVariableState so a later clone carries them (no 179.120 / 171.520). ----
@@ -206,8 +218,37 @@ public class ExecContextGraftService {
 
         log.info("830.200 attachGroup {}: grafted flat body under target #{} at ctx {} (head=#{}, {} output(s))",
                 driver, targetTaskId, lineCtxId, headTaskId, outputs.size());
-        Long resetPointTaskId = resolveResetPointTaskId(execContextId, lineCtxId, resetPointFunctionCode);
+        Long resetPointTaskId = resolveResetPointTaskId(execContextId, createdTaskIds, lineCtxId, resetPointFunctionCode);
         return new GraftResult(headTaskId, lineCtxId, List.of(), resetPointTaskId);
+    }
+
+    /**
+     * {@link #resolveResetPointTaskId(Long, String, String)} searching only the tasks this graft created: the line
+     * ctx is fresh, so every task at it is one of them. Falls back to the whole-ExecContext scan when none of them
+     * matches - RUN_NOW resets and re-expands the line after it was created, and this search must not decide on
+     * its behalf what that re-expansion kept.
+     */
+    @Nullable
+    private Long resolveResetPointTaskId(Long execContextId, List<Long> createdTaskIds, String lineCtxId,
+                                         @Nullable String resetPointFunctionCode) {
+        if (resetPointFunctionCode == null) {
+            return null;
+        }
+        for (Long id : createdTaskIds) {
+            TaskImpl t = taskRepository.findByIdReadOnly(id);
+            if (t == null) {
+                continue;
+            }
+            TaskParamsYaml tpy = t.getTaskParamsYaml();
+            if (!lineCtxId.equals(tpy.task.taskContextId)) {
+                continue;
+            }
+            String fnCode = tpy.task.function != null ? tpy.task.function.code : null;
+            if (resetPointFunctionCode.equals(fnCode)) {
+                return t.id;
+            }
+        }
+        return resolveResetPointTaskId(execContextId, lineCtxId, resetPointFunctionCode);
     }
 
     /**
@@ -292,7 +333,7 @@ public class ExecContextGraftService {
         final Long graphId = ec.execContextGraphId;
         final Long taskStateId = ec.execContextTaskStateId;
         final Long varStateId = ec.execContextVariableStateId;
-        return new GraftSetup(sec, ecd, lineCtxId, rootProcessCode, graphId, taskStateId, varStateId);
+        return new GraftSetup(sec, ecd, lineCtxId, rootProcessCode, graphId, taskStateId, varStateId, base);
     }
 
     /**

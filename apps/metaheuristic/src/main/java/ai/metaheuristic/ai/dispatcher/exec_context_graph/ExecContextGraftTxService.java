@@ -91,6 +91,21 @@ public class ExecContextGraftTxService {
             ExecContextApiData.SimpleExecContext sec, InternalFunctionData.ExecutionContextData ecd,
             Long targetTaskId, String lineCtxId, String rootProcessCode,
             List<ExecContextGraftService.InputBinding> inputBindings, List<Long> unwiredTailsOut) {
+        return createGroupTasksTx(sec, ecd, targetTaskId, lineCtxId, rootProcessCode, inputBindings, unwiredTailsOut,
+                new ArrayList<>());
+    }
+
+    /**
+     * Stage 1, also reporting the ids of the tasks it created into {@code createdTaskIdsOut} (ascending), so a
+     * caller looking for one of the line's tasks searches the line rather than the whole ExecContext.
+     * Caller MUST hold the ExecContext / Graph / TaskState write locks.
+     */
+    @Transactional
+    public Long createGroupTasksTx(
+            ExecContextApiData.SimpleExecContext sec, InternalFunctionData.ExecutionContextData ecd,
+            Long targetTaskId, String lineCtxId, String rootProcessCode,
+            List<ExecContextGraftService.InputBinding> inputBindings, List<Long> unwiredTailsOut,
+            List<Long> createdTaskIdsOut) {
 
         // 1. Write the bound inputs at the fresh line ctx. The body's tasks declare these as inputs,
         //    so the variables must exist before the sub-branch is created/runnable.
@@ -103,10 +118,8 @@ public class ExecContextGraftTxService {
         // 2. Instantiate the body sub-graph PRE_INIT, parented on the target - the canonical primitive
         //    the splitter itself uses.
         // Snapshot existing task ids so the newly-created grafted head can be identified afterward.
-        Set<Long> preExisting = new HashSet<>();
-        for (TaskImpl pe : taskRepository.findByExecContextIdReadOnly(sec.execContextId)) {
-            preExisting.add(pe.id);
-        }
+        // Ids only: the snapshot needs no task's params.
+        Set<Long> preExisting = new HashSet<>(taskRepository.findAllTaskIdsByExecContextId(sec.execContextId));
 
         ExecContextData.GraphAndStates gas = execContextGraphService.prepareGraphAndStates(
                 sec.execContextGraphId, sec.execContextTaskStateId);
@@ -135,7 +148,16 @@ public class ExecContextGraftTxService {
         execContextGraphService.createEdges(gas.graph(), lastIds, terminalDescendants);
         execContextGraphService.save(gas);
 
-        Long headId = findHeadTaskId(sec.execContextId, preExisting, rootProcessCode);
+        final List<Long> created = new ArrayList<>();
+        for (Long id : taskRepository.findAllTaskIdsByExecContextId(sec.execContextId)) {
+            if (!preExisting.contains(id)) {
+                created.add(id);
+            }
+        }
+        created.sort(Long::compareTo);
+        createdTaskIdsOut.addAll(created);
+
+        Long headId = findHeadTaskId(sec.execContextId, created, rootProcessCode);
         log.info("831.100 grafted {} sub-process(es) at ctx {} under target #{} (head=#{})",
                 ecd.subProcesses.size(), lineCtxId, targetTaskId, headId);
         return headId;
@@ -269,15 +291,14 @@ public class ExecContextGraftTxService {
         return out;
     }
 
-    private Long findHeadTaskId(Long execContextId, Set<Long> preExistingTaskIds, String rootProcessCode) {
+    private Long findHeadTaskId(Long execContextId, List<Long> createdTaskIds, String rootProcessCode) {
         // The grafted head is the newly-created (not pre-existing) task carrying the body-root process
         // code. Identity-by-newness + processCode is robust to how createTasksForSubProcesses derives
         // the ctx (sequential places it at the line ctx; other logics derive it).
-        for (TaskImpl t : taskRepository.findByExecContextIdReadOnly(execContextId)) {
-            if (preExistingTaskIds.contains(t.id)) {
-                continue;
-            }
-            if (rootProcessCode.equals(t.getTaskParamsYaml().task.processCode)) {
+        // Only the created tasks are read - the rest of the ExecContext is never loaded or parsed.
+        for (Long id : createdTaskIds) {
+            TaskImpl t = taskRepository.findByIdReadOnly(id);
+            if (t != null && rootProcessCode.equals(t.getTaskParamsYaml().task.processCode)) {
                 return t.id;
             }
         }
