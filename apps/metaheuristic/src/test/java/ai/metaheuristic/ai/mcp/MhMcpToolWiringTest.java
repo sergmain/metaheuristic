@@ -88,13 +88,17 @@ public class MhMcpToolWiringTest {
         put("mh_import_bundle_from_git", "repo");
         // the company whose Key Vault is checked - the only argument it takes
         put("mh_vault_status", "companyId");
+        // both dispatcher-event tools read a range of months and lead with its start, so the argument name alone
+        // can't tell them apart; MhMcpDispatcherEventToolTest calls each by name and reads its own result shape
+        put("mh_list_dispatcher_event_types", "fromPeriod");
+        put("mh_list_dispatcher_events", "fromPeriod");
     }};
 
     /** Take no arguments, so the probe above cannot reach them. */
     private static final Set<String> NO_ARG_TOOLS = Set.of("mh_list_source_codes", "mh_list_processors", "mh_execution_gate_status");
 
     private static List<McpServerFeatures.SyncToolSpecification> specs() {
-        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
+        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
                 .getAllToolSpecifications();
     }
 

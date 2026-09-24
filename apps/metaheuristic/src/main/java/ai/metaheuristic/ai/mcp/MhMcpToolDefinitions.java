@@ -28,6 +28,8 @@ import ai.metaheuristic.ai.dispatcher.beans.MetaStorageSynthetic;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherEventQueryService;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherEventQueryUtils;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
@@ -84,6 +86,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -123,6 +126,8 @@ import java.util.stream.Stream;
  *   mh_delete_meta_storage_record      — delete one record addressed by its natural key
  *   mh_list_meta_storage_rec_keys      — every recKey for one (companyId, type), bodies unread
  *   mh_upsert_meta_storage_record      — insert or update one record, addressed by its natural key
+ *   mh_list_dispatcher_event_types     — every dispatcher event type recorded in a range of months, with counts
+ *   mh_list_dispatcher_events          — dispatcher events of a range of months by type and contextId, paged by id
  *
  * <p>Error code prefix: {@code 01.260.} (unique to this class).
  *
@@ -139,6 +144,8 @@ public class MhMcpToolDefinitions {
     public static final int MAX_VARIABLE_CONTENT_LIMIT = 65536;
     public static final int DEFAULT_SOURCE_CODE_PARAMS_LIMIT = 65536;
     public static final int MAX_SOURCE_CODE_PARAMS_LIMIT = 1048576;
+    public static final int DEFAULT_DISPATCHER_EVENTS_LIMIT = 200;
+    public static final int MAX_DISPATCHER_EVENTS_LIMIT = 2000;
 
     private final VariableTxService variableTxService;
     private final TaskRepository taskRepository;
@@ -164,6 +171,7 @@ public class MhMcpToolDefinitions {
     private final MetaStorageRegistryRepository metaStorageRegistryRepository;
     private final MetaStorageRegistryTxService metaStorageRegistryTxService;
     private final ai.metaheuristic.ai.dispatcher.vault.VaultService vaultService;
+    private final DispatcherEventQueryService dispatcherEventQueryService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -513,7 +521,9 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(SELECT_META_STORAGE_RECORD_TOOL, this::handleSelectMetaStorageRecord),
                 new McpServerFeatures.SyncToolSpecification(DELETE_META_STORAGE_RECORD_TOOL, this::handleDeleteMetaStorageRecord),
                 new McpServerFeatures.SyncToolSpecification(LIST_META_STORAGE_REC_KEYS_TOOL, this::handleListMetaStorageRecKeys),
-                new McpServerFeatures.SyncToolSpecification(UPSERT_META_STORAGE_RECORD_TOOL, this::handleUpsertMetaStorageRecord)
+                new McpServerFeatures.SyncToolSpecification(UPSERT_META_STORAGE_RECORD_TOOL, this::handleUpsertMetaStorageRecord),
+                new McpServerFeatures.SyncToolSpecification(LIST_DISPATCHER_EVENT_TYPES_TOOL, this::handleListDispatcherEventTypes),
+                new McpServerFeatures.SyncToolSpecification(LIST_DISPATCHER_EVENTS_TOOL, this::handleListDispatcherEvents)
         ).map(MhMcpToolDefinitions::transportGuarded).toList();
     }
 
@@ -1718,6 +1728,92 @@ public class MhMcpToolDefinitions {
                 (before==null ? "Inserted " : "Updated ") + key + ", gen " + stored.gen()));
     }
 
+    // ==================== Tool 29: dispatcher event types of a range of months ====================
+
+    private static final Tool LIST_DISPATCHER_EVENT_TYPES_TOOL = Tool.builder("mh_list_dispatcher_event_types",
+                    objectSchema(
+                            Map.of(
+                                    "fromPeriod", Map.of("type", "integer",
+                                            "description", "First month as yyyyMM (e.g. 202609), inclusive - the PERIOD column of MH_EVENT"),
+                                    "toPeriod", Map.of("type", "integer",
+                                            "description", "Last month as yyyyMM, inclusive")),
+                            List.of("fromPeriod", "toPeriod")))
+            .title("List dispatcher event types")
+            .description("Every distinct dispatcher event type (MH_EVENT.EVENT) recorded in a range of months, with the "
+                    + "number of events of that type and the first and last month it occurs in. An event type is a plain "
+                    + "string: MH's own (BATCH_*, TASK_*) and any type a module publishes, e.g. RG profiling's "
+                    + "RG_MANUAL_REQ_*. Use it to see what is there before mh_list_dispatcher_events.")
+            .build();
+
+    public record DispatcherEventTypesDto(int fromPeriod, int toPeriod, int count,
+                                          List<DispatcherEventQueryUtils.EventTypeStat> types) {}
+
+    private CallToolResult handleListDispatcherEventTypes(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final int fromPeriod = DispatcherEventQueryUtils.toPeriod("fromPeriod", getRequiredLong(arguments, "fromPeriod"));
+        final int toPeriod = DispatcherEventQueryUtils.toPeriod("toPeriod", getRequiredLong(arguments, "toPeriod"));
+        DispatcherEventQueryUtils.requireRange(fromPeriod, toPeriod);
+        log.info("01.260.680 MCP listDispatcherEventTypes(fromPeriod={}, toPeriod={})", fromPeriod, toPeriod);
+
+        final List<DispatcherEventQueryUtils.EventTypeStat> types = dispatcherEventQueryService.listEventTypes(fromPeriod, toPeriod);
+        return toCallToolResult(new DispatcherEventTypesDto(fromPeriod, toPeriod, types.size(), types));
+    }
+
+    // ==================== Tool 30: dispatcher events, by type and contextId, paged by id ====================
+
+    private static final Tool LIST_DISPATCHER_EVENTS_TOOL = Tool.builder("mh_list_dispatcher_events",
+                    objectSchema(
+                            Map.of(
+                                    "fromPeriod", Map.of("type", "integer",
+                                            "description", "First month as yyyyMM (e.g. 202609), inclusive - the PERIOD column of MH_EVENT"),
+                                    "toPeriod", Map.of("type", "integer",
+                                            "description", "Last month as yyyyMM, inclusive"),
+                                    "eventTypes", Map.of("type", "array", "items", Map.of("type", "string"),
+                                            "description", "Optional. Exact event types to return"),
+                                    "eventTypePrefix", Map.of("type", "string",
+                                            "description", "Optional. Every event type starting with this literal prefix, e.g. RG_MANUAL_REQ_. "
+                                                    + "Given with eventTypes, the union of both; without either, every type"),
+                                    "contextId", Map.of("type", "string",
+                                            "description", "Optional. Only events with this contextId - for RG profiling, the id of one creation"),
+                                    "afterId", Map.of("type", "integer",
+                                            "description", "Optional, default 0. Only events with a greater id - pass the previous page's nextAfterId"),
+                                    "limit", Map.of("type", "integer",
+                                            "description", "Optional, default " + DEFAULT_DISPATCHER_EVENTS_LIMIT + ", at most "
+                                                    + MAX_DISPATCHER_EVENTS_LIMIT + ". The most events one page returns")),
+                            List.of("fromPeriod", "toPeriod")))
+            .title("List dispatcher events")
+            .description("Dispatcher events (MH_EVENT) of a range of months in id order, filtered by type and contextId. "
+                    + "Each event: id, month, type, company, createdOn (whole seconds), contextId, params - the payload its "
+                    + "publisher attached, e.g. the timing JSON of an RG profiling event - and, for MH's own events, "
+                    + "batchData or taskData; error instead of those when the stored document can't be read. "
+                    + "Paging: call again with afterId = nextAfterId until complete is true. contextId is not a column - it is "
+                    + "inside each event's stored document - so a contextId filter reads the events of the selected months and "
+                    + "types and keeps the matching ones, at most " + DispatcherEventQueryService.MAX_SCANNED + " per call: "
+                    + "a page with complete=false can hold fewer than limit events, even none, and still have more after nextAfterId.")
+            .build();
+
+    private CallToolResult handleListDispatcherEvents(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final int fromPeriod = DispatcherEventQueryUtils.toPeriod("fromPeriod", getRequiredLong(arguments, "fromPeriod"));
+        final int toPeriod = DispatcherEventQueryUtils.toPeriod("toPeriod", getRequiredLong(arguments, "toPeriod"));
+        DispatcherEventQueryUtils.requireRange(fromPeriod, toPeriod);
+        final List<String> eventTypes = optionalStringList(arguments, "eventTypes");
+        final String eventTypePrefix = blankToNull(optionalString(arguments, "eventTypePrefix"));
+        final String contextId = blankToNull(optionalString(arguments, "contextId"));
+        final Long afterIdArg = getOptionalLong(arguments, "afterId");
+        final long afterId = afterIdArg == null ? 0L : afterIdArg;
+        final Integer limitArg = getOptionalInt(arguments, "limit");
+        final int limit = limitArg == null ? DEFAULT_DISPATCHER_EVENTS_LIMIT : limitArg;
+        if (limit < 1 || limit > MAX_DISPATCHER_EVENTS_LIMIT) {
+            throw new IllegalArgumentException("Parameter 'limit' must be 1.." + MAX_DISPATCHER_EVENTS_LIMIT + ", was: " + limit);
+        }
+        log.info("01.260.700 MCP listDispatcherEvents(fromPeriod={}, toPeriod={}, eventTypes={}, eventTypePrefix={}, contextId={}, afterId={}, limit={})",
+                fromPeriod, toPeriod, eventTypes, eventTypePrefix, contextId, afterId, limit);
+
+        return toCallToolResult(dispatcherEventQueryService.listEvents(
+                fromPeriod, toPeriod, eventTypes, eventTypePrefix, contextId, afterId, limit));
+    }
+
     // ==================== Utility methods ====================
 
     private static String getRequiredString(Map<String, Object> arguments, String key) {
@@ -1749,6 +1845,34 @@ public class MhMcpToolDefinitions {
             return n.intValue();
         }
         return Integer.parseInt(value.toString());
+    }
+
+    @Nullable
+    private static Long getOptionalLong(Map<String, Object> arguments, String key) {
+        Object value = arguments.get(key);
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number n) {
+            return n.longValue();
+        }
+        return Long.parseLong(value.toString().strip());
+    }
+
+    /** An array of strings; a single string counts as a list of one. Blank entries are dropped. */
+    @Nullable
+    private static List<String> optionalStringList(Map<String, Object> arguments, String key) {
+        final Object value = arguments.get(key);
+        if (value == null) {
+            return null;
+        }
+        final Stream<?> items = value instanceof Collection<?> c ? c.stream() : Stream.of(value);
+        return items.filter(o -> o != null && !o.toString().isBlank()).map(o -> o.toString().strip()).toList();
+    }
+
+    @Nullable
+    private static String blankToNull(@Nullable String s) {
+        return s == null || s.isBlank() ? null : s.strip();
     }
 
     /**

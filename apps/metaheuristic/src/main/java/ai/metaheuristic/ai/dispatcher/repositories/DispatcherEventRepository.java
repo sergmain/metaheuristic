@@ -18,12 +18,14 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.DispatcherEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -60,4 +62,22 @@ public interface DispatcherEventRepository extends CrudRepository<DispatcherEven
     @Transactional(readOnly = true)
     @Query(value="select e.id from DispatcherEvent e where e.period < :period ")
     List<Long> getPeriodIdsBefore(int period);
+
+    /** Per EVENT value in [fromPeriod, toPeriod]: the value, the number of events, the first and the last PERIOD. */
+    @Transactional(readOnly = true)
+    @Query(value="select e.event, count(e), min(e.period), max(e.period) from DispatcherEvent e " +
+            "where e.period >= :fromPeriod and e.period <= :toPeriod group by e.event order by e.event")
+    List<Object[]> countByEventInPeriods(int fromPeriod, int toPeriod);
+
+    /** id, period, event, companyId and params of the events after afterId in [fromPeriod, toPeriod], in id order. */
+    @Transactional(readOnly = true)
+    @Query(value="select e.id, e.period, e.event, e.companyId, e.params from DispatcherEvent e " +
+            "where e.id > :afterId and e.period >= :fromPeriod and e.period <= :toPeriod order by e.id")
+    List<Object[]> findStoredAfter(long afterId, int fromPeriod, int toPeriod, Pageable pageable);
+
+    /** {@link #findStoredAfter}, of the given event types only. */
+    @Transactional(readOnly = true)
+    @Query(value="select e.id, e.period, e.event, e.companyId, e.params from DispatcherEvent e " +
+            "where e.id > :afterId and e.period >= :fromPeriod and e.period <= :toPeriod and e.event in :events order by e.id")
+    List<Object[]> findStoredAfterOfEvents(long afterId, int fromPeriod, int toPeriod, Collection<String> events, Pageable pageable);
 }
