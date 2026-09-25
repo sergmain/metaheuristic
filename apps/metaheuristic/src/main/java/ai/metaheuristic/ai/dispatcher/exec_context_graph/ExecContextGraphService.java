@@ -704,6 +704,30 @@ public class ExecContextGraphService {
     }
 
     /**
+     * The taskContextId of every Task of the ExecContext, read from its graph. A Task exists only once it is a
+     * vertex of its ExecContext's graph, and every vertex carries its taskContextId, so this is the same set as the
+     * Tasks' own taskContextIds - without loading a single Task or parsing its params.
+     */
+    public Set<String> findAllTaskContextIds(Long execContextGraphId) {
+        return findAllTaskContextIds(prepareExecContextGraph(execContextGraphId));
+    }
+
+    public static Set<String> findAllTaskContextIds(ExecContextGraph execContextGraph) {
+        return readOnlyGraph(execContextGraph, graph -> taskContextIdsOf(graph));
+    }
+
+    /** The distinct taskContextIds of the graph's vertices; a vertex without one contributes nothing. */
+    public static Set<String> taskContextIdsOf(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph) {
+        Set<String> ctxIds = new HashSet<>();
+        for (ExecContextData.TaskVertex vertex : graph.vertexSet()) {
+            if (vertex.taskContextId != null) {
+                ctxIds.add(vertex.taskContextId);
+            }
+        }
+        return ctxIds;
+    }
+
+    /**
      *
      * @return Map - key - taskContextId, value - ExecContextData.TaskWithState
      */

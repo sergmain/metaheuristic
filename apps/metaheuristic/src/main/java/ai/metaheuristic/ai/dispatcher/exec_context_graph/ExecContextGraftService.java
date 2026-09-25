@@ -184,8 +184,9 @@ public class ExecContextGraftService {
         ExecContextSyncService.getWithSyncVoid(execContextId, () ->
                 ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
                         ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () -> {
+                            // the taskContextIds come from the EC's graph, read under the Graph lock held here
                             final String freshCtxId = ContextUtils.nextSiblingTaskContextId(
-                                    s.lineBaseCtxId(), collectCtxIds(execContextId));
+                                    s.lineBaseCtxId(), collectCtxIds(graphId));
                             lineCtxRef.set(freshCtxId);
                             headRef.set(graftTxService.createGroupTasksTx(
                                     sec, ecd, targetTaskId, freshCtxId, rootProcessCode, inputBindings, new ArrayList<>(),
@@ -328,7 +329,7 @@ public class ExecContextGraftService {
         //      back to the target and the subtree is a normal nested region. ----
         String base = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 targetTpy.task.taskContextId, ecd.subProcesses.get(0).processContextId);
-        String lineCtxId = ContextUtils.nextSiblingTaskContextId(base, collectCtxIds(execContextId));
+        String lineCtxId = ContextUtils.nextSiblingTaskContextId(base, collectCtxIds(ec.execContextGraphId));
 
         final Long graphId = ec.execContextGraphId;
         final Long taskStateId = ec.execContextTaskStateId;
@@ -549,14 +550,11 @@ public class ExecContextGraftService {
         return ecd;
     }
 
-    private Set<String> collectCtxIds(Long execContextId) {
-        Set<String> ctxIds = new HashSet<>();
-        for (TaskImpl t : taskRepository.findByExecContextIdReadOnly(execContextId)) {
-            String ctxId = t.getTaskParamsYaml().task.taskContextId;
-            if (ctxId != null) {
-                ctxIds.add(ctxId);
-            }
-        }
-        return ctxIds;
+    /**
+     * Every taskContextId of the ExecContext, from its graph - a Task exists only as a vertex of that graph, so this is
+     * the same set the Tasks carry, read without loading a Task or parsing its params.
+     */
+    private Set<String> collectCtxIds(Long execContextGraphId) {
+        return execContextGraphService.findAllTaskContextIds(execContextGraphId);
     }
 }

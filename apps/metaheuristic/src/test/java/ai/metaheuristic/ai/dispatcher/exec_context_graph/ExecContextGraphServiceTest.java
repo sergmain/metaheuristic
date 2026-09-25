@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.exec_context_graph;
 
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.commons.utils.ContextUtils;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.jgrapht.util.SupplierUtil;
@@ -276,5 +277,70 @@ class ExecContextGraphServiceTest {
         assertTrue(hasEdge(graph, 306L, 310L));
         assertTrue(hasEdge(graph, 310L, 307L));
         assertTrue(hasEdge(graph, 307L, 293L));
+    }
+
+    // ==================== taskContextIdsOf - the taskContextIds a graft reads from the graph ====================
+
+    @Test
+    void test_taskContextIdsOf_everyVertexContextOnce() {
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
+        addVertex(graph, 1L, "1");
+        addVertex(graph, 2L, "1,2#1");
+        addVertex(graph, 3L, "1,2#1");
+        addVertex(graph, 4L, "1,2#2");
+        addVertex(graph, 5L, "1,3");
+
+        assertEquals(Set.of("1", "1,2#1", "1,2#2", "1,3"), ExecContextGraphService.taskContextIdsOf(graph));
+    }
+
+    @Test
+    void test_taskContextIdsOf_vertexWithoutContextContributesNothing() {
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
+        addVertex(graph, 1L, "1");
+        graph.addVertex(new ExecContextData.TaskVertex(2L));
+
+        assertEquals(Set.of("1"), ExecContextGraphService.taskContextIdsOf(graph));
+    }
+
+    @Test
+    void test_taskContextIdsOf_emptyGraph() {
+        assertEquals(Set.of(), ExecContextGraphService.taskContextIdsOf(createGraph()));
+    }
+
+    @Test
+    void test_taskContextIdsOf_survivesTheStoredDotForm() {
+        // a graft reads the graph as stored - DOT text re-imported by importExecContextGraph - so the contexts must
+        // come back from that form exactly as they were put in
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
+        ExecContextData.TaskVertex root = addVertex(graph, 1L, "1");
+        ExecContextData.TaskVertex line1a = addVertex(graph, 2L, "1,2#1");
+        ExecContextData.TaskVertex line1b = addVertex(graph, 3L, "1,2#1");
+        ExecContextData.TaskVertex line2 = addVertex(graph, 4L, "1,2#2");
+        ExecContextData.TaskVertex tail = addVertex(graph, 5L, "1,3");
+        graph.addEdge(root, line1a);
+        graph.addEdge(line1a, line1b);
+        graph.addEdge(root, line2);
+        graph.addEdge(line1b, tail);
+        graph.addEdge(line2, tail);
+
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> imported =
+                ExecContextGraphService.importExecContextGraph(ExecContextGraphService.asString(graph));
+
+        assertEquals(Set.of("1", "1,2#1", "1,2#2", "1,3"), ExecContextGraphService.taskContextIdsOf(imported));
+    }
+
+    @Test
+    void test_taskContextIdsOf_givesTheNextSiblingLineContext() {
+        // what a graft hands nextSiblingTaskContextId: lines 1,2#1 and 1,2#2 exist under level 1,2; a context of
+        // another level (1,3#5) and a deeper one (1,2,4#1) must not count
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
+        addVertex(graph, 1L, "1");
+        addVertex(graph, 2L, "1,2#1");
+        addVertex(graph, 3L, "1,2#2");
+        addVertex(graph, 4L, "1,3#5");
+        addVertex(graph, 5L, "1,2,4#1");
+
+        assertEquals("1,2#3",
+                ContextUtils.nextSiblingTaskContextId("1,2", ExecContextGraphService.taskContextIdsOf(graph)));
     }
 }

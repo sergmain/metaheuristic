@@ -131,12 +131,13 @@ public class ExecContextGraftTxService {
         // head (each a direct child of the target). Keep only descendants OUTSIDE this line's ctx prefix.
         // The per-vertex ctx is resolved from the DB (a live descendant's TaskVertex.taskContextId is
         // not reliably populated); the filter predicate itself is a pure static for Spring-less unit tests.
+        // (Superseded 2026-09-25: the ctx is the vertex's own. Every vertex is created with its Task's
+        // taskContextId - addNewTasksToGraph, fed by TaskProducingService, and the clone rewrite, which copies
+        // it - the DOT export always writes it and the import reads it back. So no Task is loaded per
+        // descendant any more - one per earlier grafted line - and the resolver is the one the Spring-less
+        // tests already drive the filter with.)
         Set<ExecContextData.TaskVertex> terminalDescendants = filterTerminalDescendants(
-                ecd.descendants, lineCtxId,
-                v -> {
-                    TaskImpl dt = taskRepository.findByIdReadOnly(v.taskId);
-                    return dt == null ? null : dt.getTaskParamsYaml().task.taskContextId;
-                });
+                ecd.descendants, lineCtxId, v -> v.taskContextId);
         // F1: if this line has NO terminal to wire into at graft time (its target's downstream is wired
         // LATER by the enclosing block - e.g. the target is the sequential chain tail), report the line's
         // tail(s) so the in-band RUN_NOW caller can rejoin them into the enclosing block's downstream
