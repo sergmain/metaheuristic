@@ -21,7 +21,6 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV6;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
@@ -41,15 +40,13 @@ public class ExecContextParamsUtilsV6
         return 6;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ExecContextParamsYamlV6.class);
     }
 
-    @NonNull
     @Override
-    public ExecContextParams upgradeTo(@NonNull ExecContextParamsYamlV6 v6) {
+    public ExecContextParams upgradeTo(ExecContextParamsYamlV6 v6) {
         ExecContextParams t = new ExecContextParams();
 
         // right now we don't need to convert Graph because it has only one version of structure
@@ -119,7 +116,7 @@ public class ExecContextParamsUtilsV6
         return trg;
     }
 
-    private static ExecContextParams.Graft toGraft(ExecContextParamsYamlV6.GraftV6 g2) {
+    private static ExecContextParams.@Nullable Graft toGraft(ExecContextParamsYamlV6.@Nullable GraftV6 g2) {
         if (g2==null) {
             return null;
         }
@@ -150,30 +147,28 @@ public class ExecContextParamsUtilsV6
         return new ExecContextParams.FunctionDefinition(f1.code, f1.params, f1.context, f1.refType);
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
     @Override
-    public Void nextUtil() {
+    public @Nullable Void nextUtil() {
         return null;
     }
 
     @Override
-    public Void prevUtil() {
+    public @Nullable Void prevUtil() {
         return null;
     }
 
     @Override
-    public String toString(@NonNull ExecContextParamsYamlV6 yaml) {
+    public String toString(ExecContextParamsYamlV6 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public ExecContextParamsYamlV6 to(@NonNull String s) {
+    public ExecContextParamsYamlV6 to(String s) {
         final ExecContextParamsYamlV6 p = getYaml().load(s);
         return p;
     }

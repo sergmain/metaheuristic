@@ -37,24 +37,21 @@ public class ExecContextTaskStateParamsUtilsV1
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ExecContextTaskStateParamsV1.class);
     }
 
-    @NonNull
     @Override
-    public ExecContextTaskStateParams upgradeTo(@NonNull ExecContextTaskStateParamsV1 v1) {
+    public ExecContextTaskStateParams upgradeTo(ExecContextTaskStateParamsV1 v1) {
         ExecContextTaskStateParams t = new ExecContextTaskStateParams();
         t.states.putAll(v1.states);
         t.triesWasMade.putAll(v1.triesWasMade);
         return t;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -69,13 +66,12 @@ public class ExecContextTaskStateParamsUtilsV1
     }
 
     @Override
-    public String toString(@NonNull ExecContextTaskStateParamsV1 yaml) {
+    public String toString(ExecContextTaskStateParamsV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public ExecContextTaskStateParamsV1 to(@NonNull String s) {
+    public ExecContextTaskStateParamsV1 to(String s) {
         final ExecContextTaskStateParamsV1 p = getYaml().load(s);
         return p;
     }

@@ -37,23 +37,20 @@ public class ExecContextGraphParamsUtilsV1
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ExecContextGraphParamsV1.class);
     }
 
-    @NonNull
     @Override
-    public ExecContextGraphParams upgradeTo(@NonNull ExecContextGraphParamsV1 v1) {
+    public ExecContextGraphParams upgradeTo(ExecContextGraphParamsV1 v1) {
         ExecContextGraphParams t = new ExecContextGraphParams();
         t.graph = v1.graph;
         return t;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -68,13 +65,12 @@ public class ExecContextGraphParamsUtilsV1
     }
 
     @Override
-    public String toString(@NonNull ExecContextGraphParamsV1 yaml) {
+    public String toString( ExecContextGraphParamsV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public ExecContextGraphParamsV1 to(@NonNull String s) {
+    public ExecContextGraphParamsV1 to(String s) {
         final ExecContextGraphParamsV1 p = getYaml().load(s);
         return p;
     }

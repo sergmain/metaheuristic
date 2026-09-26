@@ -35,15 +35,13 @@ public class ExecutionGateParamsUtilsV1
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ExecutionGateParamsV1.class);
     }
 
-    @NonNull
     @Override
-    public ExecutionGateParams upgradeTo(@NonNull ExecutionGateParamsV1 v1) {
+    public ExecutionGateParams upgradeTo(ExecutionGateParamsV1 v1) {
         ExecutionGateParams t = new ExecutionGateParams();
         t.triggeredByTaskId = v1.triggeredByTaskId;
         t.functionCode = v1.functionCode;
@@ -54,9 +52,8 @@ public class ExecutionGateParamsUtilsV1
         return t;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -71,13 +68,12 @@ public class ExecutionGateParamsUtilsV1
     }
 
     @Override
-    public String toString(@NonNull ExecutionGateParamsV1 yaml) {
+    public String toString(ExecutionGateParamsV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public ExecutionGateParamsV1 to(@NonNull String s) {
+    public ExecutionGateParamsV1 to(String s) {
         final ExecutionGateParamsV1 p = getYaml().load(s);
         return p;
     }
