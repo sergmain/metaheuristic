@@ -14,27 +14,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.exec_context_task_state;
+package ai.metaheuristic.ai.yaml.exec_context_graph;
 
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
-
-import java.util.Map;
+import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.api.data.BaseParams;
+import lombok.Data;
 
 /**
+ * <b>!!! BEFORE MAKING ANY EDITION IN THIS CLASS, READ <a href="https://github.com/sergmain/metaheuristic/wiki/multi-versioning-mechanic">...</a></b>
+ * <br/>
  * @author Serge
  * Date: 3/17/2021
- * Time: 10:47 AM
+ * Time: 10:33 AM
  */
-public class ExecContextTaskStateParamsYamlUtils {
+@Data
+public class ExecContextGraphParams implements BaseParams {
 
-    private static final ExecContextTaskStateParamsYamlUtilsV1 YAML_UTILS_V_1 = new ExecContextTaskStateParamsYamlUtilsV1();
-    private static final ExecContextTaskStateParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    public final int version = 1;
 
-    public static final BaseYamlUtils<ExecContextTaskStateParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
-            Map.of(
-                    1, YAML_UTILS_V_1
-            ),
-            DEFAULT_UTILS
-    );
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
+
+    // this is a graph of processes for runtime phase
+    public String graph = ConstsApi.EMPTY_GRAPH;
 
 }

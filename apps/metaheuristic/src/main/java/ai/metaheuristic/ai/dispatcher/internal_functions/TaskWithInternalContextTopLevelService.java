@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -82,7 +82,7 @@ public class TaskWithInternalContextTopLevelService {
         if (subExecContext == null) {
             throw new InternalFunctionException(exec_context_not_found, "992.040 ExecContext Not found #" +subExecContextId);
         }
-        ExecContextParamsYaml ecpy = subExecContext.getExecContextParamsYaml();
+        ExecContextParams ecpy = subExecContext.getExecContextParamsYaml();
         if (ecpy.variables.outputs.size() != taskParamsYaml.task.outputs.size()) {
             throw new InternalFunctionException(number_of_outputs_is_incorrect, "992.060 number_of_outputs_is_incorrect");
         }
@@ -100,7 +100,7 @@ public class TaskWithInternalContextTopLevelService {
 
             for (int i = 0; i < taskParamsYaml.task.outputs.size(); i++) {
                 TaskParamsYaml.OutputVariable output = taskParamsYaml.task.outputs.get(i);
-                ExecContextParamsYaml.Variable execContextOutput = ecpy.variables.outputs.get(i);
+                ExecContextParams.Variable execContextOutput = ecpy.variables.outputs.get(i);
 
                 List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(
                         subExecContextId, CommonConsts.TOP_LEVEL_CONTEXT_ID, execContextOutput.name);

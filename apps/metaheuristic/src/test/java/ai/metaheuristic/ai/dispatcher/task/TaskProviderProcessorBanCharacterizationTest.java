@@ -31,7 +31,7 @@ import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYaml;
+import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParams;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -208,7 +208,7 @@ public class TaskProviderProcessorBanCharacterizationTest extends PreparingSourc
 
         try {
             executionGateService.quarantine(EnumsApi.GateScope.processor, refKey,
-                    System.currentTimeMillis() + 600_000L, "host-broken", new ExecutionGateParamsYaml());
+                    System.currentTimeMillis() + 600_000L, "host-broken", new ExecutionGateParams());
 
             await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
                     .until(() -> executionGateService.blockedUntil(EnumsApi.GateScope.processor, refKey) != null);

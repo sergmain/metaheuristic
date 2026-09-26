@@ -17,7 +17,7 @@
 package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -54,25 +54,25 @@ public class ExecContextGitSourceUtils {
      * pinning.
      */
     public static List<String> collectExternalFunctionCodes(
-            List<ExecContextParamsYaml.Process> processes, List<ExecContextParamsYaml.Group> groups) {
+            List<ExecContextParams.Process> processes, List<ExecContextParams.Group> groups) {
 
         final Set<String> codes = new LinkedHashSet<>();
-        for (ExecContextParamsYaml.Process p : processes) {
+        for (ExecContextParams.Process p : processes) {
             collectFromProcess(p, codes);
         }
-        for (ExecContextParamsYaml.Group g : groups) {
-            for (ExecContextParamsYaml.Process p : g.body) {
+        for (ExecContextParams.Group g : groups) {
+            for (ExecContextParams.Process p : g.body) {
                 collectFromProcess(p, codes);
             }
         }
         return List.copyOf(codes);
     }
 
-    private static void collectFromProcess(ExecContextParamsYaml.Process p, Set<String> codes) {
+    private static void collectFromProcess(ExecContextParams.Process p, Set<String> codes) {
         addIfExternal(p.function, codes);
     }
 
-    private static void addIfExternal(ExecContextParamsYaml.@Nullable FunctionDefinition fd, Set<String> codes) {
+    private static void addIfExternal(ExecContextParams.@Nullable FunctionDefinition fd, Set<String> codes) {
         if (fd==null || fd.code==null) {
             return;
         }
@@ -94,12 +94,12 @@ public class ExecContextGitSourceUtils {
      * @return the pinned revisions, or null when the DAG uses no git-sourced Function - the common case,
      *         and null keeps it out of the stored YAML entirely.
      */
-    public static ExecContextParamsYaml.@Nullable GitSources resolveGitSources(
+    public static ExecContextParams.@Nullable GitSources resolveGitSources(
             List<String> functionCodes,
             Function<String, FunctionConfigYaml> configResolver,
             Function<GitInfo, String> headResolver) {
 
-        final List<ExecContextParamsYaml.GitSourceInfo> infos = new ArrayList<>();
+        final List<ExecContextParams.GitSourceInfo> infos = new ArrayList<>();
         for (String code : functionCodes) {
             final FunctionConfigYaml cfg = configResolver.apply(code);
             if (cfg==null) {
@@ -121,15 +121,15 @@ public class ExecContextGitSourceUtils {
             }
             // GitInfo (the Function descriptor's own type) is copied into GitParams (the ExecContext's own
             // type) here, at the boundary - the pin is not a reference to the descriptor's field
-            infos.add(new ExecContextParamsYaml.GitSourceInfo(code,
-                new ExecContextParamsYaml.GitParams(git.repo, git.branch, commit, git.path)));
+            infos.add(new ExecContextParams.GitSourceInfo(code,
+                new ExecContextParams.GitParams(git.repo, git.branch, commit, git.path)));
             // NOTE: built field-by-field rather than via GitParams.from(git) because `commit` is the
             // RESOLVED sha, not the descriptor's value
         }
         if (infos.isEmpty()) {
             return null;
         }
-        final ExecContextParamsYaml.GitSources gitSources = new ExecContextParamsYaml.GitSources();
+        final ExecContextParams.GitSources gitSources = new ExecContextParams.GitSources();
         gitSources.gitSourceInfos.addAll(infos);
         return gitSources;
     }
@@ -149,7 +149,7 @@ public class ExecContextGitSourceUtils {
      * pin for this code - an ExecContext created before pinning existed keeps its old behaviour rather
      * than failing to produce tasks.
      */
-    public static void pinGitRevision(TaskParamsYaml.FunctionConfig fc, ExecContextParamsYaml.@Nullable GitSources gitSources) {
+    public static void pinGitRevision(TaskParamsYaml.FunctionConfig fc, ExecContextParams.@Nullable GitSources gitSources) {
         if (fc.sourcing!=EnumsApi.FunctionSourcing.git) {
             return;
         }
@@ -157,7 +157,7 @@ public class ExecContextGitSourceUtils {
             log.warn("01.921.040 Function {} is git-sourced but its ExecContext pinned no revision, using the descriptor's own", fc.code);
             return;
         }
-        final ExecContextParamsYaml.GitSourceInfo info = gitSources.find(fc.code);
+        final ExecContextParams.GitSourceInfo info = gitSources.find(fc.code);
         if (info==null) {
             log.warn("01.921.050 Function {} is git-sourced but wasn't pinned by its ExecContext, using the descriptor's own", fc.code);
             return;

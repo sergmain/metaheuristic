@@ -18,7 +18,7 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.CommonConsts;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageRequest;
@@ -148,7 +148,7 @@ public class Consts {
     public static final String MH_META_STORAGE_FUNCTION = "mh.meta-storage";
     public static final String MH_META_STORAGE_REGISTRY_FUNCTION = "mh.meta-storage-registry";
 
-    public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(CommonConsts.MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
+    public static final ExecContextParams.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParams.FunctionDefinition(CommonConsts.MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 
     public static final String UNKNOWN_FILENAME_IN_BATCH = Consts.UNKNOWN_INFO;
 

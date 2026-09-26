@@ -30,11 +30,10 @@ import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -91,7 +90,7 @@ public class ExecContextTaskResettingService {
             else if (status.targetState==EnumsApi.TaskExecState.NONE) {
                 TaskSyncService.getWithSyncVoid(status.taskId, ()->resetTask(ec, status.taskId, EnumsApi.TaskExecState.NONE));
 
-                ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
+                ExecContextTaskStateParams ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
                 ectspy.triesWasMade.put(status.taskId, status.triesWasMade);
                 // A Task state lives in two stores, and assignment reads the GRAPH one:
                 // ExecContextGraphService.findAllForAssigning() returns only NONE / CHECK_CACHE vertices.
@@ -156,7 +155,7 @@ public class ExecContextTaskResettingService {
         }
 
         TaskParamsYaml taskParams = task.getTaskParamsYaml();
-        final ExecContextParamsYaml.Process process = execContext.getExecContextParamsYaml().findProcess(taskParams.task.processCode);
+        final ExecContextParams.Process process = execContext.getExecContextParamsYaml().findProcess(taskParams.task.processCode);
         if (process==null) {
             throw new CommonRollbackException("155.160 Process '" + taskParams.task.processCode + "' wasn't found", EnumsApi.OperationStatus.ERROR);
         }

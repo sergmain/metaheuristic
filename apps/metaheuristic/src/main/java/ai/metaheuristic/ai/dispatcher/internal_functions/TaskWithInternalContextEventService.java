@@ -47,7 +47,7 @@ import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -199,12 +199,12 @@ public class TaskWithInternalContextEventService {
         }
 
         TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
-        ExecContextParamsYaml.Process p = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
+        ExecContextParams.Process p = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
         if (p == null) {
             if (CommonConsts.MH_FINISH_FUNCTION.equals(taskParamsYaml.task.processCode)) {
-                ExecContextParamsYaml.FunctionDefinition function =
-                        new ExecContextParamsYaml.FunctionDefinition(CommonConsts.MH_FINISH_FUNCTION, "", EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
-                p = new ExecContextParamsYaml.Process(CommonConsts.MH_FINISH_FUNCTION, CommonConsts.MH_FINISH_FUNCTION, CommonConsts.TOP_LEVEL_CONTEXT_ID, function);
+                ExecContextParams.FunctionDefinition function =
+                        new ExecContextParams.FunctionDefinition(CommonConsts.MH_FINISH_FUNCTION, "", EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
+                p = new ExecContextParams.Process(CommonConsts.MH_FINISH_FUNCTION, CommonConsts.MH_FINISH_FUNCTION, CommonConsts.TOP_LEVEL_CONTEXT_ID, function);
             }
             else {
                 final String msg = "706.240 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + simpleExecContext.execContextId;

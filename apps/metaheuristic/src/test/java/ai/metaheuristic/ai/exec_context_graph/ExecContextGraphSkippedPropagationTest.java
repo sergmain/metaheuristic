@@ -16,22 +16,16 @@
 
 package ai.metaheuristic.ai.exec_context_graph;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
-import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.jgrapht.util.SupplierUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
-
-import java.util.List;
 
 import static ai.metaheuristic.api.EnumsApi.TaskExecState;
 import static org.junit.jupiter.api.Assertions.*;
@@ -80,7 +74,7 @@ class ExecContextGraphSkippedPropagationTest {
         // This is the baseline — should already work
 
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
-        ExecContextTaskStateParamsYaml stateParams = new ExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams stateParams = new ExecContextTaskStateParams();
 
         ExecContextData.TaskVertex t1 = addVertex(graph, 1L, "1");
         ExecContextData.TaskVertex t2 = addVertex(graph, 2L, "1");
@@ -140,7 +134,7 @@ class ExecContextGraphSkippedPropagationTest {
     @Test
     public void test_errorPropagation_skipsSiblingsWithSingleSkippedParent() {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
-        ExecContextTaskStateParamsYaml stateParams = new ExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams stateParams = new ExecContextTaskStateParams();
 
         ExecContextData.TaskVertex t1 = addVertex(graph, 1L, "1,1");
         ExecContextData.TaskVertex t2 = addVertex(graph, 2L, "1,1");
@@ -204,7 +198,7 @@ class ExecContextGraphSkippedPropagationTest {
     @Test
     public void test_errorPropagation_doesNotSkipSiblingWithMultipleParentsNotAllSkipped() {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
-        ExecContextTaskStateParamsYaml stateParams = new ExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams stateParams = new ExecContextTaskStateParams();
 
         ExecContextData.TaskVertex t1 = addVertex(graph, 1L, "1");
         ExecContextData.TaskVertex t2 = addVertex(graph, 2L, "1");
@@ -249,7 +243,7 @@ class ExecContextGraphSkippedPropagationTest {
     @Test
     public void test_skippedPropagation_cascadesToSiblings() {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
-        ExecContextTaskStateParamsYaml stateParams = new ExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams stateParams = new ExecContextTaskStateParams();
 
         ExecContextData.TaskVertex t1 = addVertex(graph, 1L, "1");
         ExecContextData.TaskVertex t2 = addVertex(graph, 2L, "1");
@@ -301,7 +295,7 @@ class ExecContextGraphSkippedPropagationTest {
     @Test
     public void test_crossContext_innerErrorPropagesToOuterSiblings() {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
-        ExecContextTaskStateParamsYaml stateParams = new ExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams stateParams = new ExecContextTaskStateParams();
 
         ExecContextData.TaskVertex t641 = addVertex(graph, 641L, "1,2#1");
         ExecContextData.TaskVertex t642 = addVertex(graph, 642L, "1,2#1");
@@ -352,7 +346,7 @@ class ExecContextGraphSkippedPropagationTest {
     @Test
     public void test_crossContext_multipleParents_mhFinishNotSkipped() {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
-        ExecContextTaskStateParamsYaml stateParams = new ExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams stateParams = new ExecContextTaskStateParams();
 
         // Batch instance 1
         ExecContextData.TaskVertex t641 = addVertex(graph, 641L, "1,2#1");
@@ -442,7 +436,7 @@ class ExecContextGraphSkippedPropagationTest {
      * Mimics the logic of ExecContextGraphService.updateTaskExecState() for a single task state change.
      */
     private static void updateTaskState(
-            ExecContextData.ExecContextDAC dac, ExecContextTaskStateParamsYaml stateParams,
+            ExecContextData.ExecContextDAC dac, ExecContextTaskStateParams stateParams,
             Long taskId, TaskExecState execState, String taskContextId,
             ExecContextOperationStatusWithTaskList status) {
 
@@ -466,7 +460,7 @@ class ExecContextGraphSkippedPropagationTest {
     @Test
     public void test_graftedLineHeadTerminalError_skipsWholeSameContextTail() {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
-        ExecContextTaskStateParamsYaml stateParams = new ExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams stateParams = new ExecContextTaskStateParams();
 
         final String parentCtx = "1,2,3,6,7,8,9|1|0|0|0|0#0";
         final String lineCtx = "1,2,3,6,7,8,9,13|1|0|0|0|0|0#1";

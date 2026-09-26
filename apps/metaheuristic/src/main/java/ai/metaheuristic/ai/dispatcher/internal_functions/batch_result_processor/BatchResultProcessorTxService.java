@@ -44,7 +44,7 @@ import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
@@ -138,7 +138,7 @@ public class BatchResultProcessorTxService {
         ExecContextSyncService.checkWriteLockPresent(simpleExecContext.execContextId);
 
         // key is name of variable
-        Map<String, ExecContextParamsYaml.Variable> nameToVar = gatherVars(simpleExecContext.paramsYaml);
+        Map<String, ExecContextParams.Variable> nameToVar = gatherVars(simpleExecContext.paramsYaml);
         Set<String> varNames = nameToVar.keySet();
         List<Variable> vars = variableRepository.findByExecContextIdAndNames(simpleExecContext.execContextId, varNames);
 
@@ -201,7 +201,7 @@ public class BatchResultProcessorTxService {
 
     @SneakyThrows
     private void storeBatchResult(
-            Long sourceCodeId, Long execContextId, ExecContextParamsYaml ecpy, String taskContextId, TaskParamsYaml taskParamsYaml,
+            Long sourceCodeId, Long execContextId, ExecContextParams ecpy, String taskContextId, TaskParamsYaml taskParamsYaml,
             Path zipFile, Long taskId) {
         String batchResultVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_RESULT.equals(o.type)).findFirst().map(o->o.name).orElse(null);
         if (S.b(batchResultVarName)) {
@@ -281,7 +281,7 @@ public class BatchResultProcessorTxService {
      * @return Map<String, ItemWithStatusWithMapping> - key is taskContextId, value - variables to store as batch item
      */
     private static Map<String, ItemWithStatusWithMapping> groupByTaskContextId(
-            List<Variable> vars, Map<String, ExecContextParamsYaml.Variable> nameToVar, List<String> excludeContextIds,
+            List<Variable> vars, Map<String, ExecContextParams.Variable> nameToVar, List<String> excludeContextIds,
             Function<String, Boolean> outputTypeFunc, Function<String, Boolean> statusTypeFunc, Function<String, Boolean> mappingTypeFunc) {
         Map<String, ItemWithStatusWithMapping> map = new HashMap<>();
 
@@ -298,7 +298,7 @@ public class BatchResultProcessorTxService {
             if (v==null) {
                 continue;
             }
-            ExecContextParamsYaml.Variable varFromExecContext = nameToVar.get(variable.name);
+            ExecContextParams.Variable varFromExecContext = nameToVar.get(variable.name);
             if (varFromExecContext==null) {
                 log.error(S.f("993.140 Can't find variable %s in execContext", variable.name) );
                 continue;
@@ -335,8 +335,8 @@ public class BatchResultProcessorTxService {
         return map;
     }
 
-    private static Map<String, ExecContextParamsYaml.Variable> gatherVars(ExecContextParamsYaml ecpy) {
-        Map<String, ExecContextParamsYaml.Variable> map = ecpy.processes.stream()
+    private static Map<String, ExecContextParams.Variable> gatherVars(ExecContextParams ecpy) {
+        Map<String, ExecContextParams.Variable> map = ecpy.processes.stream()
                 .flatMap(o->o.outputs.stream())
                 .collect(Collectors.toMap(o->o.name, o->o, (a, b) -> b, HashMap::new));
         return map;

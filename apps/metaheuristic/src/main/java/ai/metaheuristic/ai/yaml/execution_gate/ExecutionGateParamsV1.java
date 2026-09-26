@@ -14,23 +14,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.exec_context_task_state;
+package ai.metaheuristic.ai.yaml.execution_gate;
 
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.Nullable;
 
 /**
- * @author Serge
- * Date: 3/17/2021
- * Time: 10:33 AM
+ * @author Sergio Lissner
+ * Date: 8/14/2026
  */
 @Data
-public class ExecContextTaskStateParamsYamlV1 implements BaseParams {
+public class ExecutionGateParamsV1 implements BaseParams {
 
     public final int version = 1;
 
@@ -39,7 +34,10 @@ public class ExecContextTaskStateParamsYamlV1 implements BaseParams {
         return true;
     }
 
-    public final Map<Long, EnumsApi.TaskExecState> states = new HashMap<>();
-
-    public final Map<Long, Integer> triesWasMade = new HashMap<>();
+    @Nullable public Long triggeredByTaskId;
+    @Nullable public String functionCode;
+    @Nullable public Long processorId;
+    @Nullable public String matchedPattern;
+    @Nullable public String consoleExcerpt;
+    public boolean incrementTries;
 }

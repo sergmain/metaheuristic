@@ -17,7 +17,7 @@
 package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -61,9 +61,9 @@ public class ExecContextGitSourceUtilsTest {
         return cfg;
     }
 
-    private static ExecContextParamsYaml.Process process(String processCode, String functionCode, EnumsApi.FunctionExecContext ctx) {
-        final ExecContextParamsYaml.FunctionDefinition fd = new ExecContextParamsYaml.FunctionDefinition(functionCode, ctx);
-        return new ExecContextParamsYaml.Process(processCode, processCode, "#1", fd);
+    private static ExecContextParams.Process process(String processCode, String functionCode, EnumsApi.FunctionExecContext ctx) {
+        final ExecContextParams.FunctionDefinition fd = new ExecContextParams.FunctionDefinition(functionCode, ctx);
+        return new ExecContextParams.Process(processCode, processCode, "#1", fd);
     }
 
     private static Function<String, FunctionConfigYaml> registry(FunctionConfigYaml... configs) {
@@ -78,7 +78,7 @@ public class ExecContextGitSourceUtilsTest {
 
     @Test
     public void test_collectSkipsInternalFunctions() {
-        final List<ExecContextParamsYaml.Process> processes = List.of(
+        final List<ExecContextParams.Process> processes = List.of(
             process("p1", "mh.permute-variables", EnumsApi.FunctionExecContext.internal),
             process("p2", "fn-py", EnumsApi.FunctionExecContext.external));
 
@@ -87,7 +87,7 @@ public class ExecContextGitSourceUtilsTest {
 
     @Test
     public void test_collectDeduplicatesRepeatedCodes() {
-        final List<ExecContextParamsYaml.Process> processes = List.of(
+        final List<ExecContextParams.Process> processes = List.of(
             process("p1", "fn-py", EnumsApi.FunctionExecContext.external),
             process("p2", "fn-py", EnumsApi.FunctionExecContext.external),
             process("p3", "fn-sh", EnumsApi.FunctionExecContext.external));
@@ -97,7 +97,7 @@ public class ExecContextGitSourceUtilsTest {
 
     @Test
     public void test_collectSeesOnlyTheMainFunction() {
-        final ExecContextParamsYaml.Process p = process("p1", "fn-main", EnumsApi.FunctionExecContext.external);
+        final ExecContextParams.Process p = process("p1", "fn-main", EnumsApi.FunctionExecContext.external);
 
         assertEquals(List.of("fn-main"), ExecContextGitSourceUtils.collectExternalFunctionCodes(List.of(p), List.of()),
             "pre/post Functions are not supported anymore, a Process has exactly one Function to pin");
@@ -105,7 +105,7 @@ public class ExecContextGitSourceUtilsTest {
 
     @Test
     public void test_collectReachesIntoGroupBodies() {
-        final ExecContextParamsYaml.Group g = new ExecContextParamsYaml.Group("rung-2");
+        final ExecContextParams.Group g = new ExecContextParams.Group("rung-2");
         g.body.add(process("gp1", "fn-in-group", EnumsApi.FunctionExecContext.external));
 
         final List<String> codes = ExecContextGitSourceUtils.collectExternalFunctionCodes(
@@ -136,7 +136,7 @@ public class ExecContextGitSourceUtilsTest {
 
     @Test
     public void test_resolveHeadIsReplacedByConcreteSha() {
-        final ExecContextParamsYaml.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
+        final ExecContextParams.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
             List.of("fn-py"), registry(gitFunction("fn-py", "HEAD")), git -> SHA_1);
 
         assertNotNull(actual);
@@ -147,7 +147,7 @@ public class ExecContextGitSourceUtilsTest {
 
     @Test
     public void test_resolveBlankCommitIsAlsoHeadBased() {
-        final ExecContextParamsYaml.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
+        final ExecContextParams.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
             List.of("fn-py"), registry(gitFunction("fn-py", null)), git -> SHA_1);
 
         assertNotNull(actual);
@@ -156,7 +156,7 @@ public class ExecContextGitSourceUtilsTest {
 
     @Test
     public void test_resolveLeavesAnExplicitCommitAlone() {
-        final ExecContextParamsYaml.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
+        final ExecContextParams.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
             List.of("fn-py"), registry(gitFunction("fn-py", SHA_2)), git -> SHA_1);
 
         assertNotNull(actual);
@@ -166,11 +166,11 @@ public class ExecContextGitSourceUtilsTest {
 
     @Test
     public void test_resolveCarriesRepoBranchAndPathThrough() {
-        final ExecContextParamsYaml.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
+        final ExecContextParams.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
             List.of("fn-py"), registry(gitFunction("fn-py", "HEAD")), git -> SHA_1);
 
         assertNotNull(actual);
-        final ExecContextParamsYaml.GitSourceInfo info = actual.gitSourceInfos.get(0);
+        final ExecContextParams.GitSourceInfo info = actual.gitSourceInfos.get(0);
         assertEquals("fn-py", info.functionCode);
         assertEquals(REPO, info.git.repo);
         assertEquals("main", info.git.branch);
@@ -179,7 +179,7 @@ public class ExecContextGitSourceUtilsTest {
 
     @Test
     public void test_resolveKeepsOnlyGitSourcedFunctions() {
-        final ExecContextParamsYaml.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
+        final ExecContextParams.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
             List.of("fn-jar", "fn-py"),
             registry(dispatcherFunction("fn-jar"), gitFunction("fn-py", "HEAD")),
             git -> SHA_1);
@@ -191,7 +191,7 @@ public class ExecContextGitSourceUtilsTest {
 
     @Test
     public void test_resolveSkipsUnregisteredFunctionCode() {
-        final ExecContextParamsYaml.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
+        final ExecContextParams.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
             List.of("fn-missing", "fn-py"), registry(gitFunction("fn-py", "HEAD")), git -> SHA_1);
 
         assertNotNull(actual);
@@ -211,7 +211,7 @@ public class ExecContextGitSourceUtilsTest {
 
     @Test
     public void test_resolvePinsTwoFunctionsIndependently() {
-        final ExecContextParamsYaml.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
+        final ExecContextParams.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
             List.of("fn-a", "fn-b"),
             registry(gitFunction("fn-a", "HEAD"), gitFunction("fn-b", SHA_2)),
             git -> SHA_1);
@@ -227,7 +227,7 @@ public class ExecContextGitSourceUtilsTest {
         final FunctionConfigYaml cfg = gitFunction("fn-py", "HEAD");
         final GitInfo descriptorGit = cfg.function.git;
 
-        final ExecContextParamsYaml.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
+        final ExecContextParams.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
             List.of("fn-py"), registry(cfg), git -> SHA_1);
 
         assertNotNull(actual);
@@ -238,10 +238,10 @@ public class ExecContextGitSourceUtilsTest {
 
     // ---------- pinGitRevision: the pin reaching TaskParamsYaml ----------
 
-    private static ExecContextParamsYaml.GitSources pinned(String functionCode, String commit) {
-        final ExecContextParamsYaml.GitSources gs = new ExecContextParamsYaml.GitSources();
-        gs.gitSourceInfos.add(new ExecContextParamsYaml.GitSourceInfo(functionCode,
-            new ExecContextParamsYaml.GitParams(REPO, "main", commit, "fn/" + functionCode)));
+    private static ExecContextParams.GitSources pinned(String functionCode, String commit) {
+        final ExecContextParams.GitSources gs = new ExecContextParams.GitSources();
+        gs.gitSourceInfos.add(new ExecContextParams.GitSourceInfo(functionCode,
+            new ExecContextParams.GitParams(REPO, "main", commit, "fn/" + functionCode)));
         return gs;
     }
 
@@ -321,7 +321,7 @@ public class ExecContextGitSourceUtilsTest {
 
     @Test
     public void test_findReturnsNullForUnknownCode() {
-        final ExecContextParamsYaml.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
+        final ExecContextParams.GitSources actual = ExecContextGitSourceUtils.resolveGitSources(
             List.of("fn-py"), registry(gitFunction("fn-py", "HEAD")), git -> SHA_1);
 
         assertNotNull(actual);

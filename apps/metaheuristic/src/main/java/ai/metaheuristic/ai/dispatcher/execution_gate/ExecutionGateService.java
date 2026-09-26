@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.ExecutionGateChangedEvent;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecutionGateRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
-import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYaml;
+import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParams;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import jakarta.annotation.PostConstruct;
@@ -48,7 +48,6 @@ import java.util.stream.Stream;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -288,7 +287,7 @@ public class ExecutionGateService {
      * opened: re-blocking a key that is already blocked for longer is common — every failing sibling
      * Task of a quarantined Function asks for it — and it must not cost a write each time.
      */
-    public void quarantine(EnumsApi.GateScope scope, String refKey, long blockedUntil, String reasonCode, ExecutionGateParamsYaml params) {
+    public void quarantine(EnumsApi.GateScope scope, String refKey, long blockedUntil, String reasonCode, ExecutionGateParams params) {
         final long now = System.currentTimeMillis();
         if (!ExecutionGateUtils.isLive(blockedUntil, now)) {
             log.warn("01.320.060 refusing to open an already-expired execution gate, scope: {}, refKey: {}, blockedUntil: {}",

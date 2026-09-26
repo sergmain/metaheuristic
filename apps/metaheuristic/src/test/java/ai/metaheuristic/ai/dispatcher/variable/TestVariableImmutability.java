@@ -17,8 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.exceptions.VariableImmutabilityException;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import org.junit.jupiter.api.Test;
@@ -63,8 +62,8 @@ public class TestVariableImmutability {
         return id;
     }
 
-    private static ExecContextParamsYaml.Variable processOutput(String name) {
-        ExecContextParamsYaml.Variable v = new ExecContextParamsYaml.Variable(name);
+    private static ExecContextParams.Variable processOutput(String name) {
+        ExecContextParams.Variable v = new ExecContextParams.Variable(name);
         v.ext = ".txt";
         v.type = "test-type";
         return v;
@@ -84,7 +83,7 @@ public class TestVariableImmutability {
     public void test_subprocess_can_shadow_parent_variable_currentBehavior() {
         // Parent process creates output variable "count" at context "1,2"
         String parentContextId = "1,2";
-        List<ExecContextParamsYaml.Variable> parentOutputs = List.of(processOutput("count"));
+        List<ExecContextParams.Variable> parentOutputs = List.of(processOutput("count"));
         List<TaskParamsYaml.OutputVariable> parentTaskOutputs = new ArrayList<>();
 
         VariableUtils.initOutputVariables(parentOutputs, parentTaskOutputs, parentContextId, this::findVariable, this::createVariable);
@@ -96,7 +95,7 @@ public class TestVariableImmutability {
 
         // Subprocess creates output variable "count" at context "1,2,3" (child of "1,2")
         String childContextId = "1,2,3";
-        List<ExecContextParamsYaml.Variable> childOutputs = List.of(processOutput("count"));
+        List<ExecContextParams.Variable> childOutputs = List.of(processOutput("count"));
         List<TaskParamsYaml.OutputVariable> childTaskOutputs = new ArrayList<>();
 
         // Desired behavior: this should throw because "count" in parent context is immutable
@@ -112,12 +111,12 @@ public class TestVariableImmutability {
     @Test
     public void test_different_variable_names_no_conflict() {
         String parentContextId = "1,2";
-        List<ExecContextParamsYaml.Variable> parentOutputs = List.of(processOutput("result"));
+        List<ExecContextParams.Variable> parentOutputs = List.of(processOutput("result"));
         List<TaskParamsYaml.OutputVariable> parentTaskOutputs = new ArrayList<>();
         VariableUtils.initOutputVariables(parentOutputs, parentTaskOutputs, parentContextId, this::findVariable, this::createVariable);
 
         String childContextId = "1,2,3";
-        List<ExecContextParamsYaml.Variable> childOutputs = List.of(processOutput("otherVar"));
+        List<ExecContextParams.Variable> childOutputs = List.of(processOutput("otherVar"));
         List<TaskParamsYaml.OutputVariable> childTaskOutputs = new ArrayList<>();
 
         assertDoesNotThrow(() ->
@@ -149,7 +148,7 @@ public class TestVariableImmutability {
     public void test_recursionGraft_redeclareAcrossInstanceBoundary() {
         // level-0 store-req: "requirementId" at outer instance "1,2#1"
         String outerContextId = "1,2#1";
-        List<ExecContextParamsYaml.Variable> outerOutputs = List.of(processOutput("requirementId"));
+        List<ExecContextParams.Variable> outerOutputs = List.of(processOutput("requirementId"));
         List<TaskParamsYaml.OutputVariable> outerTaskOutputs = new ArrayList<>();
         VariableUtils.initOutputVariables(outerOutputs, outerTaskOutputs, outerContextId, this::findVariable, this::createVariable);
         assertEquals(1, outerTaskOutputs.size());
@@ -158,7 +157,7 @@ public class TestVariableImmutability {
 
         // deep recursion level store-req: "requirementId" at a different instance across '#'/'|'
         String deepContextId = "1,2,3,6,7,8,9,13|1|0|0|0|0|0#1";
-        List<ExecContextParamsYaml.Variable> deepOutputs = List.of(processOutput("requirementId"));
+        List<ExecContextParams.Variable> deepOutputs = List.of(processOutput("requirementId"));
         List<TaskParamsYaml.OutputVariable> deepTaskOutputs = new ArrayList<>();
 
         // Desired behavior (Red -> Green-3): recursion is legitimate. The deep instance creates
@@ -184,14 +183,14 @@ public class TestVariableImmutability {
     public void test_caller_pattern_desiredBehavior_exception_caught_and_error_recorded() {
         // Setup: parent creates "amendmentStatus" at context "1,2"
         String parentContextId = "1,2";
-        List<ExecContextParamsYaml.Variable> parentOutputs = List.of(processOutput("amendmentStatus"));
+        List<ExecContextParams.Variable> parentOutputs = List.of(processOutput("amendmentStatus"));
         List<TaskParamsYaml.OutputVariable> parentTaskOutputs = new ArrayList<>();
         VariableUtils.initOutputVariables(parentOutputs, parentTaskOutputs, parentContextId, this::findVariable, this::createVariable);
 
         // Lexical child at context "1,2,3" (same instance, no '#'/'|' crossed) tries to create
         // "amendmentStatus" (immutable by default) — a genuine shadow that must be rejected.
         String childContextId = "1,2,3";
-        List<ExecContextParamsYaml.Variable> childOutputs = List.of(processOutput("amendmentStatus"));
+        List<ExecContextParams.Variable> childOutputs = List.of(processOutput("amendmentStatus"));
         List<TaskParamsYaml.OutputVariable> childTaskOutputs = new ArrayList<>();
 
         // Simulate the FIXED caller pattern:

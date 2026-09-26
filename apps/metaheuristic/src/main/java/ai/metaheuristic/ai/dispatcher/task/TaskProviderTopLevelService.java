@@ -42,7 +42,7 @@ import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -116,7 +116,7 @@ public class TaskProviderTopLevelService {
                 eventPublisher.publishEvent(new TaskWithInternalContextEvent(simpleExecContext.sourceCodeId, simpleExecContext.execContextId, taskId));
             }
             else {
-                ExecContextParamsYaml.Process p = simpleExecContext.getParamsYaml().findProcess(taskParamYaml.task.processCode);
+                ExecContextParams.Process p = simpleExecContext.getParamsYaml().findProcess(taskParamYaml.task.processCode);
                 if (p==null) {
                     log.warn("393.120 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, simpleExecContext.execContextId);
                     return;
@@ -126,8 +126,8 @@ public class TaskProviderTopLevelService {
         });
     }
 
-    public static boolean registerTask(final ExecContextParamsYaml execContextParamsYaml, TaskImpl task, final TaskParamsYaml taskParamYaml) {
-        final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
+    public static boolean registerTask(final ExecContextParams execContextParamsYaml, TaskImpl task, final TaskParamsYaml taskParamYaml) {
+        final ExecContextParams.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
         if (p==null) {
             log.warn("393.120 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, task.execContextId);
             return false;
@@ -145,7 +145,7 @@ public class TaskProviderTopLevelService {
         });
     }
 
-    private static void registerTaskLambda(ExecContextParamsYaml.Process p, TaskImpl task, final TaskParamsYaml taskParamYaml) {
+    private static void registerTaskLambda(ExecContextParams.Process p, TaskImpl task, final TaskParamsYaml taskParamYaml) {
         final TaskQueue.QueuedTask queuedTask = new TaskQueue.QueuedTask(EnumsApi.FunctionExecContext.external, task.execContextId, task.id, task, taskParamYaml, p.tag, p.priority);
         TaskQueueService.addNewTask(queuedTask);
     }
@@ -426,7 +426,7 @@ public class TaskProviderTopLevelService {
                             log.warn("393.750 Can't re-assign task #{}, execContext #{} doesn't exist", taskId, execContextId);
                             continue;
                         }
-                        final ExecContextParamsYaml execContextParamsYaml = ec.getExecContextParamsYaml();
+                        final ExecContextParams execContextParamsYaml = ec.getExecContextParamsYaml();
 
                         final TaskParamsYaml taskParamYaml;
                         try {
@@ -438,7 +438,7 @@ public class TaskProviderTopLevelService {
                             continue;
                         }
 
-                        ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
+                        ExecContextParams.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
                         if (p==null) {
                             String es = S.f("393.810 Can't register task #%s, process %s doesn't exist in execContext #%s", taskId, taskParamYaml.task.processCode, execContextId);
                             log.warn("393.815 Can't register task #{}, process {} doesn't exist in execContext #{}", taskId, taskParamYaml.task.processCode, execContextId);

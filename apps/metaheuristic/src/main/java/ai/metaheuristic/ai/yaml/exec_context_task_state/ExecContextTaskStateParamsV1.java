@@ -14,27 +14,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.exec_context_graph;
+package ai.metaheuristic.ai.yaml.exec_context_task_state;
 
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BaseParams;
+import lombok.Data;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Serge
  * Date: 3/17/2021
- * Time: 10:47 AM
+ * Time: 10:33 AM
  */
-public class ExecContextGraphParamsYamlUtils {
+@Data
+public class ExecContextTaskStateParamsV1 implements BaseParams {
 
-    private static final ExecContextGraphParamsYamlUtilsV1 YAML_UTILS_V_1 = new ExecContextGraphParamsYamlUtilsV1();
-    private static final ExecContextGraphParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    public final int version = 1;
 
-    public static final BaseYamlUtils<ExecContextGraphParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
-            Map.of(
-                    1, YAML_UTILS_V_1
-            ),
-            DEFAULT_UTILS
-    );
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
 
+    public final Map<Long, EnumsApi.TaskExecState> states = new HashMap<>();
+
+    public final Map<Long, Integer> triesWasMade = new HashMap<>();
 }

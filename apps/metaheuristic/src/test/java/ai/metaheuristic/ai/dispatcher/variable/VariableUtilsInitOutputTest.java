@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -52,8 +52,8 @@ public class VariableUtilsInitOutputTest {
         return id;
     }
 
-    private static ExecContextParamsYaml.Variable processOutput(String name) {
-        ExecContextParamsYaml.Variable v = new ExecContextParamsYaml.Variable(name);
+    private static ExecContextParams.Variable processOutput(String name) {
+        ExecContextParams.Variable v = new ExecContextParams.Variable(name);
         v.ext = ".txt";
         v.type = "test-type";
         return v;
@@ -62,7 +62,7 @@ public class VariableUtilsInitOutputTest {
     // first init — no existing variables, empty task outputs → outputs get populated
     @Test
     public void test_firstInit_outputsCreated() {
-        List<ExecContextParamsYaml.Variable> processOutputs = List.of(
+        List<ExecContextParams.Variable> processOutputs = List.of(
                 processOutput("objectiveResult2")
         );
         List<TaskParamsYaml.OutputVariable> taskOutputs = new ArrayList<>();
@@ -82,7 +82,7 @@ public class VariableUtilsInitOutputTest {
         // simulate variable created during first pass
         existingVariables.put("objectiveResult2|" + taskContextId, 42L);
 
-        List<ExecContextParamsYaml.Variable> processOutputs = List.of(
+        List<ExecContextParams.Variable> processOutputs = List.of(
                 processOutput("objectiveResult2")
         );
         List<TaskParamsYaml.OutputVariable> taskOutputs = new ArrayList<>();
@@ -98,7 +98,7 @@ public class VariableUtilsInitOutputTest {
     // should NOT duplicate outputs
     @Test
     public void test_doubleInit_noOutputDuplication() {
-        List<ExecContextParamsYaml.Variable> processOutputs = List.of(
+        List<ExecContextParams.Variable> processOutputs = List.of(
                 processOutput("objectiveResult2"),
                 processOutput("cascadeResult2")
         );
@@ -127,7 +127,7 @@ public class VariableUtilsInitOutputTest {
         String taskContextId = "1,2,3";
 
         // first pass: create variables
-        List<ExecContextParamsYaml.Variable> processOutputs = List.of(
+        List<ExecContextParams.Variable> processOutputs = List.of(
                 processOutput("objectiveResult2")
         );
         List<TaskParamsYaml.OutputVariable> taskOutputs = new ArrayList<>();
@@ -150,7 +150,7 @@ public class VariableUtilsInitOutputTest {
     public void test_partialOutputs_onlyMissingAdded() {
         String taskContextId = "1,2";
 
-        List<ExecContextParamsYaml.Variable> processOutputs = List.of(
+        List<ExecContextParams.Variable> processOutputs = List.of(
                 processOutput("var1"),
                 processOutput("var2"),
                 processOutput("var3")

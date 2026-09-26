@@ -1,8 +1,7 @@
 package ai.metaheuristic.ai.mhsc;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.SourceCodeGraph;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -73,7 +72,7 @@ class MhscNopWhenConditionTest {
         assertNotNull(graph);
         assertFalse(graph.processes.isEmpty());
 
-        ExecContextParamsYaml.Process nopProcess = graph.processes.stream()
+        ExecContextParams.Process nopProcess = graph.processes.stream()
                 .filter(p -> "mh.nop-condition-test".equals(p.processCode))
                 .findFirst()
                 .orElse(null);

@@ -38,7 +38,7 @@ import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.exec_context.ExecContextsListItem;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
@@ -151,7 +151,7 @@ public class ExecContextTxService {
 
         List<ExecContextApiData.VariableState> variableStates = execContextUtilsServices.getExecContextVariableStates(ec.execContextVariableStateId);
 
-        ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
+        ExecContextParams ecpy = ec.getExecContextParamsYaml();
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ecpy);
 
         Map<Long, TaskApiData.TaskState> taskStates = taskTxService.getExecStateOfTasks(execContextId);
@@ -189,7 +189,7 @@ public class ExecContextTxService {
 
         // Populate process tags from ExecContextParamsYaml
         Map<String, String> processTags = new HashMap<>();
-        for (ExecContextParamsYaml.Process p : ecpy.processes) {
+        for (ExecContextParams.Process p : ecpy.processes) {
             if (p.tag != null && !p.tag.isEmpty()) {
                 processTags.put(p.processCode, p.tag);
             }
@@ -270,7 +270,7 @@ public class ExecContextTxService {
         if (execContext == null) {
             return new SourceCodeApiData.ExecContextForDeletion("705.260 execContext wasn't found, execContextId: " + execContextId);
         }
-        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
+        ExecContextParams ecpy = execContext.getExecContextParamsYaml();
         SourceCodeApiData.ExecContextForDeletion result = new SourceCodeApiData.ExecContextForDeletion(execContext.sourceCodeId, execContext.id, ecpy.sourceCodeUid, EnumsApi.ExecContextState.from(execContext.state));
         return result;
     }

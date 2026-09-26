@@ -19,7 +19,7 @@ package ai.metaheuristic.commons.graph.source_code_graph;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.exceptions.SourceCodeGraphException;
 import org.apache.commons.io.IOUtils;
@@ -82,8 +82,8 @@ public class TestSourceCodeGraphLanguageMhsc {
         SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-short-1.0.0.mhsc");
 
         // Every process code in YAML graph must exist in MHSC graph
-        for (ExecContextParamsYaml.Process yamlProcess : yamlGraph.processes) {
-            ExecContextParamsYaml.Process mhscProcess = mhscGraph.processes.stream()
+        for (ExecContextParams.Process yamlProcess : yamlGraph.processes) {
+            ExecContextParams.Process mhscProcess = mhscGraph.processes.stream()
                     .filter(p -> p.processCode.equals(yamlProcess.processCode))
                     .findFirst()
                     .orElse(null);
@@ -96,8 +96,8 @@ public class TestSourceCodeGraphLanguageMhsc {
         SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-short-1.0.0.yaml");
         SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-short-1.0.0.mhsc");
 
-        for (ExecContextParamsYaml.Process yamlProcess : yamlGraph.processes) {
-            ExecContextParamsYaml.Process mhscProcess = mhscGraph.processes.stream()
+        for (ExecContextParams.Process yamlProcess : yamlGraph.processes) {
+            ExecContextParams.Process mhscProcess = mhscGraph.processes.stream()
                     .filter(p -> p.processCode.equals(yamlProcess.processCode))
                     .findFirst()
                     .orElse(null);
@@ -137,8 +137,8 @@ public class TestSourceCodeGraphLanguageMhsc {
 
             // Output names and types
             for (int i = 0; i < yamlProcess.outputs.size(); i++) {
-                ExecContextParamsYaml.Variable yv = yamlProcess.outputs.get(i);
-                ExecContextParamsYaml.Variable mv = mhscProcess.outputs.get(i);
+                ExecContextParams.Variable yv = yamlProcess.outputs.get(i);
+                ExecContextParams.Variable mv = mhscProcess.outputs.get(i);
                 assertEquals(yv.name, mv.name,
                         "Output name mismatch at index " + i + " for process '" + code + "'");
                 assertEquals(yv.type, mv.type,
@@ -208,7 +208,7 @@ public class TestSourceCodeGraphLanguageMhsc {
                 }
             }""";
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("my-proc"))
                 .findFirst().orElseThrow();
         assertNotNull(p.cache);
@@ -226,7 +226,7 @@ public class TestSourceCodeGraphLanguageMhsc {
                 }
             }""";
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("my-proc"))
                 .findFirst().orElseThrow();
         assertNotNull(p.cache);
@@ -244,7 +244,7 @@ public class TestSourceCodeGraphLanguageMhsc {
                 }
             }""";
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("my-proc"))
                 .findFirst().orElseThrow();
         assertEquals(-1, p.priority);
@@ -260,7 +260,7 @@ public class TestSourceCodeGraphLanguageMhsc {
                     }
                 }""";
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("my-proc"))
                 .findFirst().orElseThrow();
         assertEquals(5, p.priority);
@@ -275,7 +275,7 @@ public class TestSourceCodeGraphLanguageMhsc {
                     }
                 }""";
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("my-proc"))
                 .findFirst().orElseThrow();
         assertEquals(0, p.priority);
@@ -322,7 +322,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_factorial_main_exec_source_code_process() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-main-1.8.mhsc");
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("mh.exec-source-code"))
                 .findFirst().orElseThrow();
         assertEquals("mh.exec-source-code", p.function.code);
@@ -365,7 +365,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_factorial_recursion_evaluation0_condition() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc");
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("mh.evaluation0"))
                 .findFirst().orElseThrow();
         assertEquals("mh.evaluation", p.function.code);
@@ -378,7 +378,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_factorial_recursion_nop_condition() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc");
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("mh.nop"))
                 .findFirst().orElseThrow();
         assertNotNull(p.condition);
@@ -389,7 +389,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_factorial_recursion_multiply_process() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc");
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("mh.multiply_1.2"))
                 .findFirst().orElseThrow();
         assertEquals("mh.multiply_1.2", p.function.code);
@@ -445,7 +445,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_em_stat_tag_and_priority() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/em-stat-5.0.42-ric-411.mhsc");
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("get-list-of-edition-pairs"))
                 .findFirst().orElseThrow();
         assertEquals("pc13", p.tag);
@@ -457,7 +457,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_em_stat_batch_subprocess_with_params() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/em-stat-5.0.42-ric-411.mhsc");
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("edition-maker-statistics"))
                 .findFirst().orElseThrow();
         assertEquals("edition-maker-5.0.42", p.function.code);
@@ -485,7 +485,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_edition_maker_array_input() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-edition-maker-5.0.26-20min.mhsc");
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("edition-maker"))
                 .findFirst().orElseThrow();
         assertEquals("--fill-comment", p.function.params);
@@ -497,7 +497,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_edition_maker_batch_result_processor() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-edition-maker-5.0.26-20min.mhsc");
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("mh.batch-result-processor"))
                 .findFirst().orElseThrow();
         assertEquals("batch result processor", p.processName);
@@ -535,7 +535,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_tr_image_function_params() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-tr-image-1.0.10-timeout-3-min-411.mhsc");
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("image-converter"))
                 .findFirst().orElseThrow();
         assertEquals("image-converter-4.2.8", p.function.code);
@@ -546,7 +546,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_tr_image_input_modifiers() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-tr-image-1.0.10-timeout-3-min-411.mhsc");
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("image-converter"))
                 .findFirst().orElseThrow();
         assertEquals(2, p.inputs.size());
@@ -591,8 +591,8 @@ public class TestSourceCodeGraphLanguageMhsc {
         SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
         SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
 
-        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
-            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+        for (ExecContextParams.Process yp : yamlGraph.processes) {
+            ExecContextParams.Process mp = mhscGraph.processes.stream()
                     .filter(p -> p.processCode.equals(yp.processCode))
                     .findFirst().orElse(null);
             assertNotNull(mp, "Process code '" + yp.processCode + "' missing in MHSC graph");
@@ -604,8 +604,8 @@ public class TestSourceCodeGraphLanguageMhsc {
         SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
         SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
 
-        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
-            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+        for (ExecContextParams.Process yp : yamlGraph.processes) {
+            ExecContextParams.Process mp = mhscGraph.processes.stream()
                     .filter(p -> p.processCode.equals(yp.processCode))
                     .findFirst().orElse(null);
             if (mp == null) continue;
@@ -621,8 +621,8 @@ public class TestSourceCodeGraphLanguageMhsc {
         SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
         SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
 
-        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
-            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+        for (ExecContextParams.Process yp : yamlGraph.processes) {
+            ExecContextParams.Process mp = mhscGraph.processes.stream()
                     .filter(p -> p.processCode.equals(yp.processCode))
                     .findFirst().orElse(null);
             if (mp == null) continue;
@@ -642,8 +642,8 @@ public class TestSourceCodeGraphLanguageMhsc {
         SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
         SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
 
-        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
-            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+        for (ExecContextParams.Process yp : yamlGraph.processes) {
+            ExecContextParams.Process mp = mhscGraph.processes.stream()
                     .filter(p -> p.processCode.equals(yp.processCode))
                     .findFirst().orElse(null);
             if (mp == null) continue;
@@ -657,8 +657,8 @@ public class TestSourceCodeGraphLanguageMhsc {
         SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
         SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
 
-        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
-            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+        for (ExecContextParams.Process yp : yamlGraph.processes) {
+            ExecContextParams.Process mp = mhscGraph.processes.stream()
                     .filter(p -> p.processCode.equals(yp.processCode))
                     .findFirst().orElse(null);
             if (mp == null) continue;
@@ -672,8 +672,8 @@ public class TestSourceCodeGraphLanguageMhsc {
         SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
         SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
 
-        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
-            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+        for (ExecContextParams.Process yp : yamlGraph.processes) {
+            ExecContextParams.Process mp = mhscGraph.processes.stream()
                     .filter(p -> p.processCode.equals(yp.processCode))
                     .findFirst().orElse(null);
             if (mp == null) continue;
@@ -690,8 +690,8 @@ public class TestSourceCodeGraphLanguageMhsc {
         SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
         SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
 
-        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
-            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+        for (ExecContextParams.Process yp : yamlGraph.processes) {
+            ExecContextParams.Process mp = mhscGraph.processes.stream()
                     .filter(p -> p.processCode.equals(yp.processCode))
                     .findFirst().orElse(null);
             if (mp == null) continue;
@@ -704,7 +704,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     public void test_rg_flat_templated_template_expansion_level0_no_parentId() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
         // Level 0 store-req should NOT have parentId input
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("mhdg-rg.store-req-0"))
                 .findFirst().orElseThrow();
         assertEquals(2, p.inputs.size(),
@@ -716,7 +716,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     public void test_rg_flat_templated_template_expansion_level1_has_parentId() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
         // Level 1+ store-req should have parentId input
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("mhdg-rg.store-req-1"))
                 .findFirst().orElseThrow();
         assertEquals(3, p.inputs.size(),
@@ -728,7 +728,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     public void test_rg_flat_templated_parameterized_ids_resolved() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
         // Check that {L} and {L+1} are properly resolved for level 3
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("mhdg-rg.check-objectives-4"))
                 .findFirst().orElseThrow();
         // Input should be requirementId3 (L=3)
@@ -1005,7 +1005,7 @@ public class TestSourceCodeGraphLanguageMhsc {
         assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("process-1")));
         assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("process-2")));
         // Also verify output variable names are resolved
-        ExecContextParamsYaml.Process p1 = graph.processes.stream()
+        ExecContextParams.Process p1 = graph.processes.stream()
                 .filter(p -> p.processCode.equals("process-1")).findFirst().orElseThrow();
         assertEquals("output1", p1.outputs.get(0).name);
     }
@@ -1023,12 +1023,12 @@ public class TestSourceCodeGraphLanguageMhsc {
             }
             """;
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p0 = graph.processes.stream()
+        ExecContextParams.Process p0 = graph.processes.stream()
                 .filter(p -> p.processCode.equals("store-0")).findFirst().orElseThrow();
         assertEquals("input0", p0.inputs.get(0).name);
         assertEquals("result1", p0.outputs.get(0).name);
 
-        ExecContextParamsYaml.Process p1 = graph.processes.stream()
+        ExecContextParams.Process p1 = graph.processes.stream()
                 .filter(p -> p.processCode.equals("store-1")).findFirst().orElseThrow();
         assertEquals("input1", p1.inputs.get(0).name);
         assertEquals("result2", p1.outputs.get(0).name);
@@ -1046,11 +1046,11 @@ public class TestSourceCodeGraphLanguageMhsc {
             }
             """;
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p0 = graph.processes.stream()
+        ExecContextParams.Process p0 = graph.processes.stream()
                 .filter(p -> p.processCode.equals("eval-0")).findFirst().orElseThrow();
         assertEquals("reqId0", p0.metas.get(0).get("varName"));
 
-        ExecContextParamsYaml.Process p1 = graph.processes.stream()
+        ExecContextParams.Process p1 = graph.processes.stream()
                 .filter(p -> p.processCode.equals("eval-1")).findFirst().orElseThrow();
         assertEquals("reqId1", p1.metas.get(0).get("varName"));
     }
@@ -1068,7 +1068,7 @@ public class TestSourceCodeGraphLanguageMhsc {
             }
             """;
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("my_proc"))
                 .findFirst().orElseThrow();
         assertEquals("mhdg-rg.call-cc-1.0.4", p.function.code,
@@ -1086,9 +1086,9 @@ public class TestSourceCodeGraphLanguageMhsc {
             }
             """;
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p1 = graph.processes.stream()
+        ExecContextParams.Process p1 = graph.processes.stream()
                 .filter(p -> p.processCode.equals("proc1")).findFirst().orElseThrow();
-        ExecContextParamsYaml.Process p2 = graph.processes.stream()
+        ExecContextParams.Process p2 = graph.processes.stream()
                 .filter(p -> p.processCode.equals("proc2")).findFirst().orElseThrow();
         assertEquals("mhdg-rg.call-cc-1.0.4", p1.function.code);
         assertEquals("mhdg-rg.read-2.0.1", p2.function.code);
@@ -1109,11 +1109,11 @@ public class TestSourceCodeGraphLanguageMhsc {
             }
             """;
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p1 = graph.processes.stream()
+        ExecContextParams.Process p1 = graph.processes.stream()
                 .filter(p -> p.processCode.equals("proc1")).findFirst().orElseThrow();
-        ExecContextParamsYaml.Process p2 = graph.processes.stream()
+        ExecContextParams.Process p2 = graph.processes.stream()
                 .filter(p -> p.processCode.equals("proc2")).findFirst().orElseThrow();
-        ExecContextParamsYaml.Process inner = graph.processes.stream()
+        ExecContextParams.Process inner = graph.processes.stream()
                 .filter(p -> p.processCode.equals("inner")).findFirst().orElseThrow();
         assertEquals("mhdg-rg.call-cc-1.0.6", p1.function.code);
         assertEquals("mhdg-rg.call-cc-1.0.6", p2.function.code);
@@ -1155,7 +1155,7 @@ public class TestSourceCodeGraphLanguageMhsc {
             }
             """;
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("proc-0"))
                 .findFirst().orElseThrow();
         // Meta value should have {L} resolved to 0
@@ -1194,7 +1194,7 @@ public class TestSourceCodeGraphLanguageMhsc {
             }
             """;
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("my-proc-3"))
                 .findFirst().orElseThrow();
 
@@ -1238,7 +1238,7 @@ public class TestSourceCodeGraphLanguageMhsc {
             }
             """;
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("check-4"))
                 .findFirst().orElseThrow();
 
@@ -1315,7 +1315,7 @@ public class TestSourceCodeGraphLanguageMhsc {
             }
             """;
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        ExecContextParamsYaml.Process p = graph.processes.stream()
+        ExecContextParams.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("my_proc"))
                 .findFirst().orElseThrow();
         Map<String, String> exprMeta = p.metas.stream()
@@ -1348,7 +1348,7 @@ public class TestSourceCodeGraphLanguageMhsc {
 
         // exactly one v6 group entry
         assertEquals(1, g.groups.size());
-        ExecContextParamsYaml.Group grp = g.groups.get(0);
+        ExecContextParams.Group grp = g.groups.get(0);
         assertEquals("grp1", grp.name);
 
         // declared I/O contract (<- inA, inB) (-> outC)
@@ -1395,10 +1395,10 @@ public class TestSourceCodeGraphLanguageMhsc {
         SourceCodeGraph g = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, src);
 
         // exactly one process carries a non-null graft tag (the native group-call node)
-        List<ExecContextParamsYaml.Process> graftNodes =
+        List<ExecContextParams.Process> graftNodes =
                 g.processes.stream().filter(p -> p.graft != null).toList();
         assertEquals(1, graftNodes.size(), "exactly one in-band graft node expected");
-        ExecContextParamsYaml.Process graftNode = graftNodes.get(0);
+        ExecContextParams.Process graftNode = graftNodes.get(0);
         assertNotNull(graftNode.graft);
         assertEquals("grp1", graftNode.graft.groupName);
         assertEquals("run-now", graftNode.graft.driver);
@@ -1439,24 +1439,24 @@ public class TestSourceCodeGraphLanguageMhsc {
         SourceCodeGraph g = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, src);
 
         assertEquals(1, g.groups.size());
-        ExecContextParamsYaml.Group rung = g.groups.get(0);
+        ExecContextParams.Group rung = g.groups.get(0);
         assertEquals("rung", rung.name);
         assertEquals("head", rung.resetPointProcessCode);
 
         // the SELF graft lives INSIDE the group body and references the group's OWN name (recursion)
-        List<ExecContextParamsYaml.Process> bodyGrafts =
+        List<ExecContextParams.Process> bodyGrafts =
                 rung.body.stream().filter(p -> p.graft != null).toList();
         assertEquals(1, bodyGrafts.size(), "the recursive self-graft must be a node inside the group body");
-        ExecContextParamsYaml.Graft graft = bodyGrafts.get(0).graft;
+        ExecContextParams.Graft graft = bodyGrafts.get(0).graft;
         assertNotNull(graft);
         assertEquals("rung", graft.groupName, "body graft references the group itself");
         assertEquals("run-now", graft.driver);
 
         // the outer entry graft stays in the main pipeline and also references the group
-        List<ExecContextParamsYaml.Process> mainGrafts =
+        List<ExecContextParams.Process> mainGrafts =
                 g.processes.stream().filter(p -> p.graft != null).toList();
         assertEquals(1, mainGrafts.size(), "one entry graft in the main pipeline");
-        ExecContextParamsYaml.Graft graft1 = mainGrafts.get(0).graft;
+        ExecContextParams.Graft graft1 = mainGrafts.get(0).graft;
         assertNotNull(graft1);
         assertEquals("rung", graft1.groupName);
 

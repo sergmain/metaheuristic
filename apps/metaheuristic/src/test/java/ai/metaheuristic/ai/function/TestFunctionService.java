@@ -20,15 +20,12 @@ import ai.metaheuristic.ai.MhSharedItTest;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingTopLevelService;
-import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
-import ch.qos.logback.classic.LoggerContext;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -36,16 +33,11 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.cache.test.autoconfigure.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
-import java.nio.file.Path;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -74,13 +66,13 @@ class TestFunctionService extends MhSharedItTest {
 
     @Test
     public void test() {
-        ExecContextParamsYaml.FunctionDefinition sd = new ExecContextParamsYaml.FunctionDefinition();
+        ExecContextParams.FunctionDefinition sd = new ExecContextParams.FunctionDefinition();
         sd.code = TEST_FUNCTION;
         sd.params = null;
         TaskParamsYaml.FunctionConfig sc = functionTopLevelService.getFunctionConfig(sd);
         check(sc);
 
-        ExecContextParamsYaml.FunctionDefinition sd1 = new ExecContextParamsYaml.FunctionDefinition();
+        ExecContextParams.FunctionDefinition sd1 = new ExecContextParams.FunctionDefinition();
         sd1.code = "test";
         sd1.params = null;
         sd1.refType = EnumsApi.FunctionRefType.type;

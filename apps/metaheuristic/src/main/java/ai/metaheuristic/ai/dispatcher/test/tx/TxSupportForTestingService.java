@@ -34,7 +34,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskResetTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -290,7 +290,7 @@ public class TxSupportForTestingService {
      * caller MUST hold the EC write lock (this method calls execContextCache.save).
      */
     @Transactional
-    public void addGroupToExecContextParams(Long execContextId, ExecContextParamsYaml.Group group) {
+    public void addGroupToExecContextParams(Long execContextId, ExecContextParams.Group group) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
@@ -298,7 +298,7 @@ public class TxSupportForTestingService {
         if (execContext==null) {
             throw new IllegalStateException("execContext #" + execContextId + " not found");
         }
-        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
+        ExecContextParams ecpy = execContext.getExecContextParamsYaml();
         ecpy.groups.add(group);
         execContext.updateParams(ecpy);
         execContextCache.save(execContext);

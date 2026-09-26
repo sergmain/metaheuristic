@@ -31,7 +31,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
@@ -105,7 +105,7 @@ public class ExecContextTaskStateService {
             List<TaskData.TaskWithStateAndTaskContextId> taskWithStates = new ArrayList<>(event.taskIds.size()+10);
             log.debug("call ExecContextTaskStateTopLevelService.updateTaskExecStatesExecContext({}, {})", event.execContextId, taskWithStates);
             ExecContextTaskState execContextTaskState = execContextGraphService.prepareExecContextTaskState(ec.execContextTaskStateId);
-            ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
+            ExecContextTaskStateParams ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
             for (Long taskId : event.taskIds) {
                 TaskImpl task = taskRepository.findByIdReadOnly(taskId);
                 if (task==null) {

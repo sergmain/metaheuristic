@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsUtils;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -75,23 +75,23 @@ public class ExecContextTaskState implements Serializable {
 
     @Transient
     @JsonIgnore
-    private final ThreadUtils.CommonThreadLocker<ExecContextTaskStateParamsYaml> paramsLocked =
+    private final ThreadUtils.CommonThreadLocker<ExecContextTaskStateParams> paramsLocked =
             new ThreadUtils.CommonThreadLocker<>(this::parseParams);
 
-    private ExecContextTaskStateParamsYaml parseParams() {
-        ExecContextTaskStateParamsYaml temp = ExecContextTaskStateParamsYamlUtils.BASE_YAML_UTILS.to(params);
-        ExecContextTaskStateParamsYaml ecpy = temp==null ? new ExecContextTaskStateParamsYaml() : temp;
+    private ExecContextTaskStateParams parseParams() {
+        ExecContextTaskStateParams temp = ExecContextTaskStateParamsUtils.BASE_UTILS.to(params);
+        ExecContextTaskStateParams ecpy = temp==null ? new ExecContextTaskStateParams() : temp;
         return ecpy;
     }
 
     @JsonIgnore
-    public ExecContextTaskStateParamsYaml getExecContextTaskStateParamsYaml() {
+    public ExecContextTaskStateParams getExecContextTaskStateParamsYaml() {
         return paramsLocked.get();
     }
 
     @JsonIgnore
-    public void updateParams(ExecContextTaskStateParamsYaml wpy) {
-        setParams(ExecContextTaskStateParamsYamlUtils.BASE_YAML_UTILS.toString(wpy));
+    public void updateParams(ExecContextTaskStateParams wpy) {
+        setParams(ExecContextTaskStateParamsUtils.BASE_UTILS.toString(wpy));
     }
 
 }

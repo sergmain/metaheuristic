@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
@@ -36,7 +35,7 @@ import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -72,7 +71,7 @@ public class TaskVariableInitTxService {
     private final TaskTxService taskTxService;
 
     @Transactional(rollbackFor = CommonRollbackException.class)
-    public void intiVariables(InitVariablesEvent event, Long execContextGraphId, ExecContextParamsYaml execContextParamsYaml) {
+    public void intiVariables(InitVariablesEvent event, Long execContextGraphId, ExecContextParams execContextParamsYaml) {
         TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
         if (task==null) {
             throw new CommonRollbackException();
@@ -96,7 +95,7 @@ public class TaskVariableInitTxService {
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, List.of(task.id)));
     }
 
-    private void prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task, List<String> allParentTaskContextIds) {
+    private void prepareVariables(ExecContextParams execContextParamsYaml, TaskImpl task, List<String> allParentTaskContextIds) {
         TxUtils.checkTxExists();
 
         TaskParamsYaml taskParams = task.getTaskParamsYaml();
@@ -107,7 +106,7 @@ public class TaskVariableInitTxService {
                 taskParams.task.outputs.stream().map(o -> o.name).toList());
 
         final Long execContextId = task.execContextId;
-        ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
+        ExecContextParams.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
         if (p==null) {
             log.warn("179.040 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
             return;
@@ -129,7 +128,7 @@ public class TaskVariableInitTxService {
         variableTxService.initOutputVariables(execContextId, task, p, taskParams);
     }
 
-    private TaskParamsYaml.InputVariable toInputVariable(List<String> allParentTaskContextIds, ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
+    private TaskParamsYaml.InputVariable toInputVariable(List<String> allParentTaskContextIds, ExecContextParams.Variable v, String taskContextId, Long execContextId) {
         TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
         if (v.context==EnumsApi.VariableContext.local || v.context==EnumsApi.VariableContext.array) {
             String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableUtils.getParentContext(taskContextId) : taskContextId;
@@ -159,8 +158,8 @@ public class TaskVariableInitTxService {
         iv.context = v.context;
         iv.name = v.name;
         iv.sourcing = v.sourcing;
-        iv.disk = ExecContextParamsYaml.DiskParams.toDiskInfo(v.disk);
-        iv.git = ExecContextParamsYaml.GitParams.toGitInfo(v.git);
+        iv.disk = ExecContextParams.DiskParams.toDiskInfo(v.disk);
+        iv.git = ExecContextParams.GitParams.toGitInfo(v.git);
         iv.type = v.type;
         iv.setNullable(v.getNullable());
         return iv;

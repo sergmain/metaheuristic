@@ -16,8 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
-import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 
 import java.util.List;
 import java.util.Map;
@@ -33,19 +32,19 @@ import static ai.metaheuristic.api.EnumsApi.*;
  */
 public class ExecContextTaskStateUtils {
 
-    public static long getCountUnfinishedTasks(ExecContextTaskStateParamsYaml params) {
+    public static long getCountUnfinishedTasks(ExecContextTaskStateParams params) {
         return getUnfinishedTaskVertices(params).size();
     }
 
-    public static List<Long> getUnfinishedTaskVertices(ExecContextTaskStateParamsYaml params) {
+    public static List<Long> getUnfinishedTaskVertices(ExecContextTaskStateParams params) {
         return geTaskVertices(params, (o)->!TaskExecState.isFinishedStateIncludingRecovery(o));
     }
 
-    public static List<Long> getFinishedTaskVertices(ExecContextTaskStateParamsYaml params) {
+    public static List<Long> getFinishedTaskVertices(ExecContextTaskStateParams params) {
         return geTaskVertices(params, TaskExecState::isFinishedStateIncludingRecovery);
     }
 
-    public static List<Long> geTaskVertices(ExecContextTaskStateParamsYaml params, Function<TaskExecState, Boolean> checkStateFunc) {
+    public static List<Long> geTaskVertices(ExecContextTaskStateParams params, Function<TaskExecState, Boolean> checkStateFunc) {
         return params.states.entrySet()
                 .stream()
                 .filter(o -> checkStateFunc.apply(o.getValue()))

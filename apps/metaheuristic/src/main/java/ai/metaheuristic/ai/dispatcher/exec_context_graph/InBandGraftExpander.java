@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_graph;
 
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -42,8 +42,8 @@ public class InBandGraftExpander implements GraftExpander {
     private final ExecContextGraftService execContextGraftService;
 
     @Override
-    public List<Long> expand(Long execContextId, ExecContextParamsYaml.Process graftNode, Long targetTaskId, String currTaskContextId) {
-        final ExecContextParamsYaml.Graft graft = graftNode.graft;
+    public List<Long> expand(Long execContextId, ExecContextParams.Process graftNode, Long targetTaskId, String currTaskContextId) {
+        final ExecContextParams.Graft graft = graftNode.graft;
         if (graft == null) {
             throw new IllegalStateException("832.020 expand() called on a non-graft process " + graftNode.processCode);
         }

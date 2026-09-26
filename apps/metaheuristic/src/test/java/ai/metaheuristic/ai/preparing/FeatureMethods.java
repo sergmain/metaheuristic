@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,7 +92,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
             assertTrue(tasks02.isEmpty());
 
             long mills = System.currentTimeMillis();
-            ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
+            ExecContextParams execContextParamsYaml = result.execContext.getExecContextParamsYaml();
             ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, ()->
                     ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId, ()-> {
                         txSupportForTestingService.produceAndStartAllTasks(getSourceCode(), result.execContext.id);

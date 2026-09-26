@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.yaml.experiment_result;
 
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
@@ -39,7 +39,7 @@ public class ExperimentResultParamsYamlWithCache {
     public ExperimentResultParams experimentResult = null;
 
     // for caching
-    private ExecContextParamsYaml execContextParamsYaml = null;
+    private ExecContextParams execContextParamsYaml = null;
 
     public ExperimentResultParamsYamlWithCache(ExperimentResultParams experimentResult) {
         this.experimentResult = experimentResult;
@@ -72,17 +72,17 @@ public class ExperimentResultParamsYamlWithCache {
 
     @Transient
     @JsonIgnore
-    private final ThreadUtils.CommonThreadLocker<ExecContextParamsYaml> paramsLocked =
+    private final ThreadUtils.CommonThreadLocker<ExecContextParams> paramsLocked =
             new ThreadUtils.CommonThreadLocker<>(this::parseParams);
 
-    private ExecContextParamsYaml parseParams() {
-        ExecContextParamsYaml temp = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.execContext.execContextParams);
-        ExecContextParamsYaml ecpy = temp==null ? new ExecContextParamsYaml() : temp;
+    private ExecContextParams parseParams() {
+        ExecContextParams temp = ExecContextParamsUtils.BASE_UTILS.to(experimentResult.execContext.execContextParams);
+        ExecContextParams ecpy = temp==null ? new ExecContextParams() : temp;
         return ecpy;
     }
 
     @JsonIgnore
-    public ExecContextParamsYaml getExecContextParamsYaml() {
+    public ExecContextParams getExecContextParamsYaml() {
         return paramsLocked.get();
     }
 

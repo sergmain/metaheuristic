@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -194,17 +194,17 @@ public class AnyExternalFunctionFlagTest {
      */
     private static boolean simulateProducerLoopFlag(String yaml) {
         SourceCodeGraph scg = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, yaml);
-        ExecContextParamsYaml ecpy = new ExecContextParamsYaml();
+        ExecContextParams ecpy = new ExecContextParams();
         ecpy.processes.addAll(scg.processes);
 
         boolean anyExternalFunction = false;
         for (ExecContextApiData.ProcessVertex v : scg.processGraph) {
-            ExecContextParamsYaml.Process ancestor =
+            ExecContextParams.Process ancestor =
                     ExecContextTaskProducingService.findEnclosingInternalFunctionContainer(ecpy, scg.processGraph, v);
             if (ancestor != null) {
                 continue;
             }
-            ExecContextParamsYaml.Process self = ecpy.findProcess(v.process);
+            ExecContextParams.Process self = ecpy.findProcess(v.process);
             if (self != null && self.function.context == EnumsApi.FunctionExecContext.external) {
                 anyExternalFunction = true;
             }

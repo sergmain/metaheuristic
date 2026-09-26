@@ -14,22 +14,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.exec_context_task_state;
+package ai.metaheuristic.ai.yaml.execution_gate;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-
 import org.jspecify.annotations.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
- * @author Serge
- * Date: 3/17/2021
- * Time: 10:47 AM
+ * @author Sergio Lissner
+ * Date: 8/14/2026
  */
-public class ExecContextTaskStateParamsYamlUtilsV1
+public class ExecutionGateParamsUtilsV1
         extends AbstractParamsYamlUtils<
-        ExecContextTaskStateParamsYamlV1, ExecContextTaskStateParamsYaml, Void,
+    ExecutionGateParamsV1, ExecutionGateParams, Void,
         Void, Void, Void> {
 
     @Override
@@ -40,15 +38,19 @@ public class ExecContextTaskStateParamsYamlUtilsV1
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(ExecContextTaskStateParamsYamlV1.class);
+        return YamlUtils.init(ExecutionGateParamsV1.class);
     }
 
     @NonNull
     @Override
-    public ExecContextTaskStateParamsYaml upgradeTo(@NonNull ExecContextTaskStateParamsYamlV1 v1) {
-        ExecContextTaskStateParamsYaml t = new ExecContextTaskStateParamsYaml();
-        t.states.putAll(v1.states);
-        t.triesWasMade.putAll(v1.triesWasMade);
+    public ExecutionGateParams upgradeTo(@NonNull ExecutionGateParamsV1 v1) {
+        ExecutionGateParams t = new ExecutionGateParams();
+        t.triggeredByTaskId = v1.triggeredByTaskId;
+        t.functionCode = v1.functionCode;
+        t.processorId = v1.processorId;
+        t.matchedPattern = v1.matchedPattern;
+        t.consoleExcerpt = v1.consoleExcerpt;
+        t.incrementTries = v1.incrementTries;
         return t;
     }
 
@@ -69,14 +71,14 @@ public class ExecContextTaskStateParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull ExecContextTaskStateParamsYamlV1 yaml) {
+    public String toString(@NonNull ExecutionGateParamsV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public ExecContextTaskStateParamsYamlV1 to(@NonNull String s) {
-        final ExecContextTaskStateParamsYamlV1 p = getYaml().load(s);
+    public ExecutionGateParamsV1 to(@NonNull String s) {
+        final ExecutionGateParamsV1 p = getYaml().load(s);
         return p;
     }
 }

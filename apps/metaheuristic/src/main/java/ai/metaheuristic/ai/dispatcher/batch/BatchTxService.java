@@ -42,7 +42,7 @@ import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.api.data.SourceCodeGraph;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -365,6 +365,11 @@ public class BatchTxService {
             SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
             SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
             String resultBatchVariable = variableSelector.apply(batch.execContextId, scg);
+            if (resultBatchVariable==null) {
+                final String es = "01.981.470 Name of ouput Variable is unknown";
+                log.warn(es);
+                return resource;
+            }
 
             Variable variable = variableService.getVariableAsSimple(batch.execContextId, resultBatchVariable);
             if (variable==null) {
@@ -414,7 +419,7 @@ public class BatchTxService {
 
     private CleanerInfo getBatchProcessingResultInternal(Batch batch, Long companyUniqueId, boolean includeDeleted, String variableType) {
         return getVariable(batch, companyUniqueId, includeDeleted, (execContextId, scg)-> {
-            List<ExecContextParamsYaml.Variable> vars = SourceCodeTxService.findVariableByType(scg, variableType);
+            List<ExecContextParams.Variable> vars = SourceCodeTxService.findVariableByType(scg, variableType);
             if (vars.isEmpty()) {
                 final String es = "981.540 variable with type '"+variableType+"' wasn't found";
                 log.warn(es);

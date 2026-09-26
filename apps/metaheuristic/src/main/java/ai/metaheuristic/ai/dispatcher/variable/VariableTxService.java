@@ -39,7 +39,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.commons.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -176,7 +176,7 @@ public class VariableTxService {
     }
 
     @Transactional
-    public void initInputVariableWithNull(String sourceCodeUid, Long execContextId, final ExecContextParamsYaml.Variable variable) {
+    public void initInputVariableWithNull(String sourceCodeUid, Long execContextId, final ExecContextParams.Variable variable) {
 /*
         if (execContextParamsYaml.variables.inputs.size()<varIndex+1) {
             throw new ExecContextCommonException(
@@ -265,7 +265,7 @@ public class VariableTxService {
     }
 
     @Transactional
-    public void initOutputVariable(Long execContextId, ExecContextParamsYaml.Variable output) {
+    public void initOutputVariable(Long execContextId, ExecContextParams.Variable output) {
         TxUtils.checkTxExists();
 
         Variable sv = findVariableInAllInternalContexts(output.name, CommonConsts.TOP_LEVEL_CONTEXT_ID, execContextId);
@@ -456,7 +456,7 @@ public class VariableTxService {
     @SuppressWarnings({"SameParameterValue"})
     @Nullable
     public Variable getVariable(String variable, String processCode, ExecContextImpl execContext) {
-        ExecContextParamsYaml.Process p = execContext.getExecContextParamsYaml().findProcess(processCode);
+        ExecContextParams.Process p = execContext.getExecContextParamsYaml().findProcess(processCode);
         if (p==null) {
             return null;
         }
@@ -811,7 +811,7 @@ public class VariableTxService {
     }
 
 
-    public void initOutputVariables(Long execContextId, TaskImpl task, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml) {
+    public void initOutputVariables(Long execContextId, TaskImpl task, ExecContextParams.Process p, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
 
         VariableUtils.initOutputVariables(

@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -37,8 +37,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @Execution(ExecutionMode.CONCURRENT)
 public class InternalFunctionServiceGroupBodyTest {
 
-    private static ExecContextParamsYaml.Process proc(String processCode, String internalContextId) {
-        ExecContextParamsYaml.Process p = new ExecContextParamsYaml.Process();
+    private static ExecContextParams.Process proc(String processCode, String internalContextId) {
+        ExecContextParams.Process p = new ExecContextParams.Process();
         p.processCode = processCode;
         p.processName = processCode;
         p.internalContextId = internalContextId;
@@ -51,9 +51,9 @@ public class InternalFunctionServiceGroupBodyTest {
      * sibling has its own children, so EVERY child shares the "2,3," prefix. The body list is
      * kept in DFS pre-order.
      */
-    private static ExecContextParamsYaml paramsWithSiblingCollision() {
-        ExecContextParamsYaml py = new ExecContextParamsYaml();
-        ExecContextParamsYaml.Group g = new ExecContextParamsYaml.Group("req-rung");
+    private static ExecContextParams paramsWithSiblingCollision() {
+        ExecContextParams py = new ExecContextParams();
+        ExecContextParams.Group g = new ExecContextParams.Group("req-rung");
         g.internalContextId = "2";
         // DFS pre-order body:
         g.body.add(proc("w-seq",    "2,3"));    // running wrapper (sequential sibling)
@@ -67,8 +67,8 @@ public class InternalFunctionServiceGroupBodyTest {
 
     @Test
     public void test_groupBodySubProcesses_sequentialSiblingCollision() {
-        ExecContextParamsYaml py = paramsWithSiblingCollision();
-        ExecContextParamsYaml.Process wSeq = py.groups.get(0).body.get(0);
+        ExecContextParams py = paramsWithSiblingCollision();
+        ExecContextParams.Process wSeq = py.groups.get(0).body.get(0);
 
         List<ExecContextApiData.ProcessVertex> result =
                 InternalFunctionService.groupBodySubProcesses(py, wSeq, "1,2,3");
@@ -90,9 +90,9 @@ public class InternalFunctionServiceGroupBodyTest {
      * over-trim (both branches kept), must skip grandchildren (not direct), and must exclude a
      * preceding sequential SIBLING's child.
      */
-    private static ExecContextParamsYaml paramsWithParallelParent() {
-        ExecContextParamsYaml py = new ExecContextParamsYaml();
-        ExecContextParamsYaml.Group g = new ExecContextParamsYaml.Group("req-rung");
+    private static ExecContextParams paramsWithParallelParent() {
+        ExecContextParams py = new ExecContextParams();
+        ExecContextParams.Group g = new ExecContextParams.Group("req-rung");
         g.internalContextId = "2";
         // DFS pre-order body:
         g.body.add(proc("wrapper-seq",  "2,7"));      // sequential sibling, appears BEFORE the parallel one
@@ -108,8 +108,8 @@ public class InternalFunctionServiceGroupBodyTest {
 
     @Test
     public void test_groupBodySubProcesses_parallelParentKeepsBothBranches() {
-        ExecContextParamsYaml py = paramsWithParallelParent();
-        ExecContextParamsYaml.Process amendPar = py.groups.get(0).body.get(2);
+        ExecContextParams py = paramsWithParallelParent();
+        ExecContextParams.Process amendPar = py.groups.get(0).body.get(2);
 
         List<ExecContextApiData.ProcessVertex> result =
                 InternalFunctionService.groupBodySubProcesses(py, amendPar, "1,2,3");

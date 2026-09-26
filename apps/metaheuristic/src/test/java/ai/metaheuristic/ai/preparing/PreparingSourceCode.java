@@ -34,7 +34,7 @@ import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.SneakyThrows;
@@ -110,7 +110,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         preparingSourceCodeData.execContextForTest = execContextForTest;
     }
 
-    public ExecContextParamsYaml getExecContextYaml() {
+    public ExecContextParams getExecContextYaml() {
         return preparingSourceCodeData.execContextYaml;
     }
 

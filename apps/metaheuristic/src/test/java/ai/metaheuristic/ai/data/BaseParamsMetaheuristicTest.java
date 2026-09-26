@@ -32,11 +32,11 @@ import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsUtils;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsUtils;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
@@ -54,7 +54,7 @@ import ai.metaheuristic.ai.yaml.series.SeriesParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeStoredParamsYamlUtils;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -87,9 +87,9 @@ public class BaseParamsMetaheuristicTest {
             Pair.of(DispatcherCommParamsYamlUtils.BASE_YAML_UTILS, DispatcherCommParamsYaml.class),
             Pair.of(DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS, DispatcherLookupParamsYaml.class),
             Pair.of(DispatcherParamsYamlUtils.BASE_YAML_UTILS, DispatcherParamsYaml.class),
-            Pair.of(ExecContextGraphParamsYamlUtils.BASE_YAML_UTILS, ExecContextGraphParamsYaml.class),
-            Pair.of(ExecContextParamsYamlUtils.BASE_YAML_UTILS, ExecContextParamsYaml.class),
-            Pair.of(ExecContextTaskStateParamsYamlUtils.BASE_YAML_UTILS, ExecContextTaskStateParamsYaml.class),
+            Pair.of(ExecContextGraphParamsUtils.BASE_UTILS, ExecContextGraphParams.class),
+            Pair.of(ExecContextParamsUtils.BASE_UTILS, ExecContextParams.class),
+            Pair.of(ExecContextTaskStateParamsUtils.BASE_UTILS, ExecContextTaskStateParams.class),
             Pair.of(ExperimentParamsYamlUtils.BASE_YAML_UTILS, ExperimentParamsYaml.class),
             Pair.of(ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS, ExperimentResultTaskParams.class),
             Pair.of(FunctionDownloadStatusYamlUtils.BASE_YAML_UTILS, FunctionDownloadStatusYaml.class),

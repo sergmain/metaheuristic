@@ -35,13 +35,13 @@ import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
@@ -128,9 +128,9 @@ public class ExecContextCreatorService {
 
     @Transactional(rollbackFor = {CommonRollbackException.class, ExecContextTooManyInstancesException.class} )
     public ExecContextCreationResult createExecContextAndStart(
-            Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks,
-            ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo,
-            ExecContextParamsYaml.@Nullable GitSources gitSources, @Nullable Map<String, ExecContextData.VariableValue> inputVariables) {
+        Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks,
+        ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo,
+        ExecContextParams.@Nullable GitSources gitSources, @Nullable Map<String, ExecContextData.VariableValue> inputVariables) {
 
         SourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
@@ -210,7 +210,7 @@ public class ExecContextCreatorService {
      */
     public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context,
                                                        ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo,
-                                                       ExecContextParamsYaml.@Nullable GitSources gitSources) {
+                                                       ExecContextParams.@Nullable GitSources gitSources) {
         TxUtils.checkTxExists();
         SourceCodeSyncService.checkWriteLockPresent(sourceCode.id);
 
@@ -243,7 +243,7 @@ public class ExecContextCreatorService {
     private ExecContextImpl createExecContext(
             SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context, SourceCodeGraph sourceCodeGraph,
             ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo,
-            ExecContextParamsYaml.@Nullable GitSources gitSources) {
+            ExecContextParams.@Nullable GitSources gitSources) {
 
         ExecContextImpl ec = new ExecContextImpl();
         ec.companyId = context.companyId();
@@ -252,13 +252,13 @@ public class ExecContextCreatorService {
         ec.setCreatedOn(System.currentTimeMillis());
         ec.setState(EnumsApi.ExecContextState.NONE.code);
         ec.setCompletedOn(null);
-        ExecContextParamsYaml ecpy = to(sourceCodeGraph);
+        ExecContextParams ecpy = to(sourceCodeGraph);
         ecpy.sourceCodeUid = sourceCode.uid;
         // already resolved by the orchestrator, OUTSIDE this transaction - `ls-remote` is a network call
         // and SPRING-TX-RULES.md 1 keeps context reads out of the tx
         ecpy.gitSources = gitSources;
         if (rootAndParent!=null) {
-            ecpy.execContextGraph = new ExecContextParamsYaml.ExecContextGraph(rootAndParent.rootExecContextId, rootAndParent.parentExecContextId);
+            ecpy.execContextGraph = new ExecContextParams.ExecContextGraph(rootAndParent.rootExecContextId, rootAndParent.parentExecContextId);
             ec.rootExecContextId = rootAndParent.rootExecContextId;
         }
         copyToParams(execContextCreationInfo, ecpy);
@@ -267,13 +267,13 @@ public class ExecContextCreatorService {
         ec.setValid(true);
 
         ExecContextTaskState execContextTaskState = new ExecContextTaskState();
-        execContextTaskState.updateParams(new ExecContextTaskStateParamsYaml());
+        execContextTaskState.updateParams(new ExecContextTaskStateParams());
         execContextTaskState.createdOn = System.currentTimeMillis();
         execContextTaskState = execContextTaskStateRepository.save(execContextTaskState);
         ec.execContextTaskStateId = execContextTaskState.id;
 
         ExecContextGraph execContextGraph = new ExecContextGraph();
-        execContextGraph.updateParams(new ExecContextGraphParamsYaml());
+        execContextGraph.updateParams(new ExecContextGraphParams());
         execContextGraph.createdOn = System.currentTimeMillis();
         execContextGraph = execContextGraphCache.save(execContextGraph);
         ec.execContextGraphId = execContextGraph.id;
@@ -307,12 +307,12 @@ public class ExecContextCreatorService {
      * own declaration and is refused (01.562.124), like a missing value, before anything is written.
      */
     private void initInputVariables(
-            List<ExecContextParamsYaml.Variable> inputs, @Nullable Map<String, ExecContextData.VariableValue> inputVariables, Long execContextId) {
+        List<ExecContextParams.Variable> inputs, @Nullable Map<String, ExecContextData.VariableValue> inputVariables, Long execContextId) {
 
         final Map<String, ExecContextData.VariableValue> values = inputVariables==null ? Map.of() : inputVariables;
 
         final List<String> missing = new ArrayList<>();
-        for (ExecContextParamsYaml.Variable input : inputs) {
+        for (ExecContextParams.Variable input : inputs) {
             if (!values.containsKey(input.name)) {
                 missing.add(input.name);
             }
@@ -337,7 +337,7 @@ public class ExecContextCreatorService {
                 + "as not nullable (no '?'): " + String.join(", ", nullForNotNullable)
                 + ". Supply a value, or declare the variable with '?'.");
         }
-        for (ExecContextParamsYaml.Variable input : inputs) {
+        for (ExecContextParams.Variable input : inputs) {
             final String value = values.get(input.name).value();
             if (value==null) {
                 // an explicit null: initialized AND nullified, i.e. supplied without content
@@ -349,15 +349,15 @@ public class ExecContextCreatorService {
                 execContextId, CommonConsts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.text);
         }
     }
-    private static void copyToParams(ExecContextData.@Nullable ExecContextCreationInfo info, ExecContextParamsYaml ecpy) {
+    private static void copyToParams(ExecContextData.@Nullable ExecContextCreationInfo info, ExecContextParams ecpy) {
         if (info == null) {
             return;
         }
         ecpy.desc = info.desc();
     }
 
-    private static ExecContextParamsYaml to(SourceCodeGraph sourceCodeGraph) {
-        ExecContextParamsYaml params = new ExecContextParamsYaml();
+    private static ExecContextParams to(SourceCodeGraph sourceCodeGraph) {
+        ExecContextParams params = new ExecContextParams();
         params.clean = sourceCodeGraph.clean;
         params.processes.addAll(sourceCodeGraph.processes);
         params.groups.addAll(sourceCodeGraph.groups);
@@ -367,7 +367,7 @@ public class ExecContextCreatorService {
         return params;
     }
 
-    private static void initVariables(ExecContextParamsYaml.VariableDeclaration src, ExecContextParamsYaml.VariableDeclaration trg) {
+    private static void initVariables(ExecContextParams.VariableDeclaration src, ExecContextParams.VariableDeclaration trg) {
         trg.inline.putAll(src.inline);
         trg.globals = src.globals;
         trg.inputs.addAll(src.inputs);

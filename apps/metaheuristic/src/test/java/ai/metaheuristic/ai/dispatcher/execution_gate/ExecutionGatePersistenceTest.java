@@ -17,13 +17,12 @@
 package ai.metaheuristic.ai.dispatcher.execution_gate;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.MhSharedItTest;
 import ai.metaheuristic.ai.SharedItEnv;
 import ai.metaheuristic.ai.dispatcher.beans.ExecutionGate;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecutionGateRepository;
-import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYaml;
+import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParams;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -90,7 +89,7 @@ public class ExecutionGatePersistenceTest extends MhSharedItTest {
         assertEquals("downtime", reRead.reasonCode);
         assertNotNull(reRead.version);
 
-        final ExecutionGateParamsYaml egpy = reRead.getExecutionGateParamsYaml();
+        final ExecutionGateParams egpy = reRead.getExecutionGateParamsYaml();
         assertEquals(424_242L, egpy.triggeredByTaskId);
         assertEquals("some-function:1.1", egpy.functionCode);
         assertEquals(17L, egpy.processorId);
@@ -144,7 +143,7 @@ public class ExecutionGatePersistenceTest extends MhSharedItTest {
     }
 
     private ExecutionGate save(EnumsApi.GateScope scope, String refKey, long blockedUntil, String reasonCode,
-                               java.util.function.Consumer<ExecutionGateParamsYaml> paramsFiller) {
+                               java.util.function.Consumer<ExecutionGateParams> paramsFiller) {
         final ExecutionGate gate = new ExecutionGate();
         gate.scope = scope.name();
         gate.refKey = refKey;
@@ -152,7 +151,7 @@ public class ExecutionGatePersistenceTest extends MhSharedItTest {
         gate.createdOn = System.currentTimeMillis();
         gate.reasonCode = reasonCode;
 
-        final ExecutionGateParamsYaml egpy = new ExecutionGateParamsYaml();
+        final ExecutionGateParams egpy = new ExecutionGateParams();
         paramsFiller.accept(egpy);
         gate.updateParams(egpy);
 

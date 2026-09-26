@@ -22,7 +22,6 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.springframework.beans.BeanUtils;
 
 import org.yaml.snakeyaml.Yaml;
 
@@ -34,8 +33,8 @@ import java.util.stream.Collectors;
  * Time: 2:13 PM
  */
 @SuppressWarnings("DuplicatedCode")
-public class ExecContextParamsYamlUtilsV3
-        extends AbstractParamsYamlUtils<ExecContextParamsYamlV3, ExecContextParamsYamlV4, ExecContextParamsYamlUtilsV4,
+public class ExecContextParamsUtilsV3
+        extends AbstractParamsYamlUtils<ExecContextParamsYamlV3, ExecContextParamsYamlV4, ExecContextParamsUtilsV4,
         Void, Void, Void> {
 
     @Override
@@ -59,7 +58,7 @@ public class ExecContextParamsYamlUtilsV3
         t.clean = v3.clean;
         t.sourceCodeUid = v3.sourceCodeUid;
         t.processesGraph = v3.processesGraph;
-        v3.processes.stream().map(ExecContextParamsYamlUtilsV3::toProcess).collect(Collectors.toCollection(()->t.processes));
+        v3.processes.stream().map(ExecContextParamsUtilsV3::toProcess).collect(Collectors.toCollection(()->t.processes));
         initVariables(v3.variables, t.variables);
 
         return t;
@@ -75,10 +74,10 @@ public class ExecContextParamsYamlUtilsV3
     private static ExecContextParamsYamlV4.ProcessV4 toProcess(ExecContextParamsYamlV3.ProcessV3 p2) {
         ExecContextParamsYamlV4.ProcessV4 p = new ExecContextParamsYamlV4.ProcessV4();
         p.function = toFunction(p2.function);
-        p.preFunctions = p2.preFunctions!=null ? p2.preFunctions.stream().map(ExecContextParamsYamlUtilsV3::toFunction).collect(Collectors.toList()) : null;
-        p.postFunctions = p2.postFunctions!=null ? p2.postFunctions.stream().map(ExecContextParamsYamlUtilsV3::toFunction).collect(Collectors.toList()) : null;
-        p2.inputs.stream().map(ExecContextParamsYamlUtilsV3::toVariable).collect(Collectors.toCollection(()->p.inputs));
-        p2.outputs.stream().map(ExecContextParamsYamlUtilsV3::toVariable).collect(Collectors.toCollection(()->p.outputs));
+        p.preFunctions = p2.preFunctions!=null ? p2.preFunctions.stream().map(ExecContextParamsUtilsV3::toFunction).collect(Collectors.toList()) : null;
+        p.postFunctions = p2.postFunctions!=null ? p2.postFunctions.stream().map(ExecContextParamsUtilsV3::toFunction).collect(Collectors.toList()) : null;
+        p2.inputs.stream().map(ExecContextParamsUtilsV3::toVariable).collect(Collectors.toCollection(()->p.inputs));
+        p2.outputs.stream().map(ExecContextParamsUtilsV3::toVariable).collect(Collectors.toCollection(()->p.outputs));
         p.metas.addAll(p2.metas);
         if (p2.cache!=null) {
             p.cache = new ExecContextParamsYamlV4.CacheV4(p2.cache.enabled, p2.cache.omitInline);
@@ -110,8 +109,8 @@ public class ExecContextParamsYamlUtilsV3
     }
 
     @Override
-    public @Nullable ExecContextParamsYamlUtilsV4 nextUtil() {
-        return (ExecContextParamsYamlUtilsV4) ExecContextParamsYamlUtils.BASE_YAML_UTILS.getForVersion(4);
+    public @Nullable ExecContextParamsUtilsV4 nextUtil() {
+        return (ExecContextParamsUtilsV4) ExecContextParamsUtils.BASE_UTILS.getForVersion(4);
     }
 
     @Override

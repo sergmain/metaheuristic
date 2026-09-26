@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.CommonConsts;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -43,8 +43,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @Execution(ExecutionMode.CONCURRENT)
 public class VariableUtilsAbsentNullableInputTest {
 
-    private static ExecContextParamsYaml.Variable input(String name, EnumsApi.VariableContext ctx, boolean nullable) {
-        ExecContextParamsYaml.Variable v = new ExecContextParamsYaml.Variable();
+    private static ExecContextParams.Variable input(String name, EnumsApi.VariableContext ctx, boolean nullable) {
+        ExecContextParams.Variable v = new ExecContextParams.Variable();
         v.name = name;
         v.context = ctx;
         v.setNullable(nullable);

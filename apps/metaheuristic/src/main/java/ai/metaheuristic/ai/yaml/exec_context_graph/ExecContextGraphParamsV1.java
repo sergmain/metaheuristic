@@ -26,7 +26,7 @@ import lombok.Data;
  * Time: 10:33 AM
  */
 @Data
-public class ExecContextGraphParamsYamlV1 implements BaseParams {
+public class ExecContextGraphParamsV1 implements BaseParams {
 
     public final int version = 1;
 

@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
@@ -50,7 +50,7 @@ public class ExecContextTaskStateUtilsTest {
             version: 1
             """;
 
-        ExecContextTaskStateParamsYaml paramsYaml = ExecContextTaskStateParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        ExecContextTaskStateParams paramsYaml = ExecContextTaskStateParamsUtils.BASE_UTILS.to(yaml);
 
         List<Long> l = ExecContextTaskStateUtils.getFinishedTaskVertices(paramsYaml);
         assertEquals(5, l.size());

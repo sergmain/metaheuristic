@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +58,7 @@ public class TaskFinishingTopLevelService {
         checkTaskCanBeFinishedInternal(taskId, this::finishAndStoreVariableInternal );
     }
 
-    private void checkTaskCanBeFinishedInternal(Long taskId, BiConsumer<Long, ExecContextParamsYaml> finishAndStoreVariableFunction) {
+    private void checkTaskCanBeFinishedInternal(Long taskId, BiConsumer<Long, ExecContextParams> finishAndStoreVariableFunction) {
         TxUtils.checkTxNotExists();
         TaskImpl task = taskRepository.findByIdReadOnly(taskId);
         if (task == null) {
@@ -137,7 +137,7 @@ public class TaskFinishingTopLevelService {
     }
 
     // this method is here because there was a problem with transactional method called from lambda
-    private void finishAndStoreVariableInternal(Long taskId, ExecContextParamsYaml ecpy) {
+    private void finishAndStoreVariableInternal(Long taskId, ExecContextParams ecpy) {
         taskFinishingTxService.finishAsOkAndStoreVariable(taskId, ecpy);
     }
 

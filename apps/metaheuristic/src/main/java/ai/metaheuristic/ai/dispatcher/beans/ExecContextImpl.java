@@ -15,9 +15,9 @@
  */
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils.CommonThreadLocker;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -101,22 +101,22 @@ public class ExecContextImpl implements Serializable, ExecContext {
 
     @Transient
     @JsonIgnore
-    private final CommonThreadLocker<ExecContextParamsYaml> paramsLocked = new CommonThreadLocker<>(this::parseParams);
+    private final CommonThreadLocker<ExecContextParams> paramsLocked = new CommonThreadLocker<>(this::parseParams);
 
-    private ExecContextParamsYaml parseParams() {
-        ExecContextParamsYaml temp = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(params);
-        ExecContextParamsYaml ecpy = temp==null ? new ExecContextParamsYaml() : temp;
+    private ExecContextParams parseParams() {
+        ExecContextParams temp = ExecContextParamsUtils.BASE_UTILS.to(params);
+        ExecContextParams ecpy = temp==null ? new ExecContextParams() : temp;
         return ecpy;
     }
 
     @JsonIgnore
-    public ExecContextParamsYaml getExecContextParamsYaml() {
+    public ExecContextParams getExecContextParamsYaml() {
         return paramsLocked.get();
     }
 
     @JsonIgnore
-    public void updateParams(ExecContextParamsYaml wpy) {
-        setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(wpy));
+    public void updateParams(ExecContextParams wpy) {
+        setParams(ExecContextParamsUtils.BASE_UTILS.toString(wpy));
     }
 
     @JsonIgnore

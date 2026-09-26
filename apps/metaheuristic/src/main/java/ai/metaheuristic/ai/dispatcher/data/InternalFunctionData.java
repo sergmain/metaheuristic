@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.data;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionOutput;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -67,8 +67,8 @@ public class InternalFunctionData {
     public static class ExecutionContextData {
         public InternalFunctionProcessingResult internalFunctionProcessingResult;
         public List<ExecContextApiData.ProcessVertex> subProcesses;
-        public ExecContextParamsYaml.Process process;
-        public ExecContextParamsYaml execContextParamsYaml;
+        public ExecContextParams.Process process;
+        public ExecContextParams execContextParamsYaml;
         public Set<ExecContextData.TaskVertex> descendants;
 
         public ExecutionContextData(InternalFunctionProcessingResult internalFunctionProcessingResult) {

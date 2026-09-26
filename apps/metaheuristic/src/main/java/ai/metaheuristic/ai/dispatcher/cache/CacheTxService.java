@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.cache;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
-import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
@@ -32,7 +31,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -93,11 +92,11 @@ public class CacheTxService {
     }
 
     @Transactional
-    public void storeVariablesTx(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
+    public void storeVariablesTx(TaskParamsYaml tpy, ExecContextParams.FunctionDefinition function) {
         storeVariables(tpy, function);
     }
 
-    public void storeVariables(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
+    public void storeVariables(TaskParamsYaml tpy, ExecContextParams.FunctionDefinition function) {
         TxUtils.checkTxExists();
 
         CacheData.FullKey fullKey = getKey(tpy, function);
@@ -166,7 +165,7 @@ public class CacheTxService {
         }
     }
 
-    public CacheData.FullKey getKey(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
+    public CacheData.FullKey getKey(TaskParamsYaml tpy, ExecContextParams.FunctionDefinition function) {
         return CacheUtils.getKey(tpy, function.params,
             variableTopLevelService::variableBlobIdRef,
             variableTxService::getVariableBlobDataAsString,

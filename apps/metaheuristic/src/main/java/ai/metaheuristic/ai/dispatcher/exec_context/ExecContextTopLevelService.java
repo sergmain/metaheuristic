@@ -34,7 +34,7 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.account.UserContext;
@@ -378,7 +378,7 @@ public class ExecContextTopLevelService {
                         desc = ERROR;
                     }
                     else {
-                        ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
+                        ExecContextParams ecpy = ec.getExecContextParamsYaml();
                         desc = S.b(ecpy.desc) ? "<Empty>" :  ecpy.desc;
                     }
                 } catch (Throwable th) {

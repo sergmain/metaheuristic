@@ -17,13 +17,12 @@
 package ai.metaheuristic.ai.dispatcher.execution_gate;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.MhSharedItTest;
 import ai.metaheuristic.ai.SharedItEnv;
 import ai.metaheuristic.ai.dispatcher.beans.ExecutionGate;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecutionGateRepository;
-import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYaml;
+import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParams;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -181,8 +180,8 @@ public class ExecutionGateServiceTest extends MhSharedItTest {
         return executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.api.name(), refKey) == null ? 0 : 1;
     }
 
-    private static ExecutionGateParamsYaml params() {
-        final ExecutionGateParamsYaml egpy = new ExecutionGateParamsYaml();
+    private static ExecutionGateParams params() {
+        final ExecutionGateParams egpy = new ExecutionGateParams();
         egpy.functionCode = "some-function:1.1";
         egpy.matchedPattern = "(?i)rate.limit";
         return egpy;

@@ -14,20 +14,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.execution_gate;
+package ai.metaheuristic.ai.yaml.exec_context_graph;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+
 import org.jspecify.annotations.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
- * @author Sergio Lissner
- * Date: 8/14/2026
+ * @author Serge
+ * Date: 3/17/2021
+ * Time: 10:47 AM
  */
-public class ExecutionGateParamsYamlUtilsV1
+public class ExecContextGraphParamsUtilsV1
         extends AbstractParamsYamlUtils<
-        ExecutionGateParamsYamlV1, ExecutionGateParamsYaml, Void,
+    ExecContextGraphParamsV1, ExecContextGraphParams, Void,
         Void, Void, Void> {
 
     @Override
@@ -38,19 +40,14 @@ public class ExecutionGateParamsYamlUtilsV1
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(ExecutionGateParamsYamlV1.class);
+        return YamlUtils.init(ExecContextGraphParamsV1.class);
     }
 
     @NonNull
     @Override
-    public ExecutionGateParamsYaml upgradeTo(@NonNull ExecutionGateParamsYamlV1 v1) {
-        ExecutionGateParamsYaml t = new ExecutionGateParamsYaml();
-        t.triggeredByTaskId = v1.triggeredByTaskId;
-        t.functionCode = v1.functionCode;
-        t.processorId = v1.processorId;
-        t.matchedPattern = v1.matchedPattern;
-        t.consoleExcerpt = v1.consoleExcerpt;
-        t.incrementTries = v1.incrementTries;
+    public ExecContextGraphParams upgradeTo(@NonNull ExecContextGraphParamsV1 v1) {
+        ExecContextGraphParams t = new ExecContextGraphParams();
+        t.graph = v1.graph;
         return t;
     }
 
@@ -71,14 +68,14 @@ public class ExecutionGateParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull ExecutionGateParamsYamlV1 yaml) {
+    public String toString(@NonNull ExecContextGraphParamsV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public ExecutionGateParamsYamlV1 to(@NonNull String s) {
-        final ExecutionGateParamsYamlV1 p = getYaml().load(s);
+    public ExecContextGraphParamsV1 to(@NonNull String s) {
+        final ExecContextGraphParamsV1 p = getYaml().load(s);
         return p;
     }
 }

@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.graph.mhsc.MhSourceCodeParser;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.exceptions.SourceCodeGraphException;
 import ai.metaheuristic.commons.graph.ExecContextProcessGraphService;
 import ai.metaheuristic.commons.utils.ContextUtils;
@@ -224,7 +224,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
         //     processes are moved OUT of the main graph into the group body. ---
         public Void visitGroupDecl(MhSourceCodeParser.GroupDeclContext ctx) {
             String groupName = ctx.ID().getText();
-            ExecContextParamsYaml.Group group = new ExecContextParamsYaml.Group(groupName);
+            ExecContextParams.Group group = new ExecContextParams.Group(groupName);
 
             // Declared I/O contract (O6): the group's <- inputs / -> outputs.
             if (ctx.groupInputs() != null) {
@@ -271,7 +271,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 }
             }
 
-            List<ExecContextParamsYaml.Process> bodyProcesses =
+            List<ExecContextParams.Process> bodyProcesses =
                     new ArrayList<>(scg.processes.subList(processesBefore, scg.processes.size()));
             group.body.addAll(bodyProcesses);
             scg.processes.subList(processesBefore, scg.processes.size()).clear();
@@ -314,7 +314,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
 
             checkProcessCode(processCode);
 
-            ExecContextParamsYaml.Process process = new ExecContextParamsYaml.Process();
+            ExecContextParams.Process process = new ExecContextParams.Process();
             process.processCode = processCode;
             process.processName = processCode; // default, may be overridden by nameDecl
             process.internalContextId = internalContextId;
@@ -360,7 +360,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                     } else if (pe.nameDecl() != null) {
                         process.processName = unquote(pe.nameDecl().STRING().getText());
                     } else if (pe.paramsDecl() != null) {
-                        process.function = new ExecContextParamsYaml.FunctionDefinition(
+                        process.function = new ExecContextParams.FunctionDefinition(
                                 process.function.code, unquote(pe.paramsDecl().STRING().getText()),
                                 process.function.context, process.function.refType);
                     } else if (pe.subProcessBlock() != null) {
@@ -399,7 +399,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                     } else if (pa.nameDecl() != null) {
                         process.processName = unquote(pa.nameDecl().STRING().getText());
                     } else if (pa.paramsDecl() != null) {
-                        process.function = new ExecContextParamsYaml.FunctionDefinition(
+                        process.function = new ExecContextParams.FunctionDefinition(
                                 process.function.code, unquote(pa.paramsDecl().STRING().getText()),
                                 process.function.context, process.function.refType);
                     }
@@ -606,12 +606,12 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
 
         // ================= Helper methods =================
 
-        private ExecContextParamsYaml.FunctionDefinition parseFunctionRef(MhSourceCodeParser.FunctionRefContext ctx) {
+        private ExecContextParams.FunctionDefinition parseFunctionRef(MhSourceCodeParser.FunctionRefContext ctx) {
             if (ctx.getStart().getText().equals("internal")) {
-                return new ExecContextParamsYaml.FunctionDefinition(
+                return new ExecContextParams.FunctionDefinition(
                         resolveIdRef(ctx.idRef()), null, EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
             } else {
-                return new ExecContextParamsYaml.FunctionDefinition(
+                return new ExecContextParams.FunctionDefinition(
                         resolveIdRef(ctx.idRef()), null, EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code);
             }
         }
@@ -632,15 +632,15 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             String processCode = "mh.graft." + groupName + "." + currId.incrementAndGet();
             checkProcessCode(processCode);
 
-            ExecContextParamsYaml.Process process = new ExecContextParamsYaml.Process();
+            ExecContextParams.Process process = new ExecContextParams.Process();
             process.processCode = processCode;
             process.processName = processCode;
             process.internalContextId = internalContextId;
             // placeholder function - never run; the dispatcher expands this node via attachGroup.
-            process.function = new ExecContextParamsYaml.FunctionDefinition(
+            process.function = new ExecContextParams.FunctionDefinition(
                     "mh.nop", null, EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
 
-            ExecContextParamsYaml.Graft graft = new ExecContextParamsYaml.Graft(groupName);
+            ExecContextParams.Graft graft = new ExecContextParams.Graft(groupName);
             if (ctx.graftBind() != null) {
                 List<MhSourceCodeParser.IdRefListContext> lists = ctx.graftBind().idRefList();
                 if (!lists.isEmpty()) {
@@ -672,21 +672,21 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             return result;
         }
 
-        private void parseInputs(MhSourceCodeParser.InputsDeclContext ctx, ExecContextParamsYaml.Process process) {
+        private void parseInputs(MhSourceCodeParser.InputsDeclContext ctx, ExecContextParams.Process process) {
             for (MhSourceCodeParser.VarDefContext vd : ctx.varDefList().varDef()) {
-                ExecContextParamsYaml.Variable var = varDefToExecVariable(vd);
+                ExecContextParams.Variable var = varDefToExecVariable(vd);
                 process.inputs.add(var);
             }
         }
 
-        private void parseOutputs(MhSourceCodeParser.OutputsDeclContext ctx, ExecContextParamsYaml.Process process) {
+        private void parseOutputs(MhSourceCodeParser.OutputsDeclContext ctx, ExecContextParams.Process process) {
             for (MhSourceCodeParser.VarDefContext vd : ctx.varDefList().varDef()) {
-                ExecContextParamsYaml.Variable var = varDefToExecVariable(vd);
+                ExecContextParams.Variable var = varDefToExecVariable(vd);
                 process.outputs.add(var);
             }
         }
 
-        private void parseMeta(MhSourceCodeParser.MetaDeclContext ctx, ExecContextParamsYaml.Process process) {
+        private void parseMeta(MhSourceCodeParser.MetaDeclContext ctx, ExecContextParams.Process process) {
             for (MhSourceCodeParser.MetaEntryContext me : ctx.metaEntry()) {
                 Map<String, String> entry = new LinkedHashMap<>();
                 String key = resolveIdRef(me.idRef(0));
@@ -708,7 +708,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             return ctx.getText().contains("-") ? -val : val;
         }
 
-        private ExecContextParamsYaml.Cache parseCacheDecl(MhSourceCodeParser.CacheDeclContext ctx) {
+        private ExecContextParams.Cache parseCacheDecl(MhSourceCodeParser.CacheDeclContext ctx) {
             boolean enabled = false;
             boolean omitInline = false;
             boolean cacheMeta = false;
@@ -720,12 +720,12 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                     case "cacheMeta" -> cacheMeta = true;
                 }
             }
-            return new ExecContextParamsYaml.Cache(enabled, omitInline, cacheMeta);
+            return new ExecContextParams.Cache(enabled, omitInline, cacheMeta);
         }
 
-        private ExecContextParamsYaml.Variable varDefToVariable(MhSourceCodeParser.VarDefContext ctx) {
+        private ExecContextParams.Variable varDefToVariable(MhSourceCodeParser.VarDefContext ctx) {
             String name = resolveIdRef(ctx.idRef());
-            ExecContextParamsYaml.Variable var = new ExecContextParamsYaml.Variable(name, EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher,
+            ExecContextParams.Variable var = new ExecContextParams.Variable(name, EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher,
                     null, null, null, null, null, null, null);
             applyVarModifiers(ctx, var);
             // Handle '?' shorthand for nullable
@@ -735,9 +735,9 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             return var;
         }
 
-        private ExecContextParamsYaml.Variable varDefToExecVariable(MhSourceCodeParser.VarDefContext ctx) {
+        private ExecContextParams.Variable varDefToExecVariable(MhSourceCodeParser.VarDefContext ctx) {
             String name = resolveIdRef(ctx.idRef());
-            ExecContextParamsYaml.Variable var = new ExecContextParamsYaml.Variable(name, EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher,
+            ExecContextParams.Variable var = new ExecContextParams.Variable(name, EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher,
                     null, null, null, null, null, null, null);
             applyVarModifiers(ctx, var);
             // Handle '?' shorthand for nullable
@@ -747,7 +747,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             return var;
         }
 
-        private void applyVarModifiers(MhSourceCodeParser.VarDefContext ctx, ExecContextParamsYaml.Variable var) {
+        private void applyVarModifiers(MhSourceCodeParser.VarDefContext ctx, ExecContextParams.Variable var) {
             if (ctx.varModifier() != null) {
                 for (MhSourceCodeParser.VarModifierContext mod : ctx.varModifier()) {
                     String modText = mod.getStart().getText();
@@ -778,11 +778,11 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
         }
 
         private void addFinishProcess() {
-            ExecContextParamsYaml.Process p = new ExecContextParamsYaml.Process();
+            ExecContextParams.Process p = new ExecContextParams.Process();
             p.processCode = MH_FINISH_FUNCTION;
             p.processName = MH_FINISH_FUNCTION;
             p.internalContextId = TOP_LEVEL_CONTEXT_ID;
-            p.function = new ExecContextParamsYaml.FunctionDefinition(
+            p.function = new ExecContextParams.FunctionDefinition(
                     MH_FINISH_FUNCTION, null, EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
             scg.processes.add(p);
 

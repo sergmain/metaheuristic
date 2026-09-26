@@ -24,7 +24,7 @@ import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphLanguageYaml;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static ai.metaheuristic.api.EnumsApi.FunctionExecContext.*;
-import static ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml.FunctionDefinition;
+import static ai.metaheuristic.api.data.exec_context.ExecContextParams.FunctionDefinition;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -49,7 +49,7 @@ public class TestProcessGraph {
     @Test
     public void test() {
 
-        ExecContextParamsYaml ecpy = new ExecContextParamsYaml();
+        ExecContextParams ecpy = new ExecContextParams();
         ecpy.processesGraph = ConstsApi.EMPTY_GRAPH;
 
         DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(ecpy);
@@ -101,8 +101,8 @@ public class TestProcessGraph {
               10 -> 11;
             }
             """;
-    private static ExecContextParamsYaml initExecContextParamYaml() {
-        ExecContextParamsYaml ecpy = new ExecContextParamsYaml();
+    private static ExecContextParams initExecContextParamYaml() {
+        ExecContextParams ecpy = new ExecContextParams();
         init(Consts.MH_INLINE_AS_VARIABLE_FUNCTION, internal, CommonConsts.TOP_LEVEL_CONTEXT_ID, ecpy);
         init("assembly-raw-file", external, CommonConsts.TOP_LEVEL_CONTEXT_ID, ecpy);
         init("dataset-processing", external, CommonConsts.TOP_LEVEL_CONTEXT_ID, ecpy);
@@ -119,7 +119,7 @@ public class TestProcessGraph {
 
     @Test
     public void test_findAncestors() {
-        ExecContextParamsYaml ecpy = initExecContextParamYaml();
+        ExecContextParams ecpy = initExecContextParamYaml();
 
         DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(processGraphAsStr);
         ExecContextApiData.ProcessVertex v = ExecContextProcessGraphService.findVertex(processGraph, "feature-processing-1");
@@ -150,9 +150,9 @@ public class TestProcessGraph {
 
     }
 
-    private static void init(String code, EnumsApi.FunctionExecContext context, String internalContextId, ExecContextParamsYaml ecpy) {
+    private static void init(String code, EnumsApi.FunctionExecContext context, String internalContextId, ExecContextParams ecpy) {
         FunctionDefinition f4 = new FunctionDefinition(code, "", context, EnumsApi.FunctionRefType.code);
-        ExecContextParamsYaml.Process p4 = new ExecContextParamsYaml.Process(code, code, internalContextId, f4);
+        ExecContextParams.Process p4 = new ExecContextParams.Process(code, code, internalContextId, f4);
         ecpy.processes.add(p4);
     }
 }

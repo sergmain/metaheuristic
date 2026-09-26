@@ -44,7 +44,7 @@ import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.spi.license.Feature;
@@ -343,8 +343,8 @@ public class BatchTopLevelService {
                 return new BatchData.UploadingStatus("981.185 Graph is broken");
             }
 
-            final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
-            ExecContextParamsYaml.Variable variable = execContextParamsYaml.variables.inputs.get(0);
+            final ExecContextParams execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
+            ExecContextParams.Variable variable = execContextParamsYaml.variables.inputs.get(0);
             try (InputStream is = Files.newInputStream(tempFile)) {
                 variableTxService.createInitializedTx(is, file.getSize(), variable.name, originFilename, creationResult.execContext.id, CommonConsts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.zip);
             }

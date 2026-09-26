@@ -31,7 +31,7 @@ import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponsePar
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SourceCodeGraph;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
@@ -50,7 +50,6 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 
 /**
  * @author Sergio Lissner
@@ -201,12 +200,12 @@ public class FunctionRepositoryDispatcherService {
      * revision exists at all. Records it so the broadcast can advertise it, seeds its readiness entry,
      * and nudges Processors to ask again rather than waiting out their poll interval.
      */
-    public void registerResolvedGitRevisions(ExecContextParamsYaml.@Nullable GitSources gitSources) {
+    public void registerResolvedGitRevisions(ExecContextParams.@Nullable GitSources gitSources) {
         if (gitSources==null || gitSources.gitSourceInfos.isEmpty()) {
             return;
         }
         boolean anyNew = false;
-        for (ExecContextParamsYaml.GitSourceInfo info : gitSources.gitSourceInfos) {
+        for (ExecContextParams.GitSourceInfo info : gitSources.gitSourceInfos) {
             if (info.git==null || !GtiUtils.isSha(info.git.commit)) {
                 continue;
             }
@@ -226,7 +225,7 @@ public class FunctionRepositoryDispatcherService {
         }
     }
 
-    private static GitInfo toGitInfo(ExecContextParamsYaml.GitParams src) {
+    private static GitInfo toGitInfo(ExecContextParams.GitParams src) {
         final GitInfo git = new GitInfo();
         git.repo = src.repo;
         git.branch = src.branch;
@@ -356,14 +355,14 @@ public class FunctionRepositoryDispatcherService {
 
     private static Set<String> collectFunctionCodes(SourceCodeGraph scg) {
         Set<String> codes = new HashSet<>();
-        for (ExecContextParamsYaml.Process process : scg.processes) {
+        for (ExecContextParams.Process process : scg.processes) {
             collectFunctionCodesForProcess(codes, process);
         }
         return codes;
     }
 
     @SuppressWarnings("ConstantValue")
-    public static void collectFunctionCodesForProcess(Set<String> codes, ExecContextParamsYaml.Process process) {
+    public static void collectFunctionCodesForProcess(Set<String> codes, ExecContextParams.Process process) {
         if (process.function !=null && process.function.context==EnumsApi.FunctionExecContext.external) {
             codes.add(process.function.code);
         }
@@ -399,11 +398,11 @@ public class FunctionRepositoryDispatcherService {
             if (ec==null) {
                 continue;
             }
-            final ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
+            final ExecContextParams ecpy = ec.getExecContextParamsYaml();
             if (ecpy.gitSources==null) {
                 continue;
             }
-            for (ExecContextParamsYaml.GitSourceInfo info : ecpy.gitSources.gitSourceInfos) {
+            for (ExecContextParams.GitSourceInfo info : ecpy.gitSources.gitSourceInfos) {
                 if (info.git==null || !GtiUtils.isSha(info.git.commit)) {
                     continue;
                 }

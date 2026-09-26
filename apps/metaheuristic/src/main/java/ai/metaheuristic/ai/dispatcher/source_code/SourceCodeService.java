@@ -28,7 +28,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.SourceCodeGraph;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -225,12 +225,12 @@ public class SourceCodeService {
         }
     }
 
-    private static TaskParamsYaml asTaskParamsYaml(SourceCodeParamsYaml scpy, ExecContextParamsYaml.Process process, Map<String, Long> globalIds, Map<String, Long> localIds) {
+    private static TaskParamsYaml asTaskParamsYaml(SourceCodeParamsYaml scpy, ExecContextParams.Process process, Map<String, Long> globalIds, Map<String, Long> localIds) {
         TaskParamsYaml tpy = new TaskParamsYaml();
         tpy.task.execContextId = 42L;
         tpy.task.inline = scpy.source.variables==null ? null : scpy.source.variables.inline;
         // tpy.task.workingPath will be inited later
-        for (ExecContextParamsYaml.Variable o : process.inputs) {
+        for (ExecContextParams.Variable o : process.inputs) {
             Long id;
             if (o.context == EnumsApi.VariableContext.global) {
                 id = globalIds.get(o.name);
@@ -249,13 +249,13 @@ public class SourceCodeService {
             input.sourcing = o.sourcing;
             input.empty = false;
             input.setNullable(false);
-            input.disk = ExecContextParamsYaml.DiskParams.toDiskInfo(o.disk);
-            input.git = ExecContextParamsYaml.GitParams.toGitInfo(o.git);
+            input.disk = ExecContextParams.DiskParams.toDiskInfo(o.disk);
+            input.git = ExecContextParams.GitParams.toGitInfo(o.git);
             input.filename = "file-name-for-this-variable.txt";
             tpy.task.inputs.add(input);
         }
         AtomicLong outputId = new AtomicLong(3000);
-        for (ExecContextParamsYaml.Variable o : process.outputs) {
+        for (ExecContextParams.Variable o : process.outputs) {
             TaskParamsYaml.OutputVariable output = new TaskParamsYaml.OutputVariable();
             output.id = outputId.getAndIncrement();
             output.name = o.name;
@@ -263,8 +263,8 @@ public class SourceCodeService {
             output.context = o.context;
             output.type = o.type;
             output.ext = o.ext;
-            output.disk = ExecContextParamsYaml.DiskParams.toDiskInfo(o.disk);
-            output.git = ExecContextParamsYaml.GitParams.toGitInfo(o.git);
+            output.disk = ExecContextParams.DiskParams.toDiskInfo(o.disk);
+            output.git = ExecContextParams.GitParams.toGitInfo(o.git);
             output.empty = false;
             output.setNullable(false);
             tpy.task.outputs.add(output);
@@ -309,12 +309,12 @@ public class SourceCodeService {
         Files.writeString(systemDir.resolve(Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME), "<a stub value for log file "+Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME+">");
     }
 
-    private static void createLocalVariables(ExecContextParamsYaml.Process process, Path outputDir, Map<String, Long> localIds, AtomicLong localId) throws IOException {
+    private static void createLocalVariables(ExecContextParams.Process process, Path outputDir, Map<String, Long> localIds, AtomicLong localId) throws IOException {
         boolean isLocalVars = process.inputs.stream().anyMatch(o->o.context!=EnumsApi.VariableContext.global);
         if (isLocalVars) {
             Path localVarDir = outputDir.resolve(EnumsApi.DataType.variable.toString());
             Files.createDirectory(localVarDir);
-            for (ExecContextParamsYaml.Variable o : process.inputs) {
+            for (ExecContextParams.Variable o : process.inputs) {
                 if (o.context == EnumsApi.VariableContext.local) {
                     Long id = localIds.computeIfAbsent(o.name, k -> localId.getAndIncrement());
                     Files.writeString(localVarDir.resolve(id.toString()), "<a stub value for variable "+o.name+">");
@@ -339,12 +339,12 @@ public class SourceCodeService {
         }
     }
 
-    private static void createGlobalVariables(ExecContextParamsYaml.Process process, Path outputDir, Map<String, Long> globalIds, AtomicLong globalsId) throws IOException {
+    private static void createGlobalVariables(ExecContextParams.Process process, Path outputDir, Map<String, Long> globalIds, AtomicLong globalsId) throws IOException {
         boolean isGlobalVars = process.inputs.stream().anyMatch(o->o.context== EnumsApi.VariableContext.global);
         if (isGlobalVars) {
             Path globalVarDir = outputDir.resolve(EnumsApi.DataType.global_variable.toString());
             Files.createDirectory(globalVarDir);
-            for (ExecContextParamsYaml.Variable o : process.inputs) {
+            for (ExecContextParams.Variable o : process.inputs) {
                 if (o.context == EnumsApi.VariableContext.global) {
                     Long id = globalIds.computeIfAbsent(o.name, k -> globalsId.getAndIncrement());
                     Files.writeString(globalVarDir.resolve(id.toString()), "<a stub value for global variable "+o.name+">");

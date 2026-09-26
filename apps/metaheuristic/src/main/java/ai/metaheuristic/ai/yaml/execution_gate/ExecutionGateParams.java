@@ -36,7 +36,7 @@ import org.jspecify.annotations.Nullable;
  * Date: 8/14/2026
  */
 @Data
-public class ExecutionGateParamsYaml implements BaseParams {
+public class ExecutionGateParams implements BaseParams {
 
     public final int version = 1;
 

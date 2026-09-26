@@ -30,7 +30,7 @@ import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.apache.commons.lang3.NotImplementedException;
 import org.jspecify.annotations.Nullable;
@@ -114,7 +114,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             String currentInternalContextId, Map<String, Long> ids, AtomicLong currId,
             Set<ExecContextApiData.ProcessVertex> parentProcesses, SourceCodeParamsYaml.Process p) {
 
-        ExecContextParamsYaml.Process processInGraph = toProcessForExecCode(sourceCodeParams, p, currentInternalContextId);
+        ExecContextParams.Process processInGraph = toProcessForExecCode(sourceCodeParams, p, currentInternalContextId);
         scg.processes.add(processInGraph);
         ExecContextApiData.ProcessVertex vertex = createProcessVertex(ids, currId, p.code, currentInternalContextId);
         ExecContextProcessGraphService.addProcessVertexToGraph(scg.processGraph, vertex, parentProcesses);
@@ -214,20 +214,20 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         return new ExecContextApiData.ProcessVertex(ids.computeIfAbsent(process, o -> currId.incrementAndGet()), process, internalContextId);
     }
 
-    private static ExecContextParamsYaml.Process toProcessForExecCode(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Process o, String internalContextId) {
-        ExecContextParamsYaml.Process pr = new ExecContextParamsYaml.Process();
+    private static ExecContextParams.Process toProcessForExecCode(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Process o, String internalContextId) {
+        ExecContextParams.Process pr = new ExecContextParams.Process();
         pr.internalContextId = internalContextId;
         pr.processName = o.name;
         pr.processCode = o.code;
         pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
         o.inputs.stream().map(v->getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(()->pr.inputs));
         o.outputs.stream().map(v->getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(()->pr.outputs));
-        pr.function = new ExecContextParamsYaml.FunctionDefinition(o.function.code, o.function.params, o.function.context, o.function.refType);
+        pr.function = new ExecContextParams.FunctionDefinition(o.function.code, o.function.params, o.function.context, o.function.refType);
         pr.logic = o.subProcesses!=null ? o.subProcesses.logic : null;
         // pre/post Functions are not supported anymore, SourceCodeParamsYaml.checkIntegrity() rejects them
         pr.metas = o.metas;
         if (o.cache!=null) {
-            pr.cache = new ExecContextParamsYaml.Cache(o.cache.enabled, o.cache.omitInline, o.cache.cacheMeta);
+            pr.cache = new ExecContextParams.Cache(o.cache.enabled, o.cache.omitInline, o.cache.cacheMeta);
         }
         pr.tag = o.tag;
         pr.priority = o.priority;
@@ -236,12 +236,12 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         return pr;
     }
 
-    private static ExecContextParamsYaml.Variable getVariable(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Variable v) {
+    private static ExecContextParams.Variable getVariable(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Variable v) {
         EnumsApi.VariableContext context = sourceCodeParams.source.variables!=null && sourceCodeParams.source.variables.globals!=null &&
                 sourceCodeParams.source.variables.globals.stream().anyMatch(g->g.equals(v.name))
                 ? EnumsApi.VariableContext.global
                 : ( v.array ? EnumsApi.VariableContext.array :  EnumsApi.VariableContext.local );
-        return new ExecContextParamsYaml.Variable(v.name, context, v.getSourcing(), ExecContextParamsYaml.GitParams.from(v.git), ExecContextParamsYaml.DiskParams.from(v.disk), v.parentContext, v.type, v.getNullable(), v.ext, v.mutable);
+        return new ExecContextParams.Variable(v.name, context, v.getSourcing(), ExecContextParams.GitParams.from(v.git), ExecContextParams.DiskParams.from(v.disk), v.parentContext, v.type, v.getNullable(), v.ext, v.mutable);
     }
 
     private static void checkProcessCode(Set<String> processCodes, SourceCodeParamsYaml.Process p) {

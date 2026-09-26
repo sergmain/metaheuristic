@@ -16,8 +16,7 @@
 
 package ai.metaheuristic.ai.graph;
 
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -131,7 +130,7 @@ public class TestJGrapht {
 
     @Test
     public void test_() {
-        String gStr = ExecContextGraphParamsYamlUtils.BASE_YAML_UTILS.to(key).graph;
+        String gStr = ExecContextGraphParamsUtils.BASE_UTILS.to(key).graph;
 
         Graph<String, DefaultEdge> graph = new DirectedAcyclicGraph<>(DefaultEdge.class);
         DOTImporter<String, DefaultEdge> importer = new DOTImporter<>();

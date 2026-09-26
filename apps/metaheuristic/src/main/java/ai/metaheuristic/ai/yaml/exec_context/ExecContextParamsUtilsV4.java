@@ -33,8 +33,8 @@ import java.util.stream.Collectors;
  * Time: 2:13 PM
  */
 @SuppressWarnings("DuplicatedCode")
-public class ExecContextParamsYamlUtilsV4
-        extends AbstractParamsYamlUtils<ExecContextParamsYamlV4, ExecContextParamsYamlV5, ExecContextParamsYamlUtilsV5,
+public class ExecContextParamsUtilsV4
+        extends AbstractParamsYamlUtils<ExecContextParamsYamlV4, ExecContextParamsYamlV5, ExecContextParamsUtilsV5,
         Void, Void, Void> {
 
     @Override
@@ -58,7 +58,7 @@ public class ExecContextParamsYamlUtilsV4
         t.clean = v4.clean;
         t.sourceCodeUid = v4.sourceCodeUid;
         t.processesGraph = v4.processesGraph;
-        v4.processes.stream().map(ExecContextParamsYamlUtilsV4::toProcess).collect(Collectors.toCollection(()->t.processes));
+        v4.processes.stream().map(ExecContextParamsUtilsV4::toProcess).collect(Collectors.toCollection(()->t.processes));
         initVariables(v4.variables, t.variables);
         if (v4.execContextGraph!=null) {
             t.execContextGraph = new ExecContextParamsYamlV5.ExecContextGraphV5(
@@ -77,10 +77,10 @@ public class ExecContextParamsYamlUtilsV4
     private static ExecContextParamsYamlV5.ProcessV5 toProcess(ExecContextParamsYamlV4.ProcessV4 p2) {
         ExecContextParamsYamlV5.ProcessV5 p = new ExecContextParamsYamlV5.ProcessV5();
         p.function = toFunction(p2.function);
-        p.preFunctions = p2.preFunctions!=null ? p2.preFunctions.stream().map(ExecContextParamsYamlUtilsV4::toFunction).collect(Collectors.toList()) : null;
-        p.postFunctions = p2.postFunctions!=null ? p2.postFunctions.stream().map(ExecContextParamsYamlUtilsV4::toFunction).collect(Collectors.toList()) : null;
-        p2.inputs.stream().map(ExecContextParamsYamlUtilsV4::toVariable).collect(Collectors.toCollection(()->p.inputs));
-        p2.outputs.stream().map(ExecContextParamsYamlUtilsV4::toVariable).collect(Collectors.toCollection(()->p.outputs));
+        p.preFunctions = p2.preFunctions!=null ? p2.preFunctions.stream().map(ExecContextParamsUtilsV4::toFunction).collect(Collectors.toList()) : null;
+        p.postFunctions = p2.postFunctions!=null ? p2.postFunctions.stream().map(ExecContextParamsUtilsV4::toFunction).collect(Collectors.toList()) : null;
+        p2.inputs.stream().map(ExecContextParamsUtilsV4::toVariable).collect(Collectors.toCollection(()->p.inputs));
+        p2.outputs.stream().map(ExecContextParamsUtilsV4::toVariable).collect(Collectors.toCollection(()->p.outputs));
         p.metas.addAll(p2.metas);
         if (p2.cache!=null) {
             p.cache = new ExecContextParamsYamlV5.CacheV5(p2.cache.enabled, p2.cache.omitInline, false);
@@ -111,8 +111,8 @@ public class ExecContextParamsYamlUtilsV4
     }
 
     @Override
-    public ExecContextParamsYamlUtilsV5 nextUtil() {
-        return (ExecContextParamsYamlUtilsV5) ExecContextParamsYamlUtils.BASE_YAML_UTILS.getForVersion(5);
+    public ExecContextParamsUtilsV5 nextUtil() {
+        return (ExecContextParamsUtilsV5) ExecContextParamsUtils.BASE_UTILS.getForVersion(5);
     }
 
     @Override

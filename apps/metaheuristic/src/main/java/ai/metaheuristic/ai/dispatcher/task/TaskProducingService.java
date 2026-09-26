@@ -35,7 +35,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.GraftExpander;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
@@ -72,8 +72,8 @@ public class TaskProducingService {
 
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
-            ExecContextParamsYaml.Process process,
-            ExecContextParamsYaml execContextParamsYaml, Long execContextId, Long companyId, ExecContextData.GraphAndStates graphAndStates,
+            ExecContextParams.Process process,
+            ExecContextParams execContextParamsYaml, Long execContextId, Long companyId, ExecContextData.GraphAndStates graphAndStates,
             List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
         // Default: taskContextId is the Process's static internalContextId.
         return produceTaskForProcess(process, execContextParamsYaml, execContextId, companyId, graphAndStates,
@@ -89,10 +89,10 @@ public class TaskProducingService {
      * The primary overload above delegates here with resolver = p -> p.internalContextId.
      */
     public TaskData.ProduceTaskResult produceTaskForProcess(
-            ExecContextParamsYaml.Process process,
-            ExecContextParamsYaml execContextParamsYaml, Long execContextId, Long companyId, ExecContextData.GraphAndStates graphAndStates,
+            ExecContextParams.Process process,
+            ExecContextParams execContextParamsYaml, Long execContextId, Long companyId, ExecContextData.GraphAndStates graphAndStates,
             List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState,
-            java.util.function.Function<ExecContextParamsYaml.Process, String> taskContextIdResolver) {
+            java.util.function.Function<ExecContextParams.Process, String> taskContextIdResolver) {
         TxUtils.checkTxExists();
         ExecContextGraphSyncService.checkWriteLockPresent(graphAndStates.graph().id);
         ExecContextTaskStateSyncService.checkWriteLockPresent(graphAndStates.states().id);
@@ -148,7 +148,7 @@ public class TaskProducingService {
         ExecContextGraphSyncService.checkWriteLockPresent(simpleExecContext.execContextGraphId);
         ExecContextTaskStateSyncService.checkWriteLockPresent(simpleExecContext.execContextTaskStateId);
 
-        ExecContextParamsYaml execContextParamsYaml = executionContextData.execContextParamsYaml;
+        ExecContextParams execContextParamsYaml = executionContextData.execContextParamsYaml;
         List<ExecContextApiData.ProcessVertex> subProcesses = executionContextData.subProcesses;
         if (subProcesses.isEmpty()) {
             log.info("375.040 There isn't any subProcess");
@@ -156,7 +156,7 @@ public class TaskProducingService {
         }
 
         Map<String, Map<String, String>> inlines = executionContextData.execContextParamsYaml.variables.inline;
-        ExecContextParamsYaml.Process process = executionContextData.process;
+        ExecContextParams.Process process = executionContextData.process;
 
         if (process.logic!= EnumsApi.SourceCodeSubProcessLogic.sequential && process.logic!= EnumsApi.SourceCodeSubProcessLogic.and) {
             throw new BreakFromLambdaException("375.060 only the 'sequential' and 'and' logics are supported");
@@ -177,7 +177,7 @@ public class TaskProducingService {
         final Map<String, Long> createdInBlock = new HashMap<>();
         TaskImpl t = null;
         for (ExecContextApiData.ProcessVertex subProcess : subProcesses) {
-            final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
+            final ExecContextParams.Process p = execContextParamsYaml.findProcess(subProcess.process);
             if (p==null) {
                 throw new BreakFromLambdaException("375.080 Process '" + subProcess.process + "' wasn't found");
             }
@@ -254,8 +254,8 @@ public class TaskProducingService {
     }
 
     private TaskImpl createTaskHelper(
-        Long execContextId, Long companyId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process,
-        String taskContextId, @Nullable Map<String, Map<String, String>> inlines, List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
+            Long execContextId, Long companyId, ExecContextParams execContextParamsYaml, ExecContextParams.Process process,
+            String taskContextId, @Nullable Map<String, Map<String, String>> inlines, List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
 
         TxUtils.checkTxExists();
 

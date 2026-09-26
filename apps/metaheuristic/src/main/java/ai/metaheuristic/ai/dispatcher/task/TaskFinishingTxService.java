@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +65,7 @@ public class TaskFinishingTxService {
     private final TaskTxService taskTxService;
 
     @Transactional
-    public void finishAsOkAndStoreVariable(Long taskId, ExecContextParamsYaml ecpy) {
+    public void finishAsOkAndStoreVariable(Long taskId, ExecContextParams ecpy) {
         finishAsOk(taskId, ecpy, true);
     }
 
@@ -74,7 +74,7 @@ public class TaskFinishingTxService {
         finishAsOk(taskId, null, false);
     }
 
-    private void finishAsOk(Long taskId, @Nullable ExecContextParamsYaml ecpy, boolean store) {
+    private void finishAsOk(Long taskId, @Nullable ExecContextParams ecpy, boolean store) {
         if (store && ecpy==null) {
             throw new IllegalStateException("(store && ecpy==null)");
         }
@@ -95,7 +95,7 @@ public class TaskFinishingTxService {
             TaskParamsYaml tpy = task.getTaskParamsYaml();
 
             if (tpy.task.cache!=null && tpy.task.cache.enabled) {
-                ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
+                ExecContextParams.Process p = ecpy.findProcess(tpy.task.processCode);
                 if (p==null) {
                     log.warn("319.120 Process {} wasn't found", tpy.task.processCode);
                     return;

@@ -18,7 +18,7 @@ package ai.metaheuristic.commons.graph;
 
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphLanguageYaml;
 import org.jgrapht.graph.DefaultEdge;
@@ -58,7 +58,7 @@ public class ExecContextProcessGraphTopologyOrderTest {
     private static final String AMEND_B = "amendment-gate";
 
     private static List<String> topologyOfConcurrentBranches() {
-        ExecContextParamsYaml ecpy = new ExecContextParamsYaml();
+        ExecContextParams ecpy = new ExecContextParams();
         ecpy.processesGraph = ConstsApi.EMPTY_GRAPH;
         DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> g =
                 ExecContextProcessGraphService.importProcessGraph(ecpy);

@@ -18,7 +18,7 @@ package ai.metaheuristic.commons.graph;
 
 import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.S;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -91,7 +91,7 @@ public class ExecContextProcessGraphService {
         return result;
     }
 
-    public static DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> importProcessGraph(ExecContextParamsYaml wpy) {
+    public static DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> importProcessGraph(ExecContextParams wpy) {
         return importProcessGraph(wpy.processesGraph);
     }
 
@@ -134,7 +134,7 @@ public class ExecContextProcessGraphService {
         return processGraph.getAncestors(startVertex);
     }
 
-    public static List<String> getTopologyOfProcesses(ExecContextParamsYaml execContextParamsYaml) {
+    public static List<String> getTopologyOfProcesses(ExecContextParams execContextParamsYaml) {
         DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
         // stable authored-order tie-break: among topologically-concurrent process vertices the one

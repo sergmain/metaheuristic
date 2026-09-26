@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Time: 6:20 PM
  */
 @Execution(ExecutionMode.CONCURRENT)
-public class ExecContextParamsYamlV6SourcingShapeTest {
+public class ExecContextParamsV6SourcingShapeTest {
 
     /** yaml exactly as it was stored while Variable.git was a GitInfo and Variable.disk a DiskInfo */
     private static final String LEGACY_V6 = """
@@ -95,33 +95,33 @@ public class ExecContextParamsYamlV6SourcingShapeTest {
     public void test_versionIsStillSix() {
         final ExecContextParamsYamlV6 v6 = YamlUtils.init(ExecContextParamsYamlV6.class).load(LEGACY_V6);
         assertEquals(6, v6.version, "the copy is a @Nullable-compatible change, it must not bump the version");
-        assertEquals(6, new ExecContextParamsYaml().version);
+        assertEquals(6, new ExecContextParams().version);
     }
 
     @Test
     public void test_gitParamsRoundTripsThroughGitInfo() {
         final GitInfo src = new GitInfo("repo", "branch", "commit", "path");
-        final ExecContextParamsYaml.GitParams params = ExecContextParamsYaml.GitParams.from(src);
+        final ExecContextParams.GitParams params = ExecContextParams.GitParams.from(src);
 
         assertNotNull(params);
-        assertEquals(src, ExecContextParamsYaml.GitParams.toGitInfo(params));
+        assertEquals(src, ExecContextParams.GitParams.toGitInfo(params));
     }
 
     @Test
     public void test_diskParamsRoundTripsThroughDiskInfo() {
         final DiskInfo src = new DiskInfo("mask", "code", "path");
-        final ExecContextParamsYaml.DiskParams params = ExecContextParamsYaml.DiskParams.from(src);
+        final ExecContextParams.DiskParams params = ExecContextParams.DiskParams.from(src);
 
         assertNotNull(params);
-        assertEquals(src, ExecContextParamsYaml.DiskParams.toDiskInfo(params));
+        assertEquals(src, ExecContextParams.DiskParams.toDiskInfo(params));
     }
 
     @Test
     public void test_convertersAreNullSafe() {
-        assertNull(ExecContextParamsYaml.GitParams.from(null));
-        assertNull(ExecContextParamsYaml.GitParams.toGitInfo(null));
-        assertNull(ExecContextParamsYaml.DiskParams.from(null));
-        assertNull(ExecContextParamsYaml.DiskParams.toDiskInfo(null));
+        assertNull(ExecContextParams.GitParams.from(null));
+        assertNull(ExecContextParams.GitParams.toGitInfo(null));
+        assertNull(ExecContextParams.DiskParams.from(null));
+        assertNull(ExecContextParams.DiskParams.toDiskInfo(null));
         assertNull(ExecContextParamsYamlV6.GitParamsV6.from(null));
         assertNull(ExecContextParamsYamlV6.DiskParamsV6.from(null));
     }

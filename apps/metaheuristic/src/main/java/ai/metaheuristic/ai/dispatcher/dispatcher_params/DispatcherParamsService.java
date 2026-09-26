@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYamlUtils;
 import ai.metaheuristic.api.data.SourceCodeGraph;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -130,15 +130,15 @@ public class DispatcherParamsService {
     }
 
     private static void registerSpecific(SourceCodeImpl sourceCode, SourceCodeGraph scg, String functionCode, Consumer<String> consumer) {
-        ExecContextParamsYaml.Process p = findProcessForFunction(scg, functionCode);
+        ExecContextParams.Process p = findProcessForFunction(scg, functionCode);
         if (p==null) {
             return;
         }
         consumer.accept(sourceCode.uid);
     }
 
-    private static ExecContextParamsYaml.@Nullable Process findProcessForFunction(SourceCodeGraph scg, String functionCode) {
-        for (ExecContextParamsYaml.Process process : scg.processes) {
+    private static ExecContextParams.@Nullable Process findProcessForFunction(SourceCodeGraph scg, String functionCode) {
+        for (ExecContextParams.Process process : scg.processes) {
             if (process.function.code.equals(functionCode)) {
                 return process;
             }

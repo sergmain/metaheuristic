@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariabl
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -83,10 +83,10 @@ public class VariableService {
         if (execContext == null) {
             throw new InternalFunctionException(exec_context_not_found, "992.300 ExecContext Not found");
         }
-        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
+        ExecContextParams ecpy = execContext.getExecContextParamsYaml();
         try {
             for (int i = 0; i < taskParamsYaml.task.outputs.size(); i++) {
-                ExecContextParamsYaml.Variable execContextOutput = ecpy.variables.outputs.get(i);
+                ExecContextParams.Variable execContextOutput = ecpy.variables.outputs.get(i);
                 List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(
                         subExecContextId, CommonConsts.TOP_LEVEL_CONTEXT_ID, execContextOutput.name);
                 if (holders.size() > 1) {

@@ -16,28 +16,24 @@
 
 package ai.metaheuristic.ai.yaml.execution_gate;
 
-import ai.metaheuristic.api.data.BaseParams;
-import lombok.Data;
-import org.jspecify.annotations.Nullable;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+
+import java.util.Map;
 
 /**
  * @author Sergio Lissner
  * Date: 8/14/2026
  */
-@Data
-public class ExecutionGateParamsYamlV1 implements BaseParams {
+public class ExecutionGateParamsUtils {
 
-    public final int version = 1;
+    private static final ExecutionGateParamsUtilsV1 YAML_UTILS_V_1 = new ExecutionGateParamsUtilsV1();
+    private static final ExecutionGateParamsUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
-    @Override
-    public boolean checkIntegrity() {
-        return true;
-    }
+    public static final BaseYamlUtils<ExecutionGateParams> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(
+                    1, YAML_UTILS_V_1
+            ),
+            DEFAULT_UTILS
+    );
 
-    @Nullable public Long triggeredByTaskId;
-    @Nullable public String functionCode;
-    @Nullable public Long processorId;
-    @Nullable public String matchedPattern;
-    @Nullable public String consoleExcerpt;
-    public boolean incrementTries;
 }

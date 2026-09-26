@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.ResetTasksWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateService;
 import ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
-import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYaml;
+import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParams;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.commons.utils.FunctionAnalyzerUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
@@ -35,7 +35,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
@@ -127,7 +127,7 @@ public class ExecContextTaskResettingTopLevelService {
                     hit.name, tpy.task.function.code, hit.scope, task.id);
             return;
         }
-        final ExecutionGateParamsYaml params = new ExecutionGateParamsYaml();
+        final ExecutionGateParams params = new ExecutionGateParams();
         params.triggeredByTaskId = task.id;
         params.functionCode = tpy.task.function.code;
         params.processorId = processorId;
@@ -164,7 +164,7 @@ public class ExecContextTaskResettingTopLevelService {
             log.error("156.030 ExecContextTaskState wasn't found for execContext #{}", event.execContextId);
             return;
         }
-        ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
 
         final List<TaskData.TaskWithRecoveryStatus> statuses = new ArrayList<>(taskIds.size()+1);
         for (Long taskId : taskIds) {

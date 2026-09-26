@@ -14,8 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.exec_context_graph;
+package ai.metaheuristic.ai.yaml.exec_context;
 
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV1;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV2;
+import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 
@@ -24,12 +27,12 @@ import org.yaml.snakeyaml.Yaml;
 
 /**
  * @author Serge
- * Date: 3/17/2021
- * Time: 10:47 AM
+ * Date: 6/17/2019
+ * Time: 12:10 AM
  */
-public class ExecContextGraphParamsYamlUtilsV1
+public class ExecContextParamsUtilsV1
         extends AbstractParamsYamlUtils<
-        ExecContextGraphParamsYamlV1, ExecContextGraphParamsYaml, Void,
+        ExecContextParamsYamlV1, ExecContextParamsYamlV2, ExecContextParamsUtilsV2,
         Void, Void, Void> {
 
     @Override
@@ -40,15 +43,13 @@ public class ExecContextGraphParamsYamlUtilsV1
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(ExecContextGraphParamsYamlV1.class);
+        return YamlUtils.init(ExecContextParamsYamlV1.class);
     }
 
     @NonNull
     @Override
-    public ExecContextGraphParamsYaml upgradeTo(@NonNull ExecContextGraphParamsYamlV1 v1) {
-        ExecContextGraphParamsYaml t = new ExecContextGraphParamsYaml();
-        t.graph = v1.graph;
-        return t;
+    public ExecContextParamsYamlV2 upgradeTo(@NonNull ExecContextParamsYamlV1 v1) {
+        throw new UpgradeNotSupportedException();
     }
 
     @NonNull
@@ -58,8 +59,8 @@ public class ExecContextGraphParamsYamlUtilsV1
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public ExecContextParamsUtilsV2 nextUtil() {
+        return (ExecContextParamsUtilsV2) ExecContextParamsUtils.BASE_UTILS.getForVersion(2);
     }
 
     @Override
@@ -68,14 +69,15 @@ public class ExecContextGraphParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull ExecContextGraphParamsYamlV1 yaml) {
+    public String toString(@NonNull ExecContextParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public ExecContextGraphParamsYamlV1 to(@NonNull String s) {
-        final ExecContextGraphParamsYamlV1 p = getYaml().load(s);
+    public ExecContextParamsYamlV1 to(@NonNull String s) {
+        final ExecContextParamsYamlV1 p = getYaml().load(s);
         return p;
     }
+
 }

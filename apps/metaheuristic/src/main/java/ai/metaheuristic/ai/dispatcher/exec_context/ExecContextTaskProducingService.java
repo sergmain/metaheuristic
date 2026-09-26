@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -91,7 +91,7 @@ public class ExecContextTaskProducingService {
 
         // ensure every declared nullable input that nothing seeded gets a nullified row, so it
         // resolves like any other nullable variable (real id + null blob) in cache and non-cache paths
-        final ExecContextParamsYaml ecpyForInputs = execContext.getExecContextParamsYaml();
+        final ExecContextParams ecpyForInputs = execContext.getExecContextParamsYaml();
         VariableUtils.initAbsentNullableInputVariables(
                 ecpyForInputs.variables.inputs,
                 CommonConsts.TOP_LEVEL_CONTEXT_ID,
@@ -127,18 +127,18 @@ public class ExecContextTaskProducingService {
     }
 
     private TaskData.ProduceTaskResult produceTasksForExecContext(ExecContextImpl execContext, ExecContextData.GraphAndStates graphAndStates) {
-        final ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
+        final ExecContextParams execContextParamsYaml = execContext.getExecContextParamsYaml();
         DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
         TaskData.ProduceTaskResult okResult = new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.OK, null);
         Map<String, List<Long>> parentProcesses = new HashMap<>();
         for (ExecContextApiData.ProcessVertex processVertex : processGraph) {
             String processCode = processVertex.process;
-            ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(processCode);
+            ExecContextParams.Process p = execContextParamsYaml.findProcess(processCode);
             if (p == null) {
                 // mh.finish can be omitted in sourceCode
                 if (processCode.equals(CommonConsts.MH_FINISH_FUNCTION)) {
-                    p = new ExecContextParamsYaml.Process(CommonConsts.MH_FINISH_FUNCTION, CommonConsts.MH_FINISH_FUNCTION, CommonConsts.TOP_LEVEL_CONTEXT_ID,
+                    p = new ExecContextParams.Process(CommonConsts.MH_FINISH_FUNCTION, CommonConsts.MH_FINISH_FUNCTION, CommonConsts.TOP_LEVEL_CONTEXT_ID,
                             Consts.MH_FINISH_FUNCTION_INSTANCE);
                 }
                 else {
@@ -149,7 +149,7 @@ public class ExecContextTaskProducingService {
                 return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR,
                         "701.220 Process '"+processCode+"' must be internal");
             }
-            ExecContextParamsYaml.Process internalFuncProcess = findEnclosingInternalFunctionContainer(execContextParamsYaml, processGraph, processVertex);
+            ExecContextParams.Process internalFuncProcess = findEnclosingInternalFunctionContainer(execContextParamsYaml, processGraph, processVertex);
             // internal functions will be processed in another thread
             if (internalFuncProcess!=null) {
                 continue;
@@ -165,7 +165,7 @@ public class ExecContextTaskProducingService {
                     .filter(Objects::nonNull)
                     .forEach(parentTaskIds::addAll);
 
-            final ExecContextParamsYaml.Process process = p;
+            final ExecContextParams.Process process = p;
             TaskData.ProduceTaskResult result = taskProducingService.produceTaskForProcess(
                 process, execContextParamsYaml, execContext.id, execContext.companyId,
                 graphAndStates, parentTaskIds,
@@ -182,14 +182,14 @@ public class ExecContextTaskProducingService {
 
     // the logic is following: because we goes through all processed, we have to filter out any processes whose ancestor is internal task
     // there is a trick - we have to stop scanning when we've reached the top-level process, i.e. internalContextId=="1"
-    public static ExecContextParamsYaml.@Nullable Process findEnclosingInternalFunctionContainer(ExecContextParamsYaml execContextParamsYaml, DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph, ExecContextApiData.ProcessVertex currProcess) {
+    public static ExecContextParams.@Nullable Process findEnclosingInternalFunctionContainer(ExecContextParams execContextParamsYaml, DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph, ExecContextApiData.ProcessVertex currProcess) {
         if (currProcess.processContextId.equals(CommonConsts.TOP_LEVEL_CONTEXT_ID)) {
             return null;
         }
 
         ExecContextApiData.ProcessVertex directAncestor = currProcess;
         while ((directAncestor=getDirectAncestor(processGraph, directAncestor))!=null) {
-            ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(directAncestor.process);
+            ExecContextParams.Process p = execContextParamsYaml.findProcess(directAncestor.process);
             if (p==null) {
                 log.warn("701.260 Unusual state, need to investigate");
                 continue;

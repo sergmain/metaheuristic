@@ -35,7 +35,7 @@ import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -140,7 +140,7 @@ public class ExecContextGraftByNameGroupTest extends PreparingSourceCode {
         assertNotNull(grByRef.lineCtxId());
 
         // 4. mint a v6 group whose body IS the target's sub-processes, inject it into the EC params.
-        final ExecContextParamsYaml.Group group = new ExecContextParamsYaml.Group("grp-mirror");
+        final ExecContextParams.Group group = new ExecContextParams.Group("grp-mirror");
         for (ExecContextApiData.ProcessVertex v : ecdTarget.subProcesses) {
             group.body.add(Objects.requireNonNull(sec.paramsYaml.findProcess(v.process),
                     "body process '" + v.process + "' must be resolvable in the EC params"));

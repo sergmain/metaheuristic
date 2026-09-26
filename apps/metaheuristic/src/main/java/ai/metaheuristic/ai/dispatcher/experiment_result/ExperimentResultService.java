@@ -31,13 +31,13 @@ import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.commons.utils.CollectionUtils;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
@@ -169,7 +169,7 @@ public class ExperimentResultService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"604.147 Meta 'inline-permutation' must be defined and can't be empty");
         }
 
-        ExecContextParamsYaml.VariableDeclaration variableDeclaration = simpleExecContext.paramsYaml.variables;
+        ExecContextParams.VariableDeclaration variableDeclaration = simpleExecContext.paramsYaml.variables;
 
         StringVariableData.StringVariableItem inlineVariableItem = InlineVariableUtils.getInlineVariableItem(variableDeclaration, taskParamsYaml.task.metas);
         if (S.b(inlineVariableItem.inlineKey)) {
@@ -428,7 +428,7 @@ public class ExperimentResultService {
     public static StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(ExecContextApiData.SimpleExecContext simpleExecContext, Experiment experiment) {
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
-        String s = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(simpleExecContext.getParamsYaml());
+        String s = ExecContextParamsUtils.BASE_UTILS.toString(simpleExecContext.getParamsYaml());
         ExperimentResultParams erpy = new ExperimentResultParams();
         erpy.createdOn = System.currentTimeMillis();
         erpy.execContext = new ExecContextWithParams(simpleExecContext.execContextId, s);

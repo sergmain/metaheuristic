@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 import ai.metaheuristic.ai.dispatcher.data.ExecutionGateViewData;
 import ai.metaheuristic.ai.dispatcher.execution_gate.ExecutionGateService;
 import ai.metaheuristic.ai.dispatcher.monitoring.GateMonitoring;
-import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYaml;
+import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
@@ -76,7 +76,7 @@ public class ExecutionGateRestController {
         catch (IllegalArgumentException | IllegalStateException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "01.327.040 " + e.getMessage());
         }
-        final ExecutionGateParamsYaml params = new ExecutionGateParamsYaml();
+        final ExecutionGateParams params = new ExecutionGateParams();
         executionGateService.quarantine(gateScope, refKey.strip(), blockedUntil,
                 S.b(reasonCode) ? "manual" : reasonCode.strip(), params);
         return OperationStatusRest.OPERATION_STATUS_OK;

@@ -16,9 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYaml;
-import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParams;
+import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsUtils;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -97,21 +96,21 @@ public class ExecutionGate implements Serializable {
 
     @Transient
     @JsonIgnore
-    private final ThreadUtils.CommonThreadLocker<ExecutionGateParamsYaml> paramsLocked =
+    private final ThreadUtils.CommonThreadLocker<ExecutionGateParams> paramsLocked =
             new ThreadUtils.CommonThreadLocker<>(this::parseParams);
 
-    private ExecutionGateParamsYaml parseParams() {
-        ExecutionGateParamsYaml temp = ExecutionGateParamsYamlUtils.BASE_YAML_UTILS.to(params);
-        return temp == null ? new ExecutionGateParamsYaml() : temp;
+    private ExecutionGateParams parseParams() {
+        ExecutionGateParams temp = ExecutionGateParamsUtils.BASE_YAML_UTILS.to(params);
+        return temp == null ? new ExecutionGateParams() : temp;
     }
 
     @JsonIgnore
-    public ExecutionGateParamsYaml getExecutionGateParamsYaml() {
+    public ExecutionGateParams getExecutionGateParamsYaml() {
         return paramsLocked.get();
     }
 
     @JsonIgnore
-    public void updateParams(ExecutionGateParamsYaml egpy) {
-        setParams(ExecutionGateParamsYamlUtils.BASE_YAML_UTILS.toString(egpy));
+    public void updateParams(ExecutionGateParams egpy) {
+        setParams(ExecutionGateParamsUtils.BASE_YAML_UTILS.toString(egpy));
     }
 }

@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.api.data.GitData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.utils.ExecContextGitSourceUtils;
 import ai.metaheuristic.commons.utils.GtiUtils;
@@ -54,8 +54,8 @@ public class ExecContextGitSourceService {
 
     private final FunctionService functionService;
 
-    public ExecContextParamsYaml.@Nullable GitSources resolveGitSources(
-            List<ExecContextParamsYaml.Process> processes, List<ExecContextParamsYaml.Group> groups) {
+    public ExecContextParams.@Nullable GitSources resolveGitSources(
+            List<ExecContextParams.Process> processes, List<ExecContextParams.Group> groups) {
 
         final List<String> codes = ExecContextGitSourceUtils.collectExternalFunctionCodes(processes, groups);
         if (codes.isEmpty()) {

@@ -36,7 +36,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.commons.S;
@@ -205,7 +205,7 @@ public class TaskResetTxService {
             log.error("801.230 ExecContextTaskState #{} not found", ec.execContextTaskStateId);
             return;
         }
-        ExecContextTaskStateParamsYaml stateParams = execContextTaskState.getExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams stateParams = execContextTaskState.getExecContextTaskStateParamsYaml();
         stateParams.states.put(taskId, EnumsApi.TaskExecState.INIT);
         for (ExecContextData.TaskVertex descendant : descendants) {
             if (deletedTaskIds.contains(descendant.taskId)) {

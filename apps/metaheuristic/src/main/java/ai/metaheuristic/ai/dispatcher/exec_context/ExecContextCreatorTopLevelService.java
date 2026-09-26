@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
@@ -104,7 +104,7 @@ public class ExecContextCreatorTopLevelService {
                     // data to be read outside the transaction and passed in with the smallest possible scope.
                     // The SourceCode is parsed twice as a result - that duplication is the accepted cost of
                     // transactional purity (SPRING-TX-RULES.md 1, "purity > fewer lines").
-                    final ExecContextParamsYaml.GitSources gitSources = resolveGitSources(sourceCodeId, context);
+                    final ExecContextParams.GitSources gitSources = resolveGitSources(sourceCodeId, context);
                     // the sha exists from here on, so this is the first moment Processors can be told
                     // to prepare the Function - before that there was only HEAD, which names nothing
                     functionRepositoryDispatcherService.registerResolvedGitRevisions(gitSources);
@@ -138,7 +138,7 @@ public class ExecContextCreatorTopLevelService {
      * proper "sourceCode wasn't found" error, so failing here would only replace a good message with a
      * worse one.
      */
-    private ExecContextParamsYaml.@Nullable GitSources resolveGitSources(Long sourceCodeId, ExecContextApiData.UserExecContext context) {
+    private ExecContextParams.@Nullable GitSources resolveGitSources(Long sourceCodeId, ExecContextApiData.UserExecContext context) {
         final SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, context.companyId());
         if (sourceCodesForCompany.isErrorMessages() || sourceCodesForCompany.items.isEmpty()) {
             return null;

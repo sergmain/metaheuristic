@@ -23,7 +23,7 @@ import ai.metaheuristic.commons.graph.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,7 +69,7 @@ public class InternalFunctionService {
                     "994.240 Graph for ExecContext #"+simpleExecContext.execContextId+" is broken"));
         }
 
-        final ExecContextParamsYaml.Process process = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
+        final ExecContextParams.Process process = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {
             return new InternalFunctionData.ExecutionContextData(
                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
@@ -99,13 +99,13 @@ public class InternalFunctionService {
      *  the parent's by exactly one segment. Rebase: runtimeProcessCtx + (childCtx stripped of the parent's
      *  compiled ctx prefix), e.g. parent compiled '3' running at '1,3' + child '3,7' -> '1,3,7'. */
     static List<ExecContextApiData.ProcessVertex> groupBodySubProcesses(
-            ExecContextParamsYaml py, ExecContextParamsYaml.Process process, String runningTaskContextId) {
+            ExecContextParams py, ExecContextParams.Process process, String runningTaskContextId) {
         final String parentCompiledCtx = process.internalContextId;
         final String runtimeProcessCtx = ContextUtils.getProcessContextId(ContextUtils.getLevel(runningTaskContextId));
         final String childPrefix = parentCompiledCtx + ContextUtils.CONTEXT_DIGIT_SEPARATOR;
         final List<ExecContextApiData.ProcessVertex> result = new ArrayList<>();
         long vid = 0;
-        for (ExecContextParamsYaml.Group g : py.groups) {
+        for (ExecContextParams.Group g : py.groups) {
             // Locate THIS process in the group body by processCode. The body is stored in DFS pre-order
             // (compilation order - a process is appended before its own sub-block is compiled), so a
             // process's whole subtree is the CONTIGUOUS run of entries that immediately follows it and

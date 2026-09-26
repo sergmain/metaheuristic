@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -219,7 +219,7 @@ public class ExecContextTaskAssigningTopLevelService implements ShutdownInterfac
                     vertices.stream().limit(5).map(o->o.taskId!=null ? o.taskId.toString() : "null").collect(Collectors.joining(", "))+suffix);
         }
 
-        final ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
+        final ExecContextParams execContextParamsYaml = execContext.getExecContextParamsYaml();
 
         int page = 0;
         List<Long> taskIds;

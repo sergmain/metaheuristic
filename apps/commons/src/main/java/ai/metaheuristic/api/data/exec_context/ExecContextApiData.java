@@ -345,7 +345,7 @@ public class ExecContextApiData {
         public final Long execContextVariableStateId;
         public final Long companyId;
         public final Long accountId;
-        public final ExecContextParamsYaml paramsYaml;
+        public final ExecContextParams paramsYaml;
 
         public UserExecContext asUserExecContext() {
             return new UserExecContext(getAccountId(), getCompanyId());

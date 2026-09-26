@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.yaml.exec_context;
 
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
 import java.util.Map;
@@ -25,17 +25,17 @@ import java.util.Map;
  * <br/>
  *
  */
-public class ExecContextParamsYamlUtils {
+public class ExecContextParamsUtils {
 
-    private static final ExecContextParamsYamlUtilsV1 YAML_UTILS_V_1 = new ExecContextParamsYamlUtilsV1();
-    private static final ExecContextParamsYamlUtilsV2 YAML_UTILS_V_2 = new ExecContextParamsYamlUtilsV2();
-    private static final ExecContextParamsYamlUtilsV3 YAML_UTILS_V_3 = new ExecContextParamsYamlUtilsV3();
-    private static final ExecContextParamsYamlUtilsV4 YAML_UTILS_V_4 = new ExecContextParamsYamlUtilsV4();
-    private static final ExecContextParamsYamlUtilsV5 YAML_UTILS_V_5 = new ExecContextParamsYamlUtilsV5();
-    private static final ExecContextParamsYamlUtilsV6 YAML_UTILS_V_6 = new ExecContextParamsYamlUtilsV6();
-    private static final ExecContextParamsYamlUtilsV6 DEFAULT_UTILS = YAML_UTILS_V_6;
+    private static final ExecContextParamsUtilsV1 YAML_UTILS_V_1 = new ExecContextParamsUtilsV1();
+    private static final ExecContextParamsUtilsV2 YAML_UTILS_V_2 = new ExecContextParamsUtilsV2();
+    private static final ExecContextParamsUtilsV3 YAML_UTILS_V_3 = new ExecContextParamsUtilsV3();
+    private static final ExecContextParamsUtilsV4 YAML_UTILS_V_4 = new ExecContextParamsUtilsV4();
+    private static final ExecContextParamsUtilsV5 YAML_UTILS_V_5 = new ExecContextParamsUtilsV5();
+    private static final ExecContextParamsUtilsV6 YAML_UTILS_V_6 = new ExecContextParamsUtilsV6();
+    private static final ExecContextParamsUtilsV6 DEFAULT_UTILS = YAML_UTILS_V_6;
 
-    public static final BaseYamlUtils<ExecContextParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<ExecContextParams> BASE_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1,
                     2, YAML_UTILS_V_2,

@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -96,12 +96,12 @@ public class ExecContextGraftSplitterExactBindTest extends MhSharedItTest {
         ec.execContextGraphId = 0L;
         ec.execContextTaskStateId = 0L;
 
-        ExecContextParamsYaml pyaml = new ExecContextParamsYaml();
-        ExecContextParamsYaml.Process splitter = new ExecContextParamsYaml.Process();
+        ExecContextParams pyaml = new ExecContextParams();
+        ExecContextParams.Process splitter = new ExecContextParams.Process();
         splitter.processName = "splitter";
         splitter.processCode = SPLITTER_PROCESS_CODE;
         splitter.internalContextId = "1";
-        splitter.function = new ExecContextParamsYaml.FunctionDefinition("mh.batch-line-splitter");
+        splitter.function = new ExecContextParams.FunctionDefinition("mh.batch-line-splitter");
         splitter.metas.add(Map.of("output-variable", OUTPUT_VAR));
         pyaml.processes.add(splitter);
         ec.updateParams(pyaml);

@@ -17,7 +17,7 @@
 package ai.metaheuristic.api.data;
 
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -53,10 +53,10 @@ public class SourceCodeGraph {
     public @Nullable String description = null;
     public List<Map<String, String>> metas = new ArrayList<>();
 
-    public final List<ExecContextParamsYaml.Process> processes = new ArrayList<>();
-    public final List<ExecContextParamsYaml.Group> groups = new ArrayList<>();
+    public final List<ExecContextParams.Process> processes = new ArrayList<>();
+    public final List<ExecContextParams.Group> groups = new ArrayList<>();
 
-    public final ExecContextParamsYaml.VariableDeclaration variables = new ExecContextParamsYaml.VariableDeclaration();
+    public final ExecContextParams.VariableDeclaration variables = new ExecContextParams.VariableDeclaration();
     public final DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
 
 }

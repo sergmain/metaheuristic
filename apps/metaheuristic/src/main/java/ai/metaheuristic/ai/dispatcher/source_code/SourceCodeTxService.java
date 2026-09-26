@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.SourceCodeGraph;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
@@ -178,16 +178,16 @@ public class SourceCodeTxService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public static List<ExecContextParamsYaml.Variable> findVariableByType(SourceCodeGraph scg, String type) {
-        List<ExecContextParamsYaml.Variable> list = new ArrayList<>();
-        for (ExecContextParamsYaml.Process process : scg.processes) {
+    public static List<ExecContextParams.Variable> findVariableByType(SourceCodeGraph scg, String type) {
+        List<ExecContextParams.Variable> list = new ArrayList<>();
+        for (ExecContextParams.Process process : scg.processes) {
             findVariableByType(process, type, list);
         }
         return list;
     }
 
-    private static void findVariableByType(ExecContextParamsYaml.Process process, String type, List<ExecContextParamsYaml.Variable> list) {
-        for (ExecContextParamsYaml.Variable output : process.outputs) {
+    private static void findVariableByType(ExecContextParams.Process process, String type, List<ExecContextParams.Variable> list) {
+        for (ExecContextParams.Variable output : process.outputs) {
             if (type.equals(output.type)) {
                 list.add(output);
             }

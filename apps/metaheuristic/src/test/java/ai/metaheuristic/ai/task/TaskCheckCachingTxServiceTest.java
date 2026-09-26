@@ -31,7 +31,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import org.junit.jupiter.api.Test;
@@ -121,7 +121,7 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
                 () -> variableTxService.storeStringInVariable(getExecContextForTest().id, taskId, tpy.task.outputs.get(0), textWithUUID));
 
         // (b) CACHE THE RESULT
-        final ExecContextParamsYaml.Process p = getExecContextForTest().getExecContextParamsYaml().findProcess(tpy.task.processCode);
+        final ExecContextParams.Process p = getExecContextForTest().getExecContextParamsYaml().findProcess(tpy.task.processCode);
         assertNotNull(p);
         cacheTxService.storeVariablesTx(tpy, p.function);
         assertNotNull(cacheProcessRepository.findByKeySha256LengthReadOnly(key.key()), "the result wasn't cached");

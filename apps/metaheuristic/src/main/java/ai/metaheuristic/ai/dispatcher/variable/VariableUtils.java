@@ -24,12 +24,11 @@ import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.commons.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
-import tools.jackson.core.JacksonException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -109,7 +108,7 @@ public class VariableUtils {
      * @param createVariable function that creates a new uninitialized variable by name and contextId, returns its ID
      */
     public static void initOutputVariables(
-            List<ExecContextParamsYaml.Variable> processOutputs,
+            List<ExecContextParams.Variable> processOutputs,
             List<TaskParamsYaml.OutputVariable> taskOutputs,
             String taskContextId,
             VariableResolver findVariable,
@@ -119,7 +118,7 @@ public class VariableUtils {
                 .map(o -> o.name)
                 .collect(Collectors.toSet());
 
-        for (ExecContextParamsYaml.Variable variable : processOutputs) {
+        for (ExecContextParams.Variable variable : processOutputs) {
             if (existingOutputNames.contains(variable.name)) {
                 continue;
             }
@@ -163,8 +162,8 @@ public class VariableUtils {
             taskOutputs.add(
                     new TaskParamsYaml.OutputVariable(
                             variableId, EnumsApi.VariableContext.local, variable.name, variable.sourcing,
-                            ExecContextParamsYaml.GitParams.toGitInfo(variable.git),
-                            ExecContextParamsYaml.DiskParams.toDiskInfo(variable.disk),
+                            ExecContextParams.GitParams.toGitInfo(variable.git),
+                            ExecContextParams.DiskParams.toDiskInfo(variable.disk),
                             null, false, variable.type, true, variable.getNullable(), variable.ext
                     ));
         }
@@ -183,12 +182,12 @@ public class VariableUtils {
      * @param createNullVariable creates a nullified (null-blob) variable by name and contextId, returns its ID
      */
     public static void initAbsentNullableInputVariables(
-            List<ExecContextParamsYaml.Variable> inputs,
+            List<ExecContextParams.Variable> inputs,
             String topLevelContextId,
             VariableResolver findVariable,
             VariableCreator createNullVariable) {
 
-        for (ExecContextParamsYaml.Variable input : inputs) {
+        for (ExecContextParams.Variable input : inputs) {
             if (input.context==EnumsApi.VariableContext.global) {
                 // global variables are managed separately; never auto-created here
                 continue;

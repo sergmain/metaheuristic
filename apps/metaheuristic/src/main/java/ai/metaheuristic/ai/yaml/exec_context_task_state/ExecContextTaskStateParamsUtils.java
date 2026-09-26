@@ -14,24 +14,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.execution_gate;
+package ai.metaheuristic.ai.yaml.exec_context_task_state;
 
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
 import java.util.Map;
 
 /**
- * @author Sergio Lissner
- * Date: 8/14/2026
+ * @author Serge
+ * Date: 3/17/2021
+ * Time: 10:47 AM
  */
-public class ExecutionGateParamsYamlUtils {
+public class ExecContextTaskStateParamsUtils {
 
-    private static final ExecutionGateParamsYamlUtilsV1 YAML_UTILS_V_1 = new ExecutionGateParamsYamlUtilsV1();
-    private static final ExecutionGateParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    private static final ExecContextTaskStateParamsUtilsV1 UTILS_V_1 = new ExecContextTaskStateParamsUtilsV1();
+    private static final ExecContextTaskStateParamsUtilsV1 DEFAULT_UTILS = UTILS_V_1;
 
-    public static final BaseYamlUtils<ExecutionGateParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<ExecContextTaskStateParams> BASE_UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1
+                    1, UTILS_V_1
             ),
             DEFAULT_UTILS
     );

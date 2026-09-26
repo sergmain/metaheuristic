@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Data
-public class ExecContextParamsYaml implements BaseParams {
+public class ExecContextParams implements BaseParams {
 
     @SuppressWarnings("FieldMayBeStatic")
     public final int version = 6;

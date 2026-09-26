@@ -32,7 +32,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.ContextUtils;
@@ -45,7 +45,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -357,7 +356,7 @@ public class ExecContextGraftService {
      * counter needs (bind {@code nextDepth} onto the child's {@code depth}).
      */
     public List<InputBinding> resolveInBandInputBindings(
-            Long execContextId, String resolutionTaskContextId, ExecContextParamsYaml.Graft graft) {
+            Long execContextId, String resolutionTaskContextId, ExecContextParams.Graft graft) {
         if (graft.inputBindings.isEmpty()) {
             return List.of();
         }
@@ -365,8 +364,8 @@ public class ExecContextGraftService {
         if (ec == null) {
             throw new IllegalStateException("01.830.300 execContext #" + execContextId + " not found");
         }
-        ExecContextParamsYaml.Group group = null;
-        for (ExecContextParamsYaml.Group g : ec.getExecContextParamsYaml().groups) {
+        ExecContextParams.Group group = null;
+        for (ExecContextParams.Group g : ec.getExecContextParamsYaml().groups) {
             if (graft.groupName.equals(g.name)) {
                 group = g;
                 break;
@@ -416,7 +415,7 @@ public class ExecContextGraftService {
         if (ec == null) {
             return null;
         }
-        ExecContextParamsYaml.Process p = ec.getExecContextParamsYaml().findProcess(targetProcessCode);
+        ExecContextParams.Process p = ec.getExecContextParamsYaml().findProcess(targetProcessCode);
         if (p == null) {
             return null;
         }
@@ -471,7 +470,7 @@ public class ExecContextGraftService {
     }
 
     /**
-     * Phase 5 (O5) - by-name resolution of a first-class v6 {@link ExecContextParamsYaml.Group}.
+     * Phase 5 (O5) - by-name resolution of a first-class v6 {@link ExecContextParams.Group}.
      * Looks the group up by name in the EC's params and materializes the SAME
      * {@link InternalFunctionData.ExecutionContextData} shape the v0 by-reference path derives from
      * {@link InternalFunctionService#getSubProcesses}, so the downstream graft is identical - only
@@ -481,7 +480,7 @@ public class ExecContextGraftService {
      *       ctx = {@code internalContextId}) - what {@code createTasksForSubProcesses} reads;</li>
      *   <li>a synthetic {@code sequential} parent carries the FLAT logic (O7: sequential-only in v2.0);
      *       it is an anchor for the logic check, never itself created;</li>
-     *   <li>a body-scoped {@link ExecContextParamsYaml} makes the body processes resolvable via
+     *   <li>a body-scoped {@link ExecContextParams} makes the body processes resolvable via
      *       {@code findProcess} and carries {@code inline} + {@code clean} (the only params fields the
      *       task-creation path reads);</li>
      *   <li>{@code descendants} stays the TARGET's live direct children - the body source does not
@@ -491,8 +490,8 @@ public class ExecContextGraftService {
     private InternalFunctionData.ExecutionContextData resolveGroupBody(
             ExecContextApiData.SimpleExecContext sec, Long targetTaskId, String groupName, String targetProcessCtx) {
 
-        ExecContextParamsYaml.Group group = null;
-        for (ExecContextParamsYaml.Group g : sec.paramsYaml.groups) {
+        ExecContextParams.Group group = null;
+        for (ExecContextParams.Group g : sec.paramsYaml.groups) {
             if (groupName.equals(g.name)) {
                 group = g;
                 break;
@@ -508,7 +507,7 @@ public class ExecContextGraftService {
         // Body processes -> sub-process vertices (identity = processCode, ctx = internalContextId).
         List<ExecContextApiData.ProcessVertex> subProcesses = new ArrayList<>();
         long vid = 0;
-        for (ExecContextParamsYaml.Process p : group.body) {
+        for (ExecContextParams.Process p : group.body) {
             // Phase 6a option 2 (A): lay only ROOT-level body processes (ctx == the group root). A deeper-ctx
             // body process is enclosed by an internal function within the body; it is that function's sub-process
             // and is expanded at RUNTIME when the enclosing function runs (getSubProcesses, part B) - mirroring
@@ -529,12 +528,12 @@ public class ExecContextGraftService {
         }
 
         // Synthetic sequential parent - the graft is FLAT/sequential (O7); it is an anchor, never created.
-        ExecContextParamsYaml.Process parent = new ExecContextParamsYaml.Process();
+        ExecContextParams.Process parent = new ExecContextParams.Process();
         parent.processCode = "group:" + groupName;
         parent.logic = EnumsApi.SourceCodeSubProcessLogic.sequential;
 
         // Body-scoped params: findProcess must resolve the body processes; inline + clean carry over.
-        ExecContextParamsYaml bodyParams = new ExecContextParamsYaml();
+        ExecContextParams bodyParams = new ExecContextParams();
         bodyParams.clean = sec.paramsYaml.clean;
         bodyParams.variables.inline.putAll(sec.paramsYaml.variables.inline);
         bodyParams.processes.addAll(group.body);

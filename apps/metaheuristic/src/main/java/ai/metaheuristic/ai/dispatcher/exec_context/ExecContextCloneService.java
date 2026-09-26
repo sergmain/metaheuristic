@@ -26,8 +26,10 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepositor
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsUtils;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.JsonUtils;
@@ -178,9 +180,9 @@ public class ExecContextCloneService {
         // Stage 2 — rewrite references (graph DOT inside YAML envelope, task-state
         // map keys, variable-state JSON). Pass the parsed YAML object to rewriteGraph
         // so we don't feed the whole YAML string to the DOT importer.
-        ExecContextGraphParamsYaml rewrittenGraphYaml = ExecContextCloneRewriteUtils
+        ExecContextGraphParams rewrittenGraphYaml = ExecContextCloneRewriteUtils
                 .rewriteGraph(newGraph.getExecContextGraphParamsYaml(), taskIdMap);
-        String rewrittenGraph = ExecContextGraphParamsYamlUtils.BASE_YAML_UTILS
+        String rewrittenGraph = ExecContextGraphParamsUtils.BASE_UTILS
                 .toString(rewrittenGraphYaml);
         String rewrittenTaskState = serializeTaskState(
                 ExecContextCloneRewriteUtils.rewriteTaskState(
@@ -255,8 +257,8 @@ public class ExecContextCloneService {
 
     @SneakyThrows
     private static String serializeTaskState(
-            ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml params) {
-        return ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYamlUtils
-                .BASE_YAML_UTILS.toString(params);
+            ExecContextTaskStateParams params) {
+        return ExecContextTaskStateParamsUtils
+                .BASE_UTILS.toString(params);
     }
 }

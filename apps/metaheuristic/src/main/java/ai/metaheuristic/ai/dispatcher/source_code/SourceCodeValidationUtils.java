@@ -22,7 +22,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.SourceCodeGraph;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -412,8 +412,8 @@ public class SourceCodeValidationUtils {
     public static SourceCodeApiData.SourceCodeValidationResult validateSourceCodeMhsc(
             SourceCodeGraph sourceCodeGraph,
             Predicate<String> internalFunctionResolver,
-            Predicate<ExecContextParamsYaml.FunctionDefinition> externalFunctionResolver) {
-        for (ExecContextParamsYaml.Process process : sourceCodeGraph.processes) {
+            Predicate<ExecContextParams.FunctionDefinition> externalFunctionResolver) {
+        for (ExecContextParams.Process process : sourceCodeGraph.processes) {
             SourceCodeApiData.SourceCodeValidationResult r =
                     checkMhscProcessFunctions(process, internalFunctionResolver, externalFunctionResolver);
             if (r.status != OK) {
@@ -424,9 +424,9 @@ public class SourceCodeValidationUtils {
     }
 
     private static SourceCodeApiData.SourceCodeValidationResult checkMhscProcessFunctions(
-            ExecContextParamsYaml.Process process,
+            ExecContextParams.Process process,
             Predicate<String> internalFunctionResolver,
-            Predicate<ExecContextParamsYaml.FunctionDefinition> externalFunctionResolver) {
+            Predicate<ExecContextParams.FunctionDefinition> externalFunctionResolver) {
         if (process.function != null) {
             SourceCodeApiData.SourceCodeValidationResult r =
                     checkMhscFunctionDef(process.processCode, process.function, internalFunctionResolver, externalFunctionResolver);
@@ -439,9 +439,9 @@ public class SourceCodeValidationUtils {
 
     private static SourceCodeApiData.SourceCodeValidationResult checkMhscFunctionDef(
             String processCode,
-            ExecContextParamsYaml.FunctionDefinition fnDef,
+            ExecContextParams.FunctionDefinition fnDef,
             Predicate<String> internalFunctionResolver,
-            Predicate<ExecContextParamsYaml.FunctionDefinition> externalFunctionResolver) {
+            Predicate<ExecContextParams.FunctionDefinition> externalFunctionResolver) {
         if (S.b(fnDef.code)) {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR,

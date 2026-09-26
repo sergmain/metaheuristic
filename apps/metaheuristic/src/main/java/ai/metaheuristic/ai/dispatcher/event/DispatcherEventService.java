@@ -95,7 +95,6 @@ public class DispatcherEventService {
         if (userContext !=null) {
             batchEventData.companyId = userContext.getCompanyId();
             batchEventData.username = userContext.getUsername();
-//            contextId = userContext.contextId;
             contextId = UUID.randomUUID().toString();
         }
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, companyUniqueId, contextId, batchEventData));

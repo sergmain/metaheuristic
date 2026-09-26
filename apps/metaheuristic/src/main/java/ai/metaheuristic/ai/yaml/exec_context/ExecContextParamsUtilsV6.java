@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.exec_context;
 
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV6;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -33,8 +33,8 @@ import java.util.stream.Collectors;
  * Time: 2:13 PM
  */
 @SuppressWarnings("DuplicatedCode")
-public class ExecContextParamsYamlUtilsV6
-        extends AbstractParamsYamlUtils<ExecContextParamsYamlV6, ExecContextParamsYaml, Void, Void, Void, Void> {
+public class ExecContextParamsUtilsV6
+        extends AbstractParamsYamlUtils<ExecContextParamsYamlV6, ExecContextParams, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -49,8 +49,8 @@ public class ExecContextParamsYamlUtilsV6
 
     @NonNull
     @Override
-    public ExecContextParamsYaml upgradeTo(@NonNull ExecContextParamsYamlV6 v6) {
-        ExecContextParamsYaml t = new ExecContextParamsYaml();
+    public ExecContextParams upgradeTo(@NonNull ExecContextParamsYamlV6 v6) {
+        ExecContextParams t = new ExecContextParams();
 
         // right now we don't need to convert Graph because it has only one version of structure
         // so just copying of graph field is Ok
@@ -58,34 +58,34 @@ public class ExecContextParamsYamlUtilsV6
         t.sourceCodeUid = v6.sourceCodeUid;
         t.desc = v6.desc;
         t.processesGraph = v6.processesGraph;
-        v6.processes.stream().map(ExecContextParamsYamlUtilsV6::toProcess).collect(Collectors.toCollection(()->t.processes));
+        v6.processes.stream().map(ExecContextParamsUtilsV6::toProcess).collect(Collectors.toCollection(()->t.processes));
         initVariables(v6.variables, t.variables);
         if (v6.execContextGraph!=null) {
-            t.execContextGraph = new ExecContextParamsYaml.ExecContextGraph(
+            t.execContextGraph = new ExecContextParams.ExecContextGraph(
                     v6.execContextGraph.rootExecContextId, v6.execContextGraph.parentExecContextId, v6.execContextGraph.graph);
         }
         t.columnNames.putAll(v6.columnNames);
-        v6.groups.stream().map(ExecContextParamsYamlUtilsV6::toGroup).collect(Collectors.toCollection(()->t.groups));
+        v6.groups.stream().map(ExecContextParamsUtilsV6::toGroup).collect(Collectors.toCollection(()->t.groups));
         t.gitSources = toGitSources(v6.gitSources);
         return t;
     }
 
-    private static void initVariables(ExecContextParamsYamlV6.VariableDeclarationV6 v4, ExecContextParamsYaml.VariableDeclaration v) {
+    private static void initVariables(ExecContextParamsYamlV6.VariableDeclarationV6 v4, ExecContextParams.VariableDeclaration v) {
         v.inline.putAll(v4.inline);
         v.globals = v4.globals;
         v4.inputs.forEach(o->v.inputs.add(toVariable(o)));
         v4.outputs.forEach(o->v.outputs.add(toVariable(o)));
     }
 
-    private static ExecContextParamsYaml.Process toProcess(ExecContextParamsYamlV6.ProcessV6 p2) {
-        ExecContextParamsYaml.Process p = new ExecContextParamsYaml.Process();
+    private static ExecContextParams.Process toProcess(ExecContextParamsYamlV6.ProcessV6 p2) {
+        ExecContextParams.Process p = new ExecContextParams.Process();
         p.function = toFunction(p2.function);
         // pre/post Functions are not supported anymore - a V6 that still carries them loses them here
-        p2.inputs.stream().map(ExecContextParamsYamlUtilsV6::toVariable).collect(Collectors.toCollection(()->p.inputs));
-        p2.outputs.stream().map(ExecContextParamsYamlUtilsV6::toVariable).collect(Collectors.toCollection(()->p.outputs));
+        p2.inputs.stream().map(ExecContextParamsUtilsV6::toVariable).collect(Collectors.toCollection(()->p.inputs));
+        p2.outputs.stream().map(ExecContextParamsUtilsV6::toVariable).collect(Collectors.toCollection(()->p.outputs));
         p.metas.addAll(p2.metas);
         if (p2.cache!=null) {
-            p.cache = new ExecContextParamsYaml.Cache(p2.cache.enabled, p2.cache.omitInline, p2.cache.cacheMeta);
+            p.cache = new ExecContextParams.Cache(p2.cache.enabled, p2.cache.omitInline, p2.cache.cacheMeta);
         }
         p.processName = p2.processName;
         p.processCode = p2.processCode;
@@ -100,30 +100,30 @@ public class ExecContextParamsYamlUtilsV6
         return p;
     }
 
-    private static ExecContextParamsYaml.@Nullable DiskParams toDiskParams(ExecContextParamsYamlV6.@Nullable DiskParamsV6 disk) {
-        return disk==null ? null : new ExecContextParamsYaml.DiskParams(disk.mask, disk.code, disk.path);
+    private static ExecContextParams.@Nullable DiskParams toDiskParams(ExecContextParamsYamlV6.@Nullable DiskParamsV6 disk) {
+        return disk==null ? null : new ExecContextParams.DiskParams(disk.mask, disk.code, disk.path);
     }
 
-    private static ExecContextParamsYaml.@Nullable GitParams toGitParams(ExecContextParamsYamlV6.@Nullable GitParamsV6 git) {
-        return git==null ? null : new ExecContextParamsYaml.GitParams(git.repo, git.branch, git.commit, git.path);
+    private static ExecContextParams.@Nullable GitParams toGitParams(ExecContextParamsYamlV6.@Nullable GitParamsV6 git) {
+        return git==null ? null : new ExecContextParams.GitParams(git.repo, git.branch, git.commit, git.path);
     }
 
-    private static ExecContextParamsYaml.@Nullable GitSources toGitSources(ExecContextParamsYamlV6.@Nullable GitSourcesV6 src) {
+    private static ExecContextParams.@Nullable GitSources toGitSources(ExecContextParamsYamlV6.@Nullable GitSourcesV6 src) {
         if (src==null) {
             return null;
         }
-        ExecContextParamsYaml.GitSources trg = new ExecContextParamsYaml.GitSources();
+        ExecContextParams.GitSources trg = new ExecContextParams.GitSources();
         for (ExecContextParamsYamlV6.GitSourceInfoV6 info : src.gitSourceInfos) {
-            trg.gitSourceInfos.add(new ExecContextParamsYaml.GitSourceInfo(info.functionCode, toGitParams(info.git)));
+            trg.gitSourceInfos.add(new ExecContextParams.GitSourceInfo(info.functionCode, toGitParams(info.git)));
         }
         return trg;
     }
 
-    private static ExecContextParamsYaml.Graft toGraft(ExecContextParamsYamlV6.GraftV6 g2) {
+    private static ExecContextParams.Graft toGraft(ExecContextParamsYamlV6.GraftV6 g2) {
         if (g2==null) {
             return null;
         }
-        ExecContextParamsYaml.Graft g = new ExecContextParamsYaml.Graft(g2.groupName);
+        ExecContextParams.Graft g = new ExecContextParams.Graft(g2.groupName);
         g.inputBindings.addAll(g2.inputBindings);
         g.outputBindings.addAll(g2.outputBindings);
         g.driver = g2.driver;
@@ -131,23 +131,23 @@ public class ExecContextParamsYamlUtilsV6
         return g;
     }
 
-    private static ExecContextParamsYaml.Group toGroup(ExecContextParamsYamlV6.GroupV6 g2) {
-        ExecContextParamsYaml.Group g = new ExecContextParamsYaml.Group();
+    private static ExecContextParams.Group toGroup(ExecContextParamsYamlV6.GroupV6 g2) {
+        ExecContextParams.Group g = new ExecContextParams.Group();
         g.name = g2.name;
-        g2.body.stream().map(ExecContextParamsYamlUtilsV6::toProcess).collect(Collectors.toCollection(()->g.body));
-        g2.inputs.stream().map(ExecContextParamsYamlUtilsV6::toVariable).collect(Collectors.toCollection(()->g.inputs));
-        g2.outputs.stream().map(ExecContextParamsYamlUtilsV6::toVariable).collect(Collectors.toCollection(()->g.outputs));
+        g2.body.stream().map(ExecContextParamsUtilsV6::toProcess).collect(Collectors.toCollection(()->g.body));
+        g2.inputs.stream().map(ExecContextParamsUtilsV6::toVariable).collect(Collectors.toCollection(()->g.inputs));
+        g2.outputs.stream().map(ExecContextParamsUtilsV6::toVariable).collect(Collectors.toCollection(()->g.outputs));
         g.internalContextId = g2.internalContextId;
         g.resetPointProcessCode = g2.resetPointProcessCode;
         return g;
     }
 
-    private static ExecContextParamsYaml.Variable toVariable(ExecContextParamsYamlV6.VariableV6 v) {
-        return new ExecContextParamsYaml.Variable(v.name, v.context, v.sourcing, toGitParams(v.git), toDiskParams(v.disk), v.parentContext, v.type, v.getNullable(), v.ext, null);
+    private static ExecContextParams.Variable toVariable(ExecContextParamsYamlV6.VariableV6 v) {
+        return new ExecContextParams.Variable(v.name, v.context, v.sourcing, toGitParams(v.git), toDiskParams(v.disk), v.parentContext, v.type, v.getNullable(), v.ext, null);
     }
 
-    private static ExecContextParamsYaml.FunctionDefinition toFunction(ExecContextParamsYamlV6.FunctionDefinitionV6 f1) {
-        return new ExecContextParamsYaml.FunctionDefinition(f1.code, f1.params, f1.context, f1.refType);
+    private static ExecContextParams.FunctionDefinition toFunction(ExecContextParamsYamlV6.FunctionDefinitionV6 f1) {
+        return new ExecContextParams.FunctionDefinition(f1.code, f1.params, f1.context, f1.refType);
     }
 
     @NonNull

@@ -17,8 +17,8 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.S;
@@ -52,15 +52,15 @@ public class ExecContextCloneRewriteUtils {
     }
 
     /**
-     * Rewrite the DOT graph held inside an {@link ExecContextGraphParamsYaml}
+     * Rewrite the DOT graph held inside an {@link ExecContextGraphParams}
      * using {@code taskIdMap} (oldTaskId -> newTaskId). Vertices not present
      * in the map are left unchanged. Edge structure and per-vertex
      * {@code taskContextId} attribute are preserved. Returns a new params
      * object — the input is not mutated.
      */
-    public static ExecContextGraphParamsYaml rewriteGraph(
-            ExecContextGraphParamsYaml source, Map<Long, Long> taskIdMap) {
-        ExecContextGraphParamsYaml target = new ExecContextGraphParamsYaml();
+    public static ExecContextGraphParams rewriteGraph(
+            ExecContextGraphParams source, Map<Long, Long> taskIdMap) {
+        ExecContextGraphParams target = new ExecContextGraphParams();
         target.graph = rewriteDotGraph(source.graph, taskIdMap);
         return target;
     }
@@ -101,16 +101,16 @@ public class ExecContextCloneRewriteUtils {
     }
 
     /**
-     * Rewrite the Long keys of {@link ExecContextTaskStateParamsYaml#states}
+     * Rewrite the Long keys of {@link ExecContextTaskStateParams#states}
      * and {@code triesWasMade} using {@code taskIdMap}. Returns a new
      * params YAML object — the input is not mutated. Keys not present in
      * the map are left as-is.
      */
-    public static ExecContextTaskStateParamsYaml rewriteTaskState(
-            ExecContextTaskStateParamsYaml source,
+    public static ExecContextTaskStateParams rewriteTaskState(
+            ExecContextTaskStateParams source,
             Map<Long, Long> taskIdMap) {
 
-        ExecContextTaskStateParamsYaml target = new ExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams target = new ExecContextTaskStateParams();
         for (Map.Entry<Long, EnumsApi.TaskExecState> e : source.states.entrySet()) {
             Long newKey = taskIdMap.getOrDefault(e.getKey(), e.getKey());
             target.states.put(newKey, e.getValue());

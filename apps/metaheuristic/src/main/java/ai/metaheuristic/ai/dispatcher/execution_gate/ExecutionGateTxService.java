@@ -17,11 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.execution_gate;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecutionGate;
 import ai.metaheuristic.ai.dispatcher.event.events.ExecutionGateChangedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecutionGateRepository;
-import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsYaml;
+import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +60,7 @@ public class ExecutionGateTxService {
      * not the primary mechanism — the normal path finds the row and extends it.
      */
     @Transactional
-    public void createOrExtend(EnumsApi.GateScope scope, String refKey, long blockedUntil, String reasonCode, ExecutionGateParamsYaml params) {
+    public void createOrExtend(EnumsApi.GateScope scope, String refKey, long blockedUntil, String reasonCode, ExecutionGateParams params) {
         ExecutionGate gate = executionGateRepository.findByScopeAndRefKey(scope.name(), refKey);
         if (gate == null) {
             gate = new ExecutionGate();

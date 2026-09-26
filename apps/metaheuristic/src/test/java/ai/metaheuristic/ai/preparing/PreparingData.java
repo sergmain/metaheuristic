@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.dispatcher.beans.*;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import lombok.Data;
 import org.jspecify.annotations.Nullable;
 
@@ -59,7 +59,7 @@ public class PreparingData {
         public @Nullable Function f4 = null;
         public @Nullable Function f5 = null;
         public GlobalVariable testGlobalVariable;
-        public ExecContextParamsYaml execContextYaml;
+        public ExecContextParams execContextYaml;
         public @Nullable ExecContextImpl execContextForTest = null;
     }
 }

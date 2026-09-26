@@ -14,34 +14,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.exec_context_task_state;
+package ai.metaheuristic.ai.yaml.exec_context_graph;
 
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.BaseParams;
-import lombok.Data;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * <b>!!! BEFORE MAKING ANY EDITION IN THIS CLASS, READ <a href="https://github.com/sergmain/metaheuristic/wiki/multi-versioning-mechanic">...</a></b>
- * <br/>
  * @author Serge
  * Date: 3/17/2021
- * Time: 10:33 AM
+ * Time: 10:47 AM
  */
-@Data
-public class ExecContextTaskStateParamsYaml implements BaseParams {
+public class ExecContextGraphParamsUtils {
 
-    public final int version = 1;
+    private static final ExecContextGraphParamsUtilsV1 UTILS_V_1 = new ExecContextGraphParamsUtilsV1();
+    private static final ExecContextGraphParamsUtilsV1 DEFAULT_UTILS = UTILS_V_1;
 
-    @Override
-    public boolean checkIntegrity() {
-        return true;
-    }
+    public static final BaseYamlUtils<ExecContextGraphParams> BASE_UTILS = new BaseYamlUtils<>(
+            Map.of(
+                    1, UTILS_V_1
+            ),
+            DEFAULT_UTILS
+    );
 
-    public final Map<Long, EnumsApi.TaskExecState> states = new HashMap<>();
-
-    public final Map<Long, Integer> triesWasMade = new HashMap<>();
 }

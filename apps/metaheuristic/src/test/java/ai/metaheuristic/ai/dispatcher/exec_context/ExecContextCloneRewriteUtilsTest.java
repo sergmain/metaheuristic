@@ -17,7 +17,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.utils.JsonUtils;
@@ -121,7 +121,7 @@ public class ExecContextCloneRewriteUtilsTest {
 
     @Test
     public void test_rewriteTaskState_states_keysAreRewritten() {
-        ExecContextTaskStateParamsYaml src = new ExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams src = new ExecContextTaskStateParams();
         src.states.put(100L, EnumsApi.TaskExecState.OK);
         src.states.put(200L, EnumsApi.TaskExecState.IN_PROGRESS);
         src.triesWasMade.put(100L, 3);
@@ -130,7 +130,7 @@ public class ExecContextCloneRewriteUtilsTest {
         Map<Long, Long> map = Map.of(100L, 500L, 200L, 600L);
 
         //act
-        ExecContextTaskStateParamsYaml out = ExecContextCloneRewriteUtils.rewriteTaskState(src, map);
+        ExecContextTaskStateParams out = ExecContextCloneRewriteUtils.rewriteTaskState(src, map);
 
         assertThat(out.states).hasSize(2);
         assertThat(out.states).containsEntry(500L, EnumsApi.TaskExecState.OK);
@@ -142,7 +142,7 @@ public class ExecContextCloneRewriteUtilsTest {
 
     @Test
     public void test_rewriteTaskState_inputNotMutated() {
-        ExecContextTaskStateParamsYaml src = new ExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams src = new ExecContextTaskStateParams();
         src.states.put(100L, EnumsApi.TaskExecState.OK);
         Map<Long, Long> map = Map.of(100L, 500L);
 
@@ -155,12 +155,12 @@ public class ExecContextCloneRewriteUtilsTest {
 
     @Test
     public void test_rewriteTaskState_unmappedKey_passesThrough() {
-        ExecContextTaskStateParamsYaml src = new ExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams src = new ExecContextTaskStateParams();
         src.states.put(100L, EnumsApi.TaskExecState.OK);
         src.states.put(999L, EnumsApi.TaskExecState.ERROR);
 
         //act
-        ExecContextTaskStateParamsYaml out =
+        ExecContextTaskStateParams out =
                 ExecContextCloneRewriteUtils.rewriteTaskState(src, Map.of(100L, 500L));
 
         assertThat(out.states).containsOnlyKeys(500L, 999L);

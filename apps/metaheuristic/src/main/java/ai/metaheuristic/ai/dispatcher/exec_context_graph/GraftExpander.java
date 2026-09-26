@@ -16,13 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_graph;
 
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 
 import java.util.List;
 
 /**
  * Threaded into {@code TaskProducingService.createTasksForSubProcesses} as a FUNCTION PARAMETER so the
- * task-production loop can expand an in-band graft node (a {@link ExecContextParamsYaml.Process} whose
+ * task-production loop can expand an in-band graft node (a {@link ExecContextParams.Process} whose
  * {@code graft} tag is non-null) WITHOUT a field dependency on the graft service - that field dep would
  * make a Spring ctor cycle (GraftService -> GraftTxService -> TaskProducingService -> GraftService). The
  * real implementation is {@link InBandGraftExpander}; the recursion caller passes a fail-fast lambda (025 v1).
@@ -32,5 +32,5 @@ public interface GraftExpander {
     /** Expand the in-band graft node under {@code targetTaskId}; return the grafted line's head task id. */
     // returns the grafted line's UNWIRED tail task ids (to be rejoined into the enclosing block's
     // downstream by the caller); empty when the line self-terminates or is a dormant SKIPPED (place-now) line.
-    List<Long> expand(Long execContextId, ExecContextParamsYaml.Process graftNode, Long targetTaskId, String currTaskContextId);
+    List<Long> expand(Long execContextId, ExecContextParams.Process graftNode, Long targetTaskId, String currTaskContextId);
 }

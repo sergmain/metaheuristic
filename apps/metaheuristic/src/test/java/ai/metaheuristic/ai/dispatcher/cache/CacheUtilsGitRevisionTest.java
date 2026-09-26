@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.cache;
 
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.utils.ExecContextGitSourceUtils;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
@@ -178,7 +178,7 @@ public class CacheUtilsGitRevisionTest {
      */
     private static CacheData.FullKey keyOfATaskOfANewExecContext(Git origin) {
         final FunctionConfigYaml descriptor = gitDescriptorAtHead(origin);
-        final ExecContextParamsYaml.GitSources pinned = ExecContextGitSourceUtils.resolveGitSources(
+        final ExecContextParams.GitSources pinned = ExecContextGitSourceUtils.resolveGitSources(
                 List.of(CODE), code -> descriptor, git -> branchTip(origin));
 
         final TaskParamsYaml tpy = new TaskParamsYaml();

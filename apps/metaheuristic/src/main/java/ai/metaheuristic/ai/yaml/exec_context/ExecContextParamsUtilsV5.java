@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.yaml.exec_context;
 
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV5;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV6;
 import ai.metaheuristic.commons.yaml.YamlUtils;
@@ -33,8 +32,8 @@ import java.util.stream.Collectors;
  * Time: 2:13 PM
  */
 @SuppressWarnings("DuplicatedCode")
-public class ExecContextParamsYamlUtilsV5
-        extends AbstractParamsYamlUtils<ExecContextParamsYamlV5, ExecContextParamsYamlV6, ExecContextParamsYamlUtilsV6,
+public class ExecContextParamsUtilsV5
+        extends AbstractParamsYamlUtils<ExecContextParamsYamlV5, ExecContextParamsYamlV6, ExecContextParamsUtilsV6,
         Void, Void, Void> {
 
     @Override
@@ -59,7 +58,7 @@ public class ExecContextParamsYamlUtilsV5
         t.sourceCodeUid = v5.sourceCodeUid;
         t.desc = v5.desc;
         t.processesGraph = v5.processesGraph;
-        v5.processes.stream().map(ExecContextParamsYamlUtilsV5::toProcess).collect(Collectors.toCollection(()->t.processes));
+        v5.processes.stream().map(ExecContextParamsUtilsV5::toProcess).collect(Collectors.toCollection(()->t.processes));
         initVariables(v5.variables, t.variables);
         if (v5.execContextGraph!=null) {
             t.execContextGraph = new ExecContextParamsYamlV6.ExecContextGraphV6(
@@ -79,10 +78,10 @@ public class ExecContextParamsYamlUtilsV5
     private static ExecContextParamsYamlV6.ProcessV6 toProcess(ExecContextParamsYamlV5.ProcessV5 p2) {
         ExecContextParamsYamlV6.ProcessV6 p = new ExecContextParamsYamlV6.ProcessV6();
         p.function = toFunction(p2.function);
-        p.preFunctions = p2.preFunctions!=null ? p2.preFunctions.stream().map(ExecContextParamsYamlUtilsV5::toFunction).collect(Collectors.toList()) : null;
-        p.postFunctions = p2.postFunctions!=null ? p2.postFunctions.stream().map(ExecContextParamsYamlUtilsV5::toFunction).collect(Collectors.toList()) : null;
-        p2.inputs.stream().map(ExecContextParamsYamlUtilsV5::toVariable).collect(Collectors.toCollection(()->p.inputs));
-        p2.outputs.stream().map(ExecContextParamsYamlUtilsV5::toVariable).collect(Collectors.toCollection(()->p.outputs));
+        p.preFunctions = p2.preFunctions!=null ? p2.preFunctions.stream().map(ExecContextParamsUtilsV5::toFunction).collect(Collectors.toList()) : null;
+        p.postFunctions = p2.postFunctions!=null ? p2.postFunctions.stream().map(ExecContextParamsUtilsV5::toFunction).collect(Collectors.toList()) : null;
+        p2.inputs.stream().map(ExecContextParamsUtilsV5::toVariable).collect(Collectors.toCollection(()->p.inputs));
+        p2.outputs.stream().map(ExecContextParamsUtilsV5::toVariable).collect(Collectors.toCollection(()->p.outputs));
         p.metas.addAll(p2.metas);
         if (p2.cache!=null) {
             p.cache = new ExecContextParamsYamlV6.CacheV6(p2.cache.enabled, p2.cache.omitInline, p2.cache.cacheMeta);
@@ -114,8 +113,8 @@ public class ExecContextParamsYamlUtilsV5
     }
 
     @Override
-    public ExecContextParamsYamlUtilsV6 nextUtil() {
-        return (ExecContextParamsYamlUtilsV6) ExecContextParamsYamlUtils.BASE_YAML_UTILS.getForVersion(6);
+    public ExecContextParamsUtilsV6 nextUtil() {
+        return (ExecContextParamsUtilsV6) ExecContextParamsUtils.BASE_UTILS.getForVersion(6);
     }
 
     @Override

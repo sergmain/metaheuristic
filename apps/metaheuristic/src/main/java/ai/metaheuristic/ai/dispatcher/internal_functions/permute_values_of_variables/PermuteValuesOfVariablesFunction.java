@@ -33,7 +33,7 @@ import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -118,7 +118,7 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
                     "985.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken");
         }
 
-        final ExecContextParamsYaml.Process process = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
+        final ExecContextParams.Process process = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {
             throw new InternalFunctionException(process_not_found,
                     "985.080 Process '"+taskParamsYaml.task.processCode+"'not found");

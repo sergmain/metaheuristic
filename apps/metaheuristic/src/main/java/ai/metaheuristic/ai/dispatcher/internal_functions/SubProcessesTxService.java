@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -144,7 +145,7 @@ public class SubProcessesTxService {
                 filteredDescendants.addAll(downstreamOfOldChildren);
 
                 // Clean up stale task state entries for all removed vertices (old children + their subtree)
-                ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml stateParams =
+                ExecContextTaskStateParams stateParams =
                         graphAndStates.states().getExecContextTaskStateParamsYaml();
                 for (ExecContextData.TaskVertex removed : removedVertices) {
                     stateParams.states.remove(removed.taskId);

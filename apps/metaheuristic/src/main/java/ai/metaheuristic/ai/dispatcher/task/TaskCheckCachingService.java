@@ -34,7 +34,7 @@ import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import lombok.AllArgsConstructor;
@@ -186,7 +186,7 @@ public class TaskCheckCachingService {
             return PREPARE_DATA_NONE;
         }
 
-        ExecContextParamsYaml ecpy = simpleExecContext.getParamsYaml();
+        ExecContextParams ecpy = simpleExecContext.getParamsYaml();
         CacheData.SimpleKey key = getSimpleKey(ecpy, task);
         if (key==null) {
             return PREPARE_DATA_NONE;
@@ -199,9 +199,9 @@ public class TaskCheckCachingService {
         return new PrepareData(cacheProcess, PrepareDataState.ok);
     }
 
-    public CacheData.@Nullable SimpleKey getSimpleKey(ExecContextParamsYaml ecpy, TaskImpl task) {
+    public CacheData.@Nullable SimpleKey getSimpleKey(ExecContextParams ecpy, TaskImpl task) {
         TaskParamsYaml tpy = task.getTaskParamsYaml();
-        ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
+        ExecContextParams.Process p = ecpy.findProcess(tpy.task.processCode);
         if (p==null) {
             log.warn("610.360 Process {} wasn't found", tpy.task.processCode);
             return null;

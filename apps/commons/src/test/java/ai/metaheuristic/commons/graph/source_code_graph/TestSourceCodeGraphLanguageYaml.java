@@ -20,7 +20,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.exceptions.SourceCodeGraphException;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -84,7 +84,7 @@ public class TestSourceCodeGraphLanguageYaml {
         assertEquals(1, findTargets(graph.processGraph, v22.process).size(), "Graph: \n" + asString(graph.processGraph));
         assertEquals(2, findTargets(graph.processGraph, v23.process).size(), "Graph: \n" + asString(graph.processGraph));
 
-        ExecContextParamsYaml.Process p = graph.processes.stream().filter(o->o.processCode.equals("feature-processing_cluster")).findFirst().orElseThrow();
+        ExecContextParams.Process p = graph.processes.stream().filter(o->o.processCode.equals("feature-processing_cluster")).findFirst().orElseThrow();
         assertEquals("ai", p.tag);
         assertEquals(-1, p.priority);
     }

@@ -37,7 +37,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -143,7 +143,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
                             "508.060 execContext for sourceCode '"+scUid+"' wasn't created, error: " + execContextResultRest.getErrorMessagesAsStr());
         }
 
-        final ExecContextParamsYaml execContextParamsYaml = execContextResultRest.execContext.getExecContextParamsYaml();
+        final ExecContextParams execContextParamsYaml = execContextResultRest.execContext.getExecContextParamsYaml();
 
 
         Path tempDir=null;
@@ -160,11 +160,11 @@ public class ExecSourceCodeFunction implements InternalFunction {
                 }
 
                 TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.get(i);
-                ExecContextParamsYaml.Variable inputVariable = execContextParamsYaml.variables.inputs.get(i);
+                ExecContextParams.Variable inputVariable = execContextParamsYaml.variables.inputs.get(i);
 
                 initInputVariable(tempDir, input, execContextResultRest, execContextParamsYaml, inputVariable);
             }
-            for (ExecContextParamsYaml.Variable output : execContextParamsYaml.variables.outputs) {
+            for (ExecContextParams.Variable output : execContextParamsYaml.variables.outputs) {
                 variableTxService.initOutputVariable(execContextResultRest.execContext.id, output);
             }
         }
@@ -200,8 +200,8 @@ public class ExecSourceCodeFunction implements InternalFunction {
     }
 
     private void initInputVariable(
-        Path tempDir, TaskParamsYaml.InputVariable input, ExecContextCreatorService.ExecContextCreationResult execContextResultRest,
-        ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Variable inputVariable) throws IOException {
+            Path tempDir, TaskParamsYaml.InputVariable input, ExecContextCreatorService.ExecContextCreationResult execContextResultRest,
+            ExecContextParams execContextParamsYaml, ExecContextParams.Variable inputVariable) throws IOException {
         Path tempFile = null;
         switch (input.context) {
             case global:

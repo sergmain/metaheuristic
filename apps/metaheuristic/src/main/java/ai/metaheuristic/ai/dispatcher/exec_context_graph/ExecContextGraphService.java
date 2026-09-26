@@ -28,9 +28,9 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsUtils;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
@@ -117,27 +117,27 @@ public class ExecContextGraphService {
         TxUtils.checkTxExists();
         ExecContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
 
-        ExecContextGraphParamsYaml ecpy = execContextGraph.getExecContextGraphParamsYaml();
+        ExecContextGraphParams ecpy = execContextGraph.getExecContextGraphParamsYaml();
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = importExecContextGraph(ecpy);
         try {
             callable.accept(graph);
         } finally {
             ecpy.graph = asString(graph);
-            execContextGraph.setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(ecpy));
+            execContextGraph.setParams(ExecContextParamsUtils.BASE_UTILS.toString(ecpy));
             save(execContextGraph);
         }
     }
 
     private void changeGraphWithState(
-        ExecContextData.GraphAndStates graphAndStates, BiConsumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, ExecContextTaskStateParamsYaml> callable) {
+        ExecContextData.GraphAndStates graphAndStates, BiConsumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, ExecContextTaskStateParams> callable) {
 
         TxUtils.checkTxExists();
         ExecContextGraphSyncService.checkWriteLockPresent(graphAndStates.graph().id);
         ExecContextTaskStateSyncService.checkWriteLockPresent(graphAndStates.states().id);
 
-        ExecContextGraphParamsYaml ecgpy = graphAndStates.graph().getExecContextGraphParamsYaml();
+        ExecContextGraphParams ecgpy = graphAndStates.graph().getExecContextGraphParamsYaml();
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = importExecContextGraph(ecgpy);
-        ExecContextTaskStateParamsYaml ectspy = graphAndStates.states().getExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams ectspy = graphAndStates.states().getExecContextTaskStateParamsYaml();
         try {
             callable.accept(graph, ectspy);
         } finally {
@@ -150,7 +150,7 @@ public class ExecContextGraphService {
 
     private void changeState(
         ExecContextData.ExecContextDAC execContextDAC, ExecContextTaskState execContextTaskState,
-        BiConsumer<ExecContextData.ExecContextDAC, ExecContextTaskStateParamsYaml> callable) {
+        BiConsumer<ExecContextData.ExecContextDAC, ExecContextTaskStateParams> callable) {
 
         TxUtils.checkTxExists();
         ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskState.id);
@@ -160,7 +160,7 @@ public class ExecContextGraphService {
                             "!Objects.equals(execContextGraph.execContextId, execContextTaskState.execContextId))");
         }
 
-        ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
         try {
             callable.accept(execContextDAC, ectspy);
         } finally {
@@ -205,10 +205,10 @@ public class ExecContextGraphService {
 
     private static <T> T readOnlyGraphWithState(
             ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState,
-            BiFunction<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, ExecContextTaskStateParamsYaml, T> callable) {
+            BiFunction<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, ExecContextTaskStateParams, T> callable) {
 
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContextGraph);
-        ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
         return callable.apply(graph, ectspy);
     }
 
@@ -216,7 +216,7 @@ public class ExecContextGraphService {
         return importExecContextGraph(execContextGraph.getExecContextGraphParamsYaml());
     }
 
-    public static DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> importExecContextGraph(ExecContextGraphParamsYaml wpy) {
+    public static DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> importExecContextGraph(ExecContextGraphParams wpy) {
         return importExecContextGraph(wpy.graph);
     }
 
@@ -655,7 +655,7 @@ public class ExecContextGraphService {
 
         // we don't need to get all ancestors, we need only direct.
         // So it can be done just with edges
-        ExecContextTaskStateParamsYaml stateParamsYaml = execContextTaskState.getExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams stateParamsYaml = execContextTaskState.getExecContextTaskStateParamsYaml();
         for (ExecContextData.TaskVertex ancestor : graph.getAncestors(vertex)) {
             EnumsApi.TaskExecState state = stateParamsYaml.states.getOrDefault(ancestor.taskId, EnumsApi.TaskExecState.NONE);
             if (!EnumsApi.TaskExecState.isFinishedState(state)) {
@@ -767,14 +767,14 @@ public class ExecContextGraphService {
 
     @SuppressWarnings("SameParameterValue")
     private static void setStateForAllChildrenTasksInternal(
-        ExecContextData.ExecContextDAC execContextDAC, ExecContextTaskStateParamsYaml stateParamsYaml,
+        ExecContextData.ExecContextDAC execContextDAC, ExecContextTaskStateParams stateParamsYaml,
         Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
 
         setStateForAllChildrenTasksInternal(execContextDAC, stateParamsYaml, taskId, withTaskList, state, null);
     }
 
     private static void setStateForAllChildrenTasksInternal(
-        ExecContextData.ExecContextDAC execContextDAC, ExecContextTaskStateParamsYaml stateParamsYaml,
+        ExecContextData.ExecContextDAC execContextDAC, ExecContextTaskStateParams stateParamsYaml,
             Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state, @Nullable String taskContextId) {
 
         Set<ExecContextData.TaskVertex> set = findDescendantsInternal(execContextDAC.graph(), taskId);
@@ -819,7 +819,7 @@ public class ExecContextGraphService {
      * Mark them SKIPPED and repeat until no more tasks qualify (fixed-point cascade).
      */
     private static void propagateSkippedToUnreachableTasks(
-            ExecContextData.ExecContextDAC execContextDAC, ExecContextTaskStateParamsYaml stateParamsYaml,
+            ExecContextData.ExecContextDAC execContextDAC, ExecContextTaskStateParams stateParamsYaml,
             ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
 
         boolean changed = true;
@@ -857,7 +857,7 @@ public class ExecContextGraphService {
      */
     private static boolean allParentsErrorOrSkipped(
             DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph,
-            ExecContextTaskStateParamsYaml stateParamsYaml,
+            ExecContextTaskStateParams stateParamsYaml,
             ExecContextData.TaskVertex tv) {
 
         Set<DefaultEdge> incoming = graph.incomingEdgesOf(tv);
@@ -879,7 +879,7 @@ public class ExecContextGraphService {
      * without requiring Spring context or DB access.
      */
     public static void setStateForAllChildrenTasksStatic(
-        ExecContextData.ExecContextDAC execContextDAC, ExecContextTaskStateParamsYaml stateParamsYaml,
+        ExecContextData.ExecContextDAC execContextDAC, ExecContextTaskStateParams stateParamsYaml,
         Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state, @Nullable String taskContextId) {
 
         setStateForAllChildrenTasksInternal(execContextDAC, stateParamsYaml, taskId, withTaskList, state, taskContextId);

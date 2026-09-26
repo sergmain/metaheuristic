@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsUtils;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -76,23 +76,23 @@ public class ExecContextGraph implements Serializable {
 
     @Transient
     @JsonIgnore
-    private final ThreadUtils.CommonThreadLocker<ExecContextGraphParamsYaml> paramsLocked =
+    private final ThreadUtils.CommonThreadLocker<ExecContextGraphParams> paramsLocked =
             new ThreadUtils.CommonThreadLocker<>(this::parseParams);
 
-    private ExecContextGraphParamsYaml parseParams() {
-        ExecContextGraphParamsYaml temp = ExecContextGraphParamsYamlUtils.BASE_YAML_UTILS.to(params);
-        ExecContextGraphParamsYaml ecpy = temp==null ? new ExecContextGraphParamsYaml() : temp;
+    private ExecContextGraphParams parseParams() {
+        ExecContextGraphParams temp = ExecContextGraphParamsUtils.BASE_UTILS.to(params);
+        ExecContextGraphParams ecpy = temp==null ? new ExecContextGraphParams() : temp;
         return ecpy;
     }
 
     @JsonIgnore
-    public ExecContextGraphParamsYaml getExecContextGraphParamsYaml() {
+    public ExecContextGraphParams getExecContextGraphParamsYaml() {
         return paramsLocked.get();
     }
 
     @JsonIgnore
-    public void updateParams(ExecContextGraphParamsYaml wpy) {
-        setParams(ExecContextGraphParamsYamlUtils.BASE_YAML_UTILS.toString(wpy));
+    public void updateParams(ExecContextGraphParams wpy) {
+        setParams(ExecContextGraphParamsUtils.BASE_UTILS.toString(wpy));
     }
 
 }

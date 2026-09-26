@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.exec_context;
 
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV3;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV5;
 import ai.metaheuristic.commons.CommonConsts;
@@ -36,7 +36,7 @@ public class ExecContextParamsTest {
 
     @Test
     public void testVersion() {
-        assertEquals( new ExecContextParamsYaml().version, ExecContextParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
+        assertEquals( new ExecContextParams().version, ExecContextParamsUtils.BASE_UTILS.getDefault().getVersion() );
     }
 
     @Test
@@ -51,21 +51,21 @@ public class ExecContextParamsTest {
 
         expy.processes.add(p1);
         expy.processes.add(p2);
-        String sv3 = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(expy, 3);
+        String sv3 = ExecContextParamsUtils.BASE_UTILS.toStringAsVersion(expy, 3);
 
-        ExecContextParamsYaml expy1 = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(sv3);
+        ExecContextParams expy1 = ExecContextParamsUtils.BASE_UTILS.to(sv3);
 
-        expy1.execContextGraph = new ExecContextParamsYaml.ExecContextGraph(13L, 42L, "aaa");
+        expy1.execContextGraph = new ExecContextParams.ExecContextGraph(13L, 42L, "aaa");
 
-        ExecContextParamsYaml.Process p = expy1.findProcess("process#3");
+        ExecContextParams.Process p = expy1.findProcess("process#3");
         assertNull(p);
 
-        String s = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(expy1);
+        String s = ExecContextParamsUtils.BASE_UTILS.toString(expy1);
 
         System.out.println(s);
         assertFalse(s.contains("processMap"));
 
-        ExecContextParamsYaml expy2 = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(s);
+        ExecContextParams expy2 = ExecContextParamsUtils.BASE_UTILS.to(s);
 
         assertNotNull(expy2.execContextGraph);
         assertEquals(13L, expy2.execContextGraph.rootExecContextId);
@@ -83,8 +83,8 @@ public class ExecContextParamsTest {
                 "proc#1", "proc#1", CommonConsts.TOP_LEVEL_CONTEXT_ID, fd);
         v5.processes.add(pr);
 
-        String sv5 = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(v5, 5);
-        ExecContextParamsYaml latest = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(sv5);
+        String sv5 = ExecContextParamsUtils.BASE_UTILS.toStringAsVersion(v5, 5);
+        ExecContextParams latest = ExecContextParamsUtils.BASE_UTILS.to(sv5);
 
         assertEquals(6, latest.version);
         assertEquals(1, latest.processes.size());
@@ -96,21 +96,21 @@ public class ExecContextParamsTest {
     @Test
     public void testV6GroupRoundTrips() {
         // Phase 5 acceptance (b, IR half): a v6 group entry serializes and deserializes intact.
-        ExecContextParamsYaml py = new ExecContextParamsYaml();
-        ExecContextParamsYaml.Group g = new ExecContextParamsYaml.Group("grp-A");
-        g.body.add(new ExecContextParamsYaml.Process("b#1", "b#1", CommonConsts.TOP_LEVEL_CONTEXT_ID,
-                new ExecContextParamsYaml.FunctionDefinition("fn#body")));
-        g.inputs.add(new ExecContextParamsYaml.Variable("in1"));
-        g.outputs.add(new ExecContextParamsYaml.Variable("out1"));
+        ExecContextParams py = new ExecContextParams();
+        ExecContextParams.Group g = new ExecContextParams.Group("grp-A");
+        g.body.add(new ExecContextParams.Process("b#1", "b#1", CommonConsts.TOP_LEVEL_CONTEXT_ID,
+                new ExecContextParams.FunctionDefinition("fn#body")));
+        g.inputs.add(new ExecContextParams.Variable("in1"));
+        g.outputs.add(new ExecContextParams.Variable("out1"));
         g.internalContextId = "1,2";
         g.resetPointProcessCode = "b#1";
         py.groups.add(g);
 
-        String s = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(py);
-        ExecContextParamsYaml back = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(s);
+        String s = ExecContextParamsUtils.BASE_UTILS.toString(py);
+        ExecContextParams back = ExecContextParamsUtils.BASE_UTILS.to(s);
 
         assertEquals(1, back.groups.size());
-        ExecContextParamsYaml.Group g2 = back.groups.get(0);
+        ExecContextParams.Group g2 = back.groups.get(0);
         assertEquals("grp-A", g2.name);
         assertEquals(1, g2.body.size());
         assertEquals("b#1", g2.body.get(0).processCode);
@@ -125,10 +125,10 @@ public class ExecContextParamsTest {
     @Test
     public void testV6GraftNodeRoundTrips() {
         // Phase 6.3b (Option A): an in-band graft node on a Process survives a v6 YAML round-trip.
-        ExecContextParamsYaml py = new ExecContextParamsYaml();
-        ExecContextParamsYaml.Process p = new ExecContextParamsYaml.Process(
-                "graft-node", "graft-node", "1,2", new ExecContextParamsYaml.FunctionDefinition("mh.nop"));
-        ExecContextParamsYaml.Graft graft = new ExecContextParamsYaml.Graft("grp-A");
+        ExecContextParams py = new ExecContextParams();
+        ExecContextParams.Process p = new ExecContextParams.Process(
+                "graft-node", "graft-node", "1,2", new ExecContextParams.FunctionDefinition("mh.nop"));
+        ExecContextParams.Graft graft = new ExecContextParams.Graft("grp-A");
         graft.inputBindings.add("inA");
         graft.inputBindings.add("inB");
         graft.outputBindings.add("outC");
@@ -137,11 +137,11 @@ public class ExecContextParamsTest {
         p.graft = graft;
         py.processes.add(p);
 
-        String s = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(py);
-        ExecContextParamsYaml back = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(s);
+        String s = ExecContextParamsUtils.BASE_UTILS.toString(py);
+        ExecContextParams back = ExecContextParamsUtils.BASE_UTILS.to(s);
 
         assertEquals(1, back.processes.size());
-        ExecContextParamsYaml.Graft g2 = back.processes.get(0).graft;
+        ExecContextParams.Graft g2 = back.processes.get(0).graft;
         assertNotNull(g2);
         assertEquals("grp-A", g2.groupName);
         assertEquals(java.util.List.of("inA", "inB"), g2.inputBindings);

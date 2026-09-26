@@ -14,11 +14,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.exec_context_graph;
+package ai.metaheuristic.ai.yaml.exec_context_task_state;
 
-import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <b>!!! BEFORE MAKING ANY EDITION IN THIS CLASS, READ <a href="https://github.com/sergmain/metaheuristic/wiki/multi-versioning-mechanic">...</a></b>
@@ -28,7 +31,7 @@ import lombok.Data;
  * Time: 10:33 AM
  */
 @Data
-public class ExecContextGraphParamsYaml implements BaseParams {
+public class ExecContextTaskStateParams implements BaseParams {
 
     public final int version = 1;
 
@@ -37,7 +40,7 @@ public class ExecContextGraphParamsYaml implements BaseParams {
         return true;
     }
 
-    // this is a graph of processes for runtime phase
-    public String graph = ConstsApi.EMPTY_GRAPH;
+    public final Map<Long, EnumsApi.TaskExecState> states = new HashMap<>();
 
+    public final Map<Long, Integer> triesWasMade = new HashMap<>();
 }

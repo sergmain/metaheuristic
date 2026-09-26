@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +42,7 @@ public class BatchHelperService {
 
     private final VariableService variableTopLevelService;
 
-    public String findUploadedFilenameForBatchId(Long execContextId, ExecContextParamsYaml ecpy, @Nullable String defaultName) {
+    public String findUploadedFilenameForBatchId(Long execContextId, ExecContextParams ecpy, @Nullable String defaultName) {
         String defName = S.b(defaultName) ? Consts.RESULT_ZIP : defaultName;
         if (ecpy.variables.inputs.isEmpty()) {
             return defName;

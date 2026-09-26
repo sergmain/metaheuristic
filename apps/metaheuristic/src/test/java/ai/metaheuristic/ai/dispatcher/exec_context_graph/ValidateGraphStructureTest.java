@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.exec_context_graph;
 
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsUtils;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.junit.jupiter.api.Test;
@@ -49,7 +49,7 @@ public class ValidateGraphStructureTest {
             version: 1
             """;
 
-        ExecContextGraphParamsYaml ecgpy = ExecContextGraphParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        ExecContextGraphParams ecgpy = ExecContextGraphParamsUtils.BASE_UTILS.to(yaml);
 
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = ExecContextGraphService.importExecContextGraph(ecgpy.graph);
 

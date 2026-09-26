@@ -38,7 +38,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParams;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import lombok.RequiredArgsConstructor;
@@ -119,7 +119,7 @@ public class PreparingSourceCodeInitService {
         // does not accumulate duplicates and a re-run reuses the same row.
         data.sourceCode = obtainSourceCode(source, lang, data.company.uniqueId);
 
-        data.execContextYaml = new ExecContextParamsYaml();
+        data.execContextYaml = new ExecContextParams();
         data.execContextYaml.variables.globals = new ArrayList<>();
         data.execContextYaml.variables.globals.add(GLOBAL_TEST_VARIABLE);
 

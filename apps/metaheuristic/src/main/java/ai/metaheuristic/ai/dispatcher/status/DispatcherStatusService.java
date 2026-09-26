@@ -21,8 +21,8 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.StatusUtils;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.S;
@@ -96,7 +96,7 @@ public class DispatcherStatusService {
             ExecContext: #%d, %s
             """, sc.id, sc.uid, sc.valid, ec.id, EnumsApi.ExecContextState.toState(ec.state)));
 
-        ExecContextGraphParamsYaml ecgParams = ecg.getExecContextGraphParamsYaml();
+        ExecContextGraphParams ecgParams = ecg.getExecContextGraphParamsYaml();
         s.append(S.f("""
               Graph #%d
             %s
@@ -114,7 +114,7 @@ public class DispatcherStatusService {
         StatusUtils.printTable(s::append, true, 10, false, tbl);
 
         ExecContextApiData.ExecContextVariableStates varStates = ecvs.getExecContextVariableStateInfo();
-        ExecContextTaskStateParamsYaml taskStateParams = ects.getExecContextTaskStateParamsYaml();
+        ExecContextTaskStateParams taskStateParams = ects.getExecContextTaskStateParamsYaml();
         for (Map.Entry<Long, EnumsApi.TaskExecState> en : taskStateParams.states.entrySet()) {
             TaskImpl task = taskRepository.findByIdReadOnly(en.getKey());
             if (task!=null) {
