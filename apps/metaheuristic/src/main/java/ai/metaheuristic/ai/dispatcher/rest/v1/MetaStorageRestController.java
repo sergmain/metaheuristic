@@ -16,11 +16,14 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorageRegistry;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.MetaStorageViewData;
 import ai.metaheuristic.ai.dispatcher.data.SimpleCompany;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageDownloadService;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageDropService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageIndexUtils;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageSyntheticService;
@@ -29,13 +32,20 @@ import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRegistryRepository
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageSyntheticRepository;
 import ai.metaheuristic.ai.sec.SecConsts;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.AbstractResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -81,6 +91,8 @@ public class MetaStorageRestController {
     private final MetaStorageRegistryRepository metaStorageRegistryRepository;
     private final CompanyRepository companyRepository;
     private final UserContextService userContextService;
+    private final MetaStorageDropService metaStorageDropService;
+    private final MetaStorageDownloadService metaStorageDownloadService;
 
     /**
      * One tab of the index: every meta table the caller is entitled to, with its description.
@@ -184,6 +196,57 @@ public class MetaStorageRestController {
                 ? new MetaStorageViewData.MetaTableRecordResult(scopedCompanyId, metaTable, production, recKey, false, null)
                 : new MetaStorageViewData.MetaTableRecordResult(scopedCompanyId, metaTable, production, recKey, true,
                         records.get(0).body());
+    }
+
+    /**
+     * Drop one whole meta table: every record under it in the chosen store, and its descriptor.
+     *
+     * <p>❗ {@code production} is REQUIRED here, unlike on the reads. A read defaulting to Production
+     * lands the first load where the screen lands; a delete defaulting to it would make the
+     * irreversible outcome the one a client gets by forgetting a parameter. A record in
+     * MH_META_STORAGE cannot be recovered, so the store has to be stated.
+     *
+     * <p>❗ {@code companyId} goes through {@link #scopeCompanyId} exactly as on the reads: for an
+     * ADMIN a foreign id resolves to their own company, so this endpoint cannot drop another tenant's
+     * table. The result echoes the company the drop actually ran in.
+     */
+    @DeleteMapping("/meta-tables/{metaTable}")
+    public MetaStorageViewData.MetaTableDropResult dropMetaTable(
+            Authentication authentication,
+            @PathVariable("metaTable") String metaTable,
+            @RequestParam(name = "companyId", required = false) @Nullable Long companyId,
+            @RequestParam(name = "production") boolean production) {
+
+        final Long scopedCompanyId = scopeCompanyId(authentication, companyId);
+        log.info("01.945.040 drop of meta table '{}' of company #{} (production={}) requested by '{}'",
+                metaTable, scopedCompanyId, production, authentication.getName());
+        final MetaStorageDropService.DropResult r = metaStorageDropService.drop(scopedCompanyId, metaTable, production);
+        return new MetaStorageViewData.MetaTableDropResult(scopedCompanyId, metaTable, production, r.deleted(), r.hadDescriptor());
+    }
+
+    /**
+     * One whole meta table as a zip: a directory named after the table, one file per record holding
+     * the body verbatim. Built synchronously in a temp dir, streamed, then removed by
+     * {@code CleanerInterceptor}.
+     *
+     * <p>{@code production} defaults to true like the other reads - this one changes nothing.
+     * {@code companyId} is scoped exactly as on the reads.
+     */
+    @GetMapping(value = "/meta-tables/{metaTable}/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public HttpEntity<AbstractResource> downloadMetaTable(
+            HttpServletRequest request,
+            Authentication authentication,
+            @PathVariable("metaTable") String metaTable,
+            @RequestParam(name = "companyId", required = false) @Nullable Long companyId,
+            @RequestParam(name = "production", required = false, defaultValue = "true") boolean production) {
+
+        final Long scopedCompanyId = scopeCompanyId(authentication, companyId);
+        final CleanerInfo resource = metaStorageDownloadService.download(scopedCompanyId, metaTable, production);
+        // Handed over BEFORE the null check: a failed export may already have created its temp dir.
+        request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
+        return resource.entity==null
+                ? new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE)
+                : resource.entity;
     }
 
     /**

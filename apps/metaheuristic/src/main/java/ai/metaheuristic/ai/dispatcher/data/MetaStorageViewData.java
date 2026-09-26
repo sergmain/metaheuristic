@@ -94,4 +94,15 @@ public class MetaStorageViewData {
      */
     public record MetaTableRecordResult(
             Long companyId, String metaTable, boolean production, String recKey, boolean found, @Nullable String body) {}
+
+    /**
+     * What dropping one meta table removed.
+     *
+     * @param companyId     the partition the drop ran in, as the server resolved it - for a caller not
+     *                      entitled across companies this is their own company whatever they asked for
+     * @param deleted       records removed; 0 for a table already empty, which is not an error
+     * @param hadDescriptor whether a registry descriptor existed in this store and went with the table
+     */
+    public record MetaTableDropResult(
+            Long companyId, String metaTable, boolean production, int deleted, boolean hadDescriptor) {}
 }
