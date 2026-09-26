@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.yaml.execution_gate;
 
 import ai.metaheuristic.api.data.BaseParams;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
 import org.jspecify.annotations.Nullable;
 
@@ -36,6 +37,7 @@ import org.jspecify.annotations.Nullable;
  * Date: 8/14/2026
  */
 @Data
+@JsonPropertyOrder({"version"})
 public class ExecutionGateParams implements BaseParams {
 
     public final int version = 1;

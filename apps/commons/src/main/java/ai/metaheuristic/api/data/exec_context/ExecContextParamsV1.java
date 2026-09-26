@@ -37,9 +37,9 @@ import java.util.Map;
  * Time: 10:15 PM
  */
 @Data
-public class ExecContextParamsYamlV5 implements BaseParams {
+public class ExecContextParamsV1 implements BaseParams {
 
-    public final int version = 5;
+    public final int version = 1;
 
     @Override
     public boolean checkIntegrity() {
@@ -49,24 +49,24 @@ public class ExecContextParamsYamlV5 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class VariableDeclarationV5 {
+    public static class VariableDeclarationV1 {
         public List<String> globals;
-        public final List<VariableV5> inputs = new ArrayList<>();
-        public final List<VariableV5> outputs = new ArrayList<>();
+        public final List<VariableV1> inputs = new ArrayList<>();
+        public final List<VariableV1> outputs = new ArrayList<>();
         public final Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class VariableV5 {
+    public static class VariableV1 {
         public String name;
         public EnumsApi.VariableContext context;
         public EnumsApi.@Nullable DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         @Nullable
-        public GitInfo git;
+        public GitParamsV1 git;
         @Nullable
-        public DiskInfo disk;
+        public DiskParamsV1 disk;
         @Nullable
         public Boolean parentContext;
         @Nullable
@@ -74,9 +74,14 @@ public class ExecContextParamsYamlV5 implements BaseParams {
         @Nullable
         private Boolean nullable;
 
-        // This field is used for creating a download link as extension
+        // This field is used as an extension for creating a download link
         @Nullable
         public String ext;
+
+        // if true, this variable can be reassigned in sub-contexts
+        @Deprecated(forRemoval = true)
+        @Nullable
+        public Boolean mutable;
 
         public void setSourcing(EnumsApi.DataSourcing sourcing) {
             this.sourcing = sourcing;
@@ -94,11 +99,11 @@ public class ExecContextParamsYamlV5 implements BaseParams {
             this.nullable = nullable;
         }
 
-        public VariableV5(String name) {
+        public VariableV1(String name) {
             this.name = name;
         }
 
-        public VariableV5(EnumsApi.DataSourcing sourcing, String name) {
+        public VariableV1(EnumsApi.DataSourcing sourcing, String name) {
             this.sourcing = sourcing;
             this.name = name;
         }
@@ -107,18 +112,18 @@ public class ExecContextParamsYamlV5 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class FunctionDefinitionV5 implements SimpleFunctionDefinition {
+    public static class FunctionDefinitionV1 implements SimpleFunctionDefinition {
         public String code;
         @Nullable
         public String params;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
         public EnumsApi.FunctionRefType refType = EnumsApi.FunctionRefType.code;
 
-        public FunctionDefinitionV5(String code) {
+        public FunctionDefinitionV1(String code) {
             this.code = code;
         }
 
-        public FunctionDefinitionV5(String code, EnumsApi.FunctionExecContext context) {
+        public FunctionDefinitionV1(String code, EnumsApi.FunctionExecContext context) {
             this.code = code;
             this.context = context;
         }
@@ -128,7 +133,7 @@ public class ExecContextParamsYamlV5 implements BaseParams {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class CacheV5 {
+    public static class CacheV1 {
         public boolean enabled;
         public boolean omitInline;
         public boolean cacheMeta;
@@ -137,7 +142,7 @@ public class ExecContextParamsYamlV5 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ExecContextGraphV5 {
+    public static class ExecContextGraphV1 {
         public Long rootExecContextId;
         public Long parentExecContextId;
         public String graph = ConstsApi.EMPTY_GRAPH;
@@ -154,18 +159,18 @@ public class ExecContextParamsYamlV5 implements BaseParams {
     @EqualsAndHashCode(of = {"processCode"})
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProcessV5 {
+    public static class ProcessV1 {
 
         public String processName;
         public String processCode;
 
         public String internalContextId;
 
-        public FunctionDefinitionV5 function;
+        public FunctionDefinitionV1 function;
         @Nullable
-        public List<FunctionDefinitionV5> preFunctions;
+        public List<FunctionDefinitionV1> preFunctions;
         @Nullable
-        public List<FunctionDefinitionV5> postFunctions;
+        public List<FunctionDefinitionV1> postFunctions;
 
         public EnumsApi.@Nullable SourceCodeSubProcessLogic logic;
 
@@ -176,12 +181,12 @@ public class ExecContextParamsYamlV5 implements BaseParams {
          */
         @Nullable
         public Long timeoutBeforeTerminate;
-        public final List<VariableV5> inputs = new ArrayList<>();
-        public final List<VariableV5> outputs = new ArrayList<>();
+        public final List<VariableV1> inputs = new ArrayList<>();
+        public final List<VariableV1> outputs = new ArrayList<>();
         public List<Map<String, String>> metas = new ArrayList<>();
 
         @Nullable
-        public CacheV5 cache;
+        public CacheV1 cache;
         @Nullable
         public String tag;
         public int priority;
@@ -191,12 +196,95 @@ public class ExecContextParamsYamlV5 implements BaseParams {
         @Nullable
         public Integer triesAfterError;
 
-        public ProcessV5(String processName, String processCode, String internalContextId, FunctionDefinitionV5 function) {
+        @Nullable
+        public GraftV1 graft;
+
+        public ProcessV1(String processName, String processCode, String internalContextId, FunctionDefinitionV1 function) {
             this.processName = processName;
             this.processCode = processCode;
             this.internalContextId = internalContextId;
             this.function = function;
         }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GroupV1 {
+        public String name;
+        public final List<ProcessV1> body = new ArrayList<>();
+        public final List<VariableV1> inputs = new ArrayList<>();
+        public final List<VariableV1> outputs = new ArrayList<>();
+        @Nullable
+        public String internalContextId;
+        @Nullable
+        public String resetPointProcessCode;
+
+        public GroupV1(String name) {
+            this.name = name;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GraftV1 {
+        public String groupName;
+        public final List<String> inputBindings = new ArrayList<>();
+        public final List<String> outputBindings = new ArrayList<>();
+        @Nullable
+        public String driver;
+        @Nullable
+        public String at;
+
+        public GraftV1(String groupName) {
+            this.groupName = groupName;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GitParamsV1 {
+        public String repo;
+        // right now it'll be always as origin
+//        public String remote;
+        public String branch;
+        public String commit;
+        public String path;
+
+        @Nullable
+        public static GitParamsV1 from(@Nullable GitInfo git) {
+            return git==null ? null : new GitParamsV1(git.repo, git.branch, git.commit, git.path);
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DiskParamsV1 {
+        public String mask;
+        public String code;
+        public String path;
+
+        @Nullable
+        public static DiskParamsV1 from(@Nullable DiskInfo disk) {
+            return disk==null ? null : new DiskParamsV1(disk.mask, disk.code, disk.path);
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GitSourceInfoV1 {
+        public String functionCode;
+        public GitParamsV1 git;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class GitSourcesV1 {
+        public final List<GitSourceInfoV1> gitSourceInfos = new ArrayList<>();
     }
 
     public boolean clean;
@@ -205,8 +293,9 @@ public class ExecContextParamsYamlV5 implements BaseParams {
     @Nullable
     public String desc;
 
-    public final List<ProcessV5> processes = new ArrayList<>();
-    public final VariableDeclarationV5 variables = new VariableDeclarationV5();
+    public final List<ProcessV1> processes = new ArrayList<>();
+    public final List<GroupV1> groups = new ArrayList<>();
+    public final VariableDeclarationV1 variables = new VariableDeclarationV1();
 
     // this graph is for creating tasks dynamically
     public String processesGraph = ConstsApi.EMPTY_GRAPH;
@@ -217,5 +306,9 @@ public class ExecContextParamsYamlV5 implements BaseParams {
     public final Map<Integer, String> columnNames = new LinkedHashMap<>();
 
     @Nullable
-    public ExecContextGraphV5 execContextGraph;
+    public ExecContextGraphV1 execContextGraph;
+
+    // git revisions this ExecContext is pinned to; null when no git-sourced Function is in the DAG
+    @Nullable
+    public GitSourcesV1 gitSources;
 }

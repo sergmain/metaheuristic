@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.yaml.exec_context_graph;
 
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
 
 /**
@@ -28,6 +29,7 @@ import lombok.Data;
  * Time: 10:33 AM
  */
 @Data
+@JsonPropertyOrder({"version"})
 public class ExecContextGraphParams implements BaseParams {
 
     public final int version = 1;

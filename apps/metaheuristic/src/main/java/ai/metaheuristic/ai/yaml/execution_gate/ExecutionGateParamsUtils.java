@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.execution_gate;
 
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
 
 import java.util.Map;
 
@@ -26,12 +26,12 @@ import java.util.Map;
  */
 public class ExecutionGateParamsUtils {
 
-    private static final ExecutionGateParamsUtilsV1 YAML_UTILS_V_1 = new ExecutionGateParamsUtilsV1();
-    private static final ExecutionGateParamsUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    private static final ExecutionGateParamsUtilsV1 UTILS_V_1 = new ExecutionGateParamsUtilsV1();
+    private static final ExecutionGateParamsUtilsV1 DEFAULT_UTILS = UTILS_V_1;
 
-    public static final BaseYamlUtils<ExecutionGateParams> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseJsonUtils<ExecutionGateParams> BASE_UTILS = new BaseJsonUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1
+                    1, UTILS_V_1
             ),
             DEFAULT_UTILS
     );

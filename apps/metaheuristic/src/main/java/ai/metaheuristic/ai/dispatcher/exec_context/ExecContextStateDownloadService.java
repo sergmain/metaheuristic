@@ -80,11 +80,11 @@ public class ExecContextStateDownloadService {
             Files.createDirectories(filesDir);
 
             // 1) ExecContextTaskState params
-            writeEntityParams(execContext.execContextTaskStateId, "exec-context-task-state.yaml",
+            writeEntityParams(execContext.execContextTaskStateId, "exec-context-task-state.json",
                     filesDir, resource, execContextTaskStateRepository);
 
             // 2) ExecContextGraph params
-            writeEntityParams(execContext.execContextGraphId, "exec-context-graph.yaml",
+            writeEntityParams(execContext.execContextGraphId, "exec-context-graph.json",
                     filesDir, resource, execContextGraphRepository);
 
             // 3) ExecContextVariableState params

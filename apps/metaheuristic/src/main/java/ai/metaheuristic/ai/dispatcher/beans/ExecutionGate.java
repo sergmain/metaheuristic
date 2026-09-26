@@ -100,7 +100,7 @@ public class ExecutionGate implements Serializable {
             new ThreadUtils.CommonThreadLocker<>(this::parseParams);
 
     private ExecutionGateParams parseParams() {
-        ExecutionGateParams temp = ExecutionGateParamsUtils.BASE_YAML_UTILS.to(params);
+        ExecutionGateParams temp = ExecutionGateParamsUtils.BASE_UTILS.to(params);
         return temp == null ? new ExecutionGateParams() : temp;
     }
 
@@ -111,6 +111,6 @@ public class ExecutionGate implements Serializable {
 
     @JsonIgnore
     public void updateParams(ExecutionGateParams egpy) {
-        setParams(ExecutionGateParamsUtils.BASE_YAML_UTILS.toString(egpy));
+        setParams(ExecutionGateParamsUtils.BASE_UTILS.toString(egpy));
     }
 }

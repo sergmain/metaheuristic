@@ -37,6 +37,8 @@ import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
 import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsUtils;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsUtils;
+import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParams;
+import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
@@ -61,6 +63,8 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.commons.json.versioning_json.AbstractParamsJsonUtils;
+import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -87,9 +91,6 @@ public class BaseParamsMetaheuristicTest {
             Pair.of(DispatcherCommParamsYamlUtils.BASE_YAML_UTILS, DispatcherCommParamsYaml.class),
             Pair.of(DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS, DispatcherLookupParamsYaml.class),
             Pair.of(DispatcherParamsYamlUtils.BASE_YAML_UTILS, DispatcherParamsYaml.class),
-            Pair.of(ExecContextGraphParamsUtils.BASE_UTILS, ExecContextGraphParams.class),
-            Pair.of(ExecContextParamsUtils.BASE_UTILS, ExecContextParams.class),
-            Pair.of(ExecContextTaskStateParamsUtils.BASE_UTILS, ExecContextTaskStateParams.class),
             Pair.of(ExperimentParamsYamlUtils.BASE_YAML_UTILS, ExperimentParamsYaml.class),
             Pair.of(ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS, ExperimentResultTaskParams.class),
             Pair.of(FunctionDownloadStatusYamlUtils.BASE_YAML_UTILS, FunctionDownloadStatusYaml.class),
@@ -120,6 +121,41 @@ public class BaseParamsMetaheuristicTest {
 
             for (int i = 1; i <= lastVersion; i++) {
                 final AbstractParamsYamlUtils forVersion = utils.getForVersion(i);
+                assertNotNull(forVersion);
+                assertEquals(i, forVersion.getVersion());
+
+                Class<?> vClass = Class.forName(entityCl.getName()+'V'+i);
+                final Constructor<?> enConstructor = getConstructor(vClass);
+                Object entityObj = enConstructor.newInstance();
+                assertInstanceOf(BaseParams.class, entityObj);
+                assertEquals(i, ((BaseParams) entityObj).getVersion(), entityObj.getClass().getName());
+            }
+        }
+    }
+
+    // params families stored as JSON - same naming and version-chain contract as the yaml ones above
+    private static final List<Pair<BaseJsonUtils<? extends BaseParams>, Class<?>>> jsonCls = List.of(
+            Pair.of(ExecContextGraphParamsUtils.BASE_UTILS, ExecContextGraphParams.class),
+            Pair.of(ExecContextParamsUtils.BASE_UTILS, ExecContextParams.class),
+            Pair.of(ExecContextTaskStateParamsUtils.BASE_UTILS, ExecContextTaskStateParams.class),
+            Pair.of(ExecutionGateParamsUtils.BASE_UTILS, ExecutionGateParams.class)
+    );
+
+    @Test
+    public void test_jsonFamilies() throws Exception {
+        for (Pair<BaseJsonUtils<? extends BaseParams>, Class<?>> cl : jsonCls) {
+            BaseJsonUtils<? extends BaseParams> utils = cl.getLeft();
+            Class<?> entityCl = cl.getRight();
+
+            int lastVersion = utils.getDefault().getVersion();
+
+            final Constructor<?> constructor = getConstructor(entityCl);
+            Object entity = constructor.newInstance();
+            assertInstanceOf(BaseParams.class, entity);
+            assertEquals(lastVersion, ((BaseParams) entity).getVersion(), entity.getClass().getName());
+
+            for (int i = 1; i <= lastVersion; i++) {
+                final AbstractParamsJsonUtils forVersion = utils.getForVersion(i);
                 assertNotNull(forVersion);
                 assertEquals(i, forVersion.getVersion());
 

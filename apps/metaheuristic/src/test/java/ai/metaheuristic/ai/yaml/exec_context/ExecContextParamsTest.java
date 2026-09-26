@@ -17,8 +17,7 @@
 package ai.metaheuristic.ai.yaml.exec_context;
 
 import ai.metaheuristic.api.data.exec_context.ExecContextParams;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV3;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV5;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsV1;
 import ai.metaheuristic.commons.CommonConsts;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -41,19 +40,19 @@ public class ExecContextParamsTest {
 
     @Test
     public void testMarshaling() {
-        ExecContextParamsYamlV3 expy = new ExecContextParamsYamlV3();
+        ExecContextParamsV1 expy = new ExecContextParamsV1();
 
-        ExecContextParamsYamlV3.FunctionDefinitionV3 fd1 = new ExecContextParamsYamlV3.FunctionDefinitionV3("function#1");
-        ExecContextParamsYamlV3.ProcessV3 p1 = new ExecContextParamsYamlV3.ProcessV3("process #1", "process #1", CommonConsts.TOP_LEVEL_CONTEXT_ID, fd1);
+        ExecContextParamsV1.FunctionDefinitionV1 fd1 = new ExecContextParamsV1.FunctionDefinitionV1("function#1");
+        ExecContextParamsV1.ProcessV1 p1 = new ExecContextParamsV1.ProcessV1("process #1", "process #1", CommonConsts.TOP_LEVEL_CONTEXT_ID, fd1);
 
-        ExecContextParamsYamlV3.FunctionDefinitionV3 fd2 = new ExecContextParamsYamlV3.FunctionDefinitionV3("function#2");
-        ExecContextParamsYamlV3.ProcessV3 p2 = new ExecContextParamsYamlV3.ProcessV3("process #2", "process #2", CommonConsts.TOP_LEVEL_CONTEXT_ID, fd2);
+        ExecContextParamsV1.FunctionDefinitionV1 fd2 = new ExecContextParamsV1.FunctionDefinitionV1("function#2");
+        ExecContextParamsV1.ProcessV1 p2 = new ExecContextParamsV1.ProcessV1("process #2", "process #2", CommonConsts.TOP_LEVEL_CONTEXT_ID, fd2);
 
         expy.processes.add(p1);
         expy.processes.add(p2);
-        String sv3 = ExecContextParamsUtils.BASE_UTILS.toStringAsVersion(expy, 3);
+        String sv1 = ExecContextParamsUtils.BASE_UTILS.toStringAsVersion(expy, 1);
 
-        ExecContextParams expy1 = ExecContextParamsUtils.BASE_UTILS.to(sv3);
+        ExecContextParams expy1 = ExecContextParamsUtils.BASE_UTILS.to(sv1);
 
         expy1.execContextGraph = new ExecContextParams.ExecContextGraph(13L, 42L, "aaa");
 
@@ -75,18 +74,18 @@ public class ExecContextParamsTest {
     }
 
     @Test
-    public void testV5UpgradesToV6WithEmptyGroups() {
+    public void testV1UpgradesToLatestWithEmptyGroups() {
         // Phase 5 acceptance (a): a v5 EC upgrades through the v6 chain unchanged, gaining an empty groups list.
-        ExecContextParamsYamlV5 v5 = new ExecContextParamsYamlV5();
-        ExecContextParamsYamlV5.FunctionDefinitionV5 fd = new ExecContextParamsYamlV5.FunctionDefinitionV5("fn#1");
-        ExecContextParamsYamlV5.ProcessV5 pr = new ExecContextParamsYamlV5.ProcessV5(
+        ExecContextParamsV1 v1 = new ExecContextParamsV1();
+        ExecContextParamsV1.FunctionDefinitionV1 fd = new ExecContextParamsV1.FunctionDefinitionV1("fn#1");
+        ExecContextParamsV1.ProcessV1 pr = new ExecContextParamsV1.ProcessV1(
                 "proc#1", "proc#1", CommonConsts.TOP_LEVEL_CONTEXT_ID, fd);
-        v5.processes.add(pr);
+        v1.processes.add(pr);
 
-        String sv5 = ExecContextParamsUtils.BASE_UTILS.toStringAsVersion(v5, 5);
-        ExecContextParams latest = ExecContextParamsUtils.BASE_UTILS.to(sv5);
+        String sv1 = ExecContextParamsUtils.BASE_UTILS.toStringAsVersion(v1, 1);
+        ExecContextParams latest = ExecContextParamsUtils.BASE_UTILS.to(sv1);
 
-        assertEquals(6, latest.version);
+        assertEquals(1, latest.version);
         assertEquals(1, latest.processes.size());
         assertEquals("proc#1", latest.processes.get(0).processCode);
         assertNotNull(latest.groups);

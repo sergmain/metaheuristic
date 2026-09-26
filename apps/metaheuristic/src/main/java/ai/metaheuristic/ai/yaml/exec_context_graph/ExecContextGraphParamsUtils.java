@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.exec_context_graph;
 
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
 
 import java.util.Map;
 
@@ -30,7 +30,7 @@ public class ExecContextGraphParamsUtils {
     private static final ExecContextGraphParamsUtilsV1 UTILS_V_1 = new ExecContextGraphParamsUtilsV1();
     private static final ExecContextGraphParamsUtilsV1 DEFAULT_UTILS = UTILS_V_1;
 
-    public static final BaseYamlUtils<ExecContextGraphParams> BASE_UTILS = new BaseYamlUtils<>(
+    public static final BaseJsonUtils<ExecContextGraphParams> BASE_UTILS = new BaseJsonUtils<>(
             Map.of(
                     1, UTILS_V_1
             ),

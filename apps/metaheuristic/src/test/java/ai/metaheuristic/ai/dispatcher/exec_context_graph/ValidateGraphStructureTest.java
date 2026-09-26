@@ -41,13 +41,20 @@ public class ValidateGraphStructureTest {
 
     @Test
     public void test_findAllRootVertices() {
-        String yaml = """
-            graph: "strict digraph G {\\r\\n  46651 [ ctxid=\\"1\\" ];\\r\\n  46652 [ ctxid=\\"1\\" ];\\r\\
-              \\n  46653 [ ctxid=\\"1\\" ];\\r\\n  46654 [ ctxid=\\"1\\" ];\\r\\n  46655 [ ctxid=\\"1\\"\\
-              \\ ];\\r\\n  46656 [ ctxid=\\"1\\" ];\\r\\n  46651 -> 46652;\\r\\n  46652 -> 46653;\\r\\n \\
-              \\ 46654 -> 46655;\\r\\n  46655 -> 46656;\\r\\n}\\r\\n"
-            version: 1
-            """;
+        String yaml =
+                "{\"graph\":\"strict digraph G {\\r\\n" +
+                "  46651 [ ctxid=\\\"1\\\" ];\\r\\n" +
+                "  46652 [ ctxid=\\\"1\\\" ];\\r\\n" +
+                "  46653 [ ctxid=\\\"1\\\" ];\\r\\n" +
+                "  46654 [ ctxid=\\\"1\\\" ];\\r\\n" +
+                "  46655 [ ctxid=\\\"1\\\" ];\\r\\n" +
+                "  46656 [ ctxid=\\\"1\\\" ];\\r\\n" +
+                "  46651 -> 46652;\\r\\n" +
+                "  46652 -> 46653;\\r\\n" +
+                "  46654 -> 46655;\\r\\n" +
+                "  46655 -> 46656;\\r\\n" +
+                "}\\r\\n" +
+                "\",\"version\":1}";
 
         ExecContextGraphParams ecgpy = ExecContextGraphParamsUtils.BASE_UTILS.to(yaml);
 

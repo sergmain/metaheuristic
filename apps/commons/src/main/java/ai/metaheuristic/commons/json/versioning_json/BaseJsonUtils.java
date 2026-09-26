@@ -22,6 +22,8 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.ParamsProcessingException;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.cfg.EnumFeature;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.SerializationFeature;
@@ -44,6 +46,16 @@ public class BaseJsonUtils<T extends BaseParams> {
         ObjectMapper m = JsonMapper.builder()
                 .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                // params classes keep their collections and nested objects in `public final` fields
+                // (`public final List<X> items = new ArrayList<>()`). Jackson 3 leaves such fields untouched
+                // by default, so a round trip silently comes back with empty collections. This restores
+                // the Jackson 2 behaviour those classes were written against.
+                .configure(MapperFeature.ALLOW_FINAL_FIELDS_AS_MUTATORS, true)
+                // enums are written and read by name(). Jackson 3 defaults to toString(), which ties the stored
+                // value to whatever toString() returns - a Lombok @ToString enum is stored as
+                // "EnumsApi.DataSourcing.git(value=3)" and stops reading back the day that toString() changes.
+                .configure(EnumFeature.WRITE_ENUMS_USING_TO_STRING, false)
+                .configure(EnumFeature.READ_ENUMS_USING_TO_STRING, false)
                 .build();
         mapper = m;
     }

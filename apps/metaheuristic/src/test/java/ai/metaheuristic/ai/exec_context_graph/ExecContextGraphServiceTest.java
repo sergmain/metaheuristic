@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -47,12 +49,12 @@ class ExecContextGraphServiceTest {
         ecg.id = 2908L;
         ecg.execContextId = 42L;
         ecg.version = 2;
-        ecg.setParams( IOUtils.resourceToString("/test_data/exec_context_graph/exec-context-graph.yaml", StandardCharsets.UTF_8) );
+        ecg.setParams( IOUtils.resourceToString("/test_data/exec_context_graph/exec-context-graph.json", StandardCharsets.UTF_8) );
 
         ExecContextTaskState ects = new ExecContextTaskState();
         ects.id = 2908L;
         ects.execContextId = 42L;
-        ects.setParams(IOUtils.resourceToString("/test_data/exec_context_graph/exec_context_task_state.yaml", StandardCharsets.UTF_8));
+        ects.setParams(IOUtils.resourceToString("/test_data/exec_context_graph/exec_context_task_state.json", StandardCharsets.UTF_8));
 
 
         List<ExecContextData.TaskVertex> vertices = ExecContextGraphService.findAllForAssigning(ecg, ects, true);
@@ -70,12 +72,12 @@ class ExecContextGraphServiceTest {
         ecg.id = 2908L;
         ecg.execContextId = 42L;
         ecg.version = 2;
-        ecg.setParams( IOUtils.resourceToString("/test_data/exec_context_graph_1/exec-context-graph.yaml", StandardCharsets.UTF_8) );
+        ecg.setParams( IOUtils.resourceToString("/test_data/exec_context_graph_1/exec-context-graph.json", StandardCharsets.UTF_8) );
 
         ExecContextTaskState ects = new ExecContextTaskState();
         ects.id = 2908L;
         ects.execContextId = 42L;
-        ects.setParams(IOUtils.resourceToString("/test_data/exec_context_graph_1/exec_context_task_state.yaml", StandardCharsets.UTF_8));
+        ects.setParams(IOUtils.resourceToString("/test_data/exec_context_graph_1/exec_context_task_state.json", StandardCharsets.UTF_8));
 
 
         List<ExecContextData.TaskVertex> vertices = ExecContextGraphService.findAllForAssigning(ecg, ects, true);
@@ -130,26 +132,19 @@ class ExecContextGraphServiceTest {
         // A grafted line, linear: 100(root, OK) -> 101(head, ERROR) -> 102(downstream, NONE) -> 103(mh.finish, leaf, NONE)
         // #102 is a NONE task whose grafted head #101 terminally ERRORed - a dead/broken upstream.
         // Such a task must NEVER be handed out for assigning/execution.
-        String graphYaml = """
-            graph: |
-              strict digraph G {
-                100 [ ctxid="1" ];
-                101 [ ctxid="1" ];
-                102 [ ctxid="1" ];
-                103 [ ctxid="1" ];
-                100 -> 101;
-                101 -> 102;
-                102 -> 103;
-              }
-            version: 1
-            """;
+        String graphYaml = graphParams("""
+            strict digraph G {
+              100 [ ctxid="1" ];
+              101 [ ctxid="1" ];
+              102 [ ctxid="1" ];
+              103 [ ctxid="1" ];
+              100 -> 101;
+              101 -> 102;
+              102 -> 103;
+            }
+            """);
         String stateYaml = """
-            states:
-              100: OK
-              101: ERROR
-              102: NONE
-              103: NONE
-            version: 1
+            {"states":{"100":"OK","101":"ERROR","102":"NONE","103":"NONE"},"version":1}
             """;
 
         ExecContextGraph ecg = new ExecContextGraph();
@@ -184,30 +179,22 @@ class ExecContextGraphServiceTest {
         //   203 -> 204(mh.finish, leaf, NONE)
         // #203 is REACHABLE via its live OK parent #201, so it MUST be assignable even though its other
         // parent #202 was SKIPPED by a false 'when' condition.
-        String graphYaml = """
-            graph: |
-              strict digraph G {
-                200 [ ctxid="1" ];
-                201 [ ctxid="1" ];
-                202 [ ctxid="1" ];
-                203 [ ctxid="1" ];
-                204 [ ctxid="1" ];
-                200 -> 201;
-                201 -> 202;
-                201 -> 203;
-                202 -> 203;
-                203 -> 204;
-              }
-            version: 1
-            """;
+        String graphYaml = graphParams("""
+            strict digraph G {
+              200 [ ctxid="1" ];
+              201 [ ctxid="1" ];
+              202 [ ctxid="1" ];
+              203 [ ctxid="1" ];
+              204 [ ctxid="1" ];
+              200 -> 201;
+              201 -> 202;
+              201 -> 203;
+              202 -> 203;
+              203 -> 204;
+            }
+            """);
         String stateYaml = """
-            states:
-              200: OK
-              201: OK
-              202: SKIPPED
-              203: NONE
-              204: NONE
-            version: 1
+            {"states":{"200":"OK","201":"OK","202":"SKIPPED","203":"NONE","204":"NONE"},"version":1}
             """;
 
         ExecContextGraph ecg = new ExecContextGraph();
@@ -241,27 +228,20 @@ class ExecContextGraphServiceTest {
         //   302 -> 303
         // NB the root must NOT be NONE: findAllForAssigning short-circuits on a NONE/CHECK_CACHE root
         // and returns only that vertex, which would make this assertion vacuous.
-        String graphYaml = """
-            graph: |
-              strict digraph G {
-                300 [ ctxid="1" ];
-                301 [ ctxid="1" ];
-                302 [ ctxid="1" ];
-                303 [ ctxid="1" ];
-                300 -> 301;
-                300 -> 302;
-                301 -> 303;
-                302 -> 303;
-              }
-            version: 1
-            """;
+        String graphYaml = graphParams("""
+            strict digraph G {
+              300 [ ctxid="1" ];
+              301 [ ctxid="1" ];
+              302 [ ctxid="1" ];
+              303 [ ctxid="1" ];
+              300 -> 301;
+              300 -> 302;
+              301 -> 303;
+              302 -> 303;
+            }
+            """);
         String stateYaml = """
-            states:
-              300: OK
-              301: ERROR_WITH_RECOVERY
-              302: NONE
-              303: NONE
-            version: 1
+            {"states":{"300":"OK","301":"ERROR_WITH_RECOVERY","302":"NONE","303":"NONE"},"version":1}
             """;
 
         ExecContextGraph ecg = new ExecContextGraph();
@@ -292,23 +272,17 @@ class ExecContextGraphServiceTest {
         // caller tests before it fires recovery, so this pins "recovery becomes reachable only once
         // there is genuinely nothing else to hand out".
         //   310(root, OK) -> 311(ERROR_WITH_RECOVERY) -> 312(mh.finish, leaf, NONE)
-        String graphYaml = """
-            graph: |
-              strict digraph G {
-                310 [ ctxid="1" ];
-                311 [ ctxid="1" ];
-                312 [ ctxid="1" ];
-                310 -> 311;
-                311 -> 312;
-              }
-            version: 1
-            """;
+        String graphYaml = graphParams("""
+            strict digraph G {
+              310 [ ctxid="1" ];
+              311 [ ctxid="1" ];
+              312 [ ctxid="1" ];
+              310 -> 311;
+              311 -> 312;
+            }
+            """);
         String stateYaml = """
-            states:
-              310: OK
-              311: ERROR_WITH_RECOVERY
-              312: NONE
-            version: 1
+            {"states":{"310":"OK","311":"ERROR_WITH_RECOVERY","312":"NONE"},"version":1}
             """;
 
         ExecContextGraph ecg = new ExecContextGraph();
@@ -330,5 +304,11 @@ class ExecContextGraphServiceTest {
         // (EnumsApi.TaskExecState.isFinishedState covers only OK | ERROR | SKIPPED).
         assertTrue(vertices.isEmpty(),
                 "an ExecContext whose only pending task is in ERROR_WITH_RECOVERY must yield an empty assignable set");
+    }
+
+    private static String graphParams(String dot) {
+        ExecContextGraphParams p = new ExecContextGraphParams();
+        p.graph = dot;
+        return ExecContextGraphParamsUtils.BASE_UTILS.toString(p);
     }
 }

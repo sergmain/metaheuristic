@@ -96,7 +96,7 @@ public class SharedItCleanupSwallowTest extends MhSharedItTest {
         ec.execContextVariableStateId = 0L;
         ec.execContextGraphId = 0L;
         ec.execContextTaskStateId = 0L;
-        ec.setParams("version: 1\nprocesses: []\nvariables:\n  inline: {}\n  inputs: []\n  outputs: []\n");
+        ec.setParams("{\"version\":1,\"processes\":[],\"variables\":{\"inline\":{},\"inputs\":[],\"outputs\":[]}}");
         return execContextCache.save(ec).id;
     }
 

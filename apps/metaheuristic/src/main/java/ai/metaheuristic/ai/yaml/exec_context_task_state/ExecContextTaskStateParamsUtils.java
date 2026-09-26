@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.exec_context_task_state;
 
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
 
 import java.util.Map;
 
@@ -30,7 +30,7 @@ public class ExecContextTaskStateParamsUtils {
     private static final ExecContextTaskStateParamsUtilsV1 UTILS_V_1 = new ExecContextTaskStateParamsUtilsV1();
     private static final ExecContextTaskStateParamsUtilsV1 DEFAULT_UTILS = UTILS_V_1;
 
-    public static final BaseYamlUtils<ExecContextTaskStateParams> BASE_UTILS = new BaseYamlUtils<>(
+    public static final BaseJsonUtils<ExecContextTaskStateParams> BASE_UTILS = new BaseJsonUtils<>(
             Map.of(
                     1, UTILS_V_1
             ),

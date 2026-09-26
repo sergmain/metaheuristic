@@ -119,7 +119,7 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
         ec.execContextVariableStateId = ecvs.id;
         ec.execContextGraphId = 0L;
         ec.execContextTaskStateId = 0L;
-        ec.setParams("version: 1\nprocesses: []\nvariables:\n  inline: {}\n  inputs: []\n  outputs: []\n");
+        ec.setParams("{\"version\":1,\"processes\":[],\"variables\":{\"inline\":{},\"inputs\":[],\"outputs\":[]}}");
         ec = execContextCache.save(ec);
 
         // Update the ecvs to link back

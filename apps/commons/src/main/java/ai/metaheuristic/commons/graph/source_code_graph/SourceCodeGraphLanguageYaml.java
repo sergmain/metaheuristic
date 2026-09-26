@@ -78,7 +78,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             scg.variables.globals = sourceCodeParams.source.variables.globals;
             sourceCodeParams.source.variables.inputs.stream().map(v -> getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(() -> scg.variables.inputs));
             sourceCodeParams.source.variables.outputs.stream().map(v -> getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(() -> scg.variables.outputs));
-            scg.variables.inline.putAll(sourceCodeParams.source.variables.inline);
+            sourceCodeParams.source.variables.inline.forEach((group, values) -> scg.variables.inline.put(group, withStringValues(values)));
         }
 
         String currentInternalContextId = contextIdSupplier.get();
@@ -225,7 +225,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         pr.function = new ExecContextParams.FunctionDefinition(o.function.code, o.function.params, o.function.context, o.function.refType);
         pr.logic = o.subProcesses!=null ? o.subProcesses.logic : null;
         // pre/post Functions are not supported anymore, SourceCodeParamsYaml.checkIntegrity() rejects them
-        pr.metas = o.metas;
+        pr.metas = metasWithStringValues(o.metas);
         if (o.cache!=null) {
             pr.cache = new ExecContextParams.Cache(o.cache.enabled, o.cache.omitInline, o.cache.cacheMeta);
         }
@@ -234,6 +234,26 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         pr.condition = o.condition!=null ? o.condition.conditions : null;
         pr.triesAfterError = o.triesAfterError;
         return pr;
+    }
+
+    // A yaml SourceCode is parsed by SnakeYAML, which keeps a scalar's yaml type even inside a Map<String, String>:
+    // an unquoted `true` stays a Boolean, `7` an Integer. ExecContextParams declares these values as String and is
+    // stored as JSON, whose mapper writes a Map<String, String> value with the String serializer - so every value is
+    // turned into its String form here, where the yaml model enters ExecContextParams.
+    @Nullable
+    private static List<Map<String, String>> metasWithStringValues(@Nullable List<Map<String, String>> metas) {
+        return metas==null ? null : metas.stream().map(SourceCodeGraphLanguageYaml::withStringValues).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    @Nullable
+    private static Map<String, String> withStringValues(@Nullable Map<String, String> yamlMap) {
+        if (yamlMap==null) {
+            return null;
+        }
+        final Map<String, String> result = new LinkedHashMap<>();
+        // iterated as Map<?, ?> so that no cast to String is applied to a key or a value
+        ((Map<?, ?>) yamlMap).forEach((k, v) -> result.put(String.valueOf(k), v==null ? null : v.toString()));
+        return result;
     }
 
     private static ExecContextParams.Variable getVariable(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Variable v) {

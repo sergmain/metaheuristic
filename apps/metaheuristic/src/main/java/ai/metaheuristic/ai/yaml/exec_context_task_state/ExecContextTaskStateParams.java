@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.yaml.exec_context_task_state;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
 
 import java.util.HashMap;
@@ -31,6 +32,7 @@ import java.util.Map;
  * Time: 10:33 AM
  */
 @Data
+@JsonPropertyOrder({"version"})
 public class ExecContextTaskStateParams implements BaseParams {
 
     public final int version = 1;

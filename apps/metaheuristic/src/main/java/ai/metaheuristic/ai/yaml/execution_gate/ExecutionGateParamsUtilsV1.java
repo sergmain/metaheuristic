@@ -16,17 +16,25 @@
 
 package ai.metaheuristic.ai.yaml.execution_gate;
 
-import ai.metaheuristic.commons.yaml.YamlUtils;
-import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
+import ai.metaheuristic.commons.exceptions.ParamsProcessingException;
+import ai.metaheuristic.commons.json.versioning_json.AbstractParamsJsonUtils;
+import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
+import tools.jackson.core.JacksonException;
+
 import org.jspecify.annotations.NonNull;
-import org.yaml.snakeyaml.Yaml;
 
 /**
+ * V1 of the ExecutionGateParams JSON chain, and currently its head: it upgrades V1 straight to the version-less
+ * {@link ExecutionGateParams}, so {@link #nextUtil()} ends the chain.
+ *
+ * <p>Error code prefix: {@code 01.904.} (unique to this class).
+ *
  * @author Sergio Lissner
  * Date: 8/14/2026
  */
 public class ExecutionGateParamsUtilsV1
-        extends AbstractParamsYamlUtils<
+        extends AbstractParamsJsonUtils<
     ExecutionGateParamsV1, ExecutionGateParams, Void,
         Void, Void, Void> {
 
@@ -35,13 +43,9 @@ public class ExecutionGateParamsUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
-    public Yaml getYaml() {
-        return YamlUtils.init(ExecutionGateParamsV1.class);
-    }
-
-    @Override
-    public ExecutionGateParams upgradeTo(ExecutionGateParamsV1 v1) {
+    public ExecutionGateParams upgradeTo(@NonNull ExecutionGateParamsV1 v1) {
         ExecutionGateParams t = new ExecutionGateParams();
         t.triggeredByTaskId = v1.triggeredByTaskId;
         t.functionCode = v1.functionCode;
@@ -53,8 +57,8 @@ public class ExecutionGateParamsUtilsV1
     }
 
     @Override
-    public Void downgradeTo(Void yaml) {
-        return null;
+    public Void downgradeTo(@NonNull Void unused) {
+        throw new DowngradeNotSupportedException();
     }
 
     @Override
@@ -67,14 +71,25 @@ public class ExecutionGateParamsUtilsV1
         return null;
     }
 
+    @NonNull
     @Override
-    public String toString(ExecutionGateParamsV1 yaml) {
-        return getYaml().dump(yaml);
+    public String toString(@NonNull ExecutionGateParamsV1 json) {
+        try {
+            return BaseJsonUtils.getMapper().writeValueAsString(json);
+        }
+        catch (JacksonException e) {
+            throw new ParamsProcessingException("01.904.040 Error writing ExecutionGateParamsV1: " + e.getMessage(), e);
+        }
     }
 
+    @NonNull
     @Override
-    public ExecutionGateParamsV1 to(String s) {
-        final ExecutionGateParamsV1 p = getYaml().load(s);
-        return p;
+    public ExecutionGateParamsV1 to(@NonNull String s) {
+        try {
+            return BaseJsonUtils.getMapper().readValue(s, ExecutionGateParamsV1.class);
+        }
+        catch (JacksonException e) {
+            throw new ParamsProcessingException("01.904.020 Error reading ExecutionGateParamsV1: " + e.getMessage(), e);
+        }
     }
 }

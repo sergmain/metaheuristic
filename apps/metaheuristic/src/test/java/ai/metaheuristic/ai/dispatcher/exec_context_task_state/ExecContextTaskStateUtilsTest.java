@@ -38,16 +38,7 @@ public class ExecContextTaskStateUtilsTest {
     public void test_getFinishedTaskVertices() {
 
         String yaml = """
-            states:
-              45064: OK
-              45065: NONE
-              45066: OK
-              45067: OK
-              45068: OK
-              45063: OK
-            triesWasMade: {
-              }
-            version: 1
+            {"states":{"45064":"OK","45065":"NONE","45066":"OK","45067":"OK","45068":"OK","45063":"OK"},"triesWasMade":{},"version":1}
             """;
 
         ExecContextTaskStateParams paramsYaml = ExecContextTaskStateParamsUtils.BASE_UTILS.to(yaml);

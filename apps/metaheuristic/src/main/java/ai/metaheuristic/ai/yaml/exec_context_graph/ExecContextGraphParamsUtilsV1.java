@@ -16,19 +16,26 @@
 
 package ai.metaheuristic.ai.yaml.exec_context_graph;
 
-import ai.metaheuristic.commons.yaml.YamlUtils;
-import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
+import ai.metaheuristic.commons.exceptions.ParamsProcessingException;
+import ai.metaheuristic.commons.json.versioning_json.AbstractParamsJsonUtils;
+import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
+import tools.jackson.core.JacksonException;
 
 import org.jspecify.annotations.NonNull;
-import org.yaml.snakeyaml.Yaml;
 
 /**
+ * V1 of the ExecContextGraphParams JSON chain, and currently its head: it upgrades V1 straight to the version-less
+ * {@link ExecContextGraphParams}, so {@link #nextUtil()} ends the chain.
+ *
+ * <p>Error code prefix: {@code 01.902.} (unique to this class).
+ *
  * @author Serge
  * Date: 3/17/2021
  * Time: 10:47 AM
  */
 public class ExecContextGraphParamsUtilsV1
-        extends AbstractParamsYamlUtils<
+        extends AbstractParamsJsonUtils<
     ExecContextGraphParamsV1, ExecContextGraphParams, Void,
         Void, Void, Void> {
 
@@ -37,21 +44,17 @@ public class ExecContextGraphParamsUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
-    public Yaml getYaml() {
-        return YamlUtils.init(ExecContextGraphParamsV1.class);
-    }
-
-    @Override
-    public ExecContextGraphParams upgradeTo(ExecContextGraphParamsV1 v1) {
+    public ExecContextGraphParams upgradeTo(@NonNull ExecContextGraphParamsV1 v1) {
         ExecContextGraphParams t = new ExecContextGraphParams();
         t.graph = v1.graph;
         return t;
     }
 
     @Override
-    public Void downgradeTo(Void yaml) {
-        return null;
+    public Void downgradeTo(@NonNull Void unused) {
+        throw new DowngradeNotSupportedException();
     }
 
     @Override
@@ -64,14 +67,25 @@ public class ExecContextGraphParamsUtilsV1
         return null;
     }
 
+    @NonNull
     @Override
-    public String toString( ExecContextGraphParamsV1 yaml) {
-        return getYaml().dump(yaml);
+    public String toString(@NonNull ExecContextGraphParamsV1 json) {
+        try {
+            return BaseJsonUtils.getMapper().writeValueAsString(json);
+        }
+        catch (JacksonException e) {
+            throw new ParamsProcessingException("01.902.040 Error writing ExecContextGraphParamsV1: " + e.getMessage(), e);
+        }
     }
 
+    @NonNull
     @Override
-    public ExecContextGraphParamsV1 to(String s) {
-        final ExecContextGraphParamsV1 p = getYaml().load(s);
-        return p;
+    public ExecContextGraphParamsV1 to(@NonNull String s) {
+        try {
+            return BaseJsonUtils.getMapper().readValue(s, ExecContextGraphParamsV1.class);
+        }
+        catch (JacksonException e) {
+            throw new ParamsProcessingException("01.902.020 Error reading ExecContextGraphParamsV1: " + e.getMessage(), e);
+        }
     }
 }

@@ -23,6 +23,7 @@ import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.*;
 import org.jspecify.annotations.Nullable;
 
@@ -34,10 +35,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Data
+@JsonPropertyOrder({"version"})
 public class ExecContextParams implements BaseParams {
 
     @SuppressWarnings("FieldMayBeStatic")
-    public final int version = 6;
+    public final int version = 1;
 
     @Override
     public boolean checkIntegrity() {

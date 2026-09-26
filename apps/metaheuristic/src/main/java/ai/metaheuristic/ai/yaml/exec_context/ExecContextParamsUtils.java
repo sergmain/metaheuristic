@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.yaml.exec_context;
 
 import ai.metaheuristic.api.data.exec_context.ExecContextParams;
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
 
 import java.util.Map;
 
@@ -27,22 +27,12 @@ import java.util.Map;
  */
 public class ExecContextParamsUtils {
 
-    private static final ExecContextParamsUtilsV1 YAML_UTILS_V_1 = new ExecContextParamsUtilsV1();
-    private static final ExecContextParamsUtilsV2 YAML_UTILS_V_2 = new ExecContextParamsUtilsV2();
-    private static final ExecContextParamsUtilsV3 YAML_UTILS_V_3 = new ExecContextParamsUtilsV3();
-    private static final ExecContextParamsUtilsV4 YAML_UTILS_V_4 = new ExecContextParamsUtilsV4();
-    private static final ExecContextParamsUtilsV5 YAML_UTILS_V_5 = new ExecContextParamsUtilsV5();
-    private static final ExecContextParamsUtilsV6 YAML_UTILS_V_6 = new ExecContextParamsUtilsV6();
-    private static final ExecContextParamsUtilsV6 DEFAULT_UTILS = YAML_UTILS_V_6;
+    private static final ExecContextParamsUtilsV1 UTILS_V_1 = new ExecContextParamsUtilsV1();
+    private static final ExecContextParamsUtilsV1 DEFAULT_UTILS = UTILS_V_1;
 
-    public static final BaseYamlUtils<ExecContextParams> BASE_UTILS = new BaseYamlUtils<>(
+    public static final BaseJsonUtils<ExecContextParams> BASE_UTILS = new BaseJsonUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2,
-                    3, YAML_UTILS_V_3,
-                    4, YAML_UTILS_V_4,
-                    5, YAML_UTILS_V_5,
-                    6, YAML_UTILS_V_6
+                    1, UTILS_V_1
             ),
             DEFAULT_UTILS
     );
