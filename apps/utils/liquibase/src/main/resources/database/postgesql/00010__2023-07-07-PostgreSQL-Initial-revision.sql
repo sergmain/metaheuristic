@@ -354,6 +354,39 @@ CREATE TABLE MH_EXEC_CONTEXT_VARIABLE_STATE
     PARAMS            TEXT NOT NULL
 );
 
+-- 041 ExecContext segments: one record per grafted line (with its nested subtree) plus the root segment
+CREATE TABLE MH_EXEC_CONTEXT_SEGMENT
+(
+    ID                SERIAL PRIMARY KEY,
+    VERSION           NUMERIC(5, 0)  NOT NULL,
+    EXEC_CONTEXT_ID   NUMERIC(10, 0) NOT NULL,
+    LINE_CTX_ID       VARCHAR(250)   NOT NULL,
+    FORK_TASK_ID      NUMERIC(10, 0) default NULL,
+    STRUCTURE_HASH    VARCHAR(64)    NOT NULL,
+    CREATED_ON        bigint not null,
+    PARAMS            TEXT NOT NULL
+);
+
+CREATE UNIQUE INDEX mh_exec_context_segment_ec_line_ctx_unq_idx
+    ON MH_EXEC_CONTEXT_SEGMENT (EXEC_CONTEXT_ID, LINE_CTX_ID);
+
+-- 041 ExecContext segments: one record per join vertex
+CREATE TABLE MH_EXEC_CONTEXT_JOIN
+(
+    ID                SERIAL PRIMARY KEY,
+    VERSION           NUMERIC(5, 0)  NOT NULL,
+    EXEC_CONTEXT_ID   NUMERIC(10, 0) NOT NULL,
+    JOIN_TASK_ID      NUMERIC(10, 0) NOT NULL,
+    LINES_REGISTERED  INT            NOT NULL DEFAULT 0,
+    LINES_FINISHED    INT            NOT NULL DEFAULT 0,
+    LINES_DEAD        INT            NOT NULL DEFAULT 0,
+    IS_CLOSED         BOOLEAN        NOT NULL DEFAULT FALSE,
+    CREATED_ON        bigint not null
+);
+
+CREATE UNIQUE INDEX mh_exec_context_join_ec_join_task_unq_idx
+    ON MH_EXEC_CONTEXT_JOIN (EXEC_CONTEXT_ID, JOIN_TASK_ID);
+
 CREATE TABLE MH_EXPERIMENT_RESULT
 (
   ID            SERIAL PRIMARY KEY,

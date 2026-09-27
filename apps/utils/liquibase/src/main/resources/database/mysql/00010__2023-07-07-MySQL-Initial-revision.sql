@@ -378,6 +378,39 @@ CREATE TABLE mh_exec_context_variable_state
     PARAMS              LONGTEXT NOT NULL
 );
 
+# 041 ExecContext segments: one record per grafted line (with its nested subtree) plus the root segment
+CREATE TABLE mh_exec_context_segment
+(
+    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION             INT UNSIGNED    NOT NULL,
+    EXEC_CONTEXT_ID     INT UNSIGNED    NOT NULL,
+    LINE_CTX_ID         VARCHAR(250)    NOT NULL,
+    FORK_TASK_ID        INT UNSIGNED    default NULL,
+    STRUCTURE_HASH      VARCHAR(64)     NOT NULL,
+    CREATED_ON          bigint not null,
+    PARAMS              LONGTEXT NOT NULL
+);
+
+CREATE UNIQUE INDEX mh_exec_context_segment_ec_line_ctx_unq_idx
+    ON mh_exec_context_segment (EXEC_CONTEXT_ID, LINE_CTX_ID);
+
+# 041 ExecContext segments: one record per join vertex
+CREATE TABLE mh_exec_context_join
+(
+    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION             INT UNSIGNED    NOT NULL,
+    EXEC_CONTEXT_ID     INT UNSIGNED    NOT NULL,
+    JOIN_TASK_ID        INT UNSIGNED    NOT NULL,
+    LINES_REGISTERED    INT             NOT NULL DEFAULT 0,
+    LINES_FINISHED      INT             NOT NULL DEFAULT 0,
+    LINES_DEAD          INT             NOT NULL DEFAULT 0,
+    IS_CLOSED           BOOLEAN         NOT NULL DEFAULT FALSE,
+    CREATED_ON          bigint not null
+);
+
+CREATE UNIQUE INDEX mh_exec_context_join_ec_join_task_unq_idx
+    ON mh_exec_context_join (EXEC_CONTEXT_ID, JOIN_TASK_ID);
+
 CREATE TABLE mh_experiment_result
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
@@ -661,4 +694,3 @@ CREATE table mhbp_scenario
 
 CREATE INDEX mhbp_scenario_account_id_scenario_group_id_idx
     ON mhbp_scenario (ACCOUNT_ID, SCENARIO_GROUP_ID);
-
