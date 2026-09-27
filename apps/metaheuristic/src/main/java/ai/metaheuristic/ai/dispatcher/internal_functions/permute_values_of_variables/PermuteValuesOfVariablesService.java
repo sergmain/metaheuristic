@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.GraftExpander;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
@@ -57,6 +58,7 @@ public class PermuteValuesOfVariablesService {
 
     private final VariableTxService variableService;
     private final ExecContextGraphService execContextGraphService;
+    private final ExecContextSegmentTxService segmentTxService;
     private final TaskProducingService taskProducingService;
     private final GraftExpander graftExpander;
 
@@ -79,7 +81,9 @@ public class PermuteValuesOfVariablesService {
                     variableService.createInputVariablesForSubProcess(
                             variableDataSource, simpleExecContext.execContextId, entry.getKey(), currTaskContextId, false);
                 }
-                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander);
+                // 041: one line per inline-variable set - the count comes from data, so each starts its own segment
+                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
+                        ExecContextSegmentTxService.SegmentStart.OWN);
 
             } catch (BreakFromLambdaException e) {
                 log.error(e.getMessage());
@@ -87,7 +91,8 @@ public class PermuteValuesOfVariablesService {
                         new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, e.getMessage()));
             }
         }
-        execContextGraphService.createEdges(graphAndStates.graph(), lastIds, descendants);
+        // 041 Phase 7: the join of the new lines is derived from the segments; register them with it
+        segmentTxService.registerLines(simpleExecContext.execContextId, lastIds);
     }
 
 

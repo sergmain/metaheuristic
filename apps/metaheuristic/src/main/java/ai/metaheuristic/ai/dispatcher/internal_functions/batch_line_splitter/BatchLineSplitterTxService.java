@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -72,6 +73,7 @@ public class BatchLineSplitterTxService {
     private final GraftExpander graftExpander;
     private final TaskProducingService taskProducingService;
     private final ExecContextGraphService execContextGraphService;
+    private final ExecContextSegmentTxService segmentTxService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
@@ -153,7 +155,9 @@ public class BatchLineSplitterTxService {
                 throw new BatchResourceProcessingException(es);
             }
             try {
-                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander);
+                // 041: a splitter's lines come from data - each starts its own segment
+                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
+                        ExecContextSegmentTxService.SegmentStart.OWN);
 
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;
@@ -164,7 +168,8 @@ public class BatchLineSplitterTxService {
                 throw new BatchResourceProcessingException(es);
             }
         });
-        execContextGraphService.createEdges(graphAndStates.graph(), lastIds, executionContextData.descendants);
+        // 041 Phase 7: the join of the new lines is derived from the segments; register them with it
+        segmentTxService.registerLines(simpleExecContext.execContextId, lastIds);
     }
 
     private static class CustomLineIterator extends LineIterator {

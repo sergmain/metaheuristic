@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.GraftExpander;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -61,6 +62,7 @@ public class PermuteVariablesService {
 
     private final VariableService variableTopLevelService;
     private final ExecContextGraphService execContextGraphService;
+    private final ExecContextSegmentTxService segmentTxService;
     private final TaskProducingService taskProducingService;
     private final GraftExpander graftExpander;
 
@@ -125,7 +127,8 @@ public class PermuteVariablesService {
         else {
             throw new IllegalStateException("unknown Enums.VariablesAs - "+variablesAs);
         }
-        execContextGraphService.createEdges(graphAndStates.graph(), lastIds, descendants);
+        // 041 Phase 7: the join of the new lines is derived from the segments; register them with it
+        segmentTxService.registerLines(simpleExecContext.execContextId, lastIds);
     }
 
     private boolean createTaskWIthVariables(
@@ -162,7 +165,9 @@ public class PermuteVariablesService {
                 variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
 
         taskProducingService.createTasksForSubProcesses(
-            graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander);
+            graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
+            // 041: one line per permutation - the count comes from data, so each starts its own segment
+            ExecContextSegmentTxService.SegmentStart.OWN);
         return true;
     }
 

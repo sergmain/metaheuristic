@@ -124,7 +124,9 @@ public class ExecContextGraftTxService {
         ExecContextData.GraphAndStates gas = execContextGraphService.prepareGraphAndStates(
                 sec.execContextGraphId, sec.execContextTaskStateId);
         List<Long> lastIds = new ArrayList<>();
-        taskProducingService.createTasksForSubProcesses(gas, sec, ecd, lineCtxId, targetTaskId, lastIds);
+        // 041: a graft is its own segment (decision 7); its ctx allocation (decision 10) and join registration are Phase 8
+        taskProducingService.createTasksForSubProcesses(gas, sec, ecd, lineCtxId, targetTaskId, lastIds,
+                ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService.SegmentStart.OWN);
 
         // LINE ISOLATION - wire this line's tail ONLY into the single shared downstream terminal;
         // ecd.descendants is the target's LIVE direct children, polluted by every earlier grafted line

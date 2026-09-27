@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -66,6 +67,7 @@ public class SubProcessesTxService {
     private final GraftExpander graftExpander;
     private final TaskProducingService taskProducingService;
     private final ExecContextGraphService execContextGraphService;
+    private final ExecContextSegmentTxService segmentTxService;
     private final TaskRepository taskRepository;
     private final ExecContextVariableStateService execContextVariableStateService;
     private final ExecContextCache execContextCache;
@@ -178,9 +180,12 @@ public class SubProcessesTxService {
             }
 
             taskProducingService.createTasksForSubProcesses(
-                graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander);
+                graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
+                // 041: a static sub-block written in the source stays in the segment of the line it is forked from
+                ExecContextSegmentTxService.SegmentStart.ENCLOSING);
 
-            execContextGraphService.createEdges(graphAndStates.graph(), lastIds, filteredDescendants);
+            // 041 Phase 7: the join of the new lines is derived from the segments; register them with it
+            segmentTxService.registerLines(simpleExecContext.execContextId, lastIds);
 
         } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
             throw e;
