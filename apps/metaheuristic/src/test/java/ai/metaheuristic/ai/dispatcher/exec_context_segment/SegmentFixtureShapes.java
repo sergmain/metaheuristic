@@ -16,7 +16,14 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_segment;
 
+import ai.metaheuristic.commons.utils.ContextUtils;
+import lombok.SneakyThrows;
+import org.apache.commons.io.IOUtils;
 import org.jspecify.annotations.Nullable;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * The shapes shared by the ExecContext-segment tests (041-EXEC-CONTEXT-SEGMENTS-PLAN, section 8.2).
@@ -51,6 +58,13 @@ import org.jspecify.annotations.Nullable;
  *   <li>{@link #R1} - reset: a top-level chain, a splitter whose grafted lines have three Tasks each (so one can be
  *       reset mid-line), and a {@code tag terminal} join.</li>
  * </ul>
+ *
+ * <p><b>DOT half</b> (Phase 4, for the Spring-less algebra tests): {@link DotShape}s. S1, S2 and S3 are the graphs of
+ * the RG ExecContexts the plan names (325, 328, 334), stored verbatim under {@code /segment/dot/}; S8 is S3 (its splitter
+ * fork carries both line bases {@code 1,6#…} and {@code 1,17#…}). S4, S5, S6 are hand-written in the same form; S7 is
+ * generated; X1-X3 are invalid on purpose. Which lines start a segment cannot be read from a DOT (a static
+ * {@code parallel} branch and a splitter line look alike), so each shape carries the ctx levels of its splitter / graft
+ * lines - what its SourceCode knows.
  */
 public final class SegmentFixtureShapes {
 
@@ -361,4 +375,190 @@ public final class SegmentFixtureShapes {
                 }
             }
             """, "L1\nL2");
+
+    // =================================================================================================================
+    // DOT half
+    // =================================================================================================================
+
+    /**
+     * @param id              the shape id used in the plan
+     * @param dot             the graph as DOT
+     * @param segmentLevels   the ctx levels (processContextId, no ancestors, no '#') of lines that start a segment
+     */
+    public record DotShape(String id, String dot, Set<String> segmentLevels) {
+        public Predicate<SegmentData.Line> startsSegment() {
+            return line -> segmentLevels.contains(ContextUtils.getProcessContextId(ContextUtils.getLevel(line.ctx())));
+        }
+    }
+
+    @SneakyThrows
+    private static String dotResource(String name) {
+        return IOUtils.resourceToString("/segment/dot/" + name, StandardCharsets.UTF_8);
+    }
+
+    private static final String SPLITTER_0 = "1,6";
+    private static final String SPLITTER_1 = "1,6,7,10,11,12,13,22";
+    private static final String MANUAL = "1,17";
+
+    /** RG manual genesis, 26 Tasks - ExecContext 325. */
+    public static final DotShape DOT_S1 = new DotShape("S1", dotResource("S1-ec325.dot"), Set.of(SPLITTER_0));
+
+    /** RG decomposed genesis, 52 Tasks, 11 forks resolving to one join - ExecContext 328. */
+    public static final DotShape DOT_S2 = new DotShape("S2", dotResource("S2-ec328.dot"), Set.of(SPLITTER_0, SPLITTER_1));
+
+    /** S2 plus four manual grafts {@code 1,17#1…4}, a clone (Task ids out of chain order) - ExecContext 334. */
+    public static final DotShape DOT_S3 = new DotShape("S3", dotResource("S3-ec334.dot"), Set.of(SPLITTER_0, SPLITTER_1, MANUAL));
+
+    /** A producer (#2) with zero lines: only fork -> continuation. */
+    public static final DotShape DOT_S4 = new DotShape("S4", """
+            strict digraph G {
+              1 [ ctxid="1" ];
+              2 [ ctxid="1" ];
+              3 [ ctxid="1" tag="terminal" ];
+              4 [ ctxid="1" ];
+              1 -> 2;
+              2 -> 3;
+              3 -> 4;
+            }
+            """, Set.of("1,2"));
+
+    /**
+     * F1: a graft (line {@code 1,3,2|0#1}) under the last Task (#20) of a static line ({@code 1,3#0}); its join is the
+     * enclosing join #11.
+     */
+    public static final DotShape DOT_S5 = new DotShape("S5", """
+            strict digraph G {
+              10 [ ctxid="1" ];
+              11 [ ctxid="1" tag="terminal" ];
+              12 [ ctxid="1" ];
+              20 [ ctxid="1,3#0" ];
+              30 [ ctxid="1,3,2|0#1" ];
+              31 [ ctxid="1,3,2|0#1" ];
+              10 -> 11;
+              11 -> 12;
+              10 -> 20;
+              20 -> 11;
+              20 -> 30;
+              30 -> 31;
+              31 -> 11;
+            }
+            """, Set.of("1,3,2"));
+
+    /**
+     * Three nested splitters: every splitter is the last Task of its line, so the innermost tails (#30, #31) skip two
+     * levels to the top-level join #2. The second level-1 line ({@code 1,5#2}) has a splitter with no lines.
+     */
+    public static final DotShape DOT_S6 = new DotShape("S6", """
+            strict digraph G {
+              1 [ ctxid="1" ];
+              2 [ ctxid="1" tag="terminal" ];
+              3 [ ctxid="1" ];
+              10 [ ctxid="1,5#1" ];
+              11 [ ctxid="1,5#1" ];
+              12 [ ctxid="1,5#2" ];
+              13 [ ctxid="1,5#2" ];
+              20 [ ctxid="1,5,3|1#1" ];
+              21 [ ctxid="1,5,3|1#1" ];
+              30 [ ctxid="1,5,3,2|1|1#1" ];
+              31 [ ctxid="1,5,3,2|1|1#2" ];
+              1 -> 2;
+              2 -> 3;
+              1 -> 10;
+              10 -> 11;
+              11 -> 2;
+              1 -> 12;
+              12 -> 13;
+              13 -> 2;
+              11 -> 20;
+              20 -> 21;
+              21 -> 2;
+              21 -> 30;
+              30 -> 2;
+              21 -> 31;
+              31 -> 2;
+            }
+            """, Set.of("1,5", "1,5,3", "1,5,3,2"));
+
+    /** One fork (#1) with {@code lines} lines {@code 1,2#i} of two Tasks each, joining #2 ({@code tag terminal}). */
+    public static DotShape dotS7(int lines) {
+        final StringBuilder sb = new StringBuilder("strict digraph G {\n");
+        sb.append("  1 [ ctxid=\"1\" ];\n  2 [ ctxid=\"1\" tag=\"terminal\" ];\n  3 [ ctxid=\"1\" ];\n");
+        for (int i = 1; i <= lines; i++) {
+            sb.append("  ").append(1000 + 2L * i).append(" [ ctxid=\"1,2#").append(i).append("\" ];\n");
+            sb.append("  ").append(1001 + 2L * i).append(" [ ctxid=\"1,2#").append(i).append("\" ];\n");
+        }
+        sb.append("  1 -> 2;\n  2 -> 3;\n");
+        for (int i = 1; i <= lines; i++) {
+            final long head = 1000 + 2L * i;
+            sb.append("  1 -> ").append(head).append(";\n");
+            sb.append("  ").append(head).append(" -> ").append(head + 1).append(";\n");
+            sb.append("  ").append(head + 1).append(" -> 2;\n");
+        }
+        return new DotShape("S7", sb.append("}\n").toString(), Set.of("1,2"));
+    }
+
+    public static final DotShape DOT_S7 = dotS7(1000);
+
+    /** Two line bases under one fork - S3's splitter fork carries {@code 1,6#1} and {@code 1,17#1…4}. */
+    public static final DotShape DOT_S8 = new DotShape("S8", DOT_S3.dot(), DOT_S3.segmentLevels());
+
+    /** Invalid: an edge between two lines of the same fork (line #1's tail into line #2's head). */
+    public static final DotShape DOT_X1 = new DotShape("X1", """
+            strict digraph G {
+              1 [ ctxid="1" ];
+              2 [ ctxid="1" ];
+              3 [ ctxid="1" ];
+              10 [ ctxid="1,2#1" ];
+              11 [ ctxid="1,2#1" ];
+              20 [ ctxid="1,2#2" ];
+              21 [ ctxid="1,2#2" ];
+              1 -> 2;
+              2 -> 3;
+              1 -> 10;
+              10 -> 11;
+              11 -> 2;
+              1 -> 20;
+              20 -> 21;
+              21 -> 2;
+              11 -> 20;
+            }
+            """, Set.of("1,2"));
+
+    /** Invalid: a line tail (#10) wired into #3, which is not its fork's join (#2). */
+    public static final DotShape DOT_X2 = new DotShape("X2", """
+            strict digraph G {
+              1 [ ctxid="1" ];
+              2 [ ctxid="1" ];
+              3 [ ctxid="1" ];
+              4 [ ctxid="1" ];
+              10 [ ctxid="1,2#1" ];
+              1 -> 2;
+              2 -> 3;
+              3 -> 4;
+              1 -> 10;
+              10 -> 3;
+            }
+            """, Set.of("1,2"));
+
+    /**
+     * Invalid: one join (#2) fed by the tails of two different forks - fork #1 (line {@code 1,2#1}, join #2) and fork #10
+     * (line {@code 1,2,3|1#1}, whose derived join is #11, the Task after #10 in its line).
+     */
+    public static final DotShape DOT_X3 = new DotShape("X3", """
+            strict digraph G {
+              1 [ ctxid="1" ];
+              2 [ ctxid="1" ];
+              3 [ ctxid="1" ];
+              10 [ ctxid="1,2#1" ];
+              11 [ ctxid="1,2#1" ];
+              20 [ ctxid="1,2,3|1#1" ];
+              1 -> 2;
+              2 -> 3;
+              1 -> 10;
+              10 -> 11;
+              11 -> 2;
+              10 -> 20;
+              20 -> 2;
+            }
+            """, Set.of("1,2", "1,2,3"));
 }
