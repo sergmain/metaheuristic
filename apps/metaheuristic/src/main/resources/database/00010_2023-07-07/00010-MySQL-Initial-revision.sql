@@ -473,7 +473,7 @@ CREATE TABLE mh_exec_context_variable_state
 # 041 ExecContext segments: one record per grafted line (with its nested subtree) plus the root segment
 CREATE TABLE mh_exec_context_segment
 (
-    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    ID                  bigint          NOT NULL PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
     EXEC_CONTEXT_ID     INT UNSIGNED    NOT NULL,
     LINE_CTX_ID         VARCHAR(250)    NOT NULL,
@@ -485,6 +485,9 @@ CREATE TABLE mh_exec_context_segment
 
 CREATE UNIQUE INDEX mh_exec_context_segment_ec_line_ctx_unq_idx
     ON mh_exec_context_segment (EXEC_CONTEXT_ID, LINE_CTX_ID);
+
+# ID is assigned: the writer allocates it from mh_ids (ExecContextSegmentIdService) before building the row, so
+# LINE_CTX_ID (seed + id, decision 10) is in the one INSERT.
 
 # 041 ExecContext segments: one record per join vertex
 CREATE TABLE mh_exec_context_join
