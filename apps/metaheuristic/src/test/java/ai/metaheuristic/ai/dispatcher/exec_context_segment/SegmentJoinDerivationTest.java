@@ -99,4 +99,18 @@ public class SegmentJoinDerivationTest {
         assertNull(SegmentAlgebra.derivedJoin(SegmentAlgebra.LineIndex.of(lines), lines.getFirst()), "the root line has no join");
         assertFalse(SegmentAlgebra.derivedJoins(lines).containsKey("1"));
     }
+
+    private static void assertGolden(SegmentFixtureShapes.DotShape shape) {
+        assertEquals(new TreeMap<>(SegmentGolden.load(shape.id()).derivedJoins()), new TreeMap<>(joins(shape)),
+                shape.id() + ": derived joins must equal the joins read off today's graph (golden)");
+    }
+
+    @Test public void test_golden_S1() { assertGolden(SegmentFixtureShapes.DOT_S1); }
+    @Test public void test_golden_S2() { assertGolden(SegmentFixtureShapes.DOT_S2); }
+    @Test public void test_golden_S3() { assertGolden(SegmentFixtureShapes.DOT_S3); }
+    @Test public void test_golden_S4() { assertGolden(SegmentFixtureShapes.DOT_S4); }
+    @Test public void test_golden_S5() { assertGolden(SegmentFixtureShapes.DOT_S5); }
+    @Test public void test_golden_S6() { assertGolden(SegmentFixtureShapes.DOT_S6); }
+    @Test public void test_golden_S7() { assertGolden(SegmentFixtureShapes.DOT_S7); }
+    @Test public void test_golden_S8() { assertGolden(SegmentFixtureShapes.DOT_S8); }
 }
