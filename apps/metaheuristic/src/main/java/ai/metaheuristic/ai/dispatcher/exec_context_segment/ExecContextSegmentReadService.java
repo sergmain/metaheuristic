@@ -218,6 +218,11 @@ public class ExecContextSegmentReadService {
         return SegmentVariableStates.withDerivedInputs(storedVariableStates(execContextId));
     }
 
+    /** Every Variable id the stored variable-state entries refer to (Phase 13: the Variables a clone copies). */
+    public Set<Long> referencedVariableIds(Long execContextId) {
+        return SegmentClone.referencedVariableIds(storedVariableStates(execContextId));
+    }
+
     /**
      * The {@code ext} recorded for variable {@code variableId} by its producer's output entry, or null. The producer's
      * entry sits in the segment owning the variable's ctx {@code variableCtx}, read first; every segment is read only

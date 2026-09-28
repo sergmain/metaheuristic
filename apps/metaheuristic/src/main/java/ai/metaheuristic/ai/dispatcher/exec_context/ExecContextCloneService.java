@@ -71,6 +71,12 @@ import java.util.concurrent.Executors;
  *   - the JSON inside ExecContextVariableState.params (taskId per state row,
  *     id per VariableInfo).
  * Then flip the new ExecContext from CLONING to FINISHED.
+ *
+ * 041-EXEC-CONTEXT-SEGMENTS-PLAN Phase 13 (decision 15): graph, task state and variable state live in the segment and
+ * join records. The Variables to clone are the ones the segments' variable-state entries refer to, and after the Tasks
+ * every segment is copied with the id maps, one segment per transaction, then the join records in pages
+ * ({@code ExecContextSegmentCloneTxService}). The three whole-ExecContext records are still copied and rewritten as
+ * above until they are removed (Phase 21); nothing reads them.
  */
 @Service
 @Profile("dispatcher")
@@ -84,6 +90,13 @@ public class ExecContextCloneService {
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final TaskRepository taskRepository;
     private final ExecContextCloneTxService cloneTxService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentCloneTxService segmentCloneTxService;
+    private final ai.metaheuristic.ai.dispatcher.repositories.ExecContextSegmentRepository segmentRepository;
+    private final ai.metaheuristic.ai.dispatcher.repositories.ExecContextJoinRepository joinRepository;
+
+    /** Join records copied per transaction (041 Phase 13, decision 3). */
+    private static final int JOIN_PAGE = 500;
 
     public record CloneOptions(int variableThreads, @Nullable Set<Long> taskIdAllowList) {
         public static final CloneOptions DEFAULTS = new CloneOptions(4, null);
@@ -136,7 +149,8 @@ public class ExecContextCloneService {
         // available when cloning Tasks (TaskParamsYaml carries variable IDs that
         // must be rewritten source-EC -> clone-EC). Phase 13.G.5.
         ConcurrentHashMap<Long, Long> variableIdMap = new ConcurrentHashMap<>();
-        Set<Long> sourceVarIds = collectVariableIds(sourceVarState.getParams());
+        // 041 Phase 13: the variable-state entries live in the segments
+        Set<Long> sourceVarIds = segmentReadService.referencedVariableIds(sourceExecContextId);
         cloneVariablesInParallel(sourceVarIds, newEcId, options.variableThreads(), variableIdMap);
 
         // Stage 1c — clone Task rows, build oldTaskId -> newTaskId map. Pass the
@@ -175,6 +189,16 @@ public class ExecContextCloneService {
         for (TaskImpl t : sourceTasks) {
             Long clonedTaskId = taskIdMap.get(t.id);
             cloneTxService.fillClonedTask(t.id, clonedTaskId, newEcId, variableIdMap, taskIdMap);
+        }
+
+        // Stage 1d (041 Phase 13) — copy every segment, one per transaction, then the join
+        // records in pages, through the complete Task and Variable id maps.
+        for (Long sourceSegmentId : segmentRepository.findIdsByExecContextId(sourceExecContextId)) {
+            segmentCloneTxService.copySegment(sourceSegmentId, newEcId, taskIdMap, variableIdMap);
+        }
+        List<Long> sourceJoinIds = joinRepository.findIdsByExecContextId(sourceExecContextId);
+        for (int from = 0; from < sourceJoinIds.size(); from += JOIN_PAGE) {
+            segmentCloneTxService.copyJoins(sourceJoinIds.subList(from, Math.min(from + JOIN_PAGE, sourceJoinIds.size())), newEcId, taskIdMap);
         }
 
         // Stage 2 — rewrite references (graph DOT inside YAML envelope, task-state
