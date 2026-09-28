@@ -241,6 +241,46 @@ public class ExecContextSegmentReadService {
     }
 
     /**
+     * The stored {@code STRUCTURE_HASH} of every segment, from one projection query that loads no params (Phase 15,
+     * decision 12: sealing reads hashes, not content).
+     */
+    public List<SegmentStructureHash.SegmentHash> storedStructureHashes(Long execContextId) {
+        final List<SegmentStructureHash.SegmentHash> out = new ArrayList<>();
+        for (Object[] row : segmentRepository.findStructureHashesByExecContextId(execContextId)) {
+            out.add(new SegmentStructureHash.SegmentHash((String) row[0], (String) row[1]));
+        }
+        return out;
+    }
+
+    /** Per segment: the stored hash, and the hash recomputed from the stored structure (Phase 15: what verification reads). */
+    public record StructureHashes(List<SegmentStructureHash.SegmentHash> stored, List<SegmentStructureHash.SegmentHash> recomputed) {
+        /** The root over the recomputed hashes. */
+        public String recomputedRoot() {
+            return SegmentStructureHash.root(recomputed);
+        }
+
+        /** The segments whose stored hash is not the hash of their content, sorted. */
+        public List<String> divergent() {
+            return SegmentStructureHash.divergent(stored, recomputed);
+        }
+    }
+
+    /** Every segment's stored and recomputed structure hash, reading the segments in pages of {@value #PAGE}. */
+    public StructureHashes recomputedStructureHashes(Long execContextId) {
+        final List<Long> ids = segmentRepository.findIdsByExecContextId(execContextId);
+        final List<SegmentStructureHash.SegmentHash> stored = new ArrayList<>(ids.size());
+        final List<SegmentStructureHash.SegmentHash> recomputed = new ArrayList<>(ids.size());
+        for (int from = 0; from < ids.size(); from += PAGE) {
+            for (ExecContextSegment s : segmentRepository.findAllById(ids.subList(from, Math.min(from + PAGE, ids.size())))) {
+                stored.add(new SegmentStructureHash.SegmentHash(s.lineCtxId, s.structureHash));
+                recomputed.add(new SegmentStructureHash.SegmentHash(s.lineCtxId, SegmentStructureHash.structureHash(
+                        SegmentParamsConverter.segment(s.lineCtxId, s.forkTaskId, s.getExecContextSegmentParams()))));
+            }
+        }
+        return new StructureHashes(stored, recomputed);
+    }
+
+    /**
      * The {@code ext} recorded for variable {@code variableId} by its producer's output entry, or null. The producer's
      * entry sits in the segment owning the variable's ctx {@code variableCtx}, read first; every segment is read only
      * when it is not there.

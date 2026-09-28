@@ -71,4 +71,8 @@ public interface ExecContextSegmentRepository extends CrudRepository<ExecContext
     @org.springframework.data.jpa.repository.Modifying
     @Query(value="delete from ExecContextSegment s where s.id in (:ids)")
     void deleteByIds(List<Long> ids);
+
+    /** {@code (LINE_CTX_ID, STRUCTURE_HASH)} of every segment of an ExecContext, no params (041 Phase 15: what sealing reads). */
+    @Query(value="select s.lineCtxId, s.structureHash from ExecContextSegment s where s.execContextId=:execContextId")
+    List<Object[]> findStructureHashesByExecContextId(Long execContextId);
 }
