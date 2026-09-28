@@ -49,6 +49,8 @@ public class ExecContextSegmentParamsV1 implements BaseParams {
         @Nullable
         public Long forkTaskId;
         public List<VertexV1> tasks = new ArrayList<>();
+        /** 041 Phase 11: counted in its derived join's record; see {@code ExecContextSegmentParams.Line#registered}. */
+        public boolean registered;
     }
 
     @Data

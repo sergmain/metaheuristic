@@ -46,6 +46,7 @@ public class ExecContextSegmentParamsUtilsV1
         ExecContextSegmentParams t = new ExecContextSegmentParams();
         for (ExecContextSegmentParamsV1.LineV1 lineV1 : v1.lines) {
             ExecContextSegmentParams.Line line = new ExecContextSegmentParams.Line(lineV1.ctx, lineV1.forkTaskId);
+            line.registered = lineV1.registered;
             for (ExecContextSegmentParamsV1.VertexV1 vertexV1 : lineV1.tasks) {
                 line.tasks.add(new ExecContextSegmentParams.Vertex(vertexV1.taskId, vertexV1.tag));
             }

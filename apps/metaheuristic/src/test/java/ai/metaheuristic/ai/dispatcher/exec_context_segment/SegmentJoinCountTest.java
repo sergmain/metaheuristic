@@ -32,6 +32,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p>Layout: root line {@code 1 -> 2 -> 3} (3 is the leaf); line A {@code 10 -> 11} and line B {@code 20}, both forked
  * from 1, so both join 2. The join record of 2 is given per case - registered lines, finished, dead - or absent when no
  * line was registered (lines born SKIPPED by a PLACE_NOW graft).
+ *
+ * <p>Phase 11: the lines are registered exactly when the case gives a record; without one they are lines born SKIPPED,
+ * and a revival (the tail leaving dead) registers them.
  */
 @Execution(ExecutionMode.CONCURRENT)
 public class SegmentJoinCountTest {
@@ -58,7 +61,7 @@ public class SegmentJoinCountTest {
         final Map<Long, List<SegmentData.Line>> forked = new HashMap<>();
         lines.stream().filter(l -> !l.isRoot()).forEach(l -> forked.computeIfAbsent(l.forkTaskId(), k -> new ArrayList<>()).add(l));
         return new SegmentStateChange.Lookup(index::lineOf, t -> forked.getOrDefault(t, List.of()), joins::get,
-                t -> states.getOrDefault(t, NONE));
+                t -> states.getOrDefault(t, NONE), ctx -> !joins.isEmpty());
     }
 
     private static SegmentStateChange.Result apply(Map<Long, EnumsApi.TaskExecState> states, SegmentStateChange.@Nullable JoinCount joinOf2,
@@ -172,5 +175,33 @@ public class SegmentJoinCountTest {
                 List.of(new SegmentStateChange.Change(20, OK), new SegmentStateChange.Change(10, ERROR)));
         assertEquals(Map.of(2L, jc(2, 1, 1)), r.joins(), "B finished OK, A died");
         assertEquals(Set.of(11L), r.skipped());
+    }
+
+    @Test
+    public void test_revivalOfAnUnregisteredLine_registersIt_andCreatesTheRecord() {
+        // lines A and B born SKIPPED (PLACE_NOW), never registered: no record of join 2
+        final Map<Long, EnumsApi.TaskExecState> states = Map.of(1L, OK, 10L, SKIPPED, 11L, SKIPPED, 20L, SKIPPED);
+        final SegmentStateChange.Result r = SegmentStateChange.apply(lookup(layout(null), states, Map.of()),
+                List.of(new SegmentStateChange.Change(10, EnumsApi.TaskExecState.INIT), new SegmentStateChange.Change(11, NONE)));
+        assertEquals(Set.of("1,2#1"), r.registeredLines(), "the reset reopened A's tail: A registers itself");
+        assertEquals(Map.of(2L, jc(1, 0, 0)), r.joins(), "join 2 gets a record with the one revived, pending line");
+        assertEquals(Set.of(), r.skipped());
+    }
+
+    @Test
+    public void test_revivedLine_thenFinishesOk_countsAsFinished() {
+        final Map<Long, EnumsApi.TaskExecState> states = Map.of(1L, OK, 10L, SKIPPED, 11L, SKIPPED);
+        final SegmentStateChange.Result r = SegmentStateChange.apply(lookup(layout(null), states, Map.of()),
+                List.of(new SegmentStateChange.Change(11, NONE), new SegmentStateChange.Change(10, OK), new SegmentStateChange.Change(11, OK)));
+        assertEquals(Map.of(2L, jc(1, 1, 0)), r.joins(), "registered by the revival, then one finished line");
+    }
+
+    @Test
+    public void test_registeredLineWithoutRecord_isABrokenInvariant() {
+        // registered (a record is given) - but for a different join than 2
+        final Map<Long, SegmentStateChange.JoinCount> joins = Map.of(99L, jc(1, 0, 0));
+        final IllegalStateException e = assertThrows(IllegalStateException.class,
+                () -> SegmentStateChange.apply(lookup(layout(null), Map.of(1L, OK, 10L, OK), joins), List.of(new SegmentStateChange.Change(11, OK))));
+        assertTrue(e.getMessage().startsWith("01.914.060"), e.getMessage());
     }
 }

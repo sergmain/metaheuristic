@@ -71,7 +71,7 @@ public class ExecContextSegmentStateTxService {
         changes.forEach(c -> loaded.view.hint(c.taskId, c.taskContextId));
         final SegmentStateChange.Result r = SegmentStateChange.apply(loaded.lookup(),
                 changes.stream().map(c -> new SegmentStateChange.Change(c.taskId, c.state)).toList());
-        loaded.write(r.states(), Map.of(), r.joins());
+        loaded.write(r.states(), Map.of(), r.joins(), r.registeredLines());
 
         final ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
         r.skipped().forEach(t -> status.childrenTasks.add(new TaskData.TaskWithState(t, EnumsApi.TaskExecState.SKIPPED)));
@@ -88,7 +88,7 @@ public class ExecContextSegmentStateTxService {
             throw new IllegalStateException("01.916.030 a recovery reset to " + state + " marked Tasks SKIPPED: " + r.skipped()
                     + ", Task #" + taskId + ", ExecContext #" + execContextId);
         }
-        loaded.write(r.states(), Map.of(taskId, triesWasMade), r.joins());
+        loaded.write(r.states(), Map.of(taskId, triesWasMade), r.joins(), r.registeredLines());
     }
 
     /** The tries recorded for a Task in its segment; null when none were recorded. */
@@ -115,7 +115,9 @@ public class ExecContextSegmentStateTxService {
         }
 
         SegmentStateChange.Lookup lookup() {
-            return new SegmentStateChange.Lookup(view::lineOf, view::linesForkedFrom, this::joinOf, this::stateOf);
+            // 041 Phase 11: a line's registered flag comes from its stored params
+            return new SegmentStateChange.Lookup(view::lineOf, view::linesForkedFrom, this::joinOf, this::stateOf,
+                    ctx -> view.paramsLine(ctx).registered);
         }
 
         SegmentStateChange.@Nullable JoinCount joinOf(Long joinTaskId) {
@@ -130,7 +132,8 @@ public class ExecContextSegmentStateTxService {
         }
 
         /** Writes the changed states and tries into their segments, and the moved counts into their join records. */
-        void write(Map<Long, EnumsApi.TaskExecState> states, Map<Long, Integer> tries, Map<Long, SegmentStateChange.JoinCount> joinCounts) {
+        void write(Map<Long, EnumsApi.TaskExecState> states, Map<Long, Integer> tries, Map<Long, SegmentStateChange.JoinCount> joinCounts,
+                   Set<String> registeredLines) {
             final Map<Long, ExecContextSegment> dirty = new LinkedHashMap<>();
             states.forEach((taskId, state) -> {
                 final ExecContextSegment s = segmentOf(taskId);
@@ -142,6 +145,12 @@ public class ExecContextSegmentStateTxService {
                 s.getExecContextSegmentParams().triesWasMade.put(taskId, n);
                 dirty.put(s.id, s);
             });
+            // 041 Phase 11: lines a revival registered
+            registeredLines.forEach(ctx -> {
+                view.paramsLine(ctx).registered = true;
+                final ExecContextSegment s = view.segmentOfLine(ctx);
+                dirty.put(s.id, s);
+            });
             // a state or tries change leaves the structure - and so STRUCTURE_HASH - as it is (decision 12)
             for (ExecContextSegment s : dirty.values()) {
                 final ExecContextSegmentParams p = s.getExecContextSegmentParams();
@@ -149,8 +158,15 @@ public class ExecContextSegmentStateTxService {
                 segmentRepository.save(s);
             }
             joinCounts.forEach((joinTaskId, c) -> {
-                final ExecContextJoin j = joins.getOrDefault(joinTaskId, Optional.empty()).orElseThrow(
-                        () -> new IllegalStateException("01.916.040 join #" + joinTaskId + " moved but has no record, ExecContext #" + execContextId));
+                // 041 Phase 11: a revived line may register with a join that has no record yet
+                final ExecContextJoin j = joins.getOrDefault(joinTaskId, Optional.empty()).orElseGet(() -> {
+                    final ExecContextJoin created = new ExecContextJoin();
+                    created.execContextId = execContextId;
+                    created.joinTaskId = joinTaskId;
+                    created.createdOn = System.currentTimeMillis();
+                    return created;
+                });
+                j.linesRegistered = c.registered();
                 j.linesFinished = c.finished();
                 j.linesDead = c.dead();
                 joinRepository.save(j);

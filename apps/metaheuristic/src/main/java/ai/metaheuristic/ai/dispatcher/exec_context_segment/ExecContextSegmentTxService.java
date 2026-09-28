@@ -181,7 +181,14 @@ public class ExecContextSegmentTxService {
             if (join == null) {
                 throw new IllegalStateException("01.913.070 line " + ctx + " of ExecContext #" + execContextId + " has no join");
             }
+            // 041 Phase 11: the line knows it is counted, so a reset reviving a never-registered line can tell the two apart
+            // - and a line already counted is not counted twice
+            if (line.registered) {
+                continue;
+            }
             perJoin.merge(join, 1, Integer::sum);
+            line.registered = true;
+            save(seg, seg.getExecContextSegmentParams());
         }
         perJoin.forEach((joinTaskId, n) -> {
             ExecContextJoin j = joinRepository.findByExecContextIdAndJoinTaskId(execContextId, joinTaskId);

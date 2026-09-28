@@ -45,6 +45,8 @@ import static org.junit.jupiter.api.Assertions.*;
  *   <li>per join record: finished + dead &lt;= registered &lt;= the lines resolving to that join. ⚠️ Deviation from the
  *       plan's "registered = lines resolving to it": a line born SKIPPED (PLACE_NOW graft) is never registered, so the
  *       join record of a line that never ran stays unchanged (plan section 3, section 8.6);</li>
+ *   <li>(Phase 11, exact form of 4) registered = the lines resolving to that join whose {@code registered} flag is set,
+ *       and every join with a registered line has a record;</li>
  *   <li>every segment's {@code STRUCTURE_HASH} equals the hash recomputed from its stored structure.</li>
  * </ol>
  */
@@ -69,7 +71,9 @@ public class SegmentInvariantAsserts {
         final Set<Long> taskIds = new HashSet<>(taskRepository.findAllTaskIdsByExecContextId(execContextId));
         final Map<Long, String> segmentOfTask = new HashMap<>();
         final List<SegmentData.Line> lines = new ArrayList<>();
+        final Set<String> registeredCtx = new HashSet<>();
         for (ExecContextSegment s : segments) {
+            s.getExecContextSegmentParams().lines.stream().filter(l -> l.registered).forEach(l -> registeredCtx.add(l.ctx));
             final List<SegmentData.Line> own = SegmentParamsConverter.lines(s.getExecContextSegmentParams());
             lines.addAll(own);
             for (SegmentData.Line line : own) {
@@ -107,14 +111,26 @@ public class SegmentInvariantAsserts {
         // 4. join records
         final Map<Long, Integer> resolving = new HashMap<>();
         SegmentAlgebra.derivedJoins(lines).values().forEach(join -> resolving.merge(join, 1, Integer::sum));
+        final Map<Long, Integer> registeredResolving = new HashMap<>();
+        SegmentAlgebra.derivedJoins(lines).forEach((ctx, join) -> {
+            if (registeredCtx.contains(ctx)) {
+                registeredResolving.merge(join, 1, Integer::sum);
+            }
+        });
+        final Set<Long> withRecord = new HashSet<>();
         for (Long joinRecordId : joinRepository.findIdsByExecContextId(execContextId)) {
             final ExecContextJoin j = joinRepository.findById(joinRecordId).orElseThrow();
+            withRecord.add(j.joinTaskId);
+            assertEquals(registeredResolving.getOrDefault(j.joinTaskId, 0), j.linesRegistered, ec + ", join #" + j.joinTaskId
+                    + ": registered differs from the flagged lines resolving to it");
             final int lineCount = resolving.getOrDefault(j.joinTaskId, 0);
             assertTrue(j.linesRegistered <= lineCount, ec + ", join #" + j.joinTaskId + ": registered " + j.linesRegistered
                     + " > lines resolving to it " + lineCount);
             assertTrue(j.linesFinished + j.linesDead <= j.linesRegistered, ec + ", join #" + j.joinTaskId + ": finished "
                     + j.linesFinished + " + dead " + j.linesDead + " > registered " + j.linesRegistered);
         }
+        registeredResolving.keySet().forEach(join -> assertTrue(withRecord.contains(join),
+                ec + ": join #" + join + " has registered lines but no record"));
 
         // 5. stored hash = recomputed hash
         for (ExecContextSegment s : segments) {

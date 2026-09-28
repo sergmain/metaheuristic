@@ -59,6 +59,11 @@ public class ExecContextSegmentParams implements BaseParams {
         @Nullable
         public Long forkTaskId;
         public List<Vertex> tasks = new ArrayList<>();
+        /**
+         * 041 Phase 11: the line is counted in its derived join's record (LINES_REGISTERED). False for a line born SKIPPED
+         * (a PLACE_NOW graft) until a reset revives it. Not structure: the structure hash ignores it.
+         */
+        public boolean registered;
 
         public Line(String ctx, @Nullable Long forkTaskId) {
             this.ctx = ctx;

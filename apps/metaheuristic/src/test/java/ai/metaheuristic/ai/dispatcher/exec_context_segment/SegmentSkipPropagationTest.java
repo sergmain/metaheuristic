@@ -79,7 +79,7 @@ public class SegmentSkipPropagationTest {
                     c.dead() + (tail == ERROR || tail == SKIPPED ? 1 : 0)));
         }
         return new SegmentStateChange.Lookup(index::lineOf, t -> forked.getOrDefault(t, List.of()), joins::get,
-                t -> states.getOrDefault(t, EnumsApi.TaskExecState.NONE));
+                t -> states.getOrDefault(t, EnumsApi.TaskExecState.NONE), ctx -> true);
     }
 
     private static void assertGoldenOnSegments(SegmentFixtureShapes.DotShape shape) {

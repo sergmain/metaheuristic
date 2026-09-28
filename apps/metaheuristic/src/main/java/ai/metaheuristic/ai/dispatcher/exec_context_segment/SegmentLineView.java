@@ -42,6 +42,7 @@ public final class SegmentLineView {
     private final Map<Long, ExecContextSegment> segmentOfTask = new HashMap<>();
     private final Map<Long, SegmentData.Line> lineOfTask = new HashMap<>();
     private final Map<Long, List<SegmentData.Line>> linesOfSegment = new HashMap<>();
+    private final Map<String, ExecContextSegment> segmentOfLine = new HashMap<>();
 
     /**
      * @param segmentOfCtx       the segment owning a ctx (the nearest segment start up the ctx); null when there is none
@@ -68,6 +69,7 @@ public final class SegmentLineView {
         final List<SegmentData.Line> lines = SegmentParamsConverter.lines(s.getExecContextSegmentParams());
         linesOfSegment.put(s.id, lines);
         for (SegmentData.Line l : lines) {
+            segmentOfLine.put(l.ctx(), s);
             for (SegmentData.Vertex v : l.tasks()) {
                 lineOfTask.put(v.taskId(), l);
                 segmentOfTask.put(v.taskId(), s);
@@ -99,6 +101,29 @@ public final class SegmentLineView {
     public ExecContextSegment segmentOf(Long taskId) {
         lineOf(taskId);
         return segmentOfTask.get(taskId);
+    }
+
+    /** The stored line with ctx {@code lineCtx} - its params, with the {@code registered} flag. The line must be loaded. */
+    public ai.metaheuristic.ai.yaml.exec_context_segment.ExecContextSegmentParams.Line paramsLine(String lineCtx) {
+        final ExecContextSegment s = segmentOfLine.get(lineCtx);
+        if (s == null) {
+            throw new IllegalStateException("01.918.030 line " + lineCtx + " is not loaded, ExecContext #" + execContextId);
+        }
+        for (ai.metaheuristic.ai.yaml.exec_context_segment.ExecContextSegmentParams.Line l : s.getExecContextSegmentParams().lines) {
+            if (lineCtx.equals(l.ctx)) {
+                return l;
+            }
+        }
+        throw new IllegalStateException("01.918.040 segment " + s.lineCtxId + " has no line " + lineCtx + ", ExecContext #" + execContextId);
+    }
+
+    /** The segment holding the line with ctx {@code lineCtx}. The line must be loaded. */
+    public ExecContextSegment segmentOfLine(String lineCtx) {
+        final ExecContextSegment s = segmentOfLine.get(lineCtx);
+        if (s == null) {
+            throw new IllegalStateException("01.918.050 line " + lineCtx + " is not loaded, ExecContext #" + execContextId);
+        }
+        return s;
     }
 
     /** A Task's vertex in its line - its tag. */

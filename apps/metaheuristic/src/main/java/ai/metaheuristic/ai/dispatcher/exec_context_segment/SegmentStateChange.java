@@ -35,6 +35,11 @@ import java.util.function.Function;
  * <p>Whenever the tail of a non-root line moves between pending, OK and dead, the counts of its derived join move with it
  * - for a registered line; a join without a record has no registered line and is left alone.
  *
+ * <p>Phase 11: a line knows whether it is registered ({@link Lookup#registered}). A line born SKIPPED is not; when its
+ * tail leaves dead - a reset reviving it - it registers itself with its join (the record is created when absent) and is
+ * reported in {@link Result#registeredLines()}, so storage marks it. An unregistered line moving any other way leaves the
+ * join alone. A registered line whose join has no record is a broken invariant.
+ *
  * <p>Error code prefix: {@code 01.914.} (unique to this class).
  */
 public final class SegmentStateChange {
@@ -49,6 +54,10 @@ public final class SegmentStateChange {
         JoinCount plus(int finishedDelta, int deadDelta) {
             return new JoinCount(registered, finished + finishedDelta, dead + deadDelta);
         }
+
+        JoinCount register() {
+            return new JoinCount(registered + 1, finished, dead);
+        }
     }
 
     /**
@@ -58,11 +67,13 @@ public final class SegmentStateChange {
      * @param linesForkedFrom the lines whose fork is a Task
      * @param joinOf          the record of a join Task; null when no line is registered with it
      * @param stateOf         the stored state of a Task; NONE when it has none
+     * @param registered      whether the line with a given ctx is counted in its join's record
      */
     public record Lookup(Function<Long, SegmentData.Line> lineOf,
                          Function<Long, List<SegmentData.Line>> linesForkedFrom,
                          Function<Long, @Nullable JoinCount> joinOf,
-                         Function<Long, EnumsApi.TaskExecState> stateOf) {}
+                         Function<Long, EnumsApi.TaskExecState> stateOf,
+                         java.util.function.Predicate<String> registered) {}
 
     public record Change(long taskId, EnumsApi.TaskExecState state) {}
 
@@ -70,8 +81,10 @@ public final class SegmentStateChange {
      * @param states  the new state of every Task that changed, requested or marked
      * @param skipped the Tasks the closure marked SKIPPED
      * @param joins   the new counts of every join record that moved
+     * @param registeredLines the ctx of every line this change registered (Phase 11: a revived line)
      */
-    public record Result(Map<Long, EnumsApi.TaskExecState> states, Set<Long> skipped, Map<Long, JoinCount> joins) {}
+    public record Result(Map<Long, EnumsApi.TaskExecState> states, Set<Long> skipped, Map<Long, JoinCount> joins,
+                         Set<String> registeredLines) {}
 
     /** Applies {@code changes} in order; a change to the state a Task already has is a no-op. */
     public static Result apply(Lookup lookup, List<Change> changes) {
@@ -87,7 +100,7 @@ public final class SegmentStateChange {
                         t -> o.set(t, EnumsApi.TaskExecState.SKIPPED), c.taskId()));
             }
         }
-        return new Result(o.states, skipped, o.joins);
+        return new Result(o.states, skipped, o.joins, o.registeredLines);
     }
 
     /** 0 pending, 1 OK, 2 dead - the join counts move when a tail changes category. */
@@ -100,6 +113,7 @@ public final class SegmentStateChange {
         private final Lookup lookup;
         private final Map<Long, EnumsApi.TaskExecState> states = new TreeMap<>();
         private final Map<Long, JoinCount> joins = new TreeMap<>();
+        private final Set<String> registeredLines = new TreeSet<>();
 
         private Overlay(Lookup lookup) {
             this.lookup = lookup;
@@ -132,10 +146,22 @@ public final class SegmentStateChange {
             if (joinTaskId == null) {
                 throw new IllegalStateException("01.914.020 line " + line.ctx() + " has no join");
             }
+            final boolean registered = registeredLines.contains(line.ctx()) || lookup.registered().test(line.ctx());
+            if (!registered) {
+                // born SKIPPED, never counted: only leaving dead - a revival - registers it
+                if (from != 2) {
+                    return;
+                }
+                final JoinCount current = join(joinTaskId);
+                final JoinCount base = current != null ? current : new JoinCount(0, 0, 0);
+                joins.put(joinTaskId, base.register().plus(to == 1 ? 1 : 0, 0));
+                registeredLines.add(line.ctx());
+                return;
+            }
             final JoinCount j = join(joinTaskId);
             if (j == null) {
                 // no line is registered with this join: the line was born SKIPPED (PLACE_NOW) and was never registered
-                return;
+                throw new IllegalStateException("01.914.060 line " + line.ctx() + " is registered, but its join #" + joinTaskId + " has no record");
             }
             joins.put(joinTaskId, j.plus((to == 1 ? 1 : 0) - (from == 1 ? 1 : 0), (to == 2 ? 1 : 0) - (from == 2 ? 1 : 0)));
         }
