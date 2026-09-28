@@ -258,24 +258,8 @@ public class ExecContextCreatorService {
         ec.updateParams(ecpy);
         ec.setValid(true);
 
-        ExecContextTaskState execContextTaskState = new ExecContextTaskState();
-        execContextTaskState.updateParams(new ExecContextTaskStateParams());
-        execContextTaskState.createdOn = System.currentTimeMillis();
-        execContextTaskState = execContextTaskStateRepository.save(execContextTaskState);
-        ec.execContextTaskStateId = execContextTaskState.id;
-
-        ExecContextGraph execContextGraph = new ExecContextGraph();
-        execContextGraph.updateParams(new ExecContextGraphParams());
-        execContextGraph.createdOn = System.currentTimeMillis();
-        execContextGraph = execContextGraphCache.save(execContextGraph);
-        ec.execContextGraphId = execContextGraph.id;
-
-        ExecContextVariableState bean = new ExecContextVariableState();
-        bean.updateParams(new ExecContextApiData.ExecContextVariableStates());
-        bean.createdOn = System.currentTimeMillis();
-        bean = execContextVariableStateCache.save(bean);
-        ec.execContextVariableStateId = bean.id;
-
+        // 041 Phase 21: no graph / task-state / variable-state record is created - the ExecContext's structure, states
+        // and variable-state entries live in its segments, the first of which production writes
         ec = execContextCache.save(ec);
         return ec;
     }

@@ -58,8 +58,9 @@ public class ExecContextTaskStateTxService {
     // (ExecContextSegmentStateTxService), no longer into the whole-ExecContext task-state record; the whole graph
     // (ExecContextDAC) is no longer needed - the SKIPPED closure walks the lines.
     @Transactional(rollbackFor = CommonRollbackException.class)
-    public ExecContextOperationStatusWithTaskList updateTaskExecStatesInGraph(Long execContextId, Long execContextTaskStateId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
-        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
+    public ExecContextOperationStatusWithTaskList updateTaskExecStatesInGraph(Long execContextId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
+        // 041 Phase 21: the task-state lock is keyed by the ExecContext id
+        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextId);
 
         final ExecContextOperationStatusWithTaskList status = segmentStateTxService.updateTaskExecStates(execContextId, taskWithStates);
 
@@ -70,8 +71,8 @@ public class ExecContextTaskStateTxService {
     }
 
     @Transactional(rollbackFor = CommonRollbackException.class)
-    public TransferStateResult transferStateFromTaskQueueToExecContext(Long execContextId, Long execContextTaskStateId) {
-        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
+    public TransferStateResult transferStateFromTaskQueueToExecContext(Long execContextId) {
+        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextId);
 
         TaskQueue.TaskGroups taskGroups = TaskProviderTopLevelService.getTaskGroupForTransferring(execContextId);
         if (taskGroups.groups.isEmpty()) {
@@ -104,10 +105,6 @@ public class ExecContextTaskStateTxService {
         return new TransferStateResult(taskGroups, status.childrenTasks);
     }
 
-    @Transactional
-    public Void deleteOrphanTaskStates(List<Long> ids) {
-        execContextTaskStateRepository.deleteAllByIdIn(ids);
-        return null;
-    }
+    // 041 Phase 21: deleteOrphanTaskStates is gone with the whole-ExecContext task-state record
 
 }

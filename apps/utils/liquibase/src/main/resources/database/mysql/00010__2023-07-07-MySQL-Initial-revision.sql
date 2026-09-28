@@ -336,9 +336,6 @@ CREATE TABLE mh_exec_context
     PARAMS                  LONGTEXT NOT NULL,
     IS_VALID                BOOLEAN  default false not null,
     STATE                   smallint not null default 0,
-    CTX_GRAPH_ID            INT UNSIGNED NOT NULL,
-    CTX_TASK_STATE_ID       INT UNSIGNED NOT NULL,
-    CTX_VARIABLE_STATE_ID   INT UNSIGNED NOT NULL,
     ROOT_EXEC_CONTEXT_ID    INT UNSIGNED
 );
 
@@ -350,33 +347,6 @@ CREATE INDEX mh_exec_context_id_source_code_id_idx
 
 CREATE INDEX mh_exec_context_root_exec_context_id_idx
     ON mh_exec_context (ROOT_EXEC_CONTEXT_ID);
-
-CREATE TABLE mh_exec_context_graph
-(
-    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION             INT UNSIGNED    NOT NULL,
-    EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
-    CREATED_ON          bigint not null,
-    PARAMS              LONGTEXT NOT NULL
-);
-
-CREATE TABLE mh_exec_context_task_state
-(
-    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION             INT UNSIGNED    NOT NULL,
-    EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
-    CREATED_ON          bigint not null,
-    PARAMS              LONGTEXT NOT NULL
-);
-
-CREATE TABLE mh_exec_context_variable_state
-(
-    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION             INT UNSIGNED    NOT NULL,
-    EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
-    CREATED_ON          bigint not null,
-    PARAMS              LONGTEXT NOT NULL
-);
 
 # 041 ExecContext segments: one record per grafted line (with its nested subtree) plus the root segment
 CREATE TABLE mh_exec_context_segment

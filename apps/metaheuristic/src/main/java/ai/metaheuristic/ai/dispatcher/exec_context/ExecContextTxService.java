@@ -229,8 +229,8 @@ public class ExecContextTxService {
         if (ec==null) {
             return;
         }
-        eventPublisherService.publishProcessDeletedExecContextTxEvent(new ProcessDeletedExecContextTxEvent(
-                execContextId, ec.execContextGraphId, ec.execContextTaskStateId, ec.execContextVariableStateId));
+        // 041 Phase 21: the listener deletes the ExecContext's segment and join records in bounded steps
+        eventPublisherService.publishProcessDeletedExecContextTxEvent(new ProcessDeletedExecContextTxEvent(execContextId));
 
         List<Long> relatedIds = execContextRepository.findAllRelatedExecContextIds(execContextId);
         eventPublisherService.publishDeleteExecContextInListTxEvent(new DeleteExecContextInListTxEvent(relatedIds));
@@ -320,19 +320,6 @@ public class ExecContextTxService {
         }
     }
 
-    @Transactional
-    public void deleteOrphanExecContextGraph(Long execContextGraphId) {
-        execContextGraphRepository.deleteById(execContextGraphId);
-
-    }
-
-    @Transactional
-    public void deleteOrphanExecContextTaskState(Long execContextTaskStateId) {
-        execContextTaskStateRepository.deleteById(execContextTaskStateId);
-    }
-
-    @Transactional
-    public void deleteOrphanExecContextVariableState(Long execContextVariableStateId) {
-        execContextVariableStateRepository.deleteById(execContextVariableStateId);
-    }
+    // 041 Phase 21: deleteOrphanExecContextGraph / TaskState / VariableState are gone with the whole-ExecContext
+    // records; orphan segment and join records go through ExecContextChunkedDeletionTxService
 }

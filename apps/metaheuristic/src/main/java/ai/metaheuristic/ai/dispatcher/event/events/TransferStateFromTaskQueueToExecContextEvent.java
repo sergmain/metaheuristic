@@ -27,7 +27,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class TransferStateFromTaskQueueToExecContextEvent implements EventWithId<Long> {
     public final Long execContextId;
-    public final Long execContextTaskStateId;
+    // 041 Phase 21: the whole-ExecContext task-state record id is gone; the task-state lock is keyed by execContextId
 
     @Override
     public Long getId() {

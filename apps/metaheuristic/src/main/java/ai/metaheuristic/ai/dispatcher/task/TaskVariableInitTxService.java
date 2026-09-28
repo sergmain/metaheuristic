@@ -68,7 +68,7 @@ public class TaskVariableInitTxService {
     private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
 
     @Transactional(rollbackFor = CommonRollbackException.class)
-    public void intiVariables(InitVariablesEvent event, Long execContextGraphId, ExecContextParams execContextParamsYaml) {
+    public void intiVariables(InitVariablesEvent event, ExecContextParams execContextParamsYaml) {
         TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
         if (task==null) {
             throw new CommonRollbackException();
@@ -81,7 +81,7 @@ public class TaskVariableInitTxService {
             throw new CommonRollbackException();
         }
 
-        List<String> allParentTaskContextIds = getAllParentTaskContextIds(task, paramsYaml.task.init.parentTaskIds, paramsYaml.task.taskContextId, execContextGraphId);
+        List<String> allParentTaskContextIds = getAllParentTaskContextIds(task, paramsYaml.task.init.parentTaskIds, paramsYaml.task.taskContextId);
         if (allParentTaskContextIds!=null) {
             prepareVariables(execContextParamsYaml, task, allParentTaskContextIds);
         }
@@ -163,7 +163,7 @@ public class TaskVariableInitTxService {
     }
 
     @Nullable
-    private List<String> getAllParentTaskContextIds(TaskImpl task, List<Long> parentTaskIds, String taskContextId, Long execContextGraphId) {
+    private List<String> getAllParentTaskContextIds(TaskImpl task, List<Long> parentTaskIds, String taskContextId) {
         // 041 Phase 10: the ancestors come from the segments - every line of the ExecContext (a paged read), as the whole
         // graph did: a join's ancestors span every line resolving into it. O(N) per initialization, as the graph walk was.
         final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService.Snapshot snapshot = segmentReadService.snapshot(task.execContextId);

@@ -220,7 +220,8 @@ public class ExecContextVariableStateTopLevelService implements ShutdownInterfac
         if (execContext==null) {
             return null;
         }
-        return execContext.execContextVariableStateId;
+        // 041 Phase 21: the locks are keyed by the ExecContext id; null still means "no such ExecContext"
+        return execContext.id;
     }
 
     @Nullable
@@ -229,7 +230,8 @@ public class ExecContextVariableStateTopLevelService implements ShutdownInterfac
         if (execContext==null) {
             return null;
         }
-        return execContext.execContextTaskStateId;
+        // 041 Phase 21: the locks are keyed by the ExecContext id; null still means "no such ExecContext"
+        return execContext.id;
     }
 
     // this method is here to work around some strange situation

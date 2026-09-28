@@ -27,11 +27,9 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ProcessDeletedExecContextTxEvent {
     public final Long execContextId;
-    public final Long execContextGraphId;
-    public final Long execContextTaskStateId;
-    public final Long execContextVariableStateId;
 
     public ProcessDeletedExecContextEvent to() {
-        return new ProcessDeletedExecContextEvent(execContextId, execContextGraphId, execContextTaskStateId, execContextVariableStateId);
+        // 041 Phase 21: the whole-ExecContext record ids are gone; the ExecContext id is all a listener needs
+        return new ProcessDeletedExecContextEvent(execContextId);
     }
 }

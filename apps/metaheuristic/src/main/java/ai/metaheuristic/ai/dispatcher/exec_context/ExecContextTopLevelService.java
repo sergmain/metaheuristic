@@ -224,7 +224,7 @@ public class ExecContextTopLevelService {
             return;
         }
         final ExecContextData.ReconciliationStatus status =
-                execContextReconciliationTopLevelService.reconcileStates(execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId);
+                execContextReconciliationTopLevelService.reconcileStates(execContext.id);
 
         ExecContextSyncService.getWithSyncVoid(execContextId, () -> execContextFSM.updateExecContextStatus(execContextId, status));
     }

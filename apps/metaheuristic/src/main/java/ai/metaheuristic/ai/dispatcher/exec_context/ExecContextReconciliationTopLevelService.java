@@ -63,7 +63,7 @@ public class ExecContextReconciliationTopLevelService {
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final ExecContextReadinessStateService execContextReadinessStateService;
 
-    public ExecContextData.ReconciliationStatus reconcileStates(final Long execContextId, final Long execContextGraphId, final Long execContextTaskStateId) {
+    public ExecContextData.ReconciliationStatus reconcileStates(final Long execContextId) {
         TxUtils.checkTxNotExists();
         ExecContextData.ReconciliationStatus status = new ExecContextData.ReconciliationStatus(execContextId);
 

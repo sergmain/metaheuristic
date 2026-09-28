@@ -214,9 +214,8 @@ public class MhMcpToolDefinitions {
             String stateName,
             @Nullable Long createdOn,
             @Nullable Long completedOn,
-            @Nullable Long execContextGraphId,
-            @Nullable Long execContextTaskStateId,
-            @Nullable Long execContextVariableStateId,
+            // 041 Phase 21: no graph / task-state / variable-state ids - those records are gone; the three state tools
+            // take execContextId
             @Nullable Long rootExecContextId,
             boolean valid,
             @Nullable String errorMessages
@@ -1266,7 +1265,6 @@ public class MhMcpToolDefinitions {
                 ec.id, ec.sourceCodeId, ec.companyId, ec.accountId,
                 ec.state, EnumsApi.ExecContextState.toState(ec.state).name(),
                 ec.createdOn, ec.completedOn,
-                ec.execContextGraphId, ec.execContextTaskStateId, ec.execContextVariableStateId,
                 ec.rootExecContextId,
                 valid, errorMessages
         ));

@@ -116,7 +116,7 @@ public class ExecContextTaskStateService {
             }
             if (!taskWithStates.isEmpty()) {
                 ExecContextTaskStateSyncService.getWithSyncNullable(ec.id,
-                    () -> updateTaskExecStatesExecContext(event.execContextId, ec.execContextTaskStateId, taskWithStates));
+                    () -> updateTaskExecStatesExecContext(event.execContextId, taskWithStates));
             }
 
         }
@@ -130,8 +130,8 @@ public class ExecContextTaskStateService {
         }
     }
 
-    private OperationStatusRest updateTaskExecStatesExecContext(Long execContextId, Long execContextTaskStateId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
-        final ExecContextOperationStatusWithTaskList status = execContextTaskStateService.updateTaskExecStatesInGraph(execContextId, execContextTaskStateId, taskWithStates);
+    private OperationStatusRest updateTaskExecStatesExecContext(Long execContextId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
+        final ExecContextOperationStatusWithTaskList status = execContextTaskStateService.updateTaskExecStatesInGraph(execContextId, taskWithStates);
         persistSkippedTasksInDb(status.childrenTasks);
         return status.status;
     }
@@ -142,8 +142,8 @@ public class ExecContextTaskStateService {
             int i = 1;
             long mills = System.currentTimeMillis();
             do {
-                TaskQueue.TaskGroups taskGroup = ExecContextTaskStateSyncService.getWithSync(event.id,
-                    ()-> transferStateFromTaskQueueToExecContext(event.execContextId, event.execContextTaskStateId));
+                TaskQueue.TaskGroups taskGroup = ExecContextTaskStateSyncService.getWithSync(event.execContextId,
+                    ()-> transferStateFromTaskQueueToExecContext(event.execContextId));
                 if (taskGroup.groups.isEmpty()) {
                     break;
                 }
@@ -179,14 +179,14 @@ public class ExecContextTaskStateService {
         }
     }
 
-    public TaskQueue.TaskGroups transferStateFromTaskQueueToExecContext(Long execContextId, Long execContextTaskStateId) {
+    public TaskQueue.TaskGroups transferStateFromTaskQueueToExecContext(Long execContextId) {
         try {
             ExecContextImpl ec = execContextCache.findById(execContextId, true);
             if (ec==null) {
                 return TaskQueue.EMPTY;
             }
             // 041 Phase 9: the whole graph is no longer loaded - states go into segments
-            final ExecContextTaskStateTxService.TransferStateResult result = execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextId, execContextTaskStateId);
+            final ExecContextTaskStateTxService.TransferStateResult result = execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextId);
             result.taskGroups().reset();
             persistSkippedTasksInDb(result.skippedTasks());
             return result.taskGroups();

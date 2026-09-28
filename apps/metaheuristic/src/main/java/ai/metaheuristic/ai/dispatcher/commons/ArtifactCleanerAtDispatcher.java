@@ -260,18 +260,6 @@ public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
         // this operation isn't complex so don't need to use isBusy()
         markTasksAsFinishedForFinishedExecContext();
 
-        if (isShutdown()) {
-            return;
-        }
-        deleteOrphanExecContextGraph(execContextIds);
-        if (isShutdown()) {
-            return;
-        }
-        deleteOrphanExecContextTaskState(execContextIds);
-        if (isShutdown()) {
-            return;
-        }
-        deleteOrphanExecContextVariableState(execContextIds);
     }
 
     private void markTasksAsFinishedForFinishedExecContext() {
@@ -305,74 +293,6 @@ public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
             }
         }
         execContextTopLevelService.deleteOrphanExecContexts(forDeletion);
-    }
-
-    private void deleteOrphanExecContextGraph(List<Long> execContextIds) {
-        log.info("510.420 start deleteOrphanExecContextGraph(execContextIds)");
-        Set<Long> execContextGraphIds = execContextRepository.findExecContextGraphIds(execContextIds);
-        List<Long> allExecContextGraphIds = execContextGraphRepository.findAllIds();
-        for (Long allExecContextGraphId : allExecContextGraphIds) {
-            if (!execContextGraphIds.contains(allExecContextGraphId)) {
-                ExecContextGraph execContextGraph = execContextGraphRepository.findById(allExecContextGraphId).orElse(null);
-                if (execContextGraph==null || execContextGraph.createdOn==null ||
-                        execContextGraph.createdOn==0 || (System.currentTimeMillis()-execContextGraph.createdOn) < 3_600_000 ) {
-                    continue;
-                }
-                log.info("510.450 Found orphan ExecContextGraph #{}", allExecContextGraphId);
-                try {
-                    execContextTxService.deleteOrphanExecContextGraph(allExecContextGraphId);
-                }
-                catch (Throwable th) {
-                    log.warn("510.480 error while deleting ExecContextGraph #" + allExecContextGraphId);
-                }
-            }
-        }
-    }
-
-    private void deleteOrphanExecContextTaskState(List<Long> execContextIds) {
-        log.info("510.510 start deleteOrphanExecContextTaskState(execContextIds)");
-        Set<Long> execContextTaskStateIds = execContextRepository.findExecContextTaskStateIds(execContextIds);
-
-        List<Long> allExecContextTaskStateIds = execContextTaskStateRepository.findAllIds();
-        for (Long allExecContextTaskStateId : allExecContextTaskStateIds) {
-            if (!execContextTaskStateIds.contains(allExecContextTaskStateId)) {
-                ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(allExecContextTaskStateId).orElse(null);
-                if (execContextTaskState==null || execContextTaskState.createdOn==null ||
-                        execContextTaskState.createdOn==0 || (System.currentTimeMillis()-execContextTaskState.createdOn) < 18_000_000 ) {
-                    continue;
-                }
-                log.info("510.540 Found orphan ExecContextTaskState #{}", allExecContextTaskStateId);
-                try {
-                    execContextTxService.deleteOrphanExecContextTaskState(allExecContextTaskStateId);
-                }
-                catch (Throwable th) {
-                    log.warn("510.570 error while deleting ExecContextTaskState #" + allExecContextTaskStateId);
-                }
-            }
-        }
-    }
-
-    private void deleteOrphanExecContextVariableState(List<Long> execContextIds) {
-        log.info("510.600 start deleteOrphanExecContextVariableState(execContextIds)");
-        Set<Long> execContextVariableStateIds = execContextRepository.findExecContextVariableStateIds(execContextIds);
-
-        List<Long> allExecContextVariableStateIds = execContextVariableStateRepository.findAllIds();
-        for (Long allExecContextVariableStateId : allExecContextVariableStateIds) {
-            if (!execContextVariableStateIds.contains(allExecContextVariableStateId)) {
-                ExecContextVariableState execContextVariableState = execContextVariableStateRepository.findById(allExecContextVariableStateId).orElse(null);
-                if (execContextVariableState==null || execContextVariableState.createdOn==null ||
-                        execContextVariableState.createdOn==0 || (System.currentTimeMillis()-execContextVariableState.createdOn) < 3_600_000 ) {
-                    continue;
-                }
-                log.info("510.630 Found orphan ExecContextVariableState #{}", allExecContextVariableStateId);
-                try {
-                    execContextTxService.deleteOrphanExecContextVariableState(allExecContextVariableStateId);
-                }
-                catch (Throwable th) {
-                    log.warn("510.660 error while deleting ExecContextVariableState " + allExecContextVariableStateId);
-                }
-            }
-        }
     }
 
     private void deleteOrphanTasks() {

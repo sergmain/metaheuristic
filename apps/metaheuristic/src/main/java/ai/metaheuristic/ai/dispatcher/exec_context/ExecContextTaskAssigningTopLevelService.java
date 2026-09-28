@@ -169,7 +169,7 @@ public class ExecContextTaskAssigningTopLevelService implements ShutdownInterfac
         }
 
         if (System.currentTimeMillis() - mills > 10_000) {
-            eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContextId, execContext.execContextTaskStateId));
+            eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContextId));
             mills = System.currentTimeMillis();
         }
 

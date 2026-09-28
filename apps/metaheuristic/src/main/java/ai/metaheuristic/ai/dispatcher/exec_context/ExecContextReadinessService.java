@@ -132,7 +132,7 @@ public class ExecContextReadinessService {
                 }
             }
         }
-        execContextReconciliationTopLevelService.reconcileStates(execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId);
+        execContextReconciliationTopLevelService.reconcileStates(execContext.id);
     }
 
 }

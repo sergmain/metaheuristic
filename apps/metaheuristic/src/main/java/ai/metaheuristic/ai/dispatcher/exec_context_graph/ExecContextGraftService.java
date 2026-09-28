@@ -334,9 +334,10 @@ public class ExecContextGraftService {
         // 041 Phase 8: the line ctx itself is no longer computed here - it was read from the whole-ExecContext graph. The
         // caller allocates it from the segments: in band sequentially, out of band by decision 10.
 
-        final Long graphId = ec.execContextGraphId;
-        final Long taskStateId = ec.execContextTaskStateId;
-        final Long varStateId = ec.execContextVariableStateId;
+        // 041 Phase 21: the three lock keys are the ExecContext id (the whole-ExecContext records are gone)
+        final Long graphId = ec.id;
+        final Long taskStateId = ec.id;
+        final Long varStateId = ec.id;
         return new GraftSetup(sec, ecd, rootProcessCode, graphId, taskStateId, varStateId, base);
     }
 
@@ -561,11 +562,7 @@ public class ExecContextGraftService {
         return ecd;
     }
 
-    /**
-     * Every taskContextId of the ExecContext, from its graph - a Task exists only as a vertex of that graph, so this is
-     * the same set the Tasks carry, read without loading a Task or parsing its params.
-     */
-    private Set<String> collectCtxIds(Long execContextGraphId) {
-        return execContextGraphService.findAllTaskContextIds(execContextGraphId);
-    }
+    // 041 Phase 21: collectCtxIds (no caller since Phase 8) is gone with the whole-ExecContext graph - it read "Every
+    // taskContextId of the ExecContext, from its graph - a Task exists only as a vertex of that graph, so this is
+    // the same set the Tasks carry, read without loading a Task or parsing its params."
 }

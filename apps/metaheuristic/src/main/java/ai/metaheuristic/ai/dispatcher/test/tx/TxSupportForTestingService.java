@@ -199,29 +199,8 @@ public class TxSupportForTestingService {
         }
     }
 
-    @Transactional
-    public ExecContextOperationStatusWithTaskList updateTaskExecState(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        return execContextGraphService.updateTaskExecState(execContextDAC, execContextTaskStateId, List.of(new TaskData.TaskWithStateAndTaskContextId(taskId, execState, taskContextId)));
-    }
-
-    @Transactional
-    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasksWithTx(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, Long taskId) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        return execContextGraphService.updateTaskStatesWithResettingAllChildrenTasks(execContextDAC, execContextTaskStateId, taskId);
-    }
-
-    @Transactional
-    public void setStateForAllChildrenTasksInternal(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        execContextGraphService.setStateForAllChildrenTasks(execContextDAC, execContextTaskStateId, taskId, withTaskList, state);
-    }
+    // 041 Phase 21: updateTaskExecState / updateGraphWithResettingAllChildrenTasksWithTx / setStateForAllChildrenTasksInternal
+    // drove the whole-ExecContext graph and task-state record, which are gone; states change through the segments
 
     @Transactional
     public void deleteVariableByName(String name) {
@@ -387,27 +366,15 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState ecvs = new ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState();
-        ecvs.createdOn = System.currentTimeMillis();
-        ai.metaheuristic.api.data.exec_context.ExecContextApiData.ExecContextVariableStates info =
-                new ai.metaheuristic.api.data.exec_context.ExecContextApiData.ExecContextVariableStates();
-        ecvs.updateParams(info);
-        ecvs = execContextVariableStateRepository.save(ecvs);
-
+        // 041 Phase 21: no whole-ExecContext variable-state record any more
         ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl ec = new ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl();
         ec.sourceCodeId = 1L;
         ec.companyId = 1L;
         ec.accountId = 1L;
         ec.createdOn = System.currentTimeMillis();
         ec.state = ai.metaheuristic.api.EnumsApi.ExecContextState.STARTED.code;
-        ec.execContextVariableStateId = ecvs.id;
-        ec.execContextGraphId = 0L;
-        ec.execContextTaskStateId = 0L;
         ec.setParams("{\"version\":1,\"processes\":[],\"variables\":{\"inline\":{},\"inputs\":[],\"outputs\":[]}}");
         ec = execContextCache.save(ec);
-
-        ecvs.execContextId = ec.id;
-        execContextVariableStateRepository.save(ecvs);
 
         return ec.id;
     }
@@ -420,9 +387,6 @@ public class TxSupportForTestingService {
         ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec != null) {
             variableRepository.deleteByExecContextId(execContextId);
-            if (ec.execContextVariableStateId != null) {
-                execContextVariableStateRepository.deleteById(ec.execContextVariableStateId);
-            }
             execContextCache.deleteById(execContextId);
         }
     }
