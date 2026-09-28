@@ -47,6 +47,15 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+/**
+ * Periodic cleaning of orphan and obsolete dispatcher data.
+ *
+ * <p>041-EXEC-CONTEXT-SEGMENTS-PLAN Phase 14: the segment and join records of a deleted ExecContext are deleted in
+ * bounded steps ({@code ExecContextChunkedDeletionTxService}); Tasks keep {@link #deleteOrphanTasks()}, Variables keep
+ * the (disabled) orphan-Variable step.
+ *
+ * <p>Error code prefix: {@code 01.510.} (unique to this class).
+ */
 @SuppressWarnings("DuplicatedCode")
 @Service
 @Slf4j
@@ -78,6 +87,12 @@ public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
     private final ProcessorCoreTxService processorCoreService;
     private final ProcessorCoreRepository processorCoreRepository;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
+    private final ai.metaheuristic.ai.dispatcher.repositories.ExecContextSegmentRepository segmentRepository;
+    private final ai.metaheuristic.ai.dispatcher.repositories.ExecContextJoinRepository joinRepository;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextChunkedDeletionTxService chunkedDeletionTxService;
+
+    /** Segment / join records deleted per transaction (041 Phase 14, decision 3). */
+    private static final int SEGMENT_DELETION_BOUND = 100;
 
     private static final AtomicInteger busy = new AtomicInteger(0);
     private static long mills = 0L;
@@ -127,6 +142,7 @@ public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
         // do not change the order of calling
         deleteOrphanAndObsoletedBatches();
         deleteOrphanTasks();
+        deleteOrphanSegmentsAndJoins();
         // mechanic behind how to decide that Variable is orphan needs to be re-written
 //        deleteOrphanVariables();
         deleteOrphanCacheData();
@@ -407,6 +423,42 @@ public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
                         log.error("510.750 taskTransactionalService.deleteOrphanTasks("+execContextId+")", th);
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * 041 Phase 14: the segment and join records of ExecContexts that no longer exist, in bounded steps. The ExecContext
+     * ids having segments / join records are read BEFORE the ids of existing ExecContexts: an ExecContext record is
+     * committed before its first segment, so every id found in the first read that is missing from the second belongs to a
+     * deleted ExecContext. Each step re-checks that the ExecContext record is gone.
+     */
+    private void deleteOrphanSegmentsAndJoins() {
+        TxUtils.checkTxNotExists();
+        log.info("01.510.900 start deleteOrphanSegmentsAndJoins()");
+        final Set<Long> orphan = new java.util.TreeSet<>(segmentRepository.findAllExecContextIds());
+        orphan.addAll(joinRepository.findAllExecContextIds());
+        orphan.removeAll(execContextRepository.findAllIds());
+        final Set<ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextChunkedDeletionTxService.Kind> kinds = java.util.EnumSet.of(
+                ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextChunkedDeletionTxService.Kind.SEGMENT,
+                ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextChunkedDeletionTxService.Kind.JOIN);
+        for (Long execContextId : orphan) {
+            while (true) {
+                if (isShutdown()) {
+                    return;
+                }
+                final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextChunkedDeletionTxService.Step step;
+                try {
+                    step = chunkedDeletionTxService.deleteStep(execContextId, SEGMENT_DELETION_BOUND, kinds);
+                }
+                catch (Throwable th) {
+                    log.error("01.510.920 chunkedDeletionTxService.deleteStep(" + execContextId + ")", th);
+                    break;
+                }
+                if (step == null) {
+                    break;
+                }
+                log.info("01.510.940 ExecContext #{}: deleted {} {} records", execContextId, step.deleted(), step.kind());
             }
         }
     }

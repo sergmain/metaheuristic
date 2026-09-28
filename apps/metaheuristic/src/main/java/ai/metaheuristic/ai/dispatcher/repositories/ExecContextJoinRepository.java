@@ -47,4 +47,16 @@ public interface ExecContextJoinRepository extends CrudRepository<ExecContextJoi
     @org.jspecify.annotations.Nullable
     @Query(value="select sum(j.version) from ExecContextJoin j where j.execContextId=:execContextId")
     Long sumVersionByExecContextId(Long execContextId);
+
+    /** One page of join-record ids of an ExecContext, by id (041 Phase 14: bounded deletion). */
+    @Query(value="select j.id from ExecContextJoin j where j.execContextId=:execContextId order by j.id")
+    List<Long> findIdsPageByExecContextId(org.springframework.data.domain.Pageable pageable, Long execContextId);
+
+    /** Every ExecContext id that has a join record (041 Phase 14). */
+    @Query(value="select distinct j.execContextId from ExecContextJoin j")
+    List<Long> findAllExecContextIds();
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query(value="delete from ExecContextJoin j where j.id in (:ids)")
+    void deleteByIds(List<Long> ids);
 }

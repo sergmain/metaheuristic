@@ -59,4 +59,16 @@ public interface ExecContextSegmentRepository extends CrudRepository<ExecContext
     @Nullable
     @Query(value="select sum(s.version) from ExecContextSegment s where s.execContextId=:execContextId")
     Long sumVersionByExecContextId(Long execContextId);
+
+    /** One page of segment ids of an ExecContext, by id (041 Phase 14: bounded deletion). */
+    @Query(value="select s.id from ExecContextSegment s where s.execContextId=:execContextId order by s.id")
+    List<Long> findIdsPageByExecContextId(org.springframework.data.domain.Pageable pageable, Long execContextId);
+
+    /** Every ExecContext id that has a segment (041 Phase 14: finding the segments of deleted ExecContexts). */
+    @Query(value="select distinct s.execContextId from ExecContextSegment s")
+    List<Long> findAllExecContextIds();
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query(value="delete from ExecContextSegment s where s.id in (:ids)")
+    void deleteByIds(List<Long> ids);
 }
