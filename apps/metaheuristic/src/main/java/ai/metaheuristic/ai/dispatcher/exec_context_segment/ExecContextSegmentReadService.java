@@ -224,6 +224,23 @@ public class ExecContextSegmentReadService {
     }
 
     /**
+     * The Task ids of the ExecContext's root line - its top-level chain - in chain order, read from the root segment only
+     * (Phase 19: finding a top-level Task without reading every Task of the ExecContext); empty without a root segment.
+     */
+    public List<Long> rootLineTaskIds(Long execContextId) {
+        final ExecContextSegment root = segmentRepository.findByExecContextIdAndLineCtxId(execContextId, ai.metaheuristic.commons.CommonConsts.TOP_LEVEL_CONTEXT_ID);
+        if (root == null) {
+            return List.of();
+        }
+        for (ExecContextSegmentParams.Line line : root.getExecContextSegmentParams().lines) {
+            if (line.forkTaskId == null) {
+                return line.tasks.stream().map(v -> v.taskId).toList();
+            }
+        }
+        return List.of();
+    }
+
+    /**
      * The {@code ext} recorded for variable {@code variableId} by its producer's output entry, or null. The producer's
      * entry sits in the segment owning the variable's ctx {@code variableCtx}, read first; every segment is read only
      * when it is not there.
