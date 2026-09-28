@@ -112,7 +112,8 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
                     "985.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
         }
 
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphService.findDescendants(simpleExecContext.execContextId, simpleExecContext.execContextGraphId, taskId);
+        // 041 Phase 12: the Task's direct children from the segments, as getSubProcesses computed them
+        Set<ExecContextData.TaskVertex> descendants = executionContextData.descendants;
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(broken_graph_error,
                     "985.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken");
