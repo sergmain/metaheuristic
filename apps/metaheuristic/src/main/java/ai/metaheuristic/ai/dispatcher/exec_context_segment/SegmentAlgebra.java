@@ -273,6 +273,98 @@ public final class SegmentAlgebra {
     }
 
     /**
+     * Every Task of the graph in a topological order (Kahn's algorithm): among the Tasks whose predecessors are all
+     * placed, the smallest Task id goes first, so the order is deterministic (Phase 12: the segment counterpart of the
+     * whole-graph {@code getAllTasksTopologically}). A cycle fails.
+     */
+    public static List<Long> topologicalOrder(SegmentData.Graph graph) {
+        final Map<Long, Integer> inDegree = new HashMap<>();
+        final Map<Long, List<Long>> out = new HashMap<>();
+        for (Long id : graph.nodes().keySet()) {
+            inDegree.put(id, 0);
+        }
+        for (SegmentData.Edge e : graph.edges()) {
+            node(graph.nodes(), e.from());
+            node(graph.nodes(), e.to());
+            out.computeIfAbsent(e.from(), k -> new ArrayList<>()).add(e.to());
+            inDegree.merge(e.to(), 1, Integer::sum);
+        }
+        final PriorityQueue<Long> ready = new PriorityQueue<>();
+        inDegree.forEach((id, d) -> {
+            if (d == 0) {
+                ready.add(id);
+            }
+        });
+        final List<Long> order = new ArrayList<>(inDegree.size());
+        while (!ready.isEmpty()) {
+            final Long id = ready.poll();
+            order.add(id);
+            for (Long to : out.getOrDefault(id, List.of())) {
+                if (inDegree.merge(to, -1, Integer::sum) == 0) {
+                    ready.add(to);
+                }
+            }
+        }
+        if (order.size() != inDegree.size()) {
+            throw new IllegalStateException("01.906.180 the graph has a cycle: " + (inDegree.size() - order.size())
+                    + " of " + inDegree.size() + " Tasks are on or behind it");
+        }
+        return order;
+    }
+
+    /**
+     * Why a set of lines is not one valid line-based ExecContext structure, or null when it is (Phase 12: the segment
+     * counterpart of the whole-graph {@code verifyGraph}). No lines is valid - today's check (fewer than two root
+     * vertices) accepts an empty graph. Otherwise (a line always has a Task - {@link SegmentData.Line}): exactly one root
+     * line; every fork is a Task of some line and the fork chain of every line reaches the root line; the implied graph
+     * ({@link #toGraph}) decomposes
+     * back into lines ({@link #decompose}: one chain per ctx, a head reached only from its fork, every tail wired to its
+     * derived join) and is acyclic.
+     */
+    @Nullable
+    public static String structureError(Collection<SegmentData.Line> lines) {
+        if (lines.isEmpty()) {
+            return null;
+        }
+        final LineIndex index;
+        try {
+            index = LineIndex.of(lines);
+        }
+        catch (IllegalStateException e) {
+            return e.getMessage();
+        }
+        final long roots = lines.stream().filter(SegmentData.Line::isRoot).count();
+        if (roots != 1) {
+            return "01.906.150 exactly one root line is expected, found " + roots;
+        }
+        for (SegmentData.Line line : lines) {
+            final Set<String> seen = new HashSet<>();
+            seen.add(line.ctx());
+            SegmentData.Line current = line;
+            while (!current.isRoot()) {
+                final long fork = Objects.requireNonNull(current.forkTaskId());
+                final SegmentData.Line forkLine = index.lineOfTask().get(fork);
+                if (forkLine == null) {
+                    return "01.906.160 line " + current.ctx() + " forks from Task #" + fork + ", which is in no line";
+                }
+                if (!seen.add(forkLine.ctx())) {
+                    return "01.906.170 the fork chain of line " + line.ctx() + " returns to line " + forkLine.ctx();
+                }
+                current = forkLine;
+            }
+        }
+        try {
+            final SegmentData.Graph graph = toGraph(lines);
+            decompose(graph);
+            topologicalOrder(graph);
+        }
+        catch (IllegalStateException e) {
+            return e.getMessage();
+        }
+        return null;
+    }
+
+    /**
      * Groups lines into segments. The root line starts the root segment; a line starts its own segment when
      * {@code startsSegment} says so; every other line belongs to the segment of its fork's line. Segments come back root
      * first, then by line ctx; each segment's lines in the same order.

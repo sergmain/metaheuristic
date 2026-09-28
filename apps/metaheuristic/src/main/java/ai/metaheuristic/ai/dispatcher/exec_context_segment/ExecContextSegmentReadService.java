@@ -19,11 +19,14 @@ package ai.metaheuristic.ai.dispatcher.exec_context_segment;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextSegment;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextSegmentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.yaml.exec_context_segment.ExecContextSegmentParams;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -41,11 +44,15 @@ import java.util.*;
  *   <li>{@link #findAllForAssigning} - the ready set of {@link SegmentStates#ready}, proven equal to the whole-graph
  *       {@code findAllForAssigning} over seeded runs (Phase 4 goldens).</li>
  *   <li>{@link #lineView} - lines on demand, for readers that need a Task's neighbours only.</li>
+ *   <li>{@link #graph}, {@link #dot}, {@link #verifyGraph}, {@link #allTasksTopologically} - the whole-graph views,
+ *       derived from every line (Phase 12, decision 13: no DOT is stored); {@link #tasksByCtx} - the Tasks of given
+ *       ctxs, reading only the segments owning them.</li>
  * </ul>
  *
  * <p>Error code prefix: {@code 01.919.} (unique to this class).
  */
 @Service
+@Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class ExecContextSegmentReadService {
@@ -123,5 +130,67 @@ public class ExecContextSegmentReadService {
             throw new IllegalStateException("01.919.010 Task #" + taskId + " not found, ExecContext #" + execContextId);
         }
         return t.getTaskParamsYaml().task.taskContextId;
+    }
+
+    /** The graph the segments imply (vertices: every Task with ctx and tag; edges: the three line-based kinds); empty for no segments. */
+    public SegmentData.Graph graph(Long execContextId) {
+        final Snapshot s = snapshot(execContextId);
+        return s.lines().isEmpty() ? new SegmentData.Graph(Map.of(), Set.of()) : SegmentAlgebra.toGraph(s.lines());
+    }
+
+    /** The graph as DOT in the format the whole-ExecContext graph stored (vertex attributes {@code ctxid}, {@code tag}). */
+    public String dot(Long execContextId) {
+        return SegmentDotUtils.toDot(graph(execContextId));
+    }
+
+    /** Why the ExecContext's segments are not a valid line-based structure, or null when they are. */
+    @Nullable
+    public String structureError(Long execContextId) {
+        return SegmentAlgebra.structureError(snapshot(execContextId).lines());
+    }
+
+    /** True when the segments form a valid line-based structure - the segment counterpart of the whole-graph {@code verifyGraph}. */
+    public boolean verifyGraph(Long execContextId) {
+        final String error = structureError(execContextId);
+        if (error != null) {
+            log.warn("01.919.040 ExecContext #{} has an invalid segment structure: {}", execContextId, error);
+            return false;
+        }
+        return true;
+    }
+
+    /** Every Task with its stored state, in {@link SegmentAlgebra#topologicalOrder} - the counterpart of {@code getAllTasksTopologically}. */
+    public List<TaskData.TaskWithState> allTasksTopologically(Long execContextId) {
+        final Snapshot s = snapshot(execContextId);
+        if (s.lines().isEmpty()) {
+            return List.of();
+        }
+        final List<TaskData.TaskWithState> out = new ArrayList<>();
+        for (Long id : SegmentAlgebra.topologicalOrder(SegmentAlgebra.toGraph(s.lines()))) {
+            out.add(new TaskData.TaskWithState(id, s.states().getOrDefault(id, EnumsApi.TaskExecState.NONE)));
+        }
+        return out;
+    }
+
+    /**
+     * The Tasks of each given ctx with their stored states, by ctx; a ctx no line has is absent - the counterpart of
+     * {@code findVerticesByTaskContextIds}. A ctx is one line, so only the segments owning the ctxs are read.
+     */
+    public Map<String, List<TaskData.TaskWithState>> tasksByCtx(Long execContextId, Collection<String> ctxs) {
+        final SegmentLineView view = lineView(execContextId);
+        final Map<String, List<TaskData.TaskWithState>> out = new HashMap<>();
+        for (String ctx : ctxs) {
+            final SegmentData.Line line = view.lineOfCtx(ctx);
+            if (line == null) {
+                continue;
+            }
+            final Map<Long, EnumsApi.TaskExecState> states = view.segmentOfLine(ctx).getExecContextSegmentParams().states;
+            final List<TaskData.TaskWithState> tasks = new ArrayList<>(line.tasks().size());
+            for (SegmentData.Vertex v : line.tasks()) {
+                tasks.add(new TaskData.TaskWithState(v.taskId(), states.getOrDefault(v.taskId(), EnumsApi.TaskExecState.NONE)));
+            }
+            out.put(ctx, tasks);
+        }
+        return out;
     }
 }

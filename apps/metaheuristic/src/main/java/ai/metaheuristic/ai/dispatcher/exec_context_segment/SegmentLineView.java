@@ -126,6 +126,30 @@ public final class SegmentLineView {
         return s;
     }
 
+    /**
+     * The line with ctx {@code lineCtx}, or null when no segment holds such a line (Phase 12). Reads only the segment
+     * owning the ctx.
+     */
+    public SegmentData.@Nullable Line lineOfCtx(String lineCtx) {
+        if (!segmentOfLine.containsKey(lineCtx)) {
+            final ExecContextSegment s = segmentOfCtx.apply(lineCtx);
+            if (s == null) {
+                return null;
+            }
+            index(s);
+        }
+        final ExecContextSegment s = segmentOfLine.get(lineCtx);
+        if (s == null) {
+            return null;
+        }
+        for (SegmentData.Line l : linesOfSegment.get(s.id)) {
+            if (lineCtx.equals(l.ctx())) {
+                return l;
+            }
+        }
+        return null;
+    }
+
     /** A Task's vertex in its line - its tag. */
     public SegmentData.Vertex vertexOf(Long taskId) {
         final SegmentData.Line line = lineOf(taskId);
