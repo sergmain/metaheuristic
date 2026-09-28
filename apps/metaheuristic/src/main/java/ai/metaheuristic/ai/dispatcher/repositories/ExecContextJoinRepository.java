@@ -38,4 +38,13 @@ public interface ExecContextJoinRepository extends CrudRepository<ExecContextJoi
 
     @Query(value="select j.id from ExecContextJoin j where j.execContextId=:execContextId")
     List<Long> findIdsByExecContextId(Long execContextId);
+
+    /** Number of join records of an ExecContext (041 Phase 12: part of the change-detection version). */
+    @Query(value="select count(j.id) from ExecContextJoin j where j.execContextId=:execContextId")
+    long countByExecContextId(Long execContextId);
+
+    /** Sum of the join records' {@code VERSION}s, null without join records (041 Phase 12). */
+    @org.jspecify.annotations.Nullable
+    @Query(value="select sum(j.version) from ExecContextJoin j where j.execContextId=:execContextId")
+    Long sumVersionByExecContextId(Long execContextId);
 }

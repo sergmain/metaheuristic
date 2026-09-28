@@ -54,6 +54,7 @@ public class DispatcherStatusService {
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final TaskRepository taskRepository;
     private final ExecContextTopLevelService execContextTopLevelService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
 
     public String statusSourceCode(Long id, UserContext context) {
         SourceCodeImpl sc = sourceCodeRepository.findById(id).orElse(null);
@@ -79,28 +80,16 @@ public class DispatcherStatusService {
         if (sc == null) {
             return "In ExecContext #" + id + ", SourceCode with id #" + ec.sourceCodeId + " wasn't found\n";
         }
-        ExecContextGraph ecg = execContextGraphRepository.findById(ec.execContextGraphId).orElse(null);
-        if (ecg == null) {
-            return "In ExecContext #" + id + ", ExecContextGraph with id #" + ec.execContextGraphId + " wasn't found\n";
-        }
-        ExecContextTaskState ects = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);
-        if (ects == null) {
-            return "In ExecContext #" + id + ", ExecContextTaskState with id #" + ec.execContextTaskStateId + " wasn't found\n";
-        }
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElse(null);
-        if (ecvs == null) {
-            return "In ExecContext #" + id + ", ExecContextVariableState with id #" + ec.execContextVariableStateId + " wasn't found\n";
-        }
+        // 041 Phase 12: graph, task states and variable-state entries come from the ExecContext's segments
         StringBuilder s = new StringBuilder(S.f("""
             SourceCode: #%d, uid: %s, valid: %b
             ExecContext: #%d, %s
             """, sc.id, sc.uid, sc.valid, ec.id, EnumsApi.ExecContextState.toState(ec.state)));
 
-        ExecContextGraphParams ecgParams = ecg.getExecContextGraphParamsYaml();
         s.append(S.f("""
-              Graph #%d
+              Graph of ExecContext #%d, derived from its segments
             %s
-            """, ecg.id, ecgParams.graph.indent(2)));
+            """, ec.id, segmentReadService.dot(ec.id).indent(2)));
 
         ExecContextApiData.ExecContextStateResult execContextState = execContextTopLevelService.getExecContextState(sc.id, ec.id, null, authentication);
         if (execContextState.taskStateInfos!=null) {
@@ -113,9 +102,9 @@ public class DispatcherStatusService {
         String[][] tbl = asStringTable(execContextState.header, execContextState.lines);
         StatusUtils.printTable(s::append, true, 10, false, tbl);
 
-        ExecContextApiData.ExecContextVariableStates varStates = ecvs.getExecContextVariableStateInfo();
-        ExecContextTaskStateParams taskStateParams = ects.getExecContextTaskStateParamsYaml();
-        for (Map.Entry<Long, EnumsApi.TaskExecState> en : taskStateParams.states.entrySet()) {
+        List<ExecContextApiData.VariableState> varStates = segmentReadService.variableStates(ec.id);
+        Map<Long, EnumsApi.TaskExecState> taskStates = new java.util.TreeMap<>(segmentReadService.snapshot(ec.id).states());
+        for (Map.Entry<Long, EnumsApi.TaskExecState> en : taskStates.entrySet()) {
             TaskImpl task = taskRepository.findByIdReadOnly(en.getKey());
             if (task!=null) {
                 var funcCode = task.getTaskParamsYaml().task.function.code;
@@ -125,7 +114,7 @@ public class DispatcherStatusService {
                 s.append(S.f("  Task: #%d, %s. Task wasn't found with this Id\n", en.getKey(), en.getValue()));
             }
 
-            ExecContextApiData.VariableState variableState = varStates.states.stream().filter(o -> o.taskId.equals(en.getKey())).findFirst().orElse(null);
+            ExecContextApiData.VariableState variableState = varStates.stream().filter(o -> o.taskId.equals(en.getKey())).findFirst().orElse(null);
             if (variableState == null || (CollectionUtils.isEmpty(variableState.inputs) && CollectionUtils.isEmpty(variableState.outputs))) {
                 continue;
             }

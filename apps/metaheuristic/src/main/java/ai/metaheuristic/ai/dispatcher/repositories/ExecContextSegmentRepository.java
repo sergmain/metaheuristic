@@ -50,4 +50,13 @@ public interface ExecContextSegmentRepository extends CrudRepository<ExecContext
     /** Segments whose start line forks from {@code forkTaskId} (index {@code mh_exec_context_segment_ec_fork_idx}). */
     @Query(value="select s from ExecContextSegment s where s.execContextId=:execContextId and s.forkTaskId=:forkTaskId")
     List<ExecContextSegment> findByExecContextIdAndForkTaskId(Long execContextId, Long forkTaskId);
+
+    /** Number of segments of an ExecContext (041 Phase 12: part of the change-detection version). */
+    @Query(value="select count(s.id) from ExecContextSegment s where s.execContextId=:execContextId")
+    long countByExecContextId(Long execContextId);
+
+    /** Sum of the segments' {@code VERSION}s, null without segments - grows on every segment write (041 Phase 12). */
+    @Nullable
+    @Query(value="select sum(s.version) from ExecContextSegment s where s.execContextId=:execContextId")
+    Long sumVersionByExecContextId(Long execContextId);
 }

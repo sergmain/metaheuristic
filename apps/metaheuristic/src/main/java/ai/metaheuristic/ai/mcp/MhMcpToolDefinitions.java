@@ -155,6 +155,7 @@ public class MhMcpToolDefinitions {
     private final ExecContextGraphRepository execContextGraphRepository;
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final SourceCodeRepository sourceCodeRepository;
     private final BundleService bundleService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
@@ -230,25 +231,22 @@ public class MhMcpToolDefinitions {
             @Nullable String errorMessages
     ) {}
 
+    /** 041 Phase 12: the task graph derived from the ExecContext's segments, as DOT (vertex attributes {@code ctxid}, {@code tag}). */
     public record ExecContextGraphDto(
-            Long id,
-            @Nullable Long execContextId,
-            @Nullable Long createdOn,
-            @Nullable String params
+            Long execContextId,
+            String dot
     ) {}
 
+    /** 041 Phase 12: the exec state of every Task, by Task id, as stored in the ExecContext's segments. */
     public record ExecContextTaskStateDto(
-            Long id,
-            @Nullable Long execContextId,
-            @Nullable Long createdOn,
-            @Nullable String params
+            Long execContextId,
+            Map<Long, String> states
     ) {}
 
+    /** 041 Phase 12: every variable-state entry from the ExecContext's segments, input flags derived at read time. */
     public record ExecContextVariableStateDto(
-            Long id,
-            @Nullable Long execContextId,
-            @Nullable Long createdOn,
-            @Nullable String params
+            Long execContextId,
+            List<ExecContextApiData.VariableState> states
     ) {}
 
     public record OperationResultDto(
@@ -1287,70 +1285,64 @@ public class MhMcpToolDefinitions {
 
     private static final Tool GET_EXEC_CONTEXT_GRAPH_TOOL = Tool.builder("mh_get_exec_context_graph",
                     objectSchema(
-                            Map.of("execContextGraphId", Map.of("type", "integer", "description", "Numeric id of the ExecContextGraph")),
-                            List.of("execContextGraphId")))
+                            Map.of("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext")),
+                            List.of("execContextId")))
             .title("Get ExecContext Graph")
-            .description("Get an ExecContextGraph by its id (NOT by execContextId — use "
-                    + "mh_get_exec_context_info first to find the execContextGraphId). Returns the raw "
-                    + "params YAML representing the static Process DAG.")
+            .description("Get the task graph of an ExecContext by execContextId, as DOT: one vertex per Task (attribute "
+                    + "ctxid = taskContextId, tag when the Task has one), edges within a line, fork -> line head, line tail "
+                    + "-> join. Derived on demand from the ExecContext's segments; no graph is stored.")
             .build();
 
     private CallToolResult handleGetExecContextGraph(McpSyncServerExchange exchange, CallToolRequest request) {
-        Long execContextGraphId = getRequiredLong(request.arguments(), "execContextGraphId");
-        log.info("260.200 MCP getExecContextGraph({})", execContextGraphId);
-        Optional<ExecContextGraph> opt = execContextGraphRepository.findById(execContextGraphId);
-        if (opt.isEmpty()) {
-            return errorResult("ExecContextGraph #" + execContextGraphId + " not found");
+        Long execContextId = getRequiredLong(request.arguments(), "execContextId");
+        log.info("01.260.200 MCP getExecContextGraph({})", execContextId);
+        if (execContextCache.findById(execContextId, true) == null) {
+            return errorResult("ExecContext #" + execContextId + " not found");
         }
-        ExecContextGraph g = opt.get();
-        return toCallToolResult(new ExecContextGraphDto(g.id, g.execContextId, g.createdOn, g.getParams()));
+        return toCallToolResult(new ExecContextGraphDto(execContextId, segmentReadService.dot(execContextId)));
     }
 
     // ==================== Tool 8: get exec context task state ====================
 
     private static final Tool GET_EXEC_CONTEXT_TASK_STATE_TOOL = Tool.builder("mh_get_exec_context_task_state",
                     objectSchema(
-                            Map.of("execContextTaskStateId", Map.of("type", "integer", "description", "Numeric id of the ExecContextTaskState")),
-                            List.of("execContextTaskStateId")))
+                            Map.of("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext")),
+                            List.of("execContextId")))
             .title("Get ExecContext Task State")
-            .description("Get an ExecContextTaskState by its id (NOT by execContextId — use "
-                    + "mh_get_exec_context_info first to find the execContextTaskStateId). Returns the raw "
-                    + "params YAML representing the dynamic Task execution state.")
+            .description("Get the exec state of every Task of an ExecContext by execContextId, as a map Task id -> state, "
+                    + "read from the ExecContext's segments (the scheduler's view of Task states).")
             .build();
 
     private CallToolResult handleGetExecContextTaskState(McpSyncServerExchange exchange, CallToolRequest request) {
-        Long execContextTaskStateId = getRequiredLong(request.arguments(), "execContextTaskStateId");
-        log.info("260.220 MCP getExecContextTaskState({})", execContextTaskStateId);
-        Optional<ExecContextTaskState> opt = execContextTaskStateRepository.findById(execContextTaskStateId);
-        if (opt.isEmpty()) {
-            return errorResult("ExecContextTaskState #" + execContextTaskStateId + " not found");
+        Long execContextId = getRequiredLong(request.arguments(), "execContextId");
+        log.info("01.260.220 MCP getExecContextTaskState({})", execContextId);
+        if (execContextCache.findById(execContextId, true) == null) {
+            return errorResult("ExecContext #" + execContextId + " not found");
         }
-        ExecContextTaskState s = opt.get();
-        return toCallToolResult(new ExecContextTaskStateDto(s.id, s.execContextId, s.createdOn, s.getParams()));
+        final Map<Long, String> states = new java.util.TreeMap<>();
+        segmentReadService.snapshot(execContextId).states().forEach((taskId, state) -> states.put(taskId, state.name()));
+        return toCallToolResult(new ExecContextTaskStateDto(execContextId, states));
     }
 
     // ==================== Tool 9: get exec context variable state ====================
 
     private static final Tool GET_EXEC_CONTEXT_VARIABLE_STATE_TOOL = Tool.builder("mh_get_exec_context_variable_state",
                     objectSchema(
-                            Map.of("execContextVariableStateId", Map.of("type", "integer", "description", "Numeric id of the ExecContextVariableState")),
-                            List.of("execContextVariableStateId")))
+                            Map.of("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext")),
+                            List.of("execContextId")))
             .title("Get ExecContext Variable State")
-            .description("Get an ExecContextVariableState by its id (NOT by execContextId \u2014 use "
-                    + "mh_get_exec_context_info first to find the execContextVariableStateId). Returns the raw "
-                    + "params YAML representing the dynamic Variable state (per-variable inited/nullified "
-                    + "status, blob ids, task context ids).")
+            .description("Get the variable-state entries of an ExecContext by execContextId: per Task its inputs and "
+                    + "outputs with inited / nullified status, read from the ExecContext's segments; an input shows the "
+                    + "state of its variable's producer output.")
             .build();
 
     private CallToolResult handleGetExecContextVariableState(McpSyncServerExchange exchange, CallToolRequest request) {
-        Long execContextVariableStateId = getRequiredLong(request.arguments(), "execContextVariableStateId");
-        log.info("260.230 MCP getExecContextVariableState({})", execContextVariableStateId);
-        Optional<ExecContextVariableState> opt = execContextVariableStateRepository.findById(execContextVariableStateId);
-        if (opt.isEmpty()) {
-            return errorResult("ExecContextVariableState #" + execContextVariableStateId + " not found");
+        Long execContextId = getRequiredLong(request.arguments(), "execContextId");
+        log.info("01.260.230 MCP getExecContextVariableState({})", execContextId);
+        if (execContextCache.findById(execContextId, true) == null) {
+            return errorResult("ExecContext #" + execContextId + " not found");
         }
-        ExecContextVariableState v = opt.get();
-        return toCallToolResult(new ExecContextVariableStateDto(v.id, v.execContextId, v.createdOn, v.getParams()));
+        return toCallToolResult(new ExecContextVariableStateDto(execContextId, segmentReadService.variableStates(execContextId)));
     }
 
     // ==================== Tool 10: list source codes ====================

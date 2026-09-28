@@ -20,10 +20,12 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextSegment;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextJoinRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextSegmentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.yaml.exec_context_segment.ExecContextSegmentParams;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
@@ -63,6 +65,7 @@ public class ExecContextSegmentReadService {
     private final ExecContextSegmentRepository segmentRepository;
     private final ExecContextSegmentTxService segmentTxService;
     private final TaskRepository taskRepository;
+    private final ExecContextJoinRepository joinRepository;
 
     /** Every line of an ExecContext and the stored state of every Task (a Task without one is NONE). */
     public record Snapshot(List<SegmentData.Line> lines, Map<Long, EnumsApi.TaskExecState> states) {}
@@ -192,5 +195,56 @@ public class ExecContextSegmentReadService {
             out.put(ctx, tasks);
         }
         return out;
+    }
+
+    /** Every variable-state entry as stored, read in pages of {@value #PAGE} segments, sorted by Task id. */
+    private List<ExecContextApiData.VariableState> storedVariableStates(Long execContextId) {
+        final List<Long> ids = segmentRepository.findIdsByExecContextId(execContextId);
+        final List<ExecContextApiData.VariableState> entries = new ArrayList<>();
+        for (int from = 0; from < ids.size(); from += PAGE) {
+            for (ExecContextSegment s : segmentRepository.findAllById(ids.subList(from, Math.min(from + PAGE, ids.size())))) {
+                entries.addAll(s.getExecContextSegmentParams().variableStates);
+            }
+        }
+        entries.sort(Comparator.comparing(e -> e.taskId));
+        return entries;
+    }
+
+    /**
+     * Every variable-state entry of the ExecContext, sorted by Task id, input flags derived by
+     * {@link SegmentVariableStates#withDerivedInputs} - what the whole-ExecContext variable-state record showed.
+     */
+    public List<ExecContextApiData.VariableState> variableStates(Long execContextId) {
+        return SegmentVariableStates.withDerivedInputs(storedVariableStates(execContextId));
+    }
+
+    /**
+     * The {@code ext} recorded for variable {@code variableId} by its producer's output entry, or null. The producer's
+     * entry sits in the segment owning the variable's ctx {@code variableCtx}, read first; every segment is read only
+     * when it is not there.
+     */
+    @Nullable
+    public String outputExt(Long execContextId, String variableCtx, Long variableId) {
+        final ExecContextSegment owner = segmentTxService.findSegmentOfCtx(execContextId, variableCtx);
+        if (owner != null) {
+            final String ext = SegmentVariableStates.outputExt(owner.getExecContextSegmentParams().variableStates, variableId);
+            if (ext != null) {
+                return ext;
+            }
+        }
+        return SegmentVariableStates.outputExt(storedVariableStates(execContextId), variableId);
+    }
+
+    /**
+     * A text for the state page's change detection - the part the whole-ExecContext records' versions used to be: count
+     * and {@code VERSION} sum of the segment and join records. Every write raises one {@code VERSION}, every addition
+     * raises a count, every removal lowers one, so the text changes between two reads unless removals and additions in
+     * between cancel out exactly in both count and sum. Two aggregate queries per table, no segment is loaded.
+     */
+    public String changeVersion(Long execContextId) {
+        final Long segmentSum = segmentRepository.sumVersionByExecContextId(execContextId);
+        final Long joinSum = joinRepository.sumVersionByExecContextId(execContextId);
+        return segmentRepository.countByExecContextId(execContextId) + "," + (segmentSum == null ? 0L : segmentSum)
+                + "," + joinRepository.countByExecContextId(execContextId) + "," + (joinSum == null ? 0L : joinSum);
     }
 }
