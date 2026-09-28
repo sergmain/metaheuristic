@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Set;
 
 /**
  * The one writer of ExecContext segments and join records (041-EXEC-CONTEXT-SEGMENTS-PLAN, Phase 7): Task production
@@ -328,6 +330,100 @@ public class ExecContextSegmentTxService {
         s.updateParams(p);
         s.structureHash = SegmentStructureHash.structureHash(SegmentParamsConverter.segment(s.lineCtxId, s.forkTaskId, p));
         segmentRepository.save(s);
+    }
+
+    /**
+     * Removes whole lines from the segments (041 Phase 11: a reset deleting a dynamic splitter's old lines, which the
+     * splitter re-creates when it re-runs). {@code taskIds} must hold every Task of each line it touches. A segment left
+     * without lines is deleted; a trimmed one is written with its structure hash recomputed. Each removed REGISTERED line
+     * leaves its derived join's record - registered, and finished / dead by its tail's state - unless that join is
+     * removed too; the records of removed join Tasks are deleted. The removed Tasks' states, tries and variable-state
+     * entries go with their lines.
+     */
+    @Transactional
+    public void removeLines(Long execContextId, Set<Long> taskIds) {
+        TxUtils.checkTxExists();
+        if (taskIds.isEmpty()) {
+            return;
+        }
+        final SegmentLineView view = new SegmentLineView(execContextId, ctx -> findSegmentOfCtx(execContextId, ctx), this::ctxOf,
+                fork -> segmentRepository.findByExecContextIdAndForkTaskId(execContextId, fork));
+        final Map<String, SegmentData.Line> removed = new TreeMap<>();
+        for (Long t : taskIds) {
+            final SegmentData.Line line = view.lineOf(t);
+            if (line.isRoot()) {
+                throw new IllegalStateException("01.913.140 the root line cannot be removed, Task #" + t + ", ExecContext #" + execContextId);
+            }
+            removed.putIfAbsent(line.ctx(), line);
+        }
+        for (SegmentData.Line line : removed.values()) {
+            for (SegmentData.Vertex v : line.tasks()) {
+                if (!taskIds.contains(v.taskId())) {
+                    throw new IllegalStateException("01.913.150 line " + line.ctx() + " is removed only in part: Task #" + v.taskId()
+                            + " stays, ExecContext #" + execContextId);
+                }
+            }
+        }
+
+        // join shares, computed while every line still resolves
+        final Map<Long, int[]> delta = new TreeMap<>();
+        for (SegmentData.Line line : removed.values()) {
+            if (!view.paramsLine(line.ctx()).registered) {
+                continue;
+            }
+            final Long join = SegmentAlgebra.derivedJoin(view::lineOf, line);
+            if (join == null || taskIds.contains(join)) {
+                continue;
+            }
+            final EnumsApi.TaskExecState tail = view.segmentOfLine(line.ctx()).getExecContextSegmentParams().states
+                    .getOrDefault(line.tail().taskId(), EnumsApi.TaskExecState.NONE);
+            final int[] d = delta.computeIfAbsent(join, k -> new int[3]);
+            d[0]++;
+            if (tail == EnumsApi.TaskExecState.OK) {
+                d[1]++;
+            }
+            else if (SegmentStates.dead(tail)) {
+                d[2]++;
+            }
+        }
+
+        // structure
+        final Map<Long, ExecContextSegment> touched = new LinkedHashMap<>();
+        removed.keySet().forEach(ctx -> {
+            final ExecContextSegment s = view.segmentOfLine(ctx);
+            touched.put(s.id, s);
+        });
+        for (ExecContextSegment s : touched.values()) {
+            final ExecContextSegmentParams p = s.getExecContextSegmentParams();
+            p.lines.removeIf(l -> removed.containsKey(l.ctx));
+            p.states.keySet().removeIf(taskIds::contains);
+            p.triesWasMade.keySet().removeIf(taskIds::contains);
+            p.variableStates.removeIf(e -> taskIds.contains(e.taskId));
+            if (p.lines.isEmpty()) {
+                segmentRepository.delete(s);
+            }
+            else {
+                save(s, p);
+            }
+        }
+
+        // join records
+        delta.forEach((joinTaskId, d) -> {
+            final ExecContextJoin j = joinRepository.findByExecContextIdAndJoinTaskId(execContextId, joinTaskId);
+            if (j == null) {
+                throw new IllegalStateException("01.913.160 join #" + joinTaskId + " of removed registered lines has no record, ExecContext #" + execContextId);
+            }
+            j.linesRegistered -= d[0];
+            j.linesFinished -= d[1];
+            j.linesDead -= d[2];
+            joinRepository.save(j);
+        });
+        for (Long t : taskIds) {
+            final ExecContextJoin j = joinRepository.findByExecContextIdAndJoinTaskId(execContextId, t);
+            if (j != null) {
+                joinRepository.delete(j);
+            }
+        }
     }
 
     private String ctxOf(Long taskId) {

@@ -99,6 +99,24 @@ public class ExecContextSegmentReadService {
                 fork -> segmentRepository.findByExecContextIdAndForkTaskId(execContextId, fork));
     }
 
+    /**
+     * Every Task reachable from {@code taskId} (not including it), with its ctx and tag - the segment counterpart of the
+     * whole-graph {@code findDescendants} (Phase 11, reset). Reads every line, as the graph walk did.
+     */
+    public List<ExecContextData.TaskVertex> descendants(Long execContextId, Long taskId) {
+        final Snapshot s = snapshot(execContextId);
+        if (s.lines().isEmpty()) {
+            return List.of();
+        }
+        final SegmentStates.Adjacency adj = SegmentStates.Adjacency.of(s.lines());
+        final List<ExecContextData.TaskVertex> out = new ArrayList<>();
+        for (Long id : SegmentStates.descendants(adj, taskId)) {
+            final SegmentData.Vertex v = Objects.requireNonNull(adj.vertices().get(id), () -> "01.919.030 Task #" + id + " has no vertex");
+            out.add(new ExecContextData.TaskVertex(id, adj.index().lineOf(id).ctx(), v.tag()));
+        }
+        return out;
+    }
+
     private String ctxOf(Long execContextId, Long taskId) {
         final TaskImpl t = taskRepository.findByIdReadOnly(taskId);
         if (t == null) {
