@@ -93,8 +93,8 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
             long mills = System.currentTimeMillis();
             ExecContextParams execContextParamsYaml = result.execContext.getExecContextParamsYaml();
-            ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, ()->
-                    ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId, ()-> {
+            ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().id, ()->
+                    ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().id, ()-> {
                         txSupportForTestingService.produceAndStartAllTasks(getSourceCode(), result.execContext.id);
                     }));
 

@@ -22,11 +22,8 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateUtils;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
@@ -59,9 +56,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
+    @Autowired private ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadServiceForTest;
     @Autowired private PreparingSourceCodeInitService preparingSourceCodeInitService;
     @Autowired private Globals globals;
-    @Autowired private ExecContextTaskStateRepository execContextTaskStateRepository;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private ExecContextRepository execContextRepository;
@@ -69,7 +66,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired private ExecContextStatusService execContextStatusService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
-    @Autowired private ExecContextGraphService execContextGraphService;
     @Autowired private FunctionService functionService;
 
     public SourceCodeImpl getSourceCode() {
@@ -302,7 +298,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
         List<TaskImpl> tasks = taskRepositoryForTest.findByExecContextIdAsList(getExecContextForTest().id);
 
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(this.getExecContextForTest().id, true)));
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphService.findAll(getExecContextForTest().execContextGraphId);
+        // 041 Phase 21: the graph derived from the ExecContext's segments (the whole-ExecContext graph record is gone)
+        List<ExecContextData.TaskVertex> taskVertices = segmentReadServiceForTest.graph(getExecContextForTest().id).nodes().values().stream()
+                .map(n -> new ExecContextData.TaskVertex(n.taskId(), n.ctx(), n.tag())).toList();
         if (tasks.size()!=taskVertices.size()) {
             mismatch.set("different number of tasks in db and graph, db: " + tasks.size() + ", graph: " + taskVertices.size());
             return false;
@@ -327,25 +325,16 @@ public abstract class PreparingSourceCode extends PreparingCore {
     }
 
     public List<Long> getUnfinishedTaskVertices(ExecContextImpl execContext) {
-        if (execContext.execContextTaskStateId==null) {
-            return List.of();
-        }
-        ExecContextTaskState ects = execContextTaskStateRepository.findById(execContext.execContextTaskStateId).orElse(null);
-        if (ects==null) {
-            return List.of();
-        }
-        return ExecContextTaskStateUtils.getUnfinishedTaskVertices(ects.getExecContextTaskStateParamsYaml());
+        // 041 Phase 21: the Task states live in the ExecContext's segments; same filter the record utility applied
+        return segmentReadServiceForTest.snapshot(execContext.id).states().entrySet().stream()
+                .filter(o -> !EnumsApi.TaskExecState.isFinishedStateIncludingRecovery(o.getValue()))
+                .map(java.util.Map.Entry::getKey).toList();
     }
 
     public List<Long> getFinishedTaskVertices(ExecContextImpl execContext) {
-        if (execContext.execContextTaskStateId==null) {
-            return List.of();
-        }
-        ExecContextTaskState ects = execContextTaskStateRepository.findById(execContext.execContextTaskStateId).orElse(null);
-        if (ects==null) {
-            return List.of();
-        }
-        return ExecContextTaskStateUtils.getFinishedTaskVertices(ects.getExecContextTaskStateParamsYaml());
+        return segmentReadServiceForTest.snapshot(execContext.id).states().entrySet().stream()
+                .filter(o -> EnumsApi.TaskExecState.isFinishedStateIncludingRecovery(o.getValue()))
+                .map(java.util.Map.Entry::getKey).toList();
     }
 
 

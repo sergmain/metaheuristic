@@ -141,8 +141,8 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
         processScheduledTasks();
 
-        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId,
-            () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id, getExecContextForTest().execContextTaskStateId));
+        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().id,
+            () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id));
 
         processScheduledTasks();
     }

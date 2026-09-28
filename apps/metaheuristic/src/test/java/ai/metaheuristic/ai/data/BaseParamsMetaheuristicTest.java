@@ -33,10 +33,6 @@ import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsUtils;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsUtils;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsUtils;
 import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParams;
 import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
@@ -135,9 +131,7 @@ public class BaseParamsMetaheuristicTest {
 
     // params families stored as JSON - same naming and version-chain contract as the yaml ones above
     private static final List<Pair<BaseJsonUtils<? extends BaseParams>, Class<?>>> jsonCls = List.of(
-            Pair.of(ExecContextGraphParamsUtils.BASE_UTILS, ExecContextGraphParams.class),
             Pair.of(ExecContextParamsUtils.BASE_UTILS, ExecContextParams.class),
-            Pair.of(ExecContextTaskStateParamsUtils.BASE_UTILS, ExecContextTaskStateParams.class),
             Pair.of(ExecutionGateParamsUtils.BASE_UTILS, ExecutionGateParams.class)
     );
 

@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.internal_function.evaluation;
 
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInExecContextEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTxService;
@@ -51,7 +50,6 @@ public abstract class TestBaseEvaluation extends PreparingSourceCode {
     @Autowired public ExecContextTxService execContextTxService;
     @Autowired public ExecContextStatusService execContextStatusService;
     @Autowired public ExecContextTaskStateService execContextTaskStateTopLevelService;
-    @Autowired public ExecContextGraphTopLevelService execContextGraphTopLevelService;
     @Autowired public ExecContextRepository execContextRepository;
     @Autowired public PreparingSourceCodeService preparingSourceCodeService;
     @Autowired public TaskVariableInitTxService taskVariableInitTxService;
@@ -97,7 +95,7 @@ public abstract class TestBaseEvaluation extends PreparingSourceCode {
         for (Long taskId : taskIds) {
             try {
                 TaskSyncService.getWithSyncVoid(taskId,
-                    ()-> taskVariableInitTxService.intiVariables(new InitVariablesEvent(getExecContextForTest().id, taskId), ecForTest.execContextGraphId, ecForTest.getExecContextParamsYaml()));
+                    ()-> taskVariableInitTxService.intiVariables(new InitVariablesEvent(getExecContextForTest().id, taskId), ecForTest.getExecContextParamsYaml()));
                 forUpdating = taskId;
                 break;
             } catch (CommonRollbackException e) {

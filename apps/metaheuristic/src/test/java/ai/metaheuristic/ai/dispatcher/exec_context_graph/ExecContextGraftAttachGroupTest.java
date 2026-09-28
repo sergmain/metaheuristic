@@ -74,11 +74,11 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ExecContextGraftAttachGroupTest extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
+    @Autowired private ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private InternalFunctionService internalFunctionService;
     @Autowired private ExecContextGraftService execContextGraftService;
     @Autowired private TaskRepository taskRepository;
-    @Autowired private ExecContextGraphService execContextGraphService;
     @Autowired private VariableRepository variableRepository;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 
@@ -98,8 +98,8 @@ public class ExecContextGraftAttachGroupTest extends PreparingSourceCode {
         final Long ecId = getExecContextForTest().id;
 
         ExecContextSyncService.getWithSyncVoid(ecId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId, () ->
+                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
                                 txSupportForTestingService.produceTasksWithoutStarting(getSourceCode(), ecId))));
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(ecId, true)));
 
@@ -152,8 +152,8 @@ public class ExecContextGraftAttachGroupTest extends PreparingSourceCode {
 
         // 4c. event-free graft: the grafted (SKIPPED) head is NOT assignable for dispatch.
         final Long headId = gr.headTaskId();
-        List<ExecContextData.TaskVertex> assignable = execContextGraphService.findAllForAssigning(
-                ec.execContextGraphId, ec.execContextTaskStateId, false);
+        // 041 Phase 21: readiness from the ExecContext's segments
+        List<ExecContextData.TaskVertex> assignable = segmentReadService.findAllForAssigning(ec.id, false);
         assertTrue(assignable.stream().noneMatch(x -> x.taskId.equals(headId)),
                 "grafted SKIPPED head must NOT be assignable for dispatch (event-free graft)");
 

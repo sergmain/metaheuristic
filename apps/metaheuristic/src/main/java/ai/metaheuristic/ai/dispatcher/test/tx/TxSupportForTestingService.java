@@ -62,6 +62,7 @@ public class TxSupportForTestingService {
 
     private final Globals globals;
     private final VariableRepository variableRepository;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentStateTxService segmentStateTxServiceForTest;
     private final VariableTxService variableTxService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final FunctionCache functionCache;
@@ -201,6 +202,19 @@ public class TxSupportForTestingService {
 
     // 041 Phase 21: updateTaskExecState / updateGraphWithResettingAllChildrenTasksWithTx / setStateForAllChildrenTasksInternal
     // drove the whole-ExecContext graph and task-state record, which are gone; states change through the segments
+
+    /**
+     * 041 Phase 21: the counterpart of the removed {@code updateTaskExecState(dac, taskStateId, ...)} - the Task's state
+     * (and its SKIPPED closure) written into the ExecContext's segments. The caller holds the ExecContext's graph and
+     * task-state locks, as for every segment state write.
+     */
+    @Transactional
+    public ExecContextOperationStatusWithTaskList updateTaskExecStateInSegments(Long execContextId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        return segmentStateTxServiceForTest.updateTaskExecStates(execContextId, List.of(new TaskData.TaskWithStateAndTaskContextId(taskId, execState, taskContextId)));
+    }
 
     @Transactional
     public void deleteVariableByName(String name) {

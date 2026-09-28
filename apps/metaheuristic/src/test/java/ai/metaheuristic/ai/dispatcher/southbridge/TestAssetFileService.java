@@ -85,7 +85,7 @@ public class TestAssetFileService {
         RecordingVariableTxService(Path observedFile) {
             // All 12 collaborators are null; safe because the only overridden method
             // never touches them, and any unstubbed call would NPE — see class javadoc.
-            super(null, null, null, null, null, null, null, null, null, null, null, null);
+            super(null, null, null, null, null, null, null, null, null, null, null);
             this.observedFile = observedFile;
         }
 

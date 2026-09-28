@@ -83,8 +83,6 @@ public class PreparingSourceCodeInitService {
     private final CompanyRepository companyRepository;
     private final ExecContextCache execContextCache;
     private final ExecContextRepository execContextRepository;
-    private final ExecContextGraphRepository execContextGraphRepository;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final TaskRepositoryForTest taskRepositoryForTest;
     private final AccountRepository accountRepository;
     private final DispatcherBlobStorage dispatcherBlobStorage;
@@ -232,20 +230,7 @@ public class PreparingSourceCodeInitService {
                     log.error("Error while execContextRepository.deleteById()", th);
                 }
             }
-            if (data.getExecContextForTest().execContextGraphId!=null) {
-                try {
-                    execContextGraphRepository.deleteById(data.getExecContextForTest().execContextGraphId);
-                } catch (Throwable th) {
-                    log.error("Error while execContextGraphRepository.deleteById()", th);
-                }
-            }
-            if (data.getExecContextForTest().execContextTaskStateId!=null) {
-                try {
-                    execContextTaskStateRepository.deleteById(data.getExecContextForTest().execContextTaskStateId);
-                } catch (Throwable th) {
-                    log.error("Error while execContextTaskStateRepository.deleteById()", th);
-                }
-            }
+            // 041 Phase 21: no graph / task-state record to delete - the ExecContext's segments go with it
             try {
                 taskRepositoryForTest.deleteByExecContextId(data.getExecContextForTest().getId());
             } catch (Throwable th) {

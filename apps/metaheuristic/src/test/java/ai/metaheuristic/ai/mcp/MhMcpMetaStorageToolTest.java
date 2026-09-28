@@ -115,7 +115,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
 
     private CallToolResult call(String toolName, Map<String, Object> arguments) {
         final MhMcpToolDefinitions definitions = new MhMcpToolDefinitions(
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null,
                 metaStorageRepository, metaStorageSyntheticRepository, metaStorageService, metaStorageSyntheticService,
                 null, null, null, null, null, null);
         final McpServerFeatures.SyncToolSpecification spec = definitions.getAllToolSpecifications().stream()

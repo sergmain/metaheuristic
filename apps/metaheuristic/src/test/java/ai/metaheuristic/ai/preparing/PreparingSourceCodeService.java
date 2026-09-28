@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.ResetTasksWithErrorEvent;
@@ -27,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.event.events.TransferStateFromTaskQueueToE
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateUtils;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
@@ -84,6 +82,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class PreparingSourceCodeService {
 
     private final SourceCodeRepository sourceCodeRepository;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final CompanyRepository companyRepository;
     private final ExecContextRepository execContextRepository;
     private final TaskRepositoryForTest taskRepositoryForTest;
@@ -95,7 +94,6 @@ public class PreparingSourceCodeService {
     private final ExecContextStatusService execContextStatusService;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final ExecContextCache execContextCache;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
     private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
@@ -240,14 +238,14 @@ public class PreparingSourceCodeService {
 
     @SneakyThrows
     public void findTaskForRegisteringInQueueAndWait(ExecContextImpl execContext) {
-        eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContext.id, execContext.execContextTaskStateId));
+        eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContext.id));
         Thread.sleep(500);
 
         execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
         //execContextTaskAssigningTopLevelService.procesEvent();
 
         Thread.sleep(500);
-        eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContext.id, execContext.execContextTaskStateId));
+        eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContext.id));
         Thread.sleep(500);
 //        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContext.id);
 
@@ -342,8 +340,8 @@ public class PreparingSourceCodeService {
             assertNotNull(preparingSourceCodeData.getExecContextForTest());
 
             assertEquals(EnumsApi.ExecContextState.NONE.code, preparingSourceCodeData.getExecContextForTest().getState());
-            ExecContextGraphSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().execContextGraphId, ()->
-                    ExecContextTaskStateSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().execContextTaskStateId, ()-> {
+            ExecContextGraphSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().id, ()->
+                    ExecContextTaskStateSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().id, ()-> {
                         txSupportForTestingService.produceAndStartAllTasks(preparingSourceCodeData.getSourceCode(), result.execContext.id);
                     }));
         });
@@ -384,8 +382,8 @@ public class PreparingSourceCodeService {
             assertNotNull(preparingSourceCodeData.getExecContextForTest());
 
             assertEquals(EnumsApi.ExecContextState.NONE.code, preparingSourceCodeData.getExecContextForTest().getState());
-            ExecContextGraphSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().execContextGraphId, ()->
-                    ExecContextTaskStateSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().execContextTaskStateId, ()-> {
+            ExecContextGraphSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().id, ()->
+                    ExecContextTaskStateSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().id, ()-> {
                         txSupportForTestingService.produceTasksWithoutStarting(preparingSourceCodeData.getSourceCode(), result.execContext.id);
                     }));
         });
@@ -398,26 +396,13 @@ public class PreparingSourceCodeService {
     }
 
     public long getCountUnfinishedTasks(ExecContextImpl execContext) {
-        if (execContext.execContextTaskStateId==null) {
-            return 0;
-        }
-        ExecContextTaskState ects = execContextTaskStateRepository.findById(execContext.execContextTaskStateId).orElse(null);
-        if (ects==null) {
-            return 0;
-        }
-        return ExecContextTaskStateUtils.getCountUnfinishedTasks(ects.getExecContextTaskStateParamsYaml());
+        // 041 Phase 21: the Task states live in the ExecContext's segments; same filter the record utility applied
+        return segmentReadService.snapshot(execContext.id).states().values().stream()
+                .filter(s -> !EnumsApi.TaskExecState.isFinishedStateIncludingRecovery(s)).count();
     }
 
     public EnumsApi.@Nullable TaskExecState findTaskState(ExecContextImpl execContext, Long taskId) {
-        if (execContext.execContextTaskStateId==null) {
-            return EnumsApi.TaskExecState.NONE;
-        }
-        ExecContextTaskState ects = execContextTaskStateRepository.findById(execContext.execContextTaskStateId).orElse(null);
-        if (ects==null) {
-            return EnumsApi.TaskExecState.NONE;
-        }
-
-        return ects.getExecContextTaskStateParamsYaml().states.getOrDefault(taskId, EnumsApi.TaskExecState.NONE);
+        return segmentReadService.snapshot(execContext.id).states().getOrDefault(taskId, EnumsApi.TaskExecState.NONE);
     }
 
 

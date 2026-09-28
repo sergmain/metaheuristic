@@ -19,11 +19,9 @@ package ai.metaheuristic.ai.dispatcher.exec_context_graph;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.MhSharedItTest;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
@@ -64,7 +62,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ExecContextGraftSplitterExactBindTest extends MhSharedItTest {
 
     @Autowired private VariableTxService variableTxService;
-    @Autowired private ExecContextVariableStateRepository execContextVariableStateRepository;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TaskRepository taskRepository;
     @Autowired private ExecContextGraftService execContextGraftService;

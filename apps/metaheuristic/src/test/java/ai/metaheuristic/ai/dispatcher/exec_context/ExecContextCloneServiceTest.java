@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -74,7 +73,7 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
     @Autowired VariableRepository variableRepository;
     @Autowired TxSupportForTestingService txSupport;
     @Autowired ExecContextCloneTxService cloneTxService;
-    @Autowired ExecContextGraphRepository ecgRepo;
+    @Autowired ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
 
 
     @Test
@@ -99,9 +98,9 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
         assertThat(clone.state).isEqualTo(EnumsApi.ExecContextState.FINISHED.code);
 
         ExecContextImpl source = execContextRepository.findByIdNullable(sourceId);
-        assertThat(clone.execContextGraphId).isNotEqualTo(source.execContextGraphId);
-        assertThat(clone.execContextTaskStateId).isNotEqualTo(source.execContextTaskStateId);
-        assertThat(clone.execContextVariableStateId).isNotEqualTo(source.execContextVariableStateId);
+        // 041 Phase 21 (the whole-ExecContext record ids are gone): assertThat(clone.execContextGraphId).isNotEqualTo(source.execContextGraphId);
+        // 041 Phase 21 (the whole-ExecContext record ids are gone): assertThat(clone.execContextTaskStateId).isNotEqualTo(source.execContextTaskStateId);
+        // 041 Phase 21 (the whole-ExecContext record ids are gone): assertThat(clone.execContextVariableStateId).isNotEqualTo(source.execContextVariableStateId);
 
         // identity-bearing fields preserved
         assertThat(clone.sourceCodeId).isEqualTo(source.sourceCodeId);
@@ -179,8 +178,6 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
         assertThat(clonedBlobs).containsAll(sourceBlobs);
     }
 
-    @Autowired
-    ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository ecvsRepo;
 
     /**
      * Phase 13.G.5 — Characterization test for the parent-task-id rewrite bug
@@ -383,8 +380,7 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
         // load cloned graph + cloned tasks
         ExecContextImpl clonedEc = execContextRepository.findByIdNullable(clonedEcId);
         assertThat(clonedEc).isNotNull();
-        ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph clonedGraph =
-                ecgRepo.findById(clonedEc.execContextGraphId).orElseThrow();
+        ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Graph clonedGraph = graphOf(clonedEc.id);
         java.util.List<TaskImpl> clonedTasks =
                 taskRepository.findByExecContextIdReadOnly(clonedEcId);
 
@@ -401,8 +397,7 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
         }
         for (Long pid : probeIds) {
             ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex v =
-                    ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService
-                            .findVertexByTaskId(clonedGraph, pid);
+                    findVertexByTaskId(clonedGraph, pid);
             if (v != null) {
                 graphVertexTaskIds.add(v.taskId);
             }
@@ -468,8 +463,7 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
         java.util.List<TaskImpl> srcTasks = taskRepository.findByExecContextIdReadOnly(sourceId);
         Set<Long> srcTaskRowIds = srcTasks.stream().map(t -> t.id).collect(Collectors.toSet());
 
-        ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph srcGraph =
-                ecgRepo.findById(src.execContextGraphId).orElseThrow();
+        ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Graph srcGraph = graphOf(src.id);
         Set<Long> srcGraphVertexIds = collectGraphVertexTaskIds(srcGraph, srcTaskRowIds);
 
         org.slf4j.LoggerFactory.getLogger(getClass())
@@ -484,15 +478,14 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
         ExecContextImpl clone = execContextRepository.findByIdNullable(clonedId);
         java.util.List<TaskImpl> clonedTasks = taskRepository.findByExecContextIdReadOnly(clonedId);
         Set<Long> clonedTaskRowIds = clonedTasks.stream().map(t -> t.id).collect(Collectors.toSet());
-        ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph clonedGraph =
-                ecgRepo.findById(clone.execContextGraphId).orElseThrow();
+        ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Graph clonedGraph = graphOf(clone.id);
         Set<Long> clonedGraphVertexIds = collectGraphVertexTaskIds(clonedGraph, clonedTaskRowIds);
 
         org.slf4j.LoggerFactory.getLogger(getClass())
                 .info("DIAG4 clone: ec={} taskRowIds={} graphVertexIds={}",
                         clonedId, clonedTaskRowIds, clonedGraphVertexIds);
         org.slf4j.LoggerFactory.getLogger(getClass())
-                .info("DIAG4 clone graph DOT: {}", clonedGraph.getParams());
+                .info("DIAG4 clone graph DOT: {}", ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentDotUtils.toDot(clonedGraph));
 
         // ASSERTIONS — strict equality
         assertThat(srcGraphVertexIds)
@@ -511,7 +504,7 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
      * by candidate taskIds. Pass a reasonably large candidate set.
      */
     private static Set<Long> collectGraphVertexTaskIds(
-            ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph graph,
+            ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Graph graph,
             Set<Long> candidates) {
         Set<Long> probeSet = new java.util.HashSet<>(candidates);
         // also probe a wide range to catch source-EC IDs leaking into clone graph
@@ -519,8 +512,7 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
         Set<Long> found = new java.util.HashSet<>();
         for (Long id : probeSet) {
             ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex v =
-                    ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService
-                            .findVertexByTaskId(graph, id);
+                    findVertexByTaskId(graph, id);
             if (v != null) {
                 found.add(v.taskId);
             }
@@ -529,55 +521,10 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
     }
 
 
-    @Autowired ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache ecgCache;
-
-    /**
-     * FIFTH-LEVEL DIAGNOSTIC — does ExecContextGraphCache.findById return the
-     * REWRITTEN graph (clone-EC IDs) or a stale source-EC version? This is the
-     * exact path TaskVariableInitTxService.intiVariables uses at runtime to
-     * resolve parent vertices.
-     */
-    @Test
-    void test_clone_ecgCache_returnsRewrittenGraph() {
-        DispatcherContext ctx = new DispatcherContext(getAccount(), getCompany());
-        var creation = txSupport.createExecContext(getSourceCode(), ctx.asUserExecContext());
-        setExecContextForTest(creation.execContext);
-        step_0_0_produceTasks();
-        Long sourceId = getExecContextForTest().id;
-
-        // act — clone
-        ExecContextCloneService.CloneResult result = cloneService.cloneExecContext(sourceId);
-        Long clonedId = result.clonedExecContextId();
-
-        ExecContextImpl clonedEc = execContextRepository.findByIdNullable(clonedId);
-        assertThat(clonedEc).isNotNull();
-
-        // Read the cloned graph THROUGH THE CACHE (production path)
-        ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph viaCache =
-                ecgCache.findById(clonedEc.execContextGraphId);
-        assertThat(viaCache).isNotNull();
-
-        // Read the cloned graph DIRECTLY from the repository (bypass cache wrapper but L2 still in play)
-        ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph viaRepo =
-                ecgRepo.findById(clonedEc.execContextGraphId).orElseThrow();
-
-        java.util.List<TaskImpl> clonedTasks = taskRepository.findByExecContextIdReadOnly(clonedId);
-        Set<Long> clonedTaskRowIds = clonedTasks.stream().map(t -> t.id).collect(Collectors.toSet());
-
-        Set<Long> verticesViaCache = collectGraphVertexTaskIds(viaCache, clonedTaskRowIds);
-        Set<Long> verticesViaRepo  = collectGraphVertexTaskIds(viaRepo, clonedTaskRowIds);
-
-        org.slf4j.LoggerFactory.getLogger(getClass())
-                .info("DIAG5: clonedTaskRowIds={} verticesViaCache={} verticesViaRepo={}",
-                        clonedTaskRowIds, verticesViaCache, verticesViaRepo);
-        org.slf4j.LoggerFactory.getLogger(getClass())
-                .info("DIAG5 viaCache.params={}", viaCache.getParams());
-
-        assertThat(verticesViaCache)
-                .as("ExecContextGraphCache.findById must return the rewritten graph "
-                  + "(clone-EC vertex IDs), not the source-EC graph")
-                .isEqualTo(clonedTaskRowIds);
-    }
+    // 041 Phase 21: test_clone_ecgCache_returnsRewrittenGraph is gone with ExecContextGraphCache. Its Javadoc read:
+    // "FIFTH-LEVEL DIAGNOSTIC - does ExecContextGraphCache.findById return the REWRITTEN graph (clone-EC IDs) or a
+    // stale source-EC version? This is the exact path TaskVariableInitTxService.intiVariables uses at runtime to
+    // resolve parent vertices."
 
 
     /**
@@ -647,8 +594,7 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
         ExecContextImpl clone = execContextRepository.findByIdNullable(clonedId);
         java.util.List<TaskImpl> clonedTasks = taskRepository.findByExecContextIdReadOnly(clonedId);
         Set<Long> clonedTaskRowIds = clonedTasks.stream().map(t -> t.id).collect(Collectors.toSet());
-        ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph clonedGraph =
-                ecgRepo.findById(clone.execContextGraphId).orElseThrow();
+        ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Graph clonedGraph = graphOf(clone.id);
 
         java.util.List<String> notInRows = new java.util.ArrayList<>();
         java.util.List<String> notInGraph = new java.util.ArrayList<>();
@@ -661,8 +607,7 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
                     notInRows.add("task#" + ct.id + " parentTaskId=" + pid);
                 }
                 ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex v =
-                        ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService
-                                .findVertexByTaskId(clonedGraph, pid);
+                        findVertexByTaskId(clonedGraph, pid);
                 if (v == null) {
                     notInGraph.add("task#" + ct.id + " parentTaskId=" + pid);
                 }
@@ -747,10 +692,8 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
         if (ec == null) {
             return List.of();
         }
-        String varStateJson = ecvsRepo.findById(ec.execContextVariableStateId)
-                .map(s -> s.getParams())
-                .orElse("");
-        Set<Long> ids = ExecContextCloneService.collectVariableIds(varStateJson);
+        // 041 Phase 21: the service reads them from the segments
+        Set<Long> ids = segmentReadService.referencedVariableIds(ec.id);
         if (ids.isEmpty()) {
             return List.of();
         }
@@ -758,5 +701,17 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
                 .map(id -> variableRepository.findById(id).orElse(null))
                 .filter(java.util.Objects::nonNull)
                 .toList();
+    }
+
+    /** 041 Phase 21: the graph derived from the ExecContext's segments (the whole-ExecContext graph record is gone). */
+    private ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Graph graphOf(Long execContextId) {
+        return segmentReadService.graph(execContextId);
+    }
+
+    /** The vertex of Task {@code taskId} in {@code graph}, or null - what ExecContextGraphService.findVertexByTaskId returned. */
+    private static ai.metaheuristic.ai.dispatcher.data.ExecContextData.@org.jspecify.annotations.Nullable TaskVertex findVertexByTaskId(
+            ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Graph graph, Long taskId) {
+        final ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Node n = graph.nodes().get(taskId);
+        return n == null ? null : new ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex(n.taskId(), n.ctx(), n.tag());
     }
 }

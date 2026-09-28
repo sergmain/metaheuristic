@@ -62,13 +62,13 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class ExecContextGraftRunNowRejoinTest extends PreparingSourceCode {
 
+    @Autowired private ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadServiceForRejoin;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private MhInternalTaskPipelineRunner pipelineRunner;
     @Autowired private ExecContextStatusService execContextStatusService;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TaskRepository taskRepository;
-    @Autowired private ExecContextGraphService execContextGraphService;
 
     private static final String MHSC_SOURCE = """
             source "test-graft-runnow-rejoin-1.0" {
@@ -105,8 +105,8 @@ public class ExecContextGraftRunNowRejoinTest extends PreparingSourceCode {
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(result.execContext.id, true)));
         final Long ecId = getExecContextForTest().id;
         ExecContextSyncService.getWithSyncVoid(ecId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(Objects.requireNonNull(getExecContextForTest().execContextGraphId), () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoid(Objects.requireNonNull(getExecContextForTest().execContextTaskStateId), () ->
+                ExecContextGraphSyncService.getWithSyncVoid(Objects.requireNonNull(getExecContextForTest().id), () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoid(Objects.requireNonNull(getExecContextForTest().id), () ->
                                 txSupportForTestingService.produceAndStartAllTasks(preparingSourceCodeData.getSourceCode(), ecId))));
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(ecId, true)));
         execContextStatusService.resetStatus();
@@ -125,9 +125,12 @@ public class ExecContextGraftRunNowRejoinTest extends PreparingSourceCode {
         TaskImpl grpHead = task(tasks, "grpHead");
         assertNotNull(grpHead, "grpHead task must exist (graft expanded when wrapper ran)");
 
-        final Long graphId = Objects.requireNonNull(getExecContextForTest().execContextGraphId);
-        final Set<ExecContextData.TaskVertex> grpHeadDescendants =
-                execContextGraphService.findDirectDescendants(graphId, grpHead.id);
+        // 041 Phase 21: the direct children from the segments (the whole-ExecContext graph is gone)
+        final ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentLineView view = segmentReadServiceForRejoin.lineView(getExecContextForTest().id);
+        final Set<ExecContextData.TaskVertex> grpHeadDescendants = new java.util.LinkedHashSet<>();
+        for (Long childId : ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentStates.childrenOf(view::lineOf, view::linesForkedFrom, grpHead.id)) {
+            grpHeadDescendants.add(new ExecContextData.TaskVertex(childId, view.lineOf(childId).ctx(), view.vertexOf(childId).tag()));
+        }
         // RED->GREEN-3 (desired): a run-now graft that cannot terminate at graft time rejoins the block
         // downstream, so grpHead has a real downstream terminal (not orphaned).
         assertFalse(grpHeadDescendants.isEmpty(),

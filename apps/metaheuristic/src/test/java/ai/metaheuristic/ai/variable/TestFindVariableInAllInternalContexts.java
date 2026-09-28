@@ -19,11 +19,9 @@ import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -73,7 +71,6 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
     @Autowired private VariableTxService variableTxService;
     @Autowired private VariableRepository variableRepository;
     @Autowired private ExecContextRepository execContextRepository;
-    @Autowired private ExecContextVariableStateRepository execContextVariableStateRepository;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
 

@@ -93,9 +93,7 @@ public class SharedItCleanupSwallowTest extends MhSharedItTest {
         ec.accountId = 2L;
         ec.createdOn = System.currentTimeMillis();
         ec.state = EnumsApi.ExecContextState.STARTED.code;
-        ec.execContextVariableStateId = 0L;
-        ec.execContextGraphId = 0L;
-        ec.execContextTaskStateId = 0L;
+        // 041 Phase 21: the three whole-ExecContext record pointers are gone
         ec.setParams("{\"version\":1,\"processes\":[],\"variables\":{\"inline\":{},\"inputs\":[],\"outputs\":[]}}");
         return execContextCache.save(ec).id;
     }

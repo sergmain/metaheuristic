@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -101,9 +100,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class RecoveryOrderingCharacterizationTest extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
+    @Autowired private ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     @Autowired private TxTestingService txTestingService;
     @Autowired private ExecContextCache execContextCache;
-    @Autowired private ExecContextGraphService execContextGraphService;
     @Autowired private ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
     @Autowired private ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
     @Autowired private TaskFinishingTxService taskFinishingTxService;
@@ -132,8 +131,8 @@ public class RecoveryOrderingCharacterizationTest extends PreparingSourceCode {
         final TaskImpl assignable = txTestingService.create(execContextId, taskParams(execContextId, "assembly-raw-file"));
 
         ExecContextSyncService.getWithSyncVoid(execContextId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId,
+                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().id,
                                 () -> buildGraph(root, failing, assignable))));
 
         // ❗ The root is advanced in the GRAPH only, deliberately. Moving it to OK in the DB as well
@@ -244,18 +243,17 @@ public class RecoveryOrderingCharacterizationTest extends PreparingSourceCode {
     private void setGraphState(Long taskId, EnumsApi.TaskExecState state) {
         final Long execContextId = getExecContextForTest().id;
         ExecContextSyncService.getWithSyncVoid(execContextId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId,
-                                () -> txSupportForTestingService.updateTaskExecState(
-                                        execContextGraphService.getExecContextDAC(execContextId, getExecContextForTest().execContextGraphId),
-                                        getExecContextForTest().execContextTaskStateId, taskId,
+                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().id,
+                                // 041 Phase 21: the state goes into the ExecContext's segments
+                                () -> txSupportForTestingService.updateTaskExecStateInSegments(
+                                        execContextId, taskId,
                                         state, CommonConsts.TOP_LEVEL_CONTEXT_ID))));
         refreshExecContext();
     }
 
     private List<Long> assignableTaskIds() {
-        return execContextGraphService.findAllForAssigning(
-                        getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId, true)
+        return segmentReadService.findAllForAssigning(getExecContextForTest().id, true)
                 .stream().map(v -> v.taskId).toList();
     }
 

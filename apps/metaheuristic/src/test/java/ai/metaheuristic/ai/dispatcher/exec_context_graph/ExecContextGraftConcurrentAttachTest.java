@@ -112,8 +112,8 @@ public class ExecContextGraftConcurrentAttachTest extends PreparingSourceCode {
         final Long ecId = getExecContextForTest().id;
 
         ExecContextSyncService.getWithSyncVoid(ecId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId, () ->
+                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
                                 txSupportForTestingService.produceTasksWithoutStarting(getSourceCode(), ecId))));
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(ecId, true)));
 

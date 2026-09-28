@@ -74,7 +74,7 @@ public class MhMcpDispatcherEventToolTest extends MhSharedItTest {
 
     private CallToolResult call(String toolName, Map<String, Object> arguments) {
         final MhMcpToolDefinitions definitions = new MhMcpToolDefinitions(
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, dispatcherEventQueryService);
         final McpServerFeatures.SyncToolSpecification spec = definitions.getAllToolSpecifications().stream()
                 .filter(s -> toolName.equals(s.tool().name()))
