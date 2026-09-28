@@ -217,6 +217,77 @@ public final class SegmentStates {
         return seen;
     }
 
+    /** Every Task from which {@code taskId} is reachable, not including it (Phase 10: variable-init context scope). */
+    public static Set<Long> ancestors(Adjacency adj, long taskId) {
+        final Set<Long> seen = new TreeSet<>();
+        final Deque<Long> queue = new ArrayDeque<>(adj.parentsOf(taskId));
+        while (!queue.isEmpty()) {
+            final long p = queue.poll();
+            if (seen.add(p)) {
+                queue.addAll(adj.parentsOf(p));
+            }
+        }
+        return seen;
+    }
+
+    /**
+     * The direct children of a Task over line lookups, as storage loads lines on demand (Phase 10): its chain
+     * successor, the heads of the lines it forks, and - for the tail of a non-root line - the line's derived join.
+     * Equal to {@link Adjacency#childrenOf} over all lines.
+     *
+     * @param lineOf          the line holding a Task
+     * @param linesForkedFrom the lines whose fork is a Task
+     */
+    public static List<Long> childrenOf(Function<Long, SegmentData.Line> lineOf,
+                                        Function<Long, List<SegmentData.Line>> linesForkedFrom, long taskId) {
+        final SegmentData.Line line = lineOf.apply(taskId);
+        final int pos = SegmentAlgebra.positionIn(line, taskId);
+        final List<Long> out = new ArrayList<>();
+        if (pos + 1 < line.tasks().size()) {
+            out.add(line.tasks().get(pos + 1).taskId());
+        }
+        linesForkedFrom.apply(taskId).forEach(l -> out.add(l.head().taskId()));
+        if (!line.isRoot() && pos + 1 == line.tasks().size()) {
+            final Long join = SegmentAlgebra.derivedJoin(lineOf, line);
+            if (join == null) {
+                throw new IllegalStateException("01.909.040 line " + line.ctx() + " has no join");
+            }
+            out.add(join);
+        }
+        return out;
+    }
+
+    /**
+     * The direct parents of a Task over line lookups (Phase 10): a line head's fork (none for the root head); otherwise
+     * its chain predecessor P and the tails of every line resolving to it - the lines forked from P, and, recursively,
+     * the lines forked from those lines' tails (a tail is the last Task of its chain, so its lines resolve one level up).
+     * Equal to {@link Adjacency#parentsOf} over all lines.
+     */
+    public static List<Long> parentsOf(Function<Long, SegmentData.Line> lineOf,
+                                       Function<Long, List<SegmentData.Line>> linesForkedFrom, long taskId) {
+        final SegmentData.Line line = lineOf.apply(taskId);
+        final int pos = SegmentAlgebra.positionIn(line, taskId);
+        final List<Long> out = new ArrayList<>();
+        if (pos == 0) {
+            if (!line.isRoot()) {
+                out.add(Objects.requireNonNull(line.forkTaskId()));
+            }
+            return out;
+        }
+        final long predecessor = line.tasks().get(pos - 1).taskId();
+        out.add(predecessor);
+        resolvingTails(linesForkedFrom, predecessor, out);
+        return out;
+    }
+
+    private static void resolvingTails(Function<Long, List<SegmentData.Line>> linesForkedFrom, long fork, List<Long> out) {
+        for (SegmentData.Line l : linesForkedFrom.apply(fork)) {
+            final long tail = l.tail().taskId();
+            out.add(tail);
+            resolvingTails(linesForkedFrom, tail, out);
+        }
+    }
+
     /** Convenience: the state of a Task in a map, NONE when absent. */
     public static Function<Long, EnumsApi.TaskExecState> stateOf(Map<Long, EnumsApi.TaskExecState> states) {
         return id -> states.getOrDefault(id, EnumsApi.TaskExecState.NONE);

@@ -50,6 +50,7 @@ import java.util.Set;
 public class TaskStateService {
 
     private final TaskFinishingTxService taskFinishingTxService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextCache execContextCache;
     private final TaskExecStateService taskExecStateService;
@@ -76,8 +77,8 @@ public class TaskStateService {
         }
     }
 
-    private boolean allDirectParentsDead(ExecContextGraph ecg, ExecContextData.TaskVertex subTask) {
-        Set<ExecContextData.TaskVertex> parents = ExecContextGraphService.findDirectAncestors(ecg, subTask);
+    // 041 Phase 10: the parents are passed in - they come from the segments (SegmentStates.parentsOf)
+    private boolean allDirectParentsDead(Set<ExecContextData.TaskVertex> parents) {
         if (parents.isEmpty()) {
             return false;
         }
@@ -112,15 +113,21 @@ public class TaskStateService {
             return;
         }
 
-        ExecContextGraph ecg = execContextGraphCache.findById(ec.execContextGraphId);
-        if (ecg==null) {
-            log.error("189.120 can't find ExecContextGraph #" + ec.execContextGraphId);
-            return;
+        // 041 Phase 10: direct children and parents come from the segments (a SegmentLineView loads only the lines they
+        // touch); the parents' states are read from MH_TASK, as before - join-record counts follow segment states,
+        // which lag MH_TASK, and a join decided on them could stay PRE_INIT forever.
+        final ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentLineView view = segmentReadService.lineView(ec.id);
+        final java.util.function.Function<Long, ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Line> lineOf = view::lineOf;
+        final java.util.function.Function<Long, java.util.List<ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Line>> forkedFrom = view::linesForkedFrom;
+        Set<ExecContextData.TaskVertex> subTasks = new java.util.LinkedHashSet<>();
+        for (Long childId : ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentStates.childrenOf(lineOf, forkedFrom, event.taskId)) {
+            subTasks.add(new ExecContextData.TaskVertex(childId, view.lineOf(childId).ctx(), view.vertexOf(childId).tag()));
         }
-
-        Set<ExecContextData.TaskVertex> subTasks = ExecContextGraphService.findDirectDescendants(ecg, event.taskId);
         for (ExecContextData.TaskVertex subTask : subTasks) {
-            Set<ExecContextData.TaskVertex> parents = ExecContextGraphService.findDirectAncestors(ecg, subTask);
+            Set<ExecContextData.TaskVertex> parents = new java.util.LinkedHashSet<>();
+            for (Long parentId : ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentStates.parentsOf(lineOf, forkedFrom, subTask.taskId)) {
+                parents.add(new ExecContextData.TaskVertex(parentId));
+            }
             boolean nextState = true;
             boolean anyParentError = false;
             for (ExecContextData.TaskVertex vertex : parents) {
@@ -168,8 +175,8 @@ public class TaskStateService {
             // a child with even ONE live parent is a legitimate convergence point (e.g. a condition-gated mh.nop
             // sibling rejoining) and MUST still advance — that is exactly what the earlier reverted `anyParentError`
             // variant got wrong. Leaves (mh.finish) and `tag terminal` vertices are exempt: they must always run.
-            if (allDirectParentsDead(ecg, subTask)
-                    && !ExecContextGraphService.findDirectDescendants(ecg, subTask.taskId).isEmpty()
+            if (allDirectParentsDead(parents)
+                    && !ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentStates.childrenOf(lineOf, forkedFrom, subTask.taskId).isEmpty()
                     && !ai.metaheuristic.ai.Consts.TAG_TERMINAL.equals(subTask.tag)) {
                 log.info("189.230 not advancing task #{} to INIT: all direct parents are ERROR/SKIPPED (dead branch)", subTask.taskId);
                 continue;

@@ -142,21 +142,8 @@ public final class SegmentStateChange {
 
         /** Chain successor, heads of the lines it forks, and - for a non-root line's tail - the derived join. */
         List<Long> children(Long taskId) {
-            final SegmentData.Line line = lookup.lineOf().apply(taskId);
-            final int pos = SegmentAlgebra.positionIn(line, taskId);
-            final List<Long> out = new ArrayList<>();
-            if (pos + 1 < line.tasks().size()) {
-                out.add(line.tasks().get(pos + 1).taskId());
-            }
-            lookup.linesForkedFrom().apply(taskId).forEach(l -> out.add(l.head().taskId()));
-            if (!line.isRoot() && pos + 1 == line.tasks().size()) {
-                final Long joinTaskId = SegmentAlgebra.derivedJoin(lookup.lineOf(), line);
-                if (joinTaskId == null) {
-                    throw new IllegalStateException("01.914.040 line " + line.ctx() + " has no join");
-                }
-                out.add(joinTaskId);
-            }
-            return out;
+            // 041 Phase 10: one implementation, shared with the readers
+            return SegmentStates.childrenOf(lookup.lineOf(), lookup.linesForkedFrom(), taskId);
         }
 
         /** The leaf (the root line's last Task) and {@code tag terminal} Tasks are never marked. */

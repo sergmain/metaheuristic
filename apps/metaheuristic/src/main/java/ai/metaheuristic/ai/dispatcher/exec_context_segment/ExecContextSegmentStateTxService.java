@@ -68,7 +68,7 @@ public class ExecContextSegmentStateTxService {
     public ExecContextOperationStatusWithTaskList updateTaskExecStates(Long execContextId, List<TaskData.TaskWithStateAndTaskContextId> changes) {
         TxUtils.checkTxExists();
         final Loaded loaded = new Loaded(execContextId);
-        changes.forEach(c -> loaded.ctxHint.put(c.taskId, c.taskContextId));
+        changes.forEach(c -> loaded.view.hint(c.taskId, c.taskContextId));
         final SegmentStateChange.Result r = SegmentStateChange.apply(loaded.lookup(),
                 changes.stream().map(c -> new SegmentStateChange.Change(c.taskId, c.state)).toList());
         loaded.write(r.states(), Map.of(), r.joins());
@@ -96,80 +96,26 @@ public class ExecContextSegmentStateTxService {
     @Transactional(readOnly = true)
     public Integer triesWasMade(Long execContextId, Long taskId) {
         final Loaded loaded = new Loaded(execContextId);
-        loaded.lineOf(taskId);
-        return loaded.segmentOfTask.get(taskId).getExecContextSegmentParams().triesWasMade.get(taskId);
+        return loaded.view.segmentOf(taskId).getExecContextSegmentParams().triesWasMade.get(taskId);
     }
 
-    /** The segments and join records one call has read, indexed by Task. */
+    /** The segments (through a {@link SegmentLineView}) and join records one call has read. */
     private final class Loaded {
+        // The segments and join records one call has read, indexed by Task.
+        // (lines forked from a Task:) Lines forked from {@code taskId}: in its own segment (static sub-blocks) and segments starting at such a line.
         private final Long execContextId;
-        private final Map<Long, String> ctxHint = new HashMap<>();
-        private final Map<Long, ExecContextSegment> segmentOfTask = new HashMap<>();
-        private final Map<Long, SegmentData.Line> lineOfTask = new HashMap<>();
-        private final Map<Long, List<SegmentData.Line>> linesOfSegment = new HashMap<>();
+        private final SegmentLineView view;
         private final Map<Long, Optional<ExecContextJoin>> joins = new HashMap<>();
 
         private Loaded(Long execContextId) {
             this.execContextId = execContextId;
+            // 041 Phase 10: the on-demand line loading moved into SegmentLineView, shared with the readers
+            this.view = new SegmentLineView(execContextId, ctx -> segmentTxService.findSegmentOfCtx(execContextId, ctx),
+                    this::ctxOf, fork -> segmentRepository.findByExecContextIdAndForkTaskId(execContextId, fork));
         }
 
         SegmentStateChange.Lookup lookup() {
-            return new SegmentStateChange.Lookup(this::lineOf, this::linesForkedFrom, this::joinOf, this::stateOf);
-        }
-
-        private void index(ExecContextSegment s) {
-            if (linesOfSegment.containsKey(s.id)) {
-                return;
-            }
-            final List<SegmentData.Line> lines = SegmentParamsConverter.lines(s.getExecContextSegmentParams());
-            linesOfSegment.put(s.id, lines);
-            for (SegmentData.Line l : lines) {
-                for (SegmentData.Vertex v : l.tasks()) {
-                    lineOfTask.put(v.taskId(), l);
-                    segmentOfTask.put(v.taskId(), s);
-                }
-            }
-        }
-
-        SegmentData.Line lineOf(Long taskId) {
-            final SegmentData.Line known = lineOfTask.get(taskId);
-            if (known != null) {
-                return known;
-            }
-            final String hint = ctxHint.get(taskId);
-            final String ctx = hint != null ? hint : ctxOf(taskId);
-            final ExecContextSegment s = segmentTxService.findSegmentOfCtx(execContextId, ctx);
-            if (s == null) {
-                throw new IllegalStateException("01.916.010 no segment owns ctx " + ctx + " of Task #" + taskId + ", ExecContext #" + execContextId);
-            }
-            index(s);
-            final SegmentData.Line line = lineOfTask.get(taskId);
-            if (line == null) {
-                throw new IllegalStateException("01.916.020 Task #" + taskId + " (ctx " + ctx + ") is not in segment " + s.lineCtxId
-                        + ", ExecContext #" + execContextId);
-            }
-            return line;
-        }
-
-        /** Lines forked from {@code taskId}: in its own segment (static sub-blocks) and segments starting at such a line. */
-        List<SegmentData.Line> linesForkedFrom(Long taskId) {
-            lineOf(taskId);
-            final List<ExecContextSegment> where = new ArrayList<>();
-            where.add(segmentOfTask.get(taskId));
-            for (ExecContextSegment s : segmentRepository.findByExecContextIdAndForkTaskId(execContextId, taskId)) {
-                index(s);
-                where.add(s);
-            }
-            final Set<String> seen = new HashSet<>();
-            final List<SegmentData.Line> out = new ArrayList<>();
-            for (ExecContextSegment s : where) {
-                for (SegmentData.Line l : linesOfSegment.get(s.id)) {
-                    if (taskId.equals(l.forkTaskId()) && seen.add(l.ctx())) {
-                        out.add(l);
-                    }
-                }
-            }
-            return out;
+            return new SegmentStateChange.Lookup(view::lineOf, view::linesForkedFrom, this::joinOf, this::stateOf);
         }
 
         SegmentStateChange.@Nullable JoinCount joinOf(Long joinTaskId) {
@@ -180,8 +126,7 @@ public class ExecContextSegmentStateTxService {
         }
 
         EnumsApi.TaskExecState stateOf(Long taskId) {
-            lineOf(taskId);
-            return segmentOfTask.get(taskId).getExecContextSegmentParams().states.getOrDefault(taskId, EnumsApi.TaskExecState.NONE);
+            return view.segmentOf(taskId).getExecContextSegmentParams().states.getOrDefault(taskId, EnumsApi.TaskExecState.NONE);
         }
 
         /** Writes the changed states and tries into their segments, and the moved counts into their join records. */
@@ -213,8 +158,7 @@ public class ExecContextSegmentStateTxService {
         }
 
         private ExecContextSegment segmentOf(Long taskId) {
-            lineOf(taskId);
-            return segmentOfTask.get(taskId);
+            return view.segmentOf(taskId);
         }
 
         private String ctxOf(Long taskId) {

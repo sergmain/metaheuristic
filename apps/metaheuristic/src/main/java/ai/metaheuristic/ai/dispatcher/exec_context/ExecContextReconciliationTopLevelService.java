@@ -58,6 +58,7 @@ import static ai.metaheuristic.api.EnumsApi.TaskExecState;
 public class ExecContextReconciliationTopLevelService {
 
     private final TaskTxService taskTxService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -73,16 +74,24 @@ public class ExecContextReconciliationTopLevelService {
         }
 
         // Reconcile states in db and in graph
-        List<ExecContextData.TaskVertex> rootVertices = execContextGraphService.findAllRootVertices(execContextGraphId);
-        if (rootVertices.size()>1) {
-            log.error("307.020 Too many root vertices, Will be used only first vertex, actual number: " + rootVertices.size());
-        }
+        // 041 Phase 10: every Task but the root line's head, with its segment state - what the descendants of the one
+        // root vertex were in the whole graph. A segmented ExecContext has exactly one root line (SegmentStates.Adjacency).
+        final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService.Snapshot snapshot = segmentReadService.snapshot(execContextId);
+        final ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Line rootLine =
+                snapshot.lines().stream().filter(ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Line::isRoot).findFirst().orElse(null);
 
-        if (rootVertices.isEmpty()) {
+        if (rootLine==null) {
             return status;
         }
-        final Set<TaskData.TaskWithState> vertices = execContextGraphService.findDescendantsWithState(
-                execContextGraphId, execContextTaskStateId, rootVertices.get(0).taskId);
+        final long rootHead = rootLine.head().taskId();
+        final Set<TaskData.TaskWithState> vertices = new java.util.HashSet<>();
+        for (ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Line line : snapshot.lines()) {
+            for (ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Vertex v : line.tasks()) {
+                if (v.taskId() != rootHead) {
+                    vertices.add(new TaskData.TaskWithState(v.taskId(), snapshot.states().getOrDefault(v.taskId(), TaskExecState.NONE)));
+                }
+            }
+        }
 
         final Map<Long, TaskApiData.TaskState> states = taskTxService.getExecStateOfTasks(execContextId);
         final Map<Long, TaskQueue.AllocatedTask> allocatedTasks = TaskProviderTopLevelService.getTaskExecStates(execContextId);

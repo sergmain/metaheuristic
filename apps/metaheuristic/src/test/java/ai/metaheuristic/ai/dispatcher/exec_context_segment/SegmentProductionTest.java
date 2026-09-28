@@ -62,6 +62,7 @@ public class SegmentProductionTest extends PreparingSourceCode {
     @Autowired private ExecContextBaselineSupport support;
     @Autowired private ExecContextSegmentRepository segmentRepository;
     @Autowired private ExecContextJoinRepository joinRepository;
+    @Autowired private SegmentInvariantAsserts invariants;
 
     @Override
     public SourceCodeUriAndLang getSourceCodeAndLang() {
@@ -120,6 +121,7 @@ public class SegmentProductionTest extends PreparingSourceCode {
                 "every Task of the segment has its exec state in the segment");
         assertHashMatchesContent(root);
         assertEquals(List.of(), joinsOf(ec.id), "no line has been forked yet, so no join record");
+        invariants.assertAll(ec.id);
     }
 
     /** Runs a shape to FINISHED on the step driver. */
@@ -162,6 +164,7 @@ public class SegmentProductionTest extends PreparingSourceCode {
         }
         assertEquals(Map.of("splitter", 2, "post", 3), registeredByJoinProcess(ec.id, processById),
                 "S1: the two static branches join the splitter, the three grafted lines join post");
+        invariants.assertAll(ec.id);
     }
 
     @Test
@@ -175,5 +178,6 @@ public class SegmentProductionTest extends PreparingSourceCode {
         segments.forEach(SegmentProductionTest::assertHashMatchesContent);
         assertEquals(Map.of("post", 2 + 4 + 8), registeredByJoinProcess(ec.id, processById),
                 "S6: every splitter is last in its line, so all fourteen lines resolve to the one join post");
+        invariants.assertAll(ec.id);
     }
 }
