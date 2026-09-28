@@ -65,6 +65,7 @@ public class ExecContextTaskResettingService {
     private final EventPublisherService eventPublisherService;
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final TaskFinishingTxService taskFinishingTxService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentStateTxService segmentStateTxService;
 
     @Transactional(rollbackFor =  CommonRollbackException.class)
     public void resetTasksWithErrorForRecovery(Long execContextId, List<TaskData.TaskWithRecoveryStatus> statuses) {
@@ -75,11 +76,8 @@ public class ExecContextTaskResettingService {
             return;
         }
 
-        ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);
-        if (execContextTaskState==null) {
-            log.error("155.030 ExecContextTaskState wasn't found for execContext #{}", execContextId);
-            return;
-        }
+        // 041 Phase 9: the whole-ExecContext task-state record is no longer read - the recovered state and the tries go
+        // into the Task's segment (ExecContextSegmentStateTxService.resetForRecovery)
 
         for (TaskData.TaskWithRecoveryStatus status : statuses) {
             if (status.targetState== EnumsApi.TaskExecState.ERROR) {
@@ -90,8 +88,7 @@ public class ExecContextTaskResettingService {
             else if (status.targetState==EnumsApi.TaskExecState.NONE) {
                 TaskSyncService.getWithSyncVoid(status.taskId, ()->resetTask(ec, status.taskId, EnumsApi.TaskExecState.NONE));
 
-                ExecContextTaskStateParams ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
-                ectspy.triesWasMade.put(status.taskId, status.triesWasMade);
+                segmentStateTxService.resetForRecovery(execContextId, status.taskId, status.targetState, status.triesWasMade);
                 // A Task state lives in two stores, and assignment reads the GRAPH one:
                 // ExecContextGraphService.findAllForAssigning() returns only NONE / CHECK_CACHE vertices.
                 // resetTask() above writes the DB state and the task queue but not the graph, so without
@@ -100,7 +97,6 @@ public class ExecContextTaskResettingService {
                 // The ERROR branch above needs no equivalent: finishWithError() publishes
                 // UpdateTaskExecStatesInExecContextTxEvent, which carries its state into the graph.
                 // Both stores move inside this one transaction, so nothing can observe them disagreeing.
-                ectspy.states.put(status.taskId, status.targetState);
 
                 // A Task's state lives in two stores, and assignment reads the GRAPH one:
                 // ExecContextGraphService.findAllForAssigning() returns only NONE / CHECK_CACHE vertices.
@@ -110,10 +106,6 @@ public class ExecContextTaskResettingService {
                 // The ERROR branch above needs no equivalent: finishWithError() publishes
                 // UpdateTaskExecStatesInExecContextTxEvent, which carries its state into the graph.
                 // Both stores move inside this one transaction, so nothing can observe them disagreeing.
-                ectspy.states.put(status.taskId, status.targetState);
-
-                execContextTaskState.updateParams(ectspy);
-                execContextTaskStateRepository.save(execContextTaskState);
             }
             else {
                 throw new IllegalStateException("status.targetState==");

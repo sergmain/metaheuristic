@@ -54,15 +54,18 @@ public class ExecContextTaskStateTxService {
     private final TaskExecStateService taskExecStateService;
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final EventPublisherService eventPublisherService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentStateTxService segmentStateTxService;
 
     public record TransferStateResult(TaskQueue.TaskGroups taskGroups, Set<TaskData.TaskWithState> skippedTasks) {}
 
+    // 041 Phase 9: both entry points write task states into segments and join records
+    // (ExecContextSegmentStateTxService), no longer into the whole-ExecContext task-state record; the whole graph
+    // (ExecContextDAC) is no longer needed - the SKIPPED closure walks the lines.
     @Transactional(rollbackFor = CommonRollbackException.class)
-    public ExecContextOperationStatusWithTaskList updateTaskExecStatesInGraph(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecStatesInGraph(Long execContextId, Long execContextTaskStateId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
         ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
 
-        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
-            execContextDAC, execContextTaskStateId, taskWithStates);
+        final ExecContextOperationStatusWithTaskList status = segmentStateTxService.updateTaskExecStates(execContextId, taskWithStates);
 
         // the to-be-SKIPPED task-row writes are persisted by the orchestrator (per-task lock wrapping the per-task Tx), not here
         eventPublisherService.handleFindUnassignedTasksAndRegisterInQueueEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
@@ -71,7 +74,7 @@ public class ExecContextTaskStateTxService {
     }
 
     @Transactional(rollbackFor = CommonRollbackException.class)
-    public TransferStateResult transferStateFromTaskQueueToExecContext(ExecContextData.ExecContextDAC execContextDAC, Long execContextId, Long execContextTaskStateId) {
+    public TransferStateResult transferStateFromTaskQueueToExecContext(Long execContextId, Long execContextTaskStateId) {
         ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
 
         TaskQueue.TaskGroups taskGroups = TaskProviderTopLevelService.getTaskGroupForTransferring(execContextId);
@@ -99,7 +102,7 @@ public class ExecContextTaskStateTxService {
                 taskWithStates.add(new TaskData.TaskWithStateAndTaskContextId(task.queuedTask.taskId, task.state, taskContextId));
             }
         }
-        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContextDAC, execContextTaskStateId, taskWithStates);
+        final ExecContextOperationStatusWithTaskList status = segmentStateTxService.updateTaskExecStates(execContextId, taskWithStates);
 
         // the to-be-SKIPPED task-row writes are persisted by the orchestrator (per-task lock wrapping the per-task Tx), not here
         return new TransferStateResult(taskGroups, status.childrenTasks);

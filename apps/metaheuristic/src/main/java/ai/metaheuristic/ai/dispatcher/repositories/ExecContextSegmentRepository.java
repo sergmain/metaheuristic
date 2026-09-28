@@ -46,4 +46,8 @@ public interface ExecContextSegmentRepository extends CrudRepository<ExecContext
      */
     @Query(value="select s.lineCtxId from ExecContextSegment s where s.execContextId=:execContextId and s.lineCtxId like :pattern")
     List<String> findLineCtxIdsByExecContextIdAndLineCtxIdLike(Long execContextId, String pattern);
+
+    /** Segments whose start line forks from {@code forkTaskId} (index {@code mh_exec_context_segment_ec_fork_idx}). */
+    @Query(value="select s from ExecContextSegment s where s.execContextId=:execContextId and s.forkTaskId=:forkTaskId")
+    List<ExecContextSegment> findByExecContextIdAndForkTaskId(Long execContextId, Long forkTaskId);
 }

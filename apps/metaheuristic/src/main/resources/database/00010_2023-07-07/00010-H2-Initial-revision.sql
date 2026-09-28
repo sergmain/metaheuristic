@@ -464,6 +464,9 @@ CREATE TABLE mh_exec_context_segment
 CREATE UNIQUE INDEX mh_exec_context_segment_ec_line_ctx_unq_idx
     ON mh_exec_context_segment (EXEC_CONTEXT_ID, LINE_CTX_ID);
 
+CREATE INDEX mh_exec_context_segment_ec_fork_idx
+    ON mh_exec_context_segment (EXEC_CONTEXT_ID, FORK_TASK_ID);
+
 -- ID is assigned: the writer allocates it from mh_ids (ExecContextSegmentIdService) before building the row, so
 -- LINE_CTX_ID (seed + id, decision 10) is in the one INSERT.
 

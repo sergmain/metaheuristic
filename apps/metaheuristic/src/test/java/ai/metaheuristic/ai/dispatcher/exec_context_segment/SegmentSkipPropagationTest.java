@@ -28,6 +28,9 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Phase 4 of 041-EXEC-CONTEXT-SEGMENTS-PLAN (section 8.5): the SKIPPED closure of a failure, walked along the lines from
  * the failed Task, equals what today's whole-graph propagation produced (the goldens), and has the plan's properties.
+ *
+ * <p>Phase 9: the same goldens through {@link SegmentStateChange} - the closure as segmented storage runs it, reading a
+ * join's dead parents from its record's counts instead of walking the lines into it.
  */
 @Execution(ExecutionMode.CONCURRENT)
 public class SegmentSkipPropagationTest {
@@ -55,6 +58,68 @@ public class SegmentSkipPropagationTest {
     @Test public void test_golden_S5() { assertGolden(SegmentFixtureShapes.DOT_S5); }
     @Test public void test_golden_S6() { assertGolden(SegmentFixtureShapes.DOT_S6); }
     @Test public void test_golden_S7() { assertGolden(SegmentFixtureShapes.DOT_S7); }
+
+    /**
+     * A storage lookup over every line of a shape, as {@link ExecContextSegmentStateTxService} supplies it from segments:
+     * every line registered with its derived join, the counts taken from {@code states}.
+     */
+    private static SegmentStateChange.Lookup lookup(List<SegmentData.Line> lines, Map<Long, EnumsApi.TaskExecState> states) {
+        final SegmentAlgebra.LineIndex index = SegmentAlgebra.LineIndex.of(lines);
+        final Map<Long, List<SegmentData.Line>> forked = new HashMap<>();
+        final Map<Long, SegmentStateChange.JoinCount> joins = new HashMap<>();
+        for (SegmentData.Line l : lines) {
+            if (l.isRoot()) {
+                continue;
+            }
+            forked.computeIfAbsent(Objects.requireNonNull(l.forkTaskId()), k -> new ArrayList<>()).add(l);
+            final Long join = Objects.requireNonNull(SegmentAlgebra.derivedJoin(index, l));
+            final EnumsApi.TaskExecState tail = states.getOrDefault(l.tail().taskId(), EnumsApi.TaskExecState.NONE);
+            final SegmentStateChange.JoinCount c = joins.getOrDefault(join, new SegmentStateChange.JoinCount(0, 0, 0));
+            joins.put(join, new SegmentStateChange.JoinCount(c.registered() + 1, c.finished() + (tail == OK ? 1 : 0),
+                    c.dead() + (tail == ERROR || tail == SKIPPED ? 1 : 0)));
+        }
+        return new SegmentStateChange.Lookup(index::lineOf, t -> forked.getOrDefault(t, List.of()), joins::get,
+                t -> states.getOrDefault(t, EnumsApi.TaskExecState.NONE));
+    }
+
+    private static void assertGoldenOnSegments(SegmentFixtureShapes.DotShape shape) {
+        final List<SegmentData.Line> lines = SegmentAlgebra.decompose(SegmentDotUtils.parse(shape.dot()));
+        final SegmentGolden.Golden golden = SegmentGolden.load(shape.id());
+        assertFalse(golden.skips().isEmpty(), shape.id() + ": the golden must hold at least one failure");
+        for (SegmentGolden.SkipCase c : golden.skips()) {
+            final String at = shape.id() + " run " + c.run() + " step " + c.step() + ", failed #" + c.seed();
+            final Map<Long, EnumsApi.TaskExecState> before = new TreeMap<>(c.before());
+            before.remove(c.seed());
+            final EnumsApi.TaskExecState failure = Objects.requireNonNull(c.after().get(c.seed()), at + ": no state of the failed Task");
+
+            final SegmentStateChange.Result r = SegmentStateChange.apply(lookup(lines, before),
+                    List.of(new SegmentStateChange.Change(c.seed(), failure)));
+
+            final Map<Long, EnumsApi.TaskExecState> after = new TreeMap<>(before);
+            after.putAll(r.states());
+            assertEquals(new TreeMap<>(c.after()), after, at + ": states after the change differ from the golden");
+
+            final SegmentStateChange.Lookup initial = lookup(lines, before);
+            final SegmentStateChange.Lookup recount = lookup(lines, after);
+            for (Long join : new TreeSet<>(SegmentAlgebra.derivedJoins(lines).values())) {
+                final SegmentStateChange.JoinCount expected = recount.joinOf().apply(join);
+                if (Objects.equals(initial.joinOf().apply(join), expected)) {
+                    assertFalse(r.joins().containsKey(join), at + ": join #" + join + " did not move, but was written");
+                }
+                else {
+                    assertEquals(expected, r.joins().get(join), at + ": join #" + join + " counts after the change");
+                }
+            }
+        }
+    }
+
+    @Test public void test_goldenOnSegments_S1() { assertGoldenOnSegments(SegmentFixtureShapes.DOT_S1); }
+    @Test public void test_goldenOnSegments_S2() { assertGoldenOnSegments(SegmentFixtureShapes.DOT_S2); }
+    @Test public void test_goldenOnSegments_S3() { assertGoldenOnSegments(SegmentFixtureShapes.DOT_S3); }
+    @Test public void test_goldenOnSegments_S4() { assertGoldenOnSegments(SegmentFixtureShapes.DOT_S4); }
+    @Test public void test_goldenOnSegments_S5() { assertGoldenOnSegments(SegmentFixtureShapes.DOT_S5); }
+    @Test public void test_goldenOnSegments_S6() { assertGoldenOnSegments(SegmentFixtureShapes.DOT_S6); }
+    @Test public void test_goldenOnSegments_S7() { assertGoldenOnSegments(SegmentFixtureShapes.DOT_S7); }
 
     private static SegmentStates.Adjacency adj(SegmentFixtureShapes.DotShape shape) {
         return SegmentStates.Adjacency.of(SegmentAlgebra.decompose(SegmentDotUtils.parse(shape.dot())));

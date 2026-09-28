@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context_segment;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -88,18 +89,39 @@ public final class SegmentAlgebra {
      */
     @Nullable
     public static Long derivedJoin(LineIndex index, SegmentData.Line line) {
+        // 041 Phase 9: one implementation - the lookup form below; a LineIndex is one such lookup
+        return derivedJoin(index::lineOf, line);
+    }
+
+    /**
+     * {@link #derivedJoin(LineIndex, SegmentData.Line)} over a line lookup ({@code lineOf}: the line holding a Task), so
+     * storage can load the fork's lines on demand instead of indexing every line of the ExecContext (Phase 9).
+     */
+    @Nullable
+    public static Long derivedJoin(Function<Long, SegmentData.Line> lineOf, SegmentData.Line line) {
         SegmentData.Line current = line;
         while (true) {
             final Long fork = current.forkTaskId();
             if (fork == null) {
                 return null;
             }
-            final Long next = index.nextInChain(fork);
-            if (next != null) {
-                return next;
+            final SegmentData.Line forkLine = lineOf.apply(fork);
+            final int pos = positionIn(forkLine, fork);
+            if (pos + 1 < forkLine.tasks().size()) {
+                return forkLine.tasks().get(pos + 1).taskId();
             }
-            current = index.lineOf(fork);
+            current = forkLine;
         }
+    }
+
+    /** The index of {@code taskId} in {@code line}'s chain. */
+    public static int positionIn(SegmentData.Line line, long taskId) {
+        for (int i = 0; i < line.tasks().size(); i++) {
+            if (line.tasks().get(i).taskId() == taskId) {
+                return i;
+            }
+        }
+        throw new IllegalStateException("01.906.130 Task #" + taskId + " is not in line " + line.ctx());
     }
 
     /** The derived join of every non-root line, by line ctx. */

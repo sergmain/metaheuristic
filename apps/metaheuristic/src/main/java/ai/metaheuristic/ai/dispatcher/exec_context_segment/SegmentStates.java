@@ -19,7 +19,9 @@ package ai.metaheuristic.ai.dispatcher.exec_context_segment;
 import ai.metaheuristic.api.EnumsApi;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Task-state algebra over lines (041-EXEC-CONTEXT-SEGMENTS-PLAN, Phase 4, decision 11): which Tasks are ready, the
@@ -104,7 +106,7 @@ public final class SegmentStates {
         return EnumsApi.TaskExecState.isFinishedState(s);
     }
 
-    private static boolean dead(EnumsApi.TaskExecState s) {
+    static boolean dead(EnumsApi.TaskExecState s) {
         return s == EnumsApi.TaskExecState.ERROR || s == EnumsApi.TaskExecState.SKIPPED;
     }
 
@@ -160,21 +162,44 @@ public final class SegmentStates {
      * @param states exec states by Task id; an absent Task is NONE
      */
     public static Set<Long> skipClosure(Adjacency adj, Map<Long, EnumsApi.TaskExecState> states, long seed) {
+        // 041 Phase 9: one implementation - the function form below, here over the whole-ExecContext adjacency
+        final Function<Long, EnumsApi.TaskExecState> stateOf = stateOf(states);
+        return skipClosure(adj::childrenOf,
+                c -> c == adj.leaf() || adj.isTerminal(c),
+                c -> {
+                    final List<Long> parents = adj.parentsOf(c);
+                    return !parents.isEmpty() && parents.stream().allMatch(p -> dead(stateOf.apply(p)));
+                },
+                stateOf, c -> states.put(c, EnumsApi.TaskExecState.SKIPPED), seed);
+    }
+
+    /**
+     * The SKIPPED closure over functions, so storage that loads lines on demand can run it (Phase 9). From the seed's
+     * children onwards, a Task is marked when it is not already OK / ERROR / SKIPPED, is not {@code exempt} (the leaf,
+     * {@code tag terminal}), and {@code allParentsDead} holds (false for a Task without parents); the walk continues from
+     * every Task it marks.
+     *
+     * @param stateOf        the current state of a Task - it must see every earlier {@code markSkipped}
+     * @param allParentsDead evaluated against the current states
+     * @param markSkipped    records a Task as SKIPPED
+     */
+    public static Set<Long> skipClosure(Function<Long, List<Long>> childrenOf, Predicate<Long> exempt,
+                                        Predicate<Long> allParentsDead, Function<Long, EnumsApi.TaskExecState> stateOf,
+                                        Consumer<Long> markSkipped, long seed) {
         final Set<Long> marked = new TreeSet<>();
-        final Deque<Long> queue = new ArrayDeque<>(adj.childrenOf(seed));
+        final Deque<Long> queue = new ArrayDeque<>(childrenOf.apply(seed));
         while (!queue.isEmpty()) {
             final long c = queue.poll();
-            final EnumsApi.TaskExecState s = states.getOrDefault(c, EnumsApi.TaskExecState.NONE);
-            if (s == EnumsApi.TaskExecState.OK || dead(s) || c == adj.leaf() || adj.isTerminal(c)) {
+            final EnumsApi.TaskExecState s = stateOf.apply(c);
+            if (s == EnumsApi.TaskExecState.OK || dead(s) || exempt.test(c)) {
                 continue;
             }
-            final List<Long> parents = adj.parentsOf(c);
-            if (parents.isEmpty() || !parents.stream().allMatch(p -> dead(states.getOrDefault(p, EnumsApi.TaskExecState.NONE)))) {
+            if (!allParentsDead.test(c)) {
                 continue;
             }
-            states.put(c, EnumsApi.TaskExecState.SKIPPED);
+            markSkipped.accept(c);
             marked.add(c);
-            queue.addAll(adj.childrenOf(c));
+            queue.addAll(childrenOf.apply(c));
         }
         return marked;
     }
