@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.events.ResetTaskEvent;
@@ -32,10 +31,8 @@ import ai.metaheuristic.commons.utils.FunctionAnalyzerUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import org.jspecify.annotations.Nullable;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
@@ -65,7 +62,6 @@ public class ExecContextTaskResettingTopLevelService {
 
     private final TaskRepository taskRepository;
     private final ExecContextTaskResettingService execContextTaskResettingService;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextCache execContextCache;
     private final ExecutionGateService executionGateService;
     private final ProcessorCoreRepository processorCoreRepository;
@@ -192,7 +188,7 @@ public class ExecContextTaskResettingTopLevelService {
             statuses.add(new TaskData.TaskWithRecoveryStatus(taskId, tries, targetState));
         }
         ExecContextSyncService.getWithSyncVoid(event.execContextId, ()->
-                ExecContextTaskStateSyncService.getWithSyncVoid(ec.execContextTaskStateId,
+                ExecContextTaskStateSyncService.getWithSyncVoid(ec.id,
                         () -> execContextTaskResettingService.resetTasksWithErrorForRecovery(event.execContextId, statuses)));
         int i=0;
     }

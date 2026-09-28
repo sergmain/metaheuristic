@@ -17,12 +17,9 @@
 package ai.metaheuristic.ai.mcp;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.bundle.BundleService;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorage;
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorageSynthetic;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -43,9 +40,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageSyntheticService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageSyntheticRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
@@ -152,9 +146,6 @@ public class MhMcpToolDefinitions {
     private final TaskResetService taskResetService;
     private final ExecContextCache execContextCache;
     private final ExecContextTopLevelService execContextTopLevelService;
-    private final ExecContextGraphRepository execContextGraphRepository;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final SourceCodeRepository sourceCodeRepository;
     private final BundleService bundleService;

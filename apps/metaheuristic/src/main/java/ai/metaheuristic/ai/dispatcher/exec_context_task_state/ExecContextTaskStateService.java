@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
@@ -25,13 +24,11 @@ import ai.metaheuristic.ai.dispatcher.event.events.TransferStateFromTaskQueueToE
 import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
@@ -62,7 +59,6 @@ public class ExecContextTaskStateService {
     private final ExecContextTaskStateTxService execContextTaskStateService;
     private final TaskRepository taskRepository;
     private final ExecContextCache execContextCache;
-    private final ExecContextGraphService execContextGraphService;
     private final TaskExecStateService taskExecStateService;
 
 
@@ -119,7 +115,7 @@ public class ExecContextTaskStateService {
                 taskWithStates.add(new TaskData.TaskWithStateAndTaskContextId(taskId, taskExecState, taskParams.task.taskContextId));
             }
             if (!taskWithStates.isEmpty()) {
-                ExecContextTaskStateSyncService.getWithSyncNullable(ec.execContextTaskStateId,
+                ExecContextTaskStateSyncService.getWithSyncNullable(ec.id,
                     () -> updateTaskExecStatesExecContext(event.execContextId, ec.execContextTaskStateId, taskWithStates));
             }
 
@@ -146,7 +142,7 @@ public class ExecContextTaskStateService {
             int i = 1;
             long mills = System.currentTimeMillis();
             do {
-                TaskQueue.TaskGroups taskGroup = ExecContextTaskStateSyncService.getWithSync(event.execContextTaskStateId,
+                TaskQueue.TaskGroups taskGroup = ExecContextTaskStateSyncService.getWithSync(event.id,
                     ()-> transferStateFromTaskQueueToExecContext(event.execContextId, event.execContextTaskStateId));
                 if (taskGroup.groups.isEmpty()) {
                     break;

@@ -53,8 +53,8 @@ public class TaskResetService {
         }
 
             ExecContextSyncService.getWithSyncVoid(ec.id, ()->
-                ExecContextGraphSyncService.getWithSyncVoid(ec.execContextGraphId, ()->
-                    ExecContextTaskStateSyncService.getWithSyncVoid(ec.execContextTaskStateId, ()-> {
+                ExecContextGraphSyncService.getWithSyncVoid(ec.id, ()->
+                    ExecContextTaskStateSyncService.getWithSyncVoid(ec.id, ()-> {
                             try {
                                 taskResetTxService.resetTaskAndExecContextTx(ec.id, taskId);
                             } catch (CommonRollbackException e) {

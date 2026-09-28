@@ -66,9 +66,6 @@ public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
     private final Globals globals;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextRepository execContextRepository;
-    private final ExecContextGraphRepository execContextGraphRepository;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final SourceCodeRepository sourceCodeRepository;
     private final BatchRepository batchRepository;
     private final CompanyRepository companyRepository;

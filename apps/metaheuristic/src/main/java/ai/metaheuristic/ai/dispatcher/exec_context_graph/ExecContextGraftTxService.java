@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -82,11 +81,9 @@ import java.util.Set;
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class ExecContextGraftTxService {
 
-    private final ExecContextGraphService execContextGraphService;
     private final TaskProducingService taskProducingService;
     private final VariableTxService variableTxService;
     private final TaskRepository taskRepository;
-    private final ExecContextVariableStateService execContextVariableStateService;
     private final ExecContextSegmentTxService segmentTxService;
 
     /**

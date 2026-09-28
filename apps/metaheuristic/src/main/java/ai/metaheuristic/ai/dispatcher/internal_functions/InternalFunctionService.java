@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.commons.graph.ExecContextProcessGraphService;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParams;
@@ -53,7 +52,6 @@ import static ai.metaheuristic.ai.dispatcher.data.ExecContextData.*;
 public class InternalFunctionService {
 
     private final SourceCodeCache sourceCodeCache;
-    private final ExecContextGraphService execContextGraphService;
     private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
 
     public InternalFunctionData.ExecutionContextData getSubProcesses(ExecContextApiData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml, Long taskId) {

@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -93,10 +92,7 @@ public class VariableTxService {
     private final GeneralBlobService generalBlobService;
     private final GeneralBlobTxService generalBlobTxService;
     private final DispatcherBlobStorage dispatcherBlobStorage;
-    private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final ExecContextRepository execContextRepository;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final ExecContextGraphRepository execContextGraphRepository;
 
     private Variable createInitialized(
             InputStream is, long size, String variable, @Nullable String filename,

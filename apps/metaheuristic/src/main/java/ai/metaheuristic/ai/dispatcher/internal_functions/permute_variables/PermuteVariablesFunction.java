@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.api.dispatcher.InternalFunction;
@@ -66,7 +65,6 @@ public class PermuteVariablesFunction implements InternalFunction {
 
     private final PermuteVariablesService permuteVariablesAndInlinesTxService;
     private final InternalFunctionVariableService internalFunctionVariableService;
-    private final ExecContextGraphService execContextGraphService;
     private final VariableTxService variableService;
     private final InternalFunctionService internalFunctionService;
 
@@ -170,8 +168,8 @@ public class PermuteVariablesFunction implements InternalFunction {
         final String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
-        ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextGraphId, ()->
-                ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId, ()->
+        ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextId, ()->
+                ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextId, ()->
                         permuteVariablesAndInlinesTxService.createTaskForPermutations(
                                 simpleExecContext, taskId, executionContextData, descendants, holders, variableName, subProcessContextId,
                                 producePresentVariable, producePresentVariablePrefix!=null ? producePresentVariablePrefix : "", upperCaseFirstChar, presentVariables,

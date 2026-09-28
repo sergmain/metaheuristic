@@ -152,8 +152,8 @@ public class BatchLineSplitterFunction implements InternalFunction {
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
 
-        ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
-                ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+        ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextId, ()->
+                ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextId, ()->
                         batchLineSplitterTxService.createTasksTx(simpleExecContext, taskId, taskParamsYaml, numberOfLines, content)));
     }
 }

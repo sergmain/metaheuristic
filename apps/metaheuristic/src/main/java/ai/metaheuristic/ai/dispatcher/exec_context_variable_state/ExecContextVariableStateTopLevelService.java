@@ -55,7 +55,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextVariableStateTopLevelService implements ShutdownInterface {
 
-    private final ExecContextVariableStateService execContextVariableStateService;
     private final ExecContextCache execContextCache;
     private final ExecContextSegmentVariableStateTxService segmentVariableStateTxService;
 

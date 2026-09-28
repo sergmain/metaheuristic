@@ -22,11 +22,9 @@ import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.LogDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
@@ -66,7 +64,6 @@ public class TxSupportForTestingService {
     private final VariableRepository variableRepository;
     private final VariableTxService variableTxService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
-    private final ExecContextGraphService execContextGraphService;
     private final FunctionCache functionCache;
     private final DispatcherBlobStorage dispatcherBlobStorage;
     private final ProcessorCache processorCache;
@@ -75,7 +72,6 @@ public class TxSupportForTestingService {
     private final ExecContextCache execContextCache;
     private final TaskResetTxService taskResetTxService;
     private final ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache sourceCodeCache;
-    private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final LogDataRepository logDataRepository;
 
     @Transactional
@@ -364,10 +360,9 @@ public class TxSupportForTestingService {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
-        ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(execContext.execContextGraphId, execContext.execContextTaskStateId);
-        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, taskIds, initialState);
-        execContextGraphService.save(graphAndStates);
-        return osr;
+        // 041 Phase 21: the whole-ExecContext graph is gone; Tasks join an ExecContext through its segments
+        // (ExecContextSegmentTxService), so adding them to a graph by hand has no counterpart
+        throw new IllegalStateException("041 Phase 21: addTasksToGraph has no counterpart on segments, ExecContext #" + execContext.id);
     }
 
     @Transactional

@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
@@ -72,16 +71,14 @@ public class BatchLineSplitterTxService {
     private final InternalFunctionService internalFunctionService;
     private final GraftExpander graftExpander;
     private final TaskProducingService taskProducingService;
-    private final ExecContextGraphService execContextGraphService;
     private final ExecContextSegmentTxService segmentTxService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
     public Void createTasksTx(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml, Long numberOfLines, String content) {
         try {
-            ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
-            createTasks(simpleExecContext, graphAndStates, content, taskParamsYaml, taskId, numberOfLines);
-            execContextGraphService.save(graphAndStates);
+            // 041 Phase 21: nothing whole-ExecContext is loaded or saved - the lines land in their own segments
+            createTasks(simpleExecContext, content, taskParamsYaml, taskId, numberOfLines);
         }
         catch (InternalFunctionException e) {
             throw e;
@@ -105,7 +102,7 @@ public class BatchLineSplitterTxService {
         return null;
     }
 
-    private void createTasks(ExecContextApiData.SimpleExecContext simpleExecContext, ExecContextData.GraphAndStates graphAndStates, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines) {
+    private void createTasks(ExecContextApiData.SimpleExecContext simpleExecContext, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines) {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {

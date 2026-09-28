@@ -132,7 +132,6 @@ public class ExecContextGraftService {
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
     private final InternalFunctionService internalFunctionService;
-    private final ExecContextGraphService execContextGraphService;
     private final ExecContextGraftTxService graftTxService;
     private final TaskResetService taskResetService;
     private final VariableTxService variableTxService;

@@ -20,9 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
@@ -32,7 +30,6 @@ import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -66,11 +63,9 @@ public class SubProcessesTxService {
     private final InternalFunctionService internalFunctionService;
     private final GraftExpander graftExpander;
     private final TaskProducingService taskProducingService;
-    private final ExecContextGraphService execContextGraphService;
     private final ExecContextSegmentTxService segmentTxService;
     private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final TaskRepository taskRepository;
-    private final ExecContextVariableStateService execContextVariableStateService;
     private final ExecContextCache execContextCache;
 
     @Transactional
@@ -135,7 +130,7 @@ public class SubProcessesTxService {
         }
 
         try {
-            ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
+            // 041 Phase 21: nothing whole-ExecContext is loaded - the subtree and the new lines live in segments
 
             // Remove old children and their entire sub-layer subtree from graph before creating new tasks.
             // Uses deriveParentTaskContextId walk to identify all sub-layers belonging to this wrapper.

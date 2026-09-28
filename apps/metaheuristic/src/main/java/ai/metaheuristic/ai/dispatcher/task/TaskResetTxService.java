@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
@@ -25,18 +24,14 @@ import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegiste
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingService;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.commons.S;
@@ -66,14 +61,11 @@ public class TaskResetTxService {
 
     private final ExecContextCache execContextCache;
     private final ExecContextTaskResettingService execContextTaskResettingService;
-    private final ExecContextGraphService execContextGraphService;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final EventPublisherService eventPublisherService;
     private final TaskRepository taskRepository;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
     private final TaskFinishingTxService taskFinishingTxService;
     private final VariableRepository variableRepository;
-    private final ExecContextVariableStateService execContextVariableStateService;
     private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService segmentTxService;
     private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentStateTxService segmentStateTxService;
@@ -91,8 +83,8 @@ public class TaskResetTxService {
         if (ec == null) {
             return;
         }
-        ExecContextTaskStateSyncService.checkWriteLockPresent(ec.execContextGraphId);
-        ExecContextTaskStateSyncService.checkWriteLockPresent(ec.execContextTaskStateId);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(ec.id);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(ec.id);
 
         // Set ExecContext to STARTED if it was FINISHED
         if (ec.state == EnumsApi.ExecContextState.FINISHED.code) {

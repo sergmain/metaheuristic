@@ -340,9 +340,6 @@ public class ExecContextApiData {
     public static class SimpleExecContext {
         public final Long sourceCodeId;
         public final Long execContextId;
-        public final Long execContextGraphId;
-        public final Long execContextTaskStateId;
-        public final Long execContextVariableStateId;
         public final Long companyId;
         public final Long accountId;
         public final ExecContextParams paramsYaml;

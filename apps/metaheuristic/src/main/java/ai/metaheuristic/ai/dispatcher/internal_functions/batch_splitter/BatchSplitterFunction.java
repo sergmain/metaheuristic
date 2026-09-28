@@ -137,8 +137,8 @@ public class BatchSplitterFunction implements InternalFunction {
                 workingDir = tempDir;
                 mapping = Map.of(dataFile.getFileName().toString(), originFilename);
             }
-            ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextGraphId, ()->
-                    ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId,
+            ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextId, ()->
+                    ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextId,
                             () -> loadFilesFromDirAfterZip(simpleExecContext, taskId, taskParamsYaml, workingDir, mapping)));
         }
         catch(UnzipArchiveException e) {

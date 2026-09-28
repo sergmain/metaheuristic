@@ -17,9 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.event.events.ProcessDeletedExecContextEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTxService;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,9 +39,7 @@ import java.util.List;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextCleanerService {
 
-    private final ExecContextGraphService execContextGraphService;
     private final ExecContextTaskStateTxService execContextTaskStateService;
-    private final ExecContextVariableStateService execContextVariableStateService;
 
     @Async
     @EventListener

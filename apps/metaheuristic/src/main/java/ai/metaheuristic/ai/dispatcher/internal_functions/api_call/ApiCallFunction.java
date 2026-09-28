@@ -76,8 +76,8 @@ public class ApiCallFunction implements InternalFunction {
 
         ProviderData.QuestionAndAnswer answer = apiCallService.callApi(simpleExecContext, taskId, taskContextId, taskParamsYaml);
 
-        ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
-                ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+        ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextId, ()->
+                ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextId, ()->
                         subProcessesTxService.processSubProcesses(simpleExecContext, taskId, taskParamsYaml)));
 
         eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());

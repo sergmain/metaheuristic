@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInExecContextEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
@@ -59,7 +58,6 @@ public class ExecContextReconciliationTopLevelService {
 
     private final TaskTxService taskTxService;
     private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
-    private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;

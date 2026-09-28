@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.GraftExpander;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
@@ -57,7 +56,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PermuteValuesOfVariablesService {
 
     private final VariableTxService variableService;
-    private final ExecContextGraphService execContextGraphService;
     private final ExecContextSegmentTxService segmentTxService;
     private final TaskProducingService taskProducingService;
     private final GraftExpander graftExpander;
@@ -69,7 +67,7 @@ public class PermuteValuesOfVariablesService {
 
         final AtomicInteger currTaskNumber = new AtomicInteger(0);
         final List<Long> lastIds = new ArrayList<>();
-        ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
+        // 041 Phase 21: nothing whole-ExecContext is loaded - the lines land in their own segments
 
         for (InlineVariable inlineVariable : inlineVariables) {
             try {

@@ -72,15 +72,6 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "STATE")
     public int state;
 
-    @Column(name = "CTX_GRAPH_ID")
-    public Long execContextGraphId;
-
-    @Column(name = "CTX_TASK_STATE_ID")
-    public Long execContextTaskStateId;
-
-    @Column(name = "CTX_VARIABLE_STATE_ID")
-    public Long execContextVariableStateId;
-
     @Nullable
     @Column(name = "ROOT_EXEC_CONTEXT_ID")
     public Long rootExecContextId;
@@ -121,8 +112,8 @@ public class ExecContextImpl implements Serializable, ExecContext {
 
     @JsonIgnore
     public ExecContextApiData.SimpleExecContext asSimple() {
+        // 041 Phase 21: graph, task state and variable state live in the ExecContext's segments; no record ids
         return new ExecContextApiData.SimpleExecContext(
-                sourceCodeId, id, execContextGraphId, execContextTaskStateId,
-                execContextVariableStateId, companyId, accountId, getExecContextParamsYaml());
+                sourceCodeId, id, companyId, accountId, getExecContextParamsYaml());
     }
 }

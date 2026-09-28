@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_variable_state;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.utils.TxUtils;
 import org.jspecify.annotations.Nullable;
@@ -110,16 +109,6 @@ public class ExecContextVariableStateSyncService {
         }
     }
 
-    public static <T> T getWithSyncReadOnly(ExecContextVariableState execContextVariableState, Supplier<T> supplier) {
-        TxUtils.checkTxNotExists();
-        checkWriteLockNotPresent(execContextVariableState.id);
-
-        final ReentrantReadWriteLock.ReadLock lock = getReadLock(execContextVariableState.id);
-        try {
-            lock.lock();
-            return supplier.get();
-        } finally {
-            lock.unlock();
-        }
-    }
+    // 041 Phase 21: the read-only overload keyed by a whole-ExecContext record is gone with the records; every lock of
+    // this service is keyed by the ExecContext id
 }

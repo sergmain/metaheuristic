@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.events.*;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
@@ -65,7 +64,6 @@ public class ExecContextTaskAssigningTopLevelService implements ShutdownInterfac
     private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final ExecContextCache execContextCache;
     private final ExecContextFSM execContextFSM;
-    private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final TaskCheckCachingService taskCheckCachingService;
     private final TaskFinishingTxService taskFinishingTxService;

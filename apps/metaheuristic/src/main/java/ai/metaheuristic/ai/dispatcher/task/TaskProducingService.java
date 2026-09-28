@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
@@ -61,7 +60,6 @@ import java.util.Map;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskProducingService {
 
-    private final ExecContextGraphService execContextGraphService;
     private final FunctionService functionTopLevelService;
     private final TaskTxService taskTxService;
     private final Globals globals;
@@ -75,10 +73,10 @@ public class TaskProducingService {
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParams.Process process,
-            ExecContextParams execContextParamsYaml, Long execContextId, Long companyId, ExecContextData.GraphAndStates graphAndStates,
+            ExecContextParams execContextParamsYaml, Long execContextId, Long companyId,
             List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
         // Default: taskContextId is the Process's static internalContextId.
-        return produceTaskForProcess(process, execContextParamsYaml, execContextId, companyId, graphAndStates,
+        return produceTaskForProcess(process, execContextParamsYaml, execContextId, companyId,
                 parentTaskIds, taskExecState, p -> p.internalContextId);
     }
 
@@ -92,12 +90,13 @@ public class TaskProducingService {
      */
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParams.Process process,
-            ExecContextParams execContextParamsYaml, Long execContextId, Long companyId, ExecContextData.GraphAndStates graphAndStates,
+            ExecContextParams execContextParamsYaml, Long execContextId, Long companyId,
             List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState,
             java.util.function.Function<ExecContextParams.Process, String> taskContextIdResolver) {
         TxUtils.checkTxExists();
-        ExecContextGraphSyncService.checkWriteLockPresent(graphAndStates.graph().id);
-        ExecContextTaskStateSyncService.checkWriteLockPresent(graphAndStates.states().id);
+        // 041 Phase 21: both locks are keyed by the ExecContext id
+        ExecContextGraphSyncService.checkWriteLockPresent(execContextId);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextId);
 
         TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
 

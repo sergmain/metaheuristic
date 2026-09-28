@@ -16,8 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.*;
@@ -73,7 +71,7 @@ public class ExecContextData {
 
 
 
-    public record GraphAndStates(ExecContextGraph graph, ExecContextTaskState states) {}
+    // 041 Phase 21: GraphAndStates (the whole-ExecContext graph and task-state records) is gone with the records
 
     public record ExecContextDAC(Long execContextId, DirectedAcyclicGraph<TaskVertex, DefaultEdge> graph,
                                  Integer version) {}

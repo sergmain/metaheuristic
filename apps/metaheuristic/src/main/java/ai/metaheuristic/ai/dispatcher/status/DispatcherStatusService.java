@@ -21,8 +21,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.StatusUtils;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.S;
@@ -49,9 +47,6 @@ public class DispatcherStatusService {
 
     private final SourceCodeRepository sourceCodeRepository;
     private final ExecContextRepository execContextRepository;
-    private final ExecContextGraphRepository execContextGraphRepository;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final TaskRepository taskRepository;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;

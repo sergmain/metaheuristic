@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.GraftExpander;
@@ -70,7 +69,6 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class BatchSplitterTxService {
 
-    private final ExecContextGraphService execContextGraphService;
     private final ExecContextSegmentTxService segmentTxService;
     private final InternalFunctionService internalFunctionService;
     private final TaskProducingService taskProducingService;
@@ -105,7 +103,7 @@ public class BatchSplitterTxService {
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
-        ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
+        // 041 Phase 21: nothing whole-ExecContext is loaded - the lines land in their own segments
 
         try {
             // do not remove try(Stream<Path>){}

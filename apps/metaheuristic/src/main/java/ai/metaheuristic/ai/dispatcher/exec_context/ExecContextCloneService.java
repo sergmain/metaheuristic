@@ -15,21 +15,11 @@
  */
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsUtils;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.JsonUtils;
@@ -85,9 +75,6 @@ import java.util.concurrent.Executors;
 public class ExecContextCloneService {
 
     private final ExecContextRepository execContextRepository;
-    private final ExecContextGraphRepository execContextGraphRepository;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final TaskRepository taskRepository;
     private final ExecContextCloneTxService cloneTxService;
     private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
@@ -129,21 +116,11 @@ public class ExecContextCloneService {
             throw new IllegalArgumentException(
                     "Source ExecContext not found: " + sourceExecContextId);
         }
-        ExecContextGraph sourceGraph = execContextGraphRepository
-                .findById(source.execContextGraphId).orElseThrow();
-        ExecContextTaskState sourceTaskState = execContextTaskStateRepository
-                .findById(source.execContextTaskStateId).orElseThrow();
-        ExecContextVariableState sourceVarState = execContextVariableStateRepository
-                .findById(source.execContextVariableStateId).orElseThrow();
-
         // Stage 1a — copy ExecContext envelope and child rows
+        // (041 Phase 21: the whole-ExecContext graph / task-state / variable-state records are gone; the child records
+        // are the segment and join records, copied in Stage 1d)
         ExecContextImpl newEc = cloneTxService.insertNewExecContext(source);
         Long newEcId = newEc.id;
-
-        ExecContextGraph newGraph = cloneTxService.insertNewGraph(sourceGraph, newEcId);
-        ExecContextTaskState newTaskState = cloneTxService.insertNewTaskState(sourceTaskState, newEcId);
-        ExecContextVariableState newVarState = cloneTxService.insertNewVariableState(sourceVarState, newEcId);
-        cloneTxService.updateExecContextChildPointers(newEcId, newGraph.id, newTaskState.id, newVarState.id);
 
         // Stage 1b — clone Variable rows in parallel FIRST so the variableIdMap is
         // available when cloning Tasks (TaskParamsYaml carries variable IDs that
@@ -204,21 +181,7 @@ public class ExecContextCloneService {
         // Stage 2 — rewrite references (graph DOT inside YAML envelope, task-state
         // map keys, variable-state JSON). Pass the parsed YAML object to rewriteGraph
         // so we don't feed the whole YAML string to the DOT importer.
-        ExecContextGraphParams rewrittenGraphYaml = ExecContextCloneRewriteUtils
-                .rewriteGraph(newGraph.getExecContextGraphParamsYaml(), taskIdMap);
-        String rewrittenGraph = ExecContextGraphParamsUtils.BASE_UTILS
-                .toString(rewrittenGraphYaml);
-        String rewrittenTaskState = serializeTaskState(
-                ExecContextCloneRewriteUtils.rewriteTaskState(
-                        sourceTaskState.getExecContextTaskStateParamsYaml(), taskIdMap));
-        String rewrittenVarState = ExecContextCloneRewriteUtils
-                .rewriteVariableStateJson(newVarState.getParams(), taskIdMap, variableIdMap);
-
-        cloneTxService.writeRewrittenChildren(
-                newEcId,
-                newGraph.id, rewrittenGraph,
-                newTaskState.id, rewrittenTaskState,
-                newVarState.id, rewrittenVarState);
+        // (041 Phase 21: nothing left to rewrite here - the segments were copied with the id maps in Stage 1d)
 
         // Stage 3 — flip CLONING -> FINISHED
         cloneTxService.finalizeCloneState(newEcId);
@@ -277,12 +240,5 @@ public class ExecContextCloneService {
                 ids.add(vi.id);
             }
         }
-    }
-
-    @SneakyThrows
-    private static String serializeTaskState(
-            ExecContextTaskStateParams params) {
-        return ExecContextTaskStateParamsUtils
-                .BASE_UTILS.toString(params);
     }
 }

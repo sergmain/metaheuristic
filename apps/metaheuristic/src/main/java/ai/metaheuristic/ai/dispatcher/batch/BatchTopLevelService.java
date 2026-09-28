@@ -30,7 +30,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
@@ -111,7 +110,6 @@ public class BatchTopLevelService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final BatchHelperService batchHelperService;
     private final VariableTxService variableTxService;
-    private final ExecContextGraphService execContextGraphService;
     private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final LicenseSource licenseSource;
 
@@ -352,8 +350,8 @@ public class BatchTopLevelService {
             }
             final BatchData.UploadingStatus uploadingStatus;
             uploadingStatus = ExecContextSyncService.getWithSync(creationResult.execContext.id, ()->
-                    ExecContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
-                            ExecContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
+                    ExecContextGraphSyncService.getWithSync(creationResult.execContext.id, ()->
+                            ExecContextTaskStateSyncService.getWithSync(creationResult.execContext.id, ()->
                                     batchTxService.createBatchForFile(sc, creationResult.execContext.id, userContext))));
 
             verifyGraph = segmentReadService.verifyGraph(creationResult.execContext.id);
