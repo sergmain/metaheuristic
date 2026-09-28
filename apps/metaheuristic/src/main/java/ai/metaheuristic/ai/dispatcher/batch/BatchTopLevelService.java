@@ -112,6 +112,7 @@ public class BatchTopLevelService {
     private final BatchHelperService batchHelperService;
     private final VariableTxService variableTxService;
     private final ExecContextGraphService execContextGraphService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final LicenseSource licenseSource;
 
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
@@ -338,7 +339,8 @@ public class BatchTopLevelService {
             if (creationResult.isErrorMessages()) {
                 return new BatchData.UploadingStatus("981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
-            boolean verifyGraph = execContextGraphService.verifyGraph(creationResult.execContext.execContextGraphId);
+            // 041 Phase 12: the structure check runs on the segments
+            boolean verifyGraph = segmentReadService.verifyGraph(creationResult.execContext.id);
             if (!verifyGraph) {
                 return new BatchData.UploadingStatus("981.185 Graph is broken");
             }
@@ -354,7 +356,7 @@ public class BatchTopLevelService {
                             ExecContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
                                     batchTxService.createBatchForFile(sc, creationResult.execContext.id, userContext))));
 
-            verifyGraph = execContextGraphService.verifyGraph(creationResult.execContext.execContextGraphId);
+            verifyGraph = segmentReadService.verifyGraph(creationResult.execContext.id);
             if (!verifyGraph) {
                 return new BatchData.UploadingStatus("981.200 Graph is broken");
             }
