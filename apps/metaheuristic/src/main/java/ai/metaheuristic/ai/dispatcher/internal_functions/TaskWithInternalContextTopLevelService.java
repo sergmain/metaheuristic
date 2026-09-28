@@ -129,8 +129,11 @@ public class TaskWithInternalContextTopLevelService {
                             ()-> variableTxService.storeDataInVariable(output, tempFile));
                 }
                 // we don't need to use 'flushing' of state because this method is for copying variable from long-running process
+                // 041 Phase 9: flushed after all - the entry is in a segment, and every segment write holds the ExecContext's
+                // task-state lock; this thread may hold ExecContext / Task locks, and taking that lock here could invert the
+                // task-state -> Task order of the state updates. The flush holds no other lock.
                 VariableUploadedEvent event = new VariableUploadedEvent(ec.id, task.id, output.id, variableHolder.variable.nullified);
-                execContextVariableStateTopLevelService.registerVariableStateInternal(event.execContextId, List.of(event), ec.execContextVariableStateId);
+                execContextVariableStateTopLevelService.registerVariableState(event);
             }
         }
         catch (IOException e) {

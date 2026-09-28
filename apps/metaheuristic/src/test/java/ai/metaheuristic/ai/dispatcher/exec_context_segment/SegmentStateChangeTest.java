@@ -21,6 +21,8 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextJoin;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextSegment;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
+import ai.metaheuristic.ai.dispatcher.event.events.InputVariablesInitedEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraftService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraftTxService;
@@ -30,6 +32,7 @@ import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeInitService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -66,6 +69,7 @@ public class SegmentStateChangeTest extends PreparingSourceCode {
     @Autowired private ExecContextGraftTxService graftTxService;
     @Autowired private ExecContextSegmentLineCtxService lineCtxService;
     @Autowired private ExecContextSegmentStateTxService segmentStateTxService;
+    @Autowired private ExecContextSegmentVariableStateTxService segmentVariableStateTxService;
     @Autowired private ExecContextSegmentRepository segmentRepository;
     @Autowired private ExecContextJoinRepository joinRepository;
 
@@ -204,5 +208,78 @@ public class SegmentStateChangeTest extends PreparingSourceCode {
                 "post keeps a live parent - the splitter - and is tag terminal");
 
         invariants.assertAll(ec.id);
+    }
+
+    private static ExecContextApiData.VariableInfo info(long id, String name) {
+        final ExecContextApiData.VariableInfo vi = new ExecContextApiData.VariableInfo();
+        vi.id = id;
+        vi.name = name;
+        vi.context = EnumsApi.VariableContext.local;
+        vi.inited = false;
+        vi.nullified = false;
+        return vi;
+    }
+
+    @Test
+    public void test_variableStateEntries_landInTheTasksSegment_otherSegmentsUnchanged() {
+        final ExecContextImpl ec = producedS1();
+        final Long splitterId = idOf(ec.id, "splitter");
+        final LiveLine line = liveLine(ec.id, splitterId);
+        final long inputId = 900_001L;
+        final long outputId = 900_002L;
+
+        // a created Task's entry
+        final ExecContextApiData.VariableState entry = new ExecContextApiData.VariableState();
+        entry.taskId = line.head();
+        entry.execContextId = ec.id;
+        entry.taskContextId = line.ctx();
+        entry.process = "lineHead";
+        entry.inputs = new ArrayList<>(List.of(info(inputId, "in")));
+        entry.outputs = new ArrayList<>(List.of(info(outputId, "out")));
+        Map<String, Integer> before = versions(segmentsByCtx(ec.id));
+        segmentVariableStateTxService.registerCreatedTasks(ec.id, List.of(entry));
+        assertEquals(Set.of(line.ctx()), written(before, versions(segmentsByCtx(ec.id))), "the entry lands in the Task's segment only");
+        ExecContextApiData.VariableState stored = entryOf(ec.id, line);
+        assertEquals(List.of(inputId), stored.inputs.stream().map(v -> v.id).toList());
+        assertEquals(List.of(outputId), stored.outputs.stream().map(v -> v.id).toList());
+        assertFalse(stored.outputs.getFirst().inited);
+
+        // the Task's output uploaded
+        before = versions(segmentsByCtx(ec.id));
+        segmentVariableStateTxService.registerVariableStates(ec.id, List.of(new VariableUploadedEvent(ec.id, line.head(), outputId, true)));
+        assertEquals(Set.of(line.ctx()), written(before, versions(segmentsByCtx(ec.id))), "an upload writes the producer's segment only");
+        stored = entryOf(ec.id, line);
+        assertTrue(stored.outputs.getFirst().inited, "the output is inited");
+        assertTrue(stored.outputs.getFirst().nullified, "and nullified, as uploaded");
+        assertFalse(stored.inputs.getFirst().inited, "no flag is copied onto an input by an upload of another variable");
+
+        // the Task's input variables initialized
+        before = versions(segmentsByCtx(ec.id));
+        segmentVariableStateTxService.updateInputVariableStates(ec.id,
+                List.of(new InputVariablesInitedEvent(ec.id, line.head(), List.of(new InputVariablesInitedEvent.InputVariableState(inputId, false)))));
+        assertEquals(Set.of(line.ctx()), written(before, versions(segmentsByCtx(ec.id))), "input flags write the Task's segment only");
+        stored = entryOf(ec.id, line);
+        assertTrue(stored.inputs.getFirst().inited, "the input is inited");
+        assertFalse(stored.inputs.getFirst().nullified);
+
+        // a second registration of the same Task replaces its inputs and outputs, not adds an entry
+        final ExecContextApiData.VariableState again = new ExecContextApiData.VariableState();
+        again.taskId = line.head();
+        again.execContextId = ec.id;
+        again.taskContextId = line.ctx();
+        again.process = "lineHead";
+        again.inputs = new ArrayList<>();
+        again.outputs = new ArrayList<>(List.of(info(outputId + 1, "out2")));
+        segmentVariableStateTxService.registerCreatedTasks(ec.id, List.of(again));
+        final List<ExecContextApiData.VariableState> all = segmentsByCtx(ec.id).get(line.ctx()).getExecContextSegmentParams().variableStates;
+        assertEquals(1, all.size(), "one entry per Task");
+        assertEquals(List.of(outputId + 1), all.getFirst().outputs.stream().map(v -> v.id).toList());
+
+        invariants.assertAll(ec.id);
+    }
+
+    private ExecContextApiData.VariableState entryOf(Long ecId, LiveLine line) {
+        return segmentsByCtx(ecId).get(line.ctx()).getExecContextSegmentParams().variableStates.stream()
+                .filter(v -> line.head().equals(v.taskId)).findFirst().orElseThrow();
     }
 }
