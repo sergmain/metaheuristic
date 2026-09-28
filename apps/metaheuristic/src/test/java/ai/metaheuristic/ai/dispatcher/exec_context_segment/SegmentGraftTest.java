@@ -217,4 +217,31 @@ public class SegmentGraftTest extends PreparingSourceCode {
 
         invariants.assertAll(ec.id);
     }
+
+    /** Phase 11: RUN_NOW - one new segment, the line registered with its derived join, the head reset to INIT. */
+    @Test
+    public void test_runNow_outOfBand_writesOneSegment_registersTheLine_resetsItsHead() {
+        final ExecContextImpl ec = producedS1();
+        final Map<String, Long> id = idByProcessCode(support.rows(ec.id));
+        final Long splitterId = id.get("splitter");
+        final Long postId = id.get("post");
+        final Map<String, ExecContextSegment> before = segmentsByCtx(ec.id);
+
+        final ExecContextGraftService.GraftResult gr = execContextGraftService.attachGroup(ec.id, splitterId,
+                new ExecContextGraftService.GroupRef("line"), List.of(), List.of(), ExecContextGraftService.Driver.RUN_NOW, "mh.nop");
+
+        final List<ExecContextSegment> added = added(segmentsByCtx(ec.id), before);
+        assertEquals(1, added.size(), "RUN_NOW writes exactly one new segment row");
+        final ExecContextSegment seg = added.getFirst();
+        assertEquals(BASE + "#" + seg.id, gr.lineCtxId(), "decision 10, seed 0");
+        final ExecContextSegmentParams.Line line = seg.getExecContextSegmentParams().lines.getFirst();
+        assertTrue(line.registered, "a live line is registered");
+        final var post = Objects.requireNonNull(joinRepository.findByExecContextIdAndJoinTaskId(ec.id, postId), "post's record");
+        assertEquals(1, post.linesRegistered, "the line is registered with its derived join, post");
+        assertEquals(List.of(), gr.unwiredTails(), "an out-of-band graft reports no unwired tail");
+        assertEquals(EnumsApi.TaskExecState.INIT, seg.getExecContextSegmentParams().states.get(gr.headTaskId()),
+                "the graft's reset leaves the head INIT in its segment");
+
+        invariants.assertAll(ec.id);
+    }
 }
