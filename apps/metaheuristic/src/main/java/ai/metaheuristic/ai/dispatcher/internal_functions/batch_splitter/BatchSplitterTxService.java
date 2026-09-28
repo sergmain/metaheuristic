@@ -123,7 +123,7 @@ public class BatchSplitterTxService {
                                         variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
 
                                 // 041: a splitter's lines come from data - each starts its own segment
-                                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
+                                taskProducingService.createTasksForSubProcesses(simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
                                         ExecContextSegmentTxService.SegmentStart.OWN);
 
                             }

@@ -82,7 +82,7 @@ public class PermuteValuesOfVariablesService {
                             variableDataSource, simpleExecContext.execContextId, entry.getKey(), currTaskContextId, false);
                 }
                 // 041: one line per inline-variable set - the count comes from data, so each starts its own segment
-                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
+                taskProducingService.createTasksForSubProcesses(simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
                         ExecContextSegmentTxService.SegmentStart.OWN);
 
             } catch (BreakFromLambdaException e) {

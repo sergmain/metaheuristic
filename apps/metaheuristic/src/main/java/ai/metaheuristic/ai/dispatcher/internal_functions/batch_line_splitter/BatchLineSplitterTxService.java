@@ -156,7 +156,7 @@ public class BatchLineSplitterTxService {
             }
             try {
                 // 041: a splitter's lines come from data - each starts its own segment
-                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
+                taskProducingService.createTasksForSubProcesses(simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
                         ExecContextSegmentTxService.SegmentStart.OWN);
 
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {

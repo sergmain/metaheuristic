@@ -23,6 +23,8 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentLineCtxService;
+import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
@@ -75,6 +77,13 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>Non-transactional orchestration (SPRING-TX-RULES sec 1/sec 2): resolves context, acquires the
  * four sync locks, and delegates each write to {@link ExecContextGraftTxService}.
  *
+ * <p>041-EXEC-CONTEXT-SEGMENTS-PLAN, Phase 8: a graft writes one new segment and nothing else of the ExecContext's
+ * storage. Out of band ({@link #attachGroup}) the line ctx is allocated lock-free (decision 10: {@code base#(seed + id)},
+ * {@link ExecContextSegmentLineCtxService#allocateOutOfBand}), and a PLACE_NOW graft takes no lock at all - it writes only
+ * rows it creates. A RUN_NOW graft registers its line with the shared join record, so that one transaction runs under
+ * the ExecContext lock; its reset takes its own locks. In band, the caller's locks and transaction are joined as before
+ * and the line keeps today's sequential number ({@link ExecContextSegmentLineCtxService#nextSequentialLineCtx}).
+ *
  * Error code prefix: {@code 830.}
  *
  * @author Sergio Lissner
@@ -116,7 +125,7 @@ public class ExecContextGraftService {
      *  path and the in-band dispatcher direct-call path (which already holds the Graph + TaskState
      *  locks and a tx, so it invokes graftTxService directly rather than re-acquiring locks). */
     public record GraftSetup(ExecContextApiData.SimpleExecContext sec,
-                             InternalFunctionData.ExecutionContextData ecd, String lineCtxId,
+                             InternalFunctionData.ExecutionContextData ecd,
                              String rootProcessCode, Long graphId, Long taskStateId, Long varStateId,
                              String lineBaseCtxId) {}
 
@@ -127,6 +136,7 @@ public class ExecContextGraftService {
     private final ExecContextGraftTxService graftTxService;
     private final TaskResetService taskResetService;
     private final VariableTxService variableTxService;
+    private final ExecContextSegmentLineCtxService lineCtxService;
 
     /**
      * Graft {@code groupRef}'s body under {@code targetTaskId} in {@code execContextId}, flat, PLACE_NOW.
@@ -166,41 +176,36 @@ public class ExecContextGraftService {
         final ExecContextApiData.SimpleExecContext sec = s.sec();
         final InternalFunctionData.ExecutionContextData ecd = s.ecd();
         final String rootProcessCode = s.rootProcessCode();
-        final Long graphId = s.graphId();
-        final Long taskStateId = s.taskStateId();
-        final Long varStateId = s.varStateId();
 
         // ---- Stage 1: CREATE the grafted line PRE_INIT at the fresh isolated ctx; wire the tail ONLY
         //      into the shared downstream terminal (line isolation). createTasksForSubProcesses leaves
         //      it PRE_INIT, a state neither the dispatcher nor a test driver advances on its own. ----
-        AtomicReference<Long> headRef = new AtomicReference<>();
         // The fresh line ctx is taken under the same locks that create the line's tasks. graftSetup computes
         // it lock-free, so two concurrent grafts into one EC could both take the next free sibling ctx before
         // either had created a task there, and both landed on it.
-        AtomicReference<String> lineCtxRef = new AtomicReference<>();
+        // 041 Phase 8 (decision 10): superseded - the ctx is base#(seed + a freshly allocated segment id), unique without
+        // a lock, and the new segment takes that id. No other segment, and no whole-ExecContext record, is written.
+        // the taskContextIds come from the EC's graph, read under the Graph lock held here
+        final ExecContextSegmentLineCtxService.AllocatedLine line = lineCtxService.allocateOutOfBand(execContextId, s.lineBaseCtxId());
+        final String lineCtxId = line.lineCtxId();
+        final ExecContextSegmentTxService.SegmentStart segmentStart = ExecContextSegmentTxService.SegmentStart.own(line.segmentId());
         // the ids of the tasks this graft creates - the reset point is one of them
         final List<Long> createdTaskIds = new ArrayList<>();
-        ExecContextSyncService.getWithSyncVoid(execContextId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () -> {
-                            // the taskContextIds come from the EC's graph, read under the Graph lock held here
-                            final String freshCtxId = ContextUtils.nextSiblingTaskContextId(
-                                    s.lineBaseCtxId(), collectCtxIds(graphId));
-                            lineCtxRef.set(freshCtxId);
-                            headRef.set(graftTxService.createGroupTasksTx(
-                                    sec, ecd, targetTaskId, freshCtxId, rootProcessCode, inputBindings, new ArrayList<>(),
-                                    createdTaskIds));
-                        })));
-        Long headTaskId = headRef.get();
-        final String lineCtxId = lineCtxRef.get();
+        final Long headTaskId = switch (driver) {
+            // a line born SKIPPED is never registered with its join: only rows this graft creates are written - no lock
+            case PLACE_NOW -> graftTxService.createGroupTasksTx(
+                    sec, ecd, targetTaskId, lineCtxId, rootProcessCode, inputBindings, new ArrayList<>(),
+                    createdTaskIds, segmentStart, false);
+            // a live line raises its join record's registered count - a shared row, so under the ExecContext lock
+            case RUN_NOW -> ExecContextSyncService.getWithSync(execContextId, () -> graftTxService.createGroupTasksTx(
+                    sec, ecd, targetTaskId, lineCtxId, rootProcessCode, inputBindings, new ArrayList<>(),
+                    createdTaskIds, segmentStart, true));
+        };
 
         // ---- Stage 2: WRITE-ONCE materialize the declared outputs at the line ctx + register
         //      ExecContextVariableState so a later clone carries them (no 179.120 / 171.520). ----
-        ExecContextSyncService.getWithSyncVoid(execContextId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
-                                ExecContextVariableStateSyncService.getWithSyncVoid(varStateId, () ->
-                                        graftTxService.materializeOutputsTx(sec, headTaskId, lineCtxId, outputs)))));
+        // 041 Phase 8: the Variables are fresh keys at the fresh line ctx and the entry goes into the new segment - no lock
+        graftTxService.materializeOutputsTx(sec, headTaskId, lineCtxId, outputs);
 
         // ---- Stage 3 (driver). PLACE_NOW marks the grafted line SKIPPED terminal, event-free (no
         //      dispatcher kick during the graft) - a later reset reopens+runs it. RUN_NOW instead
@@ -209,10 +214,9 @@ public class ExecContextGraftService {
         //      PRE_INIT + inner dynamic-subprocess re-expansion, one scheduler kick) - the run half is
         //      reuse, not new code. It acquires its own EC/Graph/TaskState locks (called lock-free here). ----
         switch (driver) {
-            case PLACE_NOW -> ExecContextSyncService.getWithSyncVoid(execContextId, () ->
-                    ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
-                            ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
-                                    graftTxService.markLineSkippedTx(sec, headTaskId, lineCtxId))));
+            // 041 Phase 8: writes only the new segment and the new line's Tasks (each under its own Task lock) - no
+            // ExecContext-wide lock
+            case PLACE_NOW -> graftTxService.markLineSkippedTx(sec, headTaskId, lineCtxId);
             case RUN_NOW -> taskResetService.resetTaskAndExecContext(execContextId, headTaskId);
         }
 
@@ -328,12 +332,13 @@ public class ExecContextGraftService {
         //      back to the target and the subtree is a normal nested region. ----
         String base = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 targetTpy.task.taskContextId, ecd.subProcesses.get(0).processContextId);
-        String lineCtxId = ContextUtils.nextSiblingTaskContextId(base, collectCtxIds(ec.execContextGraphId));
+        // 041 Phase 8: the line ctx itself is no longer computed here - it was read from the whole-ExecContext graph. The
+        // caller allocates it from the segments: in band sequentially, out of band by decision 10.
 
         final Long graphId = ec.execContextGraphId;
         final Long taskStateId = ec.execContextTaskStateId;
         final Long varStateId = ec.execContextVariableStateId;
-        return new GraftSetup(sec, ecd, lineCtxId, rootProcessCode, graphId, taskStateId, varStateId, base);
+        return new GraftSetup(sec, ecd, rootProcessCode, graphId, taskStateId, varStateId, base);
     }
 
     /**
@@ -441,12 +446,14 @@ public class ExecContextGraftService {
                                                  List<InputBinding> inputBindings) {
         TxUtils.checkTxExists();
         GraftSetup s = graftSetup(execContextId, targetTaskId, new GroupRef(groupName));
+        // 041 Phase 8: today's sequential sibling number, from the segments (decision 10 is out-of-band only)
+        final String lineCtxId = lineCtxService.nextSequentialLineCtx(execContextId, s.lineBaseCtxId());
         Long head = graftTxService.createGroupTasksTx(
-                s.sec(), s.ecd(), targetTaskId, s.lineCtxId(), s.rootProcessCode(), inputBindings, new ArrayList<>());
-        graftTxService.markLineSkippedTx(s.sec(), head, s.lineCtxId());
+                s.sec(), s.ecd(), targetTaskId, lineCtxId, s.rootProcessCode(), inputBindings, new ArrayList<>());
+        graftTxService.markLineSkippedTx(s.sec(), head, lineCtxId);
         log.info("830.220 in-band graft PLACE_NOW: group '{}' under target #{} at ctx {} (head=#{})",
-                groupName, targetTaskId, s.lineCtxId(), head);
-        return new GraftResult(head, s.lineCtxId(), List.of(), null);
+                groupName, targetTaskId, lineCtxId, head);
+        return new GraftResult(head, lineCtxId, List.of(), null);
     }
 
     /**
@@ -456,17 +463,21 @@ public class ExecContextGraftService {
      * an in-band RUN_NOW does NOT reset: the EC is still producing, so the grafted line is laid live
      * (PRE_INIT, wired as a child of the target and into the shared terminal) and the normal dispatcher
      * runs it when the target completes. No markLineSkippedTx, no scheduler kick.
+     * 041 Phase 8: {@link GraftResult#unwiredTails()} holds EVERY tail of the line - the caller registers them with the
+     * derived join together with its block's own tails, once the block is complete.
      */
     public GraftResult attachGroupInBandRunNow(Long execContextId, Long targetTaskId, String groupName,
                                                List<InputBinding> inputBindings) {
         TxUtils.checkTxExists();
         GraftSetup s = graftSetup(execContextId, targetTaskId, new GroupRef(groupName));
+        // 041 Phase 8: today's sequential sibling number, from the segments (decision 10 is out-of-band only)
+        final String lineCtxId = lineCtxService.nextSequentialLineCtx(execContextId, s.lineBaseCtxId());
         List<Long> unwiredTails = new ArrayList<>();
         Long head = graftTxService.createGroupTasksTx(
-                s.sec(), s.ecd(), targetTaskId, s.lineCtxId(), s.rootProcessCode(), inputBindings, unwiredTails);
+                s.sec(), s.ecd(), targetTaskId, lineCtxId, s.rootProcessCode(), inputBindings, unwiredTails);
         log.info("830.240 in-band graft RUN_NOW: group '{}' under target #{} at ctx {} (head=#{}, live PRE_INIT)",
-                groupName, targetTaskId, s.lineCtxId(), head);
-        return new GraftResult(head, s.lineCtxId(), unwiredTails, null);
+                groupName, targetTaskId, lineCtxId, head);
+        return new GraftResult(head, lineCtxId, unwiredTails, null);
     }
 
     /**
@@ -545,7 +556,9 @@ public class ExecContextGraftService {
         ecd.execContextParamsYaml = bodyParams;
         // descendants: the TARGET's live direct children (same as v0) - the line's tail wires into the
         // single shared downstream terminal; body source does not change what the target flows into.
-        ecd.descendants = execContextGraphService.findDirectDescendants(sec.execContextGraphId, targetTaskId);
+        // 041 Phase 8: no longer read - a graft writes no edge (its join is derived), and the whole-ExecContext graph is
+        // not written any more, so its descendants would be stale
+        ecd.descendants = new java.util.LinkedHashSet<>();
         return ecd;
     }
 

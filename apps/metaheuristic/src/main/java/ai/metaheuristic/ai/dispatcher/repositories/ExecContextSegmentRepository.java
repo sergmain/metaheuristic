@@ -38,4 +38,12 @@ public interface ExecContextSegmentRepository extends CrudRepository<ExecContext
 
     @Query(value="select s.id from ExecContextSegment s where s.execContextId=:execContextId")
     List<Long> findIdsByExecContextId(Long execContextId);
+
+    /**
+     * {@code LINE_CTX_ID}s matching {@code pattern}. With {@code pattern = base + "#%"} these are exactly the lines at
+     * level {@code base} that start a segment: a ctx holds one {@code #}, so text before it is the level
+     * ({@code ContextUtils.getLevel}), and ctx text never holds {@code %}, {@code _} or {@code \}.
+     */
+    @Query(value="select s.lineCtxId from ExecContextSegment s where s.execContextId=:execContextId and s.lineCtxId like :pattern")
+    List<String> findLineCtxIdsByExecContextIdAndLineCtxIdLike(Long execContextId, String pattern);
 }

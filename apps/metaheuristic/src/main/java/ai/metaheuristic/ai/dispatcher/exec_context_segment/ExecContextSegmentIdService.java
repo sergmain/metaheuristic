@@ -23,12 +23,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  * Allocates the id of a new ExecContext segment before the segment is built (041-EXEC-CONTEXT-SEGMENTS-PLAN, decision
  * 10: line index = seed + the segment's id). The number comes from the {@code mh_ids} table generator the same way a
  * Company's unique id does ({@code CompanyTopLevelService.getUniqueId}): an {@link Ids} row is saved to draw the next
  * value and deleted at once, so {@code MH_IDS} keeps no row. Lock-free for the caller - the only shared point is the
  * generator's own row update in {@code mh_gen_ids}.
+ *
+ * <p>041 Phase 8: allocations are serialized in this JVM. The table generator draws each number over a second, isolated
+ * JDBC connection while the {@code Ids} save holds one, and every allocation already queues on the one
+ * {@code mh_gen_ids} row. Without this lock, 16 parallel out-of-band grafts took all 10 pooled connections as first
+ * connections and each waited for a second: observed {@code Unable to obtain isolated JDBC connection ... active=10,
+ * idle=0} after 30 s ({@code SegmentGraftConcurrencyTest}). Waiting on this lock holds no connection, so the queue that
+ * the generator row imposes anyway no longer drains the pool.
  */
 @Service
 @Profile("dispatcher")
@@ -36,10 +45,17 @@ import org.springframework.stereotype.Service;
 public class ExecContextSegmentIdService {
 
     private final IdsRepository idsRepository;
+    private final ReentrantLock allocationLock = new ReentrantLock();
 
     public Long allocate() {
-        final Long id = idsRepository.save(new Ids()).id;
-        idsRepository.deleteById(id);
-        return id;
+        allocationLock.lock();
+        try {
+            final Long id = idsRepository.save(new Ids()).id;
+            idsRepository.deleteById(id);
+            return id;
+        }
+        finally {
+            allocationLock.unlock();
+        }
     }
 }

@@ -165,7 +165,7 @@ public class PermuteVariablesService {
                 variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
 
         taskProducingService.createTasksForSubProcesses(
-            graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
+            simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
             // 041: one line per permutation - the count comes from data, so each starts its own segment
             ExecContextSegmentTxService.SegmentStart.OWN);
         return true;

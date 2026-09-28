@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeInitService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.utils.ContextUtils;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -33,6 +34,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
+import java.util.Comparator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -57,6 +60,11 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * <p>Observations come from {@code MH_TASK} records, {@link ExecContextGraftService.GraftResult} values, the
  * ExecContext state and the real internal-task queue only.
+ *
+ * <p>041 decision 10, option (a): an out-of-band graft's line index is {@code seed + an allocated id}, so the two
+ * out-of-band cases assert the line ctx as "at base {@code 1,2}, index above every earlier sibling" and then write it
+ * as {@value #NEW_LINE} in every pinned text (in the rows before they are sorted, and in the step keys). Every other
+ * pinned value - and the in-band cases, whose lines keep sequential numbers - is unchanged.
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
@@ -68,27 +76,30 @@ public class ExecContextBaselineGraftTest extends PreparingSourceCode {
     @Autowired private ExecContextBaselineSupport support;
     @Autowired private ExecContextGraftService execContextGraftService;
 
+    /** The out-of-band grafted line's ctx as written in the pinned texts (decision 10, option a). */
+    private static final String NEW_LINE = "1,2#<new>";
+
     private static final String PLACE_NOW_OUT_OF_BAND = """
-            lineCtxId=1,2#4
-            head=lineHead@1,2#4
-            resetPoint=lineHead@1,2#4
+            lineCtxId=1,2#<new>
+            head=lineHead@1,2#<new>
+            resetPoint=lineHead@1,2#<new>
             unwiredTails=0
             execContext=FINISHED
             new:
-            lineHead@1,2#4=SKIPPED
-            lineTail@1,2#4=SKIPPED""";
+            lineHead@1,2#<new>=SKIPPED
+            lineTail@1,2#<new>=SKIPPED""";
 
     private static final String RUN_NOW_OUT_OF_BAND = """
-            lineCtxId=1,2#4
-            head=lineHead@1,2#4
-            resetPoint=lineHead@1,2#4
+            lineCtxId=1,2#<new>
+            head=lineHead@1,2#<new>
+            resetPoint=lineHead@1,2#<new>
             unwiredTails=0
             execContextAfterGraft=STARTED
-            reopened=lineHead@1,2#4, lineTail@1,2#4, mh.finish@1, post@1
+            reopened=lineHead@1,2#<new>, lineTail@1,2#<new>, mh.finish@1, post@1
             execContextAtEnd=FINISHED""";
     private static final String RUN_NOW_OUT_OF_BAND_STEPS = """
-            0: lineHead@1,2#4
-            1: lineTail@1,2#4
+            0: lineHead@1,2#<new>
+            1: lineTail@1,2#<new>
             2: post@1
             3: mh.finish@1""";
     private static final String RUN_NOW_OUT_OF_BAND_FINAL = """
@@ -98,11 +109,11 @@ public class ExecContextBaselineGraftTest extends PreparingSourceCode {
             lineHead@1,2#1=OK
             lineHead@1,2#2=OK
             lineHead@1,2#3=OK
-            lineHead@1,2#4=OK
+            lineHead@1,2#<new>=OK
             lineTail@1,2#1=OK
             lineTail@1,2#2=OK
             lineTail@1,2#3=OK
-            lineTail@1,2#4=OK
+            lineTail@1,2#<new>=OK
             mh.finish@1=OK
             post@1=OK
             prepare@1=OK
@@ -160,24 +171,27 @@ public class ExecContextBaselineGraftTest extends PreparingSourceCode {
                 ecId, splitterId, new ExecContextGraftService.GroupRef("line"), List.of(), List.of(),
                 ExecContextGraftService.Driver.PLACE_NOW, "mh.nop");
         support.settle(ecId);
+        final String lineCtxId = assertOutOfBandLineCtx(gr.lineCtxId(), before);
 
         final List<ExecContextBaselineSupport.TaskRow> after = support.rows(ecId);
         assertEquals(ExecContextBaselineSupport.describeRows(before), ExecContextBaselineSupport.describeRows(existing(after, before)),
                 "PLACE_NOW: no Task that existed before the graft may change state - the join 'post' included");
 
-        final String observed = "lineCtxId=" + gr.lineCtxId()
-                + "\nhead=" + keyOf(after, gr.headTaskId())
-                + "\nresetPoint=" + keyOf(after, gr.resetPointTaskId())
+        final List<ExecContextBaselineSupport.TaskRow> afterN = normalized(after, lineCtxId);
+        final String observed = "lineCtxId=" + NEW_LINE
+                + "\nhead=" + keyOf(afterN, gr.headTaskId())
+                + "\nresetPoint=" + keyOf(afterN, gr.resetPointTaskId())
                 + "\nunwiredTails=" + gr.unwiredTails().size()
                 + "\nexecContext=" + support.state(ecId)
-                + "\nnew:\n" + ExecContextBaselineSupport.describeRows(added(after, before));
+                + "\nnew:\n" + ExecContextBaselineSupport.describeRows(added(afterN, before));
         assertEquals(PLACE_NOW_OUT_OF_BAND, observed, "PLACE_NOW out of band: graft result and the new Tasks");
     }
 
     @Test
     public void test_runNow_outOfBand_intoFinished() {
         final Long ecId = runToFinished(SegmentFixtureShapes.S1).execContextId();
-        final Long splitterId = taskId(support.rows(ecId), "splitter");
+        final List<ExecContextBaselineSupport.TaskRow> before = support.rows(ecId);
+        final Long splitterId = taskId(before, "splitter");
 
         final AtomicReference<ExecContextGraftService.GraftResult> grRef = new AtomicReference<>();
         final AtomicReference<String> reopened = new AtomicReference<>();
@@ -187,7 +201,7 @@ public class ExecContextBaselineGraftTest extends PreparingSourceCode {
                     ecId, splitterId, new ExecContextGraftService.GroupRef("line"), List.of(), List.of(),
                     ExecContextGraftService.Driver.RUN_NOW, "mh.nop"));
             stateAfterGraft.set(support.state(ecId));
-            reopened.set(support.rows(ecId).stream()
+            reopened.set(normalized(support.rows(ecId), grRef.get().lineCtxId()).stream()
                     .filter(r -> !r.isFinished())
                     .map(ExecContextBaselineSupport.TaskRow::key)
                     .sorted()
@@ -196,8 +210,9 @@ public class ExecContextBaselineGraftTest extends PreparingSourceCode {
         }, 80);
 
         final ExecContextGraftService.GraftResult gr = grRef.get();
-        final List<ExecContextBaselineSupport.TaskRow> after = support.rows(ecId);
-        final String observed = "lineCtxId=" + gr.lineCtxId()
+        final String lineCtxId = assertOutOfBandLineCtx(gr.lineCtxId(), before);
+        final List<ExecContextBaselineSupport.TaskRow> after = normalized(support.rows(ecId), lineCtxId);
+        final String observed = "lineCtxId=" + NEW_LINE
                 + "\nhead=" + keyOf(after, gr.headTaskId())
                 + "\nresetPoint=" + keyOf(after, gr.resetPointTaskId())
                 + "\nunwiredTails=" + gr.unwiredTails().size()
@@ -205,7 +220,7 @@ public class ExecContextBaselineGraftTest extends PreparingSourceCode {
                 + "\nreopened=" + reopened.get()
                 + "\nexecContextAtEnd=" + support.state(ecId);
         assertEquals(RUN_NOW_OUT_OF_BAND, observed, "RUN_NOW out of band: graft result, reopened Tasks, ExecContext states");
-        assertEquals(RUN_NOW_OUT_OF_BAND_STEPS, ExecContextBaselineSupport.describeSteps(second.steps()),
+        assertEquals(RUN_NOW_OUT_OF_BAND_STEPS, ExecContextBaselineSupport.describeSteps(normalizedSteps(second.steps(), lineCtxId)),
                 "RUN_NOW out of band: the Tasks handed out at each scheduler step after the graft");
         assertEquals(RUN_NOW_OUT_OF_BAND_FINAL, ExecContextBaselineSupport.describeRows(after),
                 "RUN_NOW out of band: final (process code @ ctx = exec state) of every Task");
@@ -247,6 +262,42 @@ public class ExecContextBaselineGraftTest extends PreparingSourceCode {
         final List<ExecContextBaselineSupport.TaskRow> found = rows.stream().filter(r -> r.processCode().equals(processCode)).toList();
         assertEquals(1, found.size(), "exactly one Task with process code '" + processCode + "' expected");
         return found.getFirst().id();
+    }
+
+    /**
+     * Decision 10, option (a): the out-of-band line lies at base {@code 1,2}, its index above every sibling that existed
+     * before the graft. Returns the line ctx.
+     */
+    private static String assertOutOfBandLineCtx(String lineCtxId, List<ExecContextBaselineSupport.TaskRow> before) {
+        assertEquals("1,2", ContextUtils.getLevel(lineCtxId), "the out-of-band line is at base 1,2: " + lineCtxId);
+        final long index = Long.parseLong(Objects.requireNonNull(ContextUtils.getPath(lineCtxId), lineCtxId));
+        final long highest = before.stream()
+                .filter(r -> "1,2".equals(ContextUtils.getLevel(r.ctx())))
+                .map(r -> ContextUtils.getPath(r.ctx()))
+                .filter(Objects::nonNull)
+                .mapToLong(Long::parseLong)
+                .max().orElse(0);
+        assertTrue(index > highest, "the out-of-band line index " + index + " must lie above every earlier sibling (highest " + highest + ")");
+        return lineCtxId;
+    }
+
+    /** {@code rows} with the out-of-band line's ctx written as {@link #NEW_LINE}, re-sorted as {@code support.rows} sorts. */
+    private static List<ExecContextBaselineSupport.TaskRow> normalized(List<ExecContextBaselineSupport.TaskRow> rows, String lineCtxId) {
+        return rows.stream()
+                .map(r -> lineCtxId.equals(r.ctx()) ? new ExecContextBaselineSupport.TaskRow(r.id(), r.processCode(), NEW_LINE, r.state()) : r)
+                .sorted(Comparator.comparing(ExecContextBaselineSupport.TaskRow::key).thenComparing(ExecContextBaselineSupport.TaskRow::id))
+                .toList();
+    }
+
+    /** Step keys with the out-of-band line's ctx written as {@link #NEW_LINE}, each step re-sorted. */
+    private static List<List<String>> normalizedSteps(List<List<String>> steps, String lineCtxId) {
+        final String suffix = "@" + lineCtxId;
+        return steps.stream()
+                .map(step -> step.stream()
+                        .map(k -> k.endsWith(suffix) ? k.substring(0, k.length() - lineCtxId.length()) + NEW_LINE : k)
+                        .sorted()
+                        .toList())
+                .toList();
     }
 
     private static String keyOf(List<ExecContextBaselineSupport.TaskRow> rows, @Nullable Long taskId) {

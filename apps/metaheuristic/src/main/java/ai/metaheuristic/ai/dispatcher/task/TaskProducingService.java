@@ -138,10 +138,9 @@ public class TaskProducingService {
     };
 
     public void createTasksForSubProcesses(
-            ExecContextData.GraphAndStates graphAndStates,
             ExecContextApiData.SimpleExecContext simpleExecContext, InternalFunctionData.ExecutionContextData executionContextData,
             String currTaskContextId, Long parentTaskId, List<Long> lastIds, ExecContextSegmentTxService.SegmentStart segmentStart) {
-        createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData,
+        createTasksForSubProcesses(simpleExecContext, executionContextData,
                 currTaskContextId, parentTaskId, lastIds, GRAFT_NOT_SUPPORTED, segmentStart);
     }
 
@@ -151,13 +150,13 @@ public class TaskProducingService {
      *                     source (an {@code mh.nop}'s {@code sequential} / {@code parallel})
      */
     public void createTasksForSubProcesses(
-            ExecContextData.GraphAndStates graphAndStates,
             ExecContextApiData.SimpleExecContext simpleExecContext, InternalFunctionData.ExecutionContextData executionContextData,
             String currTaskContextId, Long parentTaskId, List<Long> lastIds, GraftExpander graftExpander,
             ExecContextSegmentTxService.SegmentStart segmentStart) {
         TxUtils.checkTxExists();
-        ExecContextGraphSyncService.checkWriteLockPresent(simpleExecContext.execContextGraphId);
-        ExecContextTaskStateSyncService.checkWriteLockPresent(simpleExecContext.execContextTaskStateId);
+        // 041 Phase 8: no graph / task-state write lock is required any more - this method writes neither whole-ExecContext
+        // record (Tasks go into segments, Phase 7), and an out-of-band PLACE_NOW graft calls it holding no lock at all
+        // (decision 10). The graphAndStates parameter went for the same reason: nothing here read it.
 
         ExecContextParams execContextParamsYaml = executionContextData.execContextParamsYaml;
         List<ExecContextApiData.ProcessVertex> subProcesses = executionContextData.subProcesses;

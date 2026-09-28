@@ -180,7 +180,7 @@ public class SubProcessesTxService {
             }
 
             taskProducingService.createTasksForSubProcesses(
-                graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
+                    simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
                 // 041: a static sub-block written in the source stays in the segment of the line it is forked from
                 ExecContextSegmentTxService.SegmentStart.ENCLOSING);
 

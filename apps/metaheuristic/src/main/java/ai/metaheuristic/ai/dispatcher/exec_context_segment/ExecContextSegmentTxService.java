@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context_segment.ExecContextSegmentParams;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.ContextUtils;
@@ -39,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.ArrayList;
 
 /**
  * The one writer of ExecContext segments and join records (041-EXEC-CONTEXT-SEGMENTS-PLAN, Phase 7): Task production
@@ -57,6 +59,10 @@ import java.util.TreeMap;
  * <p>The segment that owns a ctx is found by walking the ctx up ({@code ContextUtils.deriveParentTaskContextId}) to the
  * nearest segment start - a fork's line ctx is the parent ctx of the lines it forks - ending at the root segment.
  *
+ * <p>Grafts (Phase 8): {@link SegmentStart#own(Long)} makes the new line's segment take an id allocated before its Tasks
+ * were built (decision 10: the line ctx is derived from that id); {@link #lineTaskIds}, {@link #addVariableStates} and
+ * {@link #markLineSkipped} read and write only the grafted line's own segment.
+ *
  * <p>Error code prefix: {@code 01.913.} (unique to this class).
  */
 @Service
@@ -65,8 +71,22 @@ import java.util.TreeMap;
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class ExecContextSegmentTxService {
 
+    // 041 Phase 8: SegmentStart.own(id) is an own segment whose id was allocated in advance - a graft whose line ctx is
+    // derived from that id (decision 10). ENCLOSING and OWN keep their meaning.
     /** Where a new line goes: its own new segment, or the segment that owns its fork's line. */
-    public enum SegmentStart { ENCLOSING, OWN }
+    public sealed interface SegmentStart {
+        record Enclosing() implements SegmentStart {}
+
+        /** @param presetSegmentId the id the new segment takes; null - allocate one when the segment is created */
+        record Own(@Nullable Long presetSegmentId) implements SegmentStart {}
+
+        SegmentStart ENCLOSING = new Enclosing();
+        SegmentStart OWN = new Own(null);
+
+        static SegmentStart own(Long presetSegmentId) {
+            return new Own(presetSegmentId);
+        }
+    }
 
     private final ExecContextSegmentRepository segmentRepository;
     private final ExecContextJoinRepository joinRepository;
@@ -110,7 +130,7 @@ public class ExecContextSegmentTxService {
                 throw new IllegalStateException("01.913.030 Task #" + taskId + " has no parent, so it starts the root line, "
                         + "but its ctx is " + ctx + ", ExecContext #" + execContextId);
             }
-            createSegment(execContextId, ctx, null, taskId, tag, state);
+            createSegment(execContextId, ctx, null, taskId, tag, state, null);
             return;
         }
         if (parentTaskIds.size() != 1) {
@@ -118,8 +138,8 @@ public class ExecContextSegmentTxService {
                     + ", a line has exactly one fork, parents " + parentTaskIds);
         }
         final Long fork = parentTaskIds.getFirst();
-        if (start == SegmentStart.OWN) {
-            createSegment(execContextId, ctx, fork, taskId, tag, state);
+        if (start instanceof SegmentStart.Own own) {
+            createSegment(execContextId, ctx, fork, taskId, tag, state, own.presetSegmentId());
             return;
         }
         final String forkCtx = ctxOf(fork);
@@ -230,9 +250,9 @@ public class ExecContextSegmentTxService {
     }
 
     private void createSegment(Long execContextId, String ctx, @Nullable Long fork, Long taskId, @Nullable String tag,
-                               EnumsApi.TaskExecState state) {
+                               EnumsApi.TaskExecState state, @Nullable Long presetSegmentId) {
         final ExecContextSegment s = new ExecContextSegment();
-        s.id = idService.allocate();
+        s.id = presetSegmentId != null ? presetSegmentId : idService.allocate();
         s.execContextId = execContextId;
         s.lineCtxId = ctx;
         s.forkTaskId = fork;
@@ -243,6 +263,57 @@ public class ExecContextSegmentTxService {
         p.lines.add(line);
         p.states.put(taskId, state);
         save(s, p);
+    }
+
+    /** The Task ids of the line at {@code lineCtxId}, in chain order. */
+    @Transactional(readOnly = true)
+    public List<Long> lineTaskIds(Long execContextId, String lineCtxId) {
+        return new ArrayList<>(requireLine(execContextId, lineCtxId).line().tasks.stream().map(v -> v.taskId).toList());
+    }
+
+    /** Appends variable-state entries to the segment owning {@code ctx} - the segment counterpart of registering them. */
+    @Transactional
+    public void addVariableStates(Long execContextId, String ctx, List<ExecContextApiData.VariableState> states) {
+        TxUtils.checkTxExists();
+        final ExecContextSegment s = findSegmentOfCtx(execContextId, ctx);
+        if (s == null) {
+            throw new IllegalStateException("01.913.100 no segment owns ctx " + ctx + ", ExecContext #" + execContextId);
+        }
+        final ExecContextSegmentParams p = s.getExecContextSegmentParams();
+        p.variableStates.addAll(states);
+        save(s, p);
+    }
+
+    /**
+     * Marks {@code headTaskId} and every Task after it in the line at {@code lineCtxId} SKIPPED, in that line's segment
+     * only, and returns their ids in chain order. For a freshly grafted line this is the whole SKIPPED closure: a line's
+     * join always has a live parent (its fork, or the enclosing fork), so the kill stops at the line's tail.
+     */
+    @Transactional
+    public List<Long> markLineSkipped(Long execContextId, String lineCtxId, Long headTaskId) {
+        TxUtils.checkTxExists();
+        final OwnedLine owned = requireLine(execContextId, lineCtxId);
+        final List<Long> ids = owned.line().tasks.stream().map(v -> v.taskId).toList();
+        final int from = ids.indexOf(headTaskId);
+        if (from < 0) {
+            throw new IllegalStateException("01.913.120 Task #" + headTaskId + " is not in line " + lineCtxId + ", ExecContext #" + execContextId);
+        }
+        final List<Long> skipped = new ArrayList<>(ids.subList(from, ids.size()));
+        final ExecContextSegmentParams p = owned.segment().getExecContextSegmentParams();
+        skipped.forEach(id -> p.states.put(id, EnumsApi.TaskExecState.SKIPPED));
+        save(owned.segment(), p);
+        return skipped;
+    }
+
+    private record OwnedLine(ExecContextSegment segment, ExecContextSegmentParams.Line line) {}
+
+    private OwnedLine requireLine(Long execContextId, String lineCtxId) {
+        final ExecContextSegment s = findSegmentOfCtx(execContextId, lineCtxId);
+        final ExecContextSegmentParams.Line line = s == null ? null : lineAt(s.getExecContextSegmentParams(), lineCtxId);
+        if (s == null || line == null) {
+            throw new IllegalStateException("01.913.110 no line at ctx " + lineCtxId + ", ExecContext #" + execContextId);
+        }
+        return new OwnedLine(s, line);
     }
 
     /** Writes params and the structure hash recomputed from them. */
