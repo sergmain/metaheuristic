@@ -97,6 +97,28 @@ public class SegmentGraftTest extends PreparingSourceCode {
         return m;
     }
 
+    /**
+     * The ExecContext's segments once nothing writes them any more: the scheduler is driven until no Task is INIT, then the
+     * segment VERSIONs must agree over three consecutive reads. 041 Phase 21: creation leaves asynchronous work (the queued
+     * variable-state flush of the created Tasks writes their segments) whose lock is keyed by the ExecContext id - the same
+     * key the graft takes - so it can land during the graft unless the fixture is quiescent first.
+     */
+    private Map<String, ExecContextSegment> quiescentSegments(Long ecId) {
+        support.settle(ecId);
+        final java.util.concurrent.atomic.AtomicReference<Map<String, Integer>> last = new java.util.concurrent.atomic.AtomicReference<>();
+        final java.util.concurrent.atomic.AtomicInteger stableReads = new java.util.concurrent.atomic.AtomicInteger();
+        org.awaitility.Awaitility.await().atMost(java.time.Duration.ofSeconds(20)).pollInterval(java.time.Duration.ofMillis(300))
+                .until(() -> {
+                    final Map<String, Integer> now = versions(segmentsByCtx(ecId));
+                    if (now.equals(last.getAndSet(now))) {
+                        return stableReads.incrementAndGet() >= 2;
+                    }
+                    stableReads.set(0);
+                    return false;
+                });
+        return segmentsByCtx(ecId);
+    }
+
     private static Map<String, Long> idByProcessCode(List<ExecContextBaselineSupport.TaskRow> rows) {
         final Map<String, Long> m = new HashMap<>();
         rows.forEach(r -> m.put(r.processCode(), r.id()));
@@ -119,7 +141,7 @@ public class SegmentGraftTest extends PreparingSourceCode {
     public void test_placeNow_outOfBand_writesExactlyOneSegment() {
         final ExecContextImpl ec = producedS1();
         final Long splitterId = idByProcessCode(support.rows(ec.id)).get("splitter");
-        final Map<String, ExecContextSegment> before = segmentsByCtx(ec.id);
+        final Map<String, ExecContextSegment> before = quiescentSegments(ec.id);
 
         final ExecContextGraftService.GraftResult gr = placeNow(ec.id, splitterId, List.of(), List.of());
 

@@ -52,6 +52,11 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * <p>Section 8.6 names S7 (one fork with 1,000 lines); S7 is a DOT-only fixture, so the ExecContext is S1 run with 1,000
  * items - one splitter fork with 1,000 grafted lines of two Tasks each.
+ *
+ * <p>041 Phase 21: deleting an ExecContext through {@code ExecContextTxService.deleteExecContext} publishes the event whose
+ * listener ({@code ExecContextCleanerService}) deletes its segment and join records right away in bounded steps. The
+ * service case below therefore removes the ExecContext record directly (no event), so its steps are the only deletion;
+ * the listener has its own case.
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
@@ -67,6 +72,7 @@ public class SegmentDeletionTest extends PreparingSourceCode {
     @Autowired private SegmentInvariantAsserts invariants;
     @Autowired private ExecContextChunkedDeletionTxService deletionTxService;
     @Autowired private ExecContextTxService execContextTxService;
+    @Autowired private ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository execContextRepository;
     @Autowired private ExecContextSegmentRepository segmentRepository;
     @Autowired private ExecContextJoinRepository joinRepository;
     @Autowired private TaskRepository taskRepository;
@@ -117,7 +123,8 @@ public class SegmentDeletionTest extends PreparingSourceCode {
         assertTrue(live.getMessage().startsWith("01.922.020"), live.getMessage());
         assertEquals(before, counts(ecId), "nothing of a live ExecContext was deleted");
 
-        execContextTxService.deleteExecContext(ecId);
+        // the ExecContext record only - no deletion event, so no listener competes with the steps below
+        execContextRepository.deleteById(ecId);
 
         // one step, then stop: exactly one bound of segments, nothing else
         final Step first = deletionTxService.deleteStep(ecId, BOUND, ExecContextChunkedDeletionTxService.ALL);
@@ -143,5 +150,22 @@ public class SegmentDeletionTest extends PreparingSourceCode {
         assertEquals(before, deleted, "every record of every kind deleted exactly once");
         assertEquals(Map.of(Kind.SEGMENT, 0L, Kind.JOIN, 0L, Kind.TASK, 0L, Kind.VARIABLE, 0L), counts(ecId), "nothing left");
         assertNull(deletionTxService.deleteStep(ecId, BOUND, ExecContextChunkedDeletionTxService.ALL), "a finished deletion stays finished");
+    }
+
+    /** Phase 21: the deletion listener takes the segment and join records of a deleted ExecContext; Tasks stay for the periodic cleaner. */
+    @Test
+    public void test_S1x200_deleteExecContext_listenerDeletesSegmentsAndJoins() {
+        final int lines = 200;
+        final String items = IntStream.rangeClosed(1, lines).mapToObj(i -> "L" + i).collect(Collectors.joining("\n"));
+        final Long ecId = runToFinished(new SegmentFixtureShapes.Shape("S1x" + lines, SegmentFixtureShapes.S1.mhsc(), items));
+        final Map<Kind, Long> before = counts(ecId);
+        assertEquals(1L + lines, before.get(Kind.SEGMENT), "the root segment and one per grafted line");
+        assertTrue(before.get(Kind.JOIN) > 0, "the lines' joins have records");
+
+        execContextTxService.deleteExecContext(ecId);
+
+        org.awaitility.Awaitility.await().atMost(java.time.Duration.ofSeconds(60)).pollInterval(java.time.Duration.ofMillis(300))
+                .until(() -> segmentRepository.countByExecContextId(ecId) == 0 && joinRepository.countByExecContextId(ecId) == 0);
+        assertEquals(before.get(Kind.TASK), counts(ecId).get(Kind.TASK), "the listener leaves the Tasks to the periodic cleaner");
     }
 }
