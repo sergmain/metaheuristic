@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.mcp.MhMcpToolDefinitions;
 import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeInitService;
+import ai.metaheuristic.ai.yaml.exec_context_segment.ExecContextSegmentParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.utils.JsonUtils;
@@ -33,6 +34,7 @@ import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -67,7 +69,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p>Correction to "created and not driven": creation itself leaves ONE asynchronous write to the root segment, see
  * {@link #awaitCreationWritesLanded}. Measuring {@code changeVersion} before it lands made the test flaky ("a read changes
  * nothing": {@code 1,5,0,0} vs {@code 1,6,0,0}), so the test waits for it first.
+ *
+ * <p>Logging: every step logs at INFO, prefixed {@code READS}, with the ms since creation and the thread - the ExecContext's
+ * segments (id, ctx, fork, VERSION, lines, states, variable-state entries), every Task in MH_TASK and in the segments,
+ * {@code changeVersion}, and each poll of the creation wait - so a failure in a suite shows what moved and when.
  */
+@Slf4j
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
 @Execution(ExecutionMode.SAME_THREAD)
@@ -82,6 +89,46 @@ public class SegmentStateReadsTest extends PreparingSourceCode {
     @Autowired private ExecContextSegmentRepository segmentRepository;
     @Autowired private ExecContextCache execContextCache;
 
+    /** When the ExecContext of this test was created - every log line carries the ms since then. */
+    private long createdAtNanos;
+
+    private long ms() {
+        return (System.nanoTime() - createdAtNanos) / 1_000_000;
+    }
+
+    /** One INFO block: {@code changeVersion}, every segment, every Task in MH_TASK and in the segments. */
+    private void dump(String phase, Long ecId) {
+        log.info("READS [{} ms, {}] {} - ExecContext #{} changeVersion {}", ms(), Thread.currentThread().getName(), phase, ecId,
+                segmentReadService.changeVersion(ecId));
+        for (Long segmentId : segmentRepository.findIdsByExecContextId(ecId)) {
+            final ExecContextSegment s = segmentRepository.findById(segmentId).orElse(null);
+            if (s == null) {
+                log.info("READS [{} ms]   segment #{} vanished between the id read and the load", ms(), segmentId);
+                continue;
+            }
+            final ExecContextSegmentParams p = s.getExecContextSegmentParams();
+            log.info("READS [{} ms]   segment #{} ctx {} fork {} VERSION {} lines {} states {}", ms(), s.id, s.lineCtxId, s.forkTaskId,
+                    s.version, p.lines.stream().map(l -> l.ctx + ":" + l.tasks.stream().map(v -> String.valueOf(v.taskId)).toList()).toList(),
+                    p.states);
+            for (ExecContextApiData.VariableState vs : p.variableStates) {
+                log.info("READS [{} ms]     variable-state entry task #{} process {} ctx {} inputs {} outputs {}", ms(), vs.taskId, vs.process,
+                        vs.taskContextId, describe(vs.inputs), describe(vs.outputs));
+            }
+        }
+        final Map<Long, EnumsApi.TaskExecState> inSegments = segmentReadService.snapshot(ecId).states();
+        for (ExecContextBaselineSupport.TaskRow r : support.rows(ecId)) {
+            log.info("READS [{} ms]   task #{} {} MH_TASK {} segment {}", ms(), r.id(), r.key(), r.state(),
+                    inSegments.getOrDefault(r.id(), EnumsApi.TaskExecState.NONE));
+        }
+    }
+
+    private static List<String> describe(@org.jspecify.annotations.Nullable List<ExecContextApiData.VariableInfo> infos) {
+        if (infos == null) {
+            return List.of();
+        }
+        return infos.stream().map(i -> i.id + ":" + i.name + (i.inited ? ":inited" : "") + (i.nullified ? ":nullified" : "")).toList();
+    }
+
     @Override
     public SourceCodeUriAndLang getSourceCodeAndLang() {
         return new SourceCodeUriAndLang("inline://segment-baseline-s1", EnumsApi.SourceCodeLang.mhsc, SegmentFixtureShapes.S1.mhsc());
@@ -91,7 +138,9 @@ public class SegmentStateReadsTest extends PreparingSourceCode {
         final PreparingData.PreparingSourceCodeData data =
                 preparingSourceCodeInitService.beforePreparingSourceCode(SegmentFixtureShapes.S1.mhsc(), EnumsApi.SourceCodeLang.mhsc);
         final ExecContextImpl ec = support.createAndStart(data, SegmentFixtureShapes.S1.items());
+        createdAtNanos = System.nanoTime();
         setExecContextForTest(ec);
+        log.info("READS [0 ms, {}] ExecContext #{} created and started", Thread.currentThread().getName(), ec.id);
         return ec;
     }
 
@@ -105,14 +154,23 @@ public class SegmentStateReadsTest extends PreparingSourceCode {
      * {@code globals.testing}, PRE_INIT Tasks do not move, and this test never flushes the queued variable-state events.
      */
     private void awaitCreationWritesLanded(Long ecId) {
+        final java.util.concurrent.atomic.AtomicInteger polls = new java.util.concurrent.atomic.AtomicInteger();
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(() -> {
             final List<ExecContextBaselineSupport.TaskRow> rows = support.rows(ecId);
+            final Map<Long, EnumsApi.TaskExecState> inSegments = segmentReadService.snapshot(ecId).states();
+            final List<String> init = rows.stream().filter(r -> r.state() == EnumsApi.TaskExecState.INIT).map(r -> "#" + r.id() + " " + r.key()).toList();
+            final List<String> differ = rows.stream()
+                    .filter(r -> r.state() != inSegments.getOrDefault(r.id(), EnumsApi.TaskExecState.NONE))
+                    .map(r -> "#" + r.id() + " " + r.key() + " MH_TASK " + r.state() + " segment " + inSegments.getOrDefault(r.id(), EnumsApi.TaskExecState.NONE))
+                    .toList();
+            log.info("READS [{} ms] creation wait poll {}: changeVersion {}, INIT in MH_TASK {}, MH_TASK != segment {}", ms(),
+                    polls.incrementAndGet(), segmentReadService.changeVersion(ecId), init, differ);
             if (rows.stream().anyMatch(r -> r.state() == EnumsApi.TaskExecState.INIT)) {
                 return false;
             }
-            final Map<Long, EnumsApi.TaskExecState> inSegments = segmentReadService.snapshot(ecId).states();
             return rows.stream().allMatch(r -> r.state() == inSegments.getOrDefault(r.id(), EnumsApi.TaskExecState.NONE));
         });
+        log.info("READS [{} ms] creation writes landed after {} poll(s)", ms(), polls.get());
     }
 
     private static ExecContextApiData.VariableInfo info(long id, String name, String ext) {
@@ -159,32 +217,46 @@ public class SegmentStateReadsTest extends PreparingSourceCode {
     @Test
     public void test_derivedEntries_changeVersion_outputExt_andTheMcpReads() throws Exception {
         final ExecContextImpl ec = producedS1();
+        dump("right after creation", ec.id);
         // the asynchronous state write creation leaves behind lands first - otherwise it can land between two reads below
         awaitCreationWritesLanded(ec.id);
+        dump("after the creation writes landed", ec.id);
         final Map<String, Long> id = support.rows(ec.id).stream()
                 .collect(Collectors.toMap(ExecContextBaselineSupport.TaskRow::processCode, ExecContextBaselineSupport.TaskRow::id));
         final Long prepare = id.get("prepare");
         final Long fanout = id.get("fanout");
         final long varId = 910_001L;
+        log.info("READS [{} ms] tasks by process {}; prepare #{}, fanout #{}, variable #{}", ms(), id, prepare, fanout, varId);
 
         segmentVariableStateTxService.registerCreatedTasks(ec.id, List.of(
                 entry(ec.id, prepare, "prepare", List.of(), List.of(info(varId, "shared", ".csv"))),
                 entry(ec.id, fanout, "fanout", List.of(info(varId, "shared", null)), List.of())));
+        dump("after the test's registerCreatedTasks", ec.id);
 
         final String v0 = segmentReadService.changeVersion(ec.id);
-        assertEquals(v0, segmentReadService.changeVersion(ec.id), "a read changes nothing");
+        final String v0again = segmentReadService.changeVersion(ec.id);
+        log.info("READS [{} ms] changeVersion read twice: {} then {}", ms(), v0, v0again);
+        if (!v0.equals(v0again)) {
+            dump("the two reads differ", ec.id);
+        }
+        assertEquals(v0, v0again, "a read changes nothing");
         assertFalse(inputOf(segmentReadService.variableStates(ec.id), fanout, varId).inited, "before the upload the input is not inited");
 
         segmentVariableStateTxService.registerVariableStates(ec.id, List.of(new VariableUploadedEvent(ec.id, prepare, varId, false)));
+        log.info("READS [{} ms] after the upload of variable #{}: changeVersion {} (was {})", ms(), varId, segmentReadService.changeVersion(ec.id), v0);
         assertNotEquals(v0, segmentReadService.changeVersion(ec.id), "the upload wrote the root segment, the version moved");
 
         final ExecContextApiData.VariableInfo derived = inputOf(segmentReadService.variableStates(ec.id), fanout, varId);
+        log.info("READS [{} ms] fanout's input #{} derived: inited {}, nullified {}", ms(), varId, derived.inited, derived.nullified);
         assertTrue(derived.inited, "the consumer's input shows the uploaded output");
         assertFalse(derived.nullified, "not nullified, as uploaded");
         final ExecContextSegment root = Objects.requireNonNull(segmentRepository.findByExecContextIdAndLineCtxId(ec.id, "1"));
+        dump("after the upload", ec.id);
         assertFalse(inputOf(root.getExecContextSegmentParams().variableStates, fanout, varId).inited,
                 "the stored entry keeps its own flag - the derivation happens at read time only");
 
+        log.info("READS [{} ms] outputExt: variable #{} -> {}, variable #999999 -> {}", ms(), varId,
+                segmentReadService.outputExt(ec.id, "1", varId), segmentReadService.outputExt(ec.id, "1", 999_999L));
         assertEquals(".csv", segmentReadService.outputExt(ec.id, "1", varId), "the producer's extension");
         assertNull(segmentReadService.outputExt(ec.id, "1", 999_999L), "no entry has that output");
 
@@ -192,31 +264,39 @@ public class SegmentStateReadsTest extends PreparingSourceCode {
         final MhMcpToolDefinitions defs = mcp();
 
         final CallToolResult graph = call(defs, "mh_get_exec_context_graph", ec.id);
+        log.info("READS [{} ms] MCP mh_get_exec_context_graph: isError {}, {} chars", ms(), graph.isError(), textOf(graph).length());
         assertNotEquals(Boolean.TRUE, graph.isError(), textOf(graph));
         final MhMcpToolDefinitions.ExecContextGraphDto graphDto = JsonUtils.getMapper().readValue(textOf(graph), MhMcpToolDefinitions.ExecContextGraphDto.class);
+        log.info("READS [{} ms] MCP graph DOT: {}", ms(), graphDto.dot());
         assertEquals(ec.id, graphDto.execContextId());
         assertEquals(new TreeSet<>(id.values()), new TreeSet<>(SegmentDotUtils.parse(graphDto.dot()).nodes().keySet()),
                 "the DOT has every Task of MH_TASK");
 
         final CallToolResult states = call(defs, "mh_get_exec_context_task_state", ec.id);
+        log.info("READS [{} ms] MCP mh_get_exec_context_task_state: isError {}, {}", ms(), states.isError(), textOf(states));
         assertNotEquals(Boolean.TRUE, states.isError(), textOf(states));
         final MhMcpToolDefinitions.ExecContextTaskStateDto statesDto = JsonUtils.getMapper().readValue(textOf(states), MhMcpToolDefinitions.ExecContextTaskStateDto.class);
         assertEquals(new TreeSet<>(id.values()), new TreeSet<>(statesDto.states().keySet()), "a state for every Task");
         final Map<Long, EnumsApi.TaskExecState> stored = segmentReadService.snapshot(ec.id).states();
+        log.info("READS [{} ms] segment states for the MCP comparison: {}", ms(), stored);
         statesDto.states().forEach((taskId, state) -> assertEquals(
                 stored.getOrDefault(taskId, EnumsApi.TaskExecState.NONE).name(), state, "Task #" + taskId + ": the segment's state"));
 
         final CallToolResult vars = call(defs, "mh_get_exec_context_variable_state", ec.id);
+        log.info("READS [{} ms] MCP mh_get_exec_context_variable_state: isError {}, {}", ms(), vars.isError(), textOf(vars));
         assertNotEquals(Boolean.TRUE, vars.isError(), textOf(vars));
         final MhMcpToolDefinitions.ExecContextVariableStateDto varsDto = JsonUtils.getMapper().readValue(textOf(vars), MhMcpToolDefinitions.ExecContextVariableStateDto.class);
         assertTrue(inputOf(varsDto.states(), fanout, varId).inited, "the MCP entries carry the derived input flag");
 
         for (String tool : List.of("mh_get_exec_context_graph", "mh_get_exec_context_task_state", "mh_get_exec_context_variable_state")) {
             final CallToolResult unknown = call(defs, tool, -1L);
+            log.info("READS [{} ms] MCP {} for ExecContext #-1: isError {}, {}", ms(), tool, unknown.isError(), textOf(unknown));
             assertEquals(Boolean.TRUE, unknown.isError(), tool + ": an unknown ExecContext is an error");
             assertTrue(textOf(unknown).contains("ExecContext #-1 not found"), tool + ": " + textOf(unknown));
         }
 
+        dump("before the invariants", ec.id);
         invariants.assertAll(ec.id);
+        log.info("READS [{} ms] invariants hold - done", ms());
     }
 }
