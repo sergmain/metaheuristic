@@ -41,9 +41,11 @@ import org.springframework.boot.cache.test.autoconfigure.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -61,6 +63,10 @@ import static org.junit.jupiter.api.Assertions.*;
  *   <li>the MCP tools {@code mh_get_exec_context_graph}, {@code _task_state}, {@code _variable_state}, built on the real
  *       beans, return the derived DOT, every Task's state and the derived entries - and refuse an unknown ExecContext.</li>
  * </ul>
+ *
+ * <p>Correction to "created and not driven": creation itself leaves ONE asynchronous write to the root segment, see
+ * {@link #awaitCreationWritesLanded}. Measuring {@code changeVersion} before it lands made the test flaky ("a read changes
+ * nothing": {@code 1,5,0,0} vs {@code 1,6,0,0}), so the test waits for it first.
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test", "mh-test-lm"})
@@ -87,6 +93,26 @@ public class SegmentStateReadsTest extends PreparingSourceCode {
         final ExecContextImpl ec = support.createAndStart(data, SegmentFixtureShapes.S1.items());
         setExecContextForTest(ec);
         return ec;
+    }
+
+    /**
+     * Creation is not the last write: the ExecContext's INIT Task moves on through two asynchronous hops. Production
+     * publishes {@code InitVariablesTxEvent} for every produced Task ({@code TaskProducingService}); for the INIT one,
+     * {@code TaskVariableInitService} (@Async, queued) moves it to its next state in MH_TASK and publishes
+     * {@code UpdateTaskExecStatesInExecContextTxEvent}; {@code ExecContextTaskStateService} (@Async, queued) writes that
+     * state into the Task's segment. Waits, driving nothing, until no Task is INIT and every Task's state in the segments
+     * is its MH_TASK state. After that nothing writes the segments unless the test does: the schedulers are off under
+     * {@code globals.testing}, PRE_INIT Tasks do not move, and this test never flushes the queued variable-state events.
+     */
+    private void awaitCreationWritesLanded(Long ecId) {
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(() -> {
+            final List<ExecContextBaselineSupport.TaskRow> rows = support.rows(ecId);
+            if (rows.stream().anyMatch(r -> r.state() == EnumsApi.TaskExecState.INIT)) {
+                return false;
+            }
+            final Map<Long, EnumsApi.TaskExecState> inSegments = segmentReadService.snapshot(ecId).states();
+            return rows.stream().allMatch(r -> r.state() == inSegments.getOrDefault(r.id(), EnumsApi.TaskExecState.NONE));
+        });
     }
 
     private static ExecContextApiData.VariableInfo info(long id, String name, String ext) {
@@ -133,6 +159,8 @@ public class SegmentStateReadsTest extends PreparingSourceCode {
     @Test
     public void test_derivedEntries_changeVersion_outputExt_andTheMcpReads() throws Exception {
         final ExecContextImpl ec = producedS1();
+        // the asynchronous state write creation leaves behind lands first - otherwise it can land between two reads below
+        awaitCreationWritesLanded(ec.id);
         final Map<String, Long> id = support.rows(ec.id).stream()
                 .collect(Collectors.toMap(ExecContextBaselineSupport.TaskRow::processCode, ExecContextBaselineSupport.TaskRow::id));
         final Long prepare = id.get("prepare");
