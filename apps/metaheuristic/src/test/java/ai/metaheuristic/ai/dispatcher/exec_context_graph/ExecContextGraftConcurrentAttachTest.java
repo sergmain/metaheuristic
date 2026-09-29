@@ -66,6 +66,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * no @DirtiesContext; cleanup inherited). Every assertion reads real state: what each call returned or threw, and
  * the tasks the EC holds at each line ctx.
  *
+ * <p>041 Phase 8 (decision 10) - CORRECTION to the two paragraphs above: a PLACE_NOW {@code attachGroup} takes no lock at
+ * all, and its line ctx is {@code base#(seed + a freshly allocated segment id)}, unique without a lock. The two grafts
+ * never queue on the EC write lock any more, so the forced interleaving is impossible (waiting for it timed out - both
+ * grafts had finished while the test still held the lock). The two grafts are now released together by a start gate;
+ * the assertions are unchanged.
+ *
  * @author Sergio Lissner
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
@@ -141,8 +147,11 @@ public class ExecContextGraftConcurrentAttachTest extends PreparingSourceCode {
         final Long target = targetTaskId;
         final List<ExecContextGraftService.GraftResult> results = new CopyOnWriteArrayList<>();
         final List<Throwable> failures = new CopyOnWriteArrayList<>();
+        // 041 Phase 8: PLACE_NOW takes no EC lock - the two grafts start together instead of queueing on it
+        final java.util.concurrent.CountDownLatch startGate = new java.util.concurrent.CountDownLatch(1);
         final Runnable graft = () -> {
             try {
+                startGate.await();
                 results.add(execContextGraftService.attachGroup(
                         ecId, target,
                         ExecContextGraftService.GroupRef.fromTargetSubProcesses(),
@@ -154,19 +163,9 @@ public class ExecContextGraftConcurrentAttachTest extends PreparingSourceCode {
             }
         };
 
-        final ReentrantReadWriteLock.WriteLock lock = ExecContextSyncService.getWriteLock(ecId);
-        final Thread a;
-        final Thread b;
-        lock.lock();
-        try {
-            a = Thread.ofPlatform().daemon().name("graft-a").start(graft);
-            b = Thread.ofPlatform().daemon().name("graft-b").start(graft);
-            await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(50))
-                    .until(() -> parkedOnExecContextLock(a) && parkedOnExecContextLock(b));
-        }
-        finally {
-            lock.unlock();
-        }
+        final Thread a = Thread.ofPlatform().daemon().name("graft-a").start(graft);
+        final Thread b = Thread.ofPlatform().daemon().name("graft-b").start(graft);
+        startGate.countDown();
         a.join(Duration.ofSeconds(60));
         b.join(Duration.ofSeconds(60));
         assertFalse(a.isAlive(), "PHASE #1: graft A must have finished");
