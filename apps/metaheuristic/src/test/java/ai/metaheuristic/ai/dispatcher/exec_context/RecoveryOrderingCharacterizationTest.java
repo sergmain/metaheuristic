@@ -126,14 +126,19 @@ public class RecoveryOrderingCharacterizationTest extends PreparingSourceCode {
 
         final Long execContextId = getExecContextForTest().id;
 
+        // 041 Phase 22: an ExecContext is line-based - one Task cannot have two successors at its own ctx. So failing
+        // and assignable are two lines forked from root (ctx FAILING_CTX, ASSIGNABLE_CTX), and a join Task after root
+        // closes them: root(OK) -> [failing | assignable] -> join(NONE). The join waits for both lines, so the two
+        // scenarios below see the same assignable sets as before: {assignable}, then {} (failing is not finished).
         final TaskImpl root = txTestingService.create(execContextId, taskParams(execContextId, "assembly-raw-file"));
-        final TaskImpl failing = txTestingService.create(execContextId, taskParams(execContextId, "dataset-processing"));
-        final TaskImpl assignable = txTestingService.create(execContextId, taskParams(execContextId, "assembly-raw-file"));
+        final TaskImpl failing = txTestingService.create(execContextId, taskParams(execContextId, "dataset-processing", FAILING_CTX));
+        final TaskImpl assignable = txTestingService.create(execContextId, taskParams(execContextId, "assembly-raw-file", ASSIGNABLE_CTX));
+        final TaskImpl join = txTestingService.create(execContextId, taskParams(execContextId, "mh.permute-values-of-variables"));
 
         ExecContextSyncService.getWithSyncVoid(execContextId, () ->
                 ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
                         ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().id,
-                                () -> buildGraph(root, failing, assignable))));
+                                () -> buildGraph(root, failing, assignable, join))));
 
         // ❗ The root is advanced in the GRAPH only, deliberately. Moving it to OK in the DB as well
         // fires TaskStateService.changeTaskStateToInitForChildren, which drags every child to INIT —
@@ -216,10 +221,11 @@ public class RecoveryOrderingCharacterizationTest extends PreparingSourceCode {
                 "draining the recovery event must reset the failed Task to NONE for its remaining try");
     }
 
-    private void buildGraph(TaskImpl root, TaskImpl failing, TaskImpl assignable) {
+    private void buildGraph(TaskImpl root, TaskImpl failing, TaskImpl assignable, TaskImpl join) {
         final TaskApiData.TaskWithContext tRoot = new TaskApiData.TaskWithContext(root.id, CommonConsts.TOP_LEVEL_CONTEXT_ID);
-        final TaskApiData.TaskWithContext tFailing = new TaskApiData.TaskWithContext(failing.id, CommonConsts.TOP_LEVEL_CONTEXT_ID);
-        final TaskApiData.TaskWithContext tAssignable = new TaskApiData.TaskWithContext(assignable.id, CommonConsts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext tFailing = new TaskApiData.TaskWithContext(failing.id, FAILING_CTX);
+        final TaskApiData.TaskWithContext tAssignable = new TaskApiData.TaskWithContext(assignable.id, ASSIGNABLE_CTX);
+        final TaskApiData.TaskWithContext tJoin = new TaskApiData.TaskWithContext(join.id, CommonConsts.TOP_LEVEL_CONTEXT_ID);
 
         OperationStatusRest osr;
 
@@ -234,6 +240,11 @@ public class RecoveryOrderingCharacterizationTest extends PreparingSourceCode {
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(root.id), List.of(tAssignable));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         refreshExecContext();
+
+        // the join follows root in root's line; its other parents are the tails of the two lines
+        osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(root.id, failing.id, assignable.id), List.of(tJoin));
+        assertEquals(EnumsApi.OperationStatus.OK, osr.status);
+        refreshExecContext();
     }
 
     /**
@@ -242,13 +253,15 @@ public class RecoveryOrderingCharacterizationTest extends PreparingSourceCode {
      */
     private void setGraphState(Long taskId, EnumsApi.TaskExecState state) {
         final Long execContextId = getExecContextForTest().id;
+        // 041 Phase 22: the Task's own ctx - the segment writer finds the Task's line by it
+        final String taskContextId = Objects.requireNonNull(taskRepository.findByIdReadOnly(taskId)).getTaskParamsYaml().task.taskContextId;
         ExecContextSyncService.getWithSyncVoid(execContextId, () ->
                 ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
                         ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().id,
                                 // 041 Phase 21: the state goes into the ExecContext's segments
                                 () -> txSupportForTestingService.updateTaskExecStateInSegments(
                                         execContextId, taskId,
-                                        state, CommonConsts.TOP_LEVEL_CONTEXT_ID))));
+                                        state, taskContextId))));
         refreshExecContext();
     }
 
@@ -262,9 +275,16 @@ public class RecoveryOrderingCharacterizationTest extends PreparingSourceCode {
     }
 
     private static String taskParams(Long execContextId, String processCode) {
+        return taskParams(execContextId, processCode, CommonConsts.TOP_LEVEL_CONTEXT_ID);
+    }
+
+    private static final String FAILING_CTX = "1,2#1";
+    private static final String ASSIGNABLE_CTX = "1,2#2";
+
+    private static String taskParams(Long execContextId, String processCode, String taskContextId) {
         TaskParamsYaml tpy = new TaskParamsYaml();
         tpy.task.execContextId = execContextId;
-        tpy.task.taskContextId = CommonConsts.TOP_LEVEL_CONTEXT_ID;
+        tpy.task.taskContextId = taskContextId;
         tpy.task.processCode = processCode;
         tpy.task.context = EnumsApi.FunctionExecContext.external;
         tpy.task.function = new TaskParamsYaml.FunctionConfig();

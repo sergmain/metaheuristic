@@ -63,6 +63,7 @@ public class TxSupportForTestingService {
     private final Globals globals;
     private final VariableRepository variableRepository;
     private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentStateTxService segmentStateTxServiceForTest;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService segmentTxServiceForTest;
     private final VariableTxService variableTxService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final FunctionCache functionCache;
@@ -355,7 +356,12 @@ public class TxSupportForTestingService {
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
         // 041 Phase 21: the whole-ExecContext graph is gone; Tasks join an ExecContext through its segments
         // (ExecContextSegmentTxService), so adding them to a graph by hand has no counterpart
-        throw new IllegalStateException("041 Phase 21: addTasksToGraph has no counterpart on segments, ExecContext #" + execContext.id);
+        // 041 Phase 22: the counterpart is the production writer itself - a Task with no parent starts the root line, a
+        // Task at a ctx that has a line follows that line's tail (other parents: tails of lines joining it), a Task at a
+        // new ctx starts a line forked from its single parent, in the segment of that parent's line
+        segmentTxServiceForTest.addTasks(execContext.id, parentTaskIds, taskIds, initialState, null,
+                ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService.SegmentStart.ENCLOSING);
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @Transactional
