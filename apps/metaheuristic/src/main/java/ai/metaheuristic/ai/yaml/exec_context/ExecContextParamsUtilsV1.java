@@ -24,7 +24,6 @@ import ai.metaheuristic.commons.json.versioning_json.AbstractParamsJsonUtils;
 import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
 import tools.jackson.core.JacksonException;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.stream.Collectors;
@@ -48,9 +47,8 @@ public class ExecContextParamsUtilsV1
         return 1;
     }
 
-    @NonNull
     @Override
-    public ExecContextParams upgradeTo(@NonNull ExecContextParamsV1 v1) {
+    public ExecContextParams upgradeTo(ExecContextParamsV1 v1) {
         ExecContextParams t = new ExecContextParams();
 
         // right now we don't need to convert Graph because it has only one version of structure
@@ -144,7 +142,7 @@ public class ExecContextParamsUtilsV1
     }
 
     private static ExecContextParams.Variable toVariable(ExecContextParamsV1.VariableV1 v) {
-        return new ExecContextParams.Variable(v.name, v.context, v.sourcing, toGitParams(v.git), toDiskParams(v.disk), v.parentContext, v.type, v.getNullable(), v.ext, null);
+        return new ExecContextParams.Variable(v.name, v.context, v.sourcing, toGitParams(v.git), toDiskParams(v.disk), v.parentContext, v.type, v.getNullable(), v.ext);
     }
 
     private static ExecContextParams.FunctionDefinition toFunction(ExecContextParamsV1.FunctionDefinitionV1 f1) {
@@ -152,7 +150,7 @@ public class ExecContextParamsUtilsV1
     }
 
     @Override
-    public Void downgradeTo(@NonNull Void unused) {
+    public Void downgradeTo(Void unused) {
         throw new DowngradeNotSupportedException();
     }
 
@@ -166,9 +164,8 @@ public class ExecContextParamsUtilsV1
         return null;
     }
 
-    @NonNull
     @Override
-    public String toString(@NonNull ExecContextParamsV1 json) {
+    public String toString(ExecContextParamsV1 json) {
         try {
             return BaseJsonUtils.getMapper().writeValueAsString(json);
         }
@@ -177,9 +174,8 @@ public class ExecContextParamsUtilsV1
         }
     }
 
-    @NonNull
     @Override
-    public ExecContextParamsV1 to(@NonNull String s) {
+    public ExecContextParamsV1 to(String s) {
         try {
             return BaseJsonUtils.getMapper().readValue(s, ExecContextParamsV1.class);
         }

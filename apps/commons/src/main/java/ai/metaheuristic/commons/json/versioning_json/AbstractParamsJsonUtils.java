@@ -17,7 +17,6 @@
 package ai.metaheuristic.commons.json.versioning_json;
 
 import ai.metaheuristic.api.data.BaseParams;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -27,21 +26,16 @@ import org.jspecify.annotations.Nullable;
  */
 abstract public class AbstractParamsJsonUtils<CurrT extends BaseParams, NextT extends BaseParams, NextU, PrevT, PrevU, CurrForDownT> {
 
-    @NonNull
-    public abstract NextT upgradeTo(@NonNull CurrT baseParams);
+    public abstract NextT upgradeTo(CurrT baseParams);
 
-    @NonNull
-    public abstract PrevT downgradeTo(@NonNull CurrForDownT baseParams);
+    public abstract PrevT downgradeTo(CurrForDownT baseParams);
 
-    @Nullable
-    public abstract NextU nextUtil();
+    public abstract @Nullable NextU nextUtil();
 
-    @Nullable
-    public abstract PrevU prevUtil();
+    public abstract @Nullable PrevU prevUtil();
 
     public abstract String toString(CurrT baseParams);
 
-    @NonNull
     public abstract CurrT to(String s);
 
     public abstract int getVersion();

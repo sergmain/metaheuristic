@@ -726,7 +726,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
         private ExecContextParams.Variable varDefToVariable(MhSourceCodeParser.VarDefContext ctx) {
             String name = resolveIdRef(ctx.idRef());
             ExecContextParams.Variable var = new ExecContextParams.Variable(name, EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher,
-                    null, null, null, null, null, null, null);
+                    null, null, null, null, null, null);
             applyVarModifiers(ctx, var);
             // Handle '?' shorthand for nullable
             if (ctx.getText().endsWith("?")) {
@@ -738,7 +738,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
         private ExecContextParams.Variable varDefToExecVariable(MhSourceCodeParser.VarDefContext ctx) {
             String name = resolveIdRef(ctx.idRef());
             ExecContextParams.Variable var = new ExecContextParams.Variable(name, EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher,
-                    null, null, null, null, null, null, null);
+                    null, null, null, null, null, null);
             applyVarModifiers(ctx, var);
             // Handle '?' shorthand for nullable
             if (ctx.getText().endsWith("?")) {

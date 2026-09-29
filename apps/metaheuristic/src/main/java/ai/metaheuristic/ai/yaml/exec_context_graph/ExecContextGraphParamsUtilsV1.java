@@ -20,6 +20,7 @@ import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.exceptions.ParamsProcessingException;
 import ai.metaheuristic.commons.json.versioning_json.AbstractParamsJsonUtils;
 import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
+import org.jspecify.annotations.Nullable;
 import tools.jackson.core.JacksonException;
 
 import org.jspecify.annotations.NonNull;
@@ -44,32 +45,30 @@ public class ExecContextGraphParamsUtilsV1
         return 1;
     }
 
-    @NonNull
     @Override
-    public ExecContextGraphParams upgradeTo(@NonNull ExecContextGraphParamsV1 v1) {
+    public ExecContextGraphParams upgradeTo(ExecContextGraphParamsV1 v1) {
         ExecContextGraphParams t = new ExecContextGraphParams();
         t.graph = v1.graph;
         return t;
     }
 
     @Override
-    public Void downgradeTo(@NonNull Void unused) {
+    public Void downgradeTo(Void unused) {
         throw new DowngradeNotSupportedException();
     }
 
     @Override
-    public Void nextUtil() {
+    public @Nullable Void nextUtil() {
         return null;
     }
 
     @Override
-    public Void prevUtil() {
+    public @Nullable Void prevUtil() {
         return null;
     }
 
-    @NonNull
     @Override
-    public String toString(@NonNull ExecContextGraphParamsV1 json) {
+    public String toString(ExecContextGraphParamsV1 json) {
         try {
             return BaseJsonUtils.getMapper().writeValueAsString(json);
         }
@@ -78,9 +77,8 @@ public class ExecContextGraphParamsUtilsV1
         }
     }
 
-    @NonNull
     @Override
-    public ExecContextGraphParamsV1 to(@NonNull String s) {
+    public ExecContextGraphParamsV1 to(String s) {
         try {
             return BaseJsonUtils.getMapper().readValue(s, ExecContextGraphParamsV1.class);
         }
