@@ -116,13 +116,17 @@ public class ExecContextSegmentTxService {
             final ExecContextSegmentParams.Line line = lineAt(p, ctx);
             if (line != null) {
                 final Long tail = line.tasks.getLast().taskId;
-                if (parentTaskIds.size() != 1 || !tail.equals(parentTaskIds.getFirst())) {
+                // 041 Phase 22: besides the line's tail, the parents may be tails of lines that now resolve to this Task -
+                // the process after one whose sub-processes are produced with it (an external function's sub-process
+                // block): the process graph wires those tails to it, the segments derive that edge
+                if (!parentTaskIds.contains(tail)) {
                     throw new IllegalStateException("01.913.020 Task #" + taskId + " at ctx " + ctx + " of ExecContext #"
                             + execContextId + " must follow the line's tail #" + tail + ", its parents are " + parentTaskIds);
                 }
                 line.tasks.add(new ExecContextSegmentParams.Vertex(taskId, tag));
                 p.states.put(taskId, state);
                 save(owning, p);
+                registerJoinedLines(execContextId, taskId, parentTaskIds.stream().filter(id -> !tail.equals(id)).distinct().toList());
                 return;
             }
         }
@@ -203,6 +207,27 @@ public class ExecContextSegmentTxService {
             j.linesRegistered += n;
             joinRepository.save(j);
         });
+    }
+
+    /**
+     * 041 Phase 22: {@code lineTails} are the parents of the just appended {@code joinTaskId} other than its chain
+     * predecessor. Each must be the tail of a line whose derived join is now {@code joinTaskId}; those lines are
+     * registered with it - as the code creating a sub-block registers the lines it forked ({@link #registerLines}).
+     */
+    private void registerJoinedLines(Long execContextId, Long joinTaskId, List<Long> lineTails) {
+        if (lineTails.isEmpty()) {
+            return;
+        }
+        for (Long t : lineTails) {
+            final String ctx = ctxOf(t);
+            final ExecContextSegment seg = findSegmentOfCtx(execContextId, ctx);
+            final ExecContextSegmentParams.Line line = seg == null ? null : lineAt(seg.getExecContextSegmentParams(), ctx);
+            if (line == null || !t.equals(line.tasks.getLast().taskId) || !joinTaskId.equals(derivedJoin(execContextId, line))) {
+                throw new IllegalStateException("01.913.025 Task #" + joinTaskId + " of ExecContext #" + execContextId + " has Task #" + t
+                        + " (ctx " + ctx + ") as a parent, which is neither its chain predecessor nor the tail of a line joining it");
+            }
+        }
+        registerLines(execContextId, lineTails);
     }
 
     /**
