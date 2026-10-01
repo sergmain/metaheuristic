@@ -113,6 +113,15 @@ public class VaultService {
     }
 
     /**
+     * Whether the company has a Vault at all — unlocked in dispatcher memory, or persisted in
+     * {@code Company.params}. Unlike {@link #isOpened(long)} this answers {@code true} for a LOCKED
+     * Vault too, which is the case the key-priority resolution must not mistake for "no Vault".
+     */
+    public boolean hasVault(long companyUniqueId) {
+        return unlocked.containsKey(companyUniqueId) || vaultTxService.loadVaultBlob(companyUniqueId) != null;
+    }
+
+    /**
      * Resolve the API key for a given company + code.
      * Returns empty if the vault is locked or the entry does not exist.
      */

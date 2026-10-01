@@ -157,4 +157,42 @@ public class VaultData {
 
     /** Body for deleting an entry. Passphrase is the proof-of-knowledge gate. */
     public record DeleteEntryRequest(String passphrase) {}
+
+    /** Body for producing the boot-unlock value. Passphrase is the proof-of-knowledge gate. */
+    public record BootUnlockRequest(String passphrase) {}
+
+    /**
+     * Value to put into application.properties so the management company's Vault is unlocked at
+     * Dispatcher start. {@code propertyName}={@code encryptedPassphrase} is the line to add; the KEK must
+     * be present in the environment variable {@code kekEnv} of the Dispatcher process.
+     */
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class BootUnlockValue extends BaseDataClass {
+        @Nullable
+        public String propertyName;
+        @Nullable
+        public String encryptedPassphrase;
+        @Nullable
+        public String kekEnv;
+
+        public BootUnlockValue(String propertyName, String encryptedPassphrase, String kekEnv) {
+            this.propertyName = propertyName;
+            this.encryptedPassphrase = encryptedPassphrase;
+            this.kekEnv = kekEnv;
+        }
+
+        public BootUnlockValue(String error) {
+            addErrorMessage(error);
+        }
+
+        @JsonCreator
+        public BootUnlockValue(
+                @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+                @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
+    }
 }

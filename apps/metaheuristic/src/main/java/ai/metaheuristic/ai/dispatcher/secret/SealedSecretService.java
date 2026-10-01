@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.secret;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.processor.security.ProcessorKeyResolver;
 import ai.metaheuristic.ai.dispatcher.vault.VaultService;
 import ai.metaheuristic.commons.security.AsymmetricEncryptor;
@@ -102,16 +103,26 @@ public class SealedSecretService {
      *
      * @param processorId authenticated Processor id (resolved upstream by the controller).
      * @param companyId   ownership anchor for the Vault lookup.
+     * @param taskCompanyId company that owns the task's ExecContext. The Vault actually read is chosen by
+     *                    {@link VaultKeyPriorityUtils#vaultCompanyIdFor}: the management company's Vault
+     *                    wins whenever it holds {@code keyCode}.
      * @param keyCode     Vault entry code.
      * @return an {@link Outcome} carrying either the sealed payload or a reason.
      */
-    public Outcome sealFor(long processorId, long companyId, String keyCode) {
+    public Outcome sealFor(long processorId, long taskCompanyId, String keyCode) {
         Optional<PublicKey> pubKeyOpt = processorKeyResolver.publicKeyFor(processorId);
         if (pubKeyOpt.isEmpty()) {
             log.info("0664.010 Processor {} has no publicKeySpki on file yet — answering processorNotEnrolled", processorId);
             return Outcome.processorNotEnrolled();
         }
         PublicKey pubKey = pubKeyOpt.get();
+
+        // The management company's Vault has priority over the task company's own Vault for the same keyCode.
+        // Everything below works against the Vault that answers, so it is resolved here and named companyId.
+        final long companyId = VaultKeyPriorityUtils.vaultCompanyIdFor(
+            taskCompanyId, keyCode, Consts.MANAGEMENT_COMPANY_ID,
+            vaultService::isOpened, vaultService::hasVault,
+            (id, code) -> vaultService.getKeyBytes(id, code).map(b -> { Arrays.fill(b, (byte) 0); return true; }).orElse(false));
 
         // A locked Vault and a Vault without this entry both make getKeyBytes answer empty, but they are
         // opposite conditions: a lock clears when an operator unlocks, a missing entry never clears by itself.

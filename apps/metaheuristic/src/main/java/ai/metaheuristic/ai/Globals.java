@@ -364,11 +364,40 @@ public class Globals {
 
     @Getter
     @Setter
+    public static class Vault {
+        public BootUnlock bootUnlock = new BootUnlock();
+    }
+
+    /**
+     * Auto-unlock of the management company's Key Vault at Dispatcher start.
+     *
+     * <p>Two halves kept apart on purpose: {@code encryptedPassphrase} sits in application.properties and is
+     * the Vault passphrase AES-GCM-encrypted with the KEK (key-encryption key); the KEK itself sits in the OS
+     * environment variable named by {@code kekEnv}. Either half alone opens nothing.
+     *
+     * <p>A blank {@code encryptedPassphrase} means not configured: the Vault stays locked after a restart,
+     * exactly as before. The value is produced by the Dispatcher itself, from the Key Vault page of the
+     * management company, so it is encrypted with the same KEK that decrypts it.
+     */
+    @Getter
+    @Setter
+    public static class BootUnlock {
+        /** Name of the OS environment variable holding the KEK: Base64 of 32 random bytes (AES-256). */
+        public String kekEnv = "MH_VAULT_KEK";
+
+        /** Base64 of [12-byte IV || ciphertext || 16-byte tag], AAD bound to the company. */
+        @Nullable
+        public String encryptedPassphrase;
+    }
+
+    @Getter
+    @Setter
     public static class Dispatcher {
         public Asset asset = new Asset();
         public RowsLimit rowsLimit = new RowsLimit();
         public DispatcherTimeout timeout = new DispatcherTimeout();
         public ExecutionGate executionGate = new ExecutionGate();
+        public Vault vault = new Vault();
 
         @PeriodUnit(ChronoUnit.DAYS)
         public Period keepEventsInDb = ConstsApi.DAYS_90;
@@ -1015,6 +1044,8 @@ public class Globals {
         log.info("'\tdispatcher.chunkSize: {}", dispatcher.chunkSize);
         log.info("'\tdispatcher.keepEventsInDb: {}", dispatcher.keepEventsInDb);
         log.info("'\tdispatcher.maxTriesAfterError: {}", dispatcher.maxTriesAfterError);
+        log.info("'\tdispatcher.vault.bootUnlock.kekEnv: {}", dispatcher.vault.bootUnlock.kekEnv);
+        log.info("'\tdispatcher.vault.bootUnlock.encryptedPassphrase: {}", dispatcher.vault.bootUnlock.encryptedPassphrase!=null ? "provided" : "wasn't provided");
 
         log.info("'\tdispatcher.timeout.gc: {}", dispatcher.timeout.gc);
         log.info("'\tdispatcher.timeout.artifactCleaner: {}", dispatcher.timeout.artifactCleaner);

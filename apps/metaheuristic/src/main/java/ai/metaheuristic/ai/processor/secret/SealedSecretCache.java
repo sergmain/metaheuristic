@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.processor.secret;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.commons.security.SealedSecret;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
@@ -47,6 +48,13 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>In-memory only — process restart clears the cache. Sealed bytes never
  * touch disk.
+ *
+ * <p>A key in the management company's Vault has priority over the same key of every other company
+ * (Dispatcher-side {@code VaultKeyPriorityUtils}), so an entry cached under any companyId may hold the
+ * management value. An invalidation for the management company therefore evicts that keyCode for every
+ * company.
+ *
+ * <p>Error code prefix: {@code 01.814.} (unique to this class).
  *
  * @author Sergio Lissner
  */
@@ -87,6 +95,13 @@ public class SealedSecretCache {
 
     /** Push-invalidation entry point — called from the keep-alive response handler. */
     public void invalidate(long companyId, String keyCode) {
+        if (companyId == Consts.MANAGEMENT_COMPANY_ID) {
+            final boolean removed = entries.keySet().removeIf(k -> k.keyCode().equals(keyCode));
+            if (removed) {
+                log.info("01.814.030 SealedSecretCache push-invalidate keyCode={} for every company - the management company's entry changed", keyCode);
+            }
+            return;
+        }
         CacheKey key = new CacheKey(companyId, keyCode);
         if (entries.remove(key) != null) {
             log.info("814.020 SealedSecretCache push-invalidate companyId={}, keyCode={}", companyId, keyCode);
