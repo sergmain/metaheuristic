@@ -16,9 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -45,11 +43,11 @@ import java.util.List;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextUtilsService {
 
-    private final ExecContextVariableStateTxService execContextVariableStateCache;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final VariableTxService variableTxService;
 
     @SuppressWarnings("DataFlowIssue")
-    public String getExtensionForVariable(Long execContextVariableStateId, Long variableId, String defaultExt) {
+    public String getExtensionForVariable(Long execContextId, Long variableId, String defaultExt) {
         Variable variable = variableTxService.getVariable(variableId);
         if (variable==null) {
             return defaultExt;
@@ -58,21 +56,13 @@ public class ExecContextUtilsService {
         if (variableType!=null && variableType!=EnumsApi.VariableType.unknown) {
             return variableType.ext;
         }
-        List<ExecContextApiData.VariableState> variableStates = getExecContextVariableStates(execContextVariableStateId);
-        String ext = variableStates.stream()
-                .filter(o->o.outputs!=null)
-                .flatMap(o->o.outputs.stream())
-                .filter(o->o.id.equals(variableId) && !S.b(o.ext))
-                .findFirst().map(o->o.ext)
-                .orElse(defaultExt) ;
-        return ext;
+        // 041 Phase 12: the producer's output entry, from the segment owning the variable's ctx
+        String ext = segmentReadService.outputExt(execContextId, variable.taskContextId, variableId);
+        return ext!=null ? ext : defaultExt;
     }
 
-    public List<ExecContextApiData.VariableState> getExecContextVariableStates(@Nullable Long execContextVariableStateId) {
-        if (execContextVariableStateId==null) {
-            return List.of();
-        }
-        ExecContextVariableState ecvs = execContextVariableStateCache.findById(execContextVariableStateId);
-        return ecvs!=null ? ecvs.getExecContextVariableStateInfo().states : List.of();
+    /** 041 Phase 12: every variable-state entry from the segments, input flags derived at read time. */
+    public List<ExecContextApiData.VariableState> getExecContextVariableStates(Long execContextId) {
+        return segmentReadService.variableStates(execContextId);
     }
 }

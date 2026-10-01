@@ -21,12 +21,9 @@ import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.events.NewWebsocketTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
@@ -35,8 +32,6 @@ import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SourceCodeGraph;
@@ -88,9 +83,6 @@ public class ExecContextCreatorService {
     private final ExecContextCache execContextCache;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final ExecContextGraphCache execContextGraphCache;
-    private final ExecContextVariableStateTxService execContextVariableStateCache;
     private final ApplicationEventPublisher eventPublisher;
     private final VariableTxService variableTxService;
 
@@ -185,8 +177,8 @@ public class ExecContextCreatorService {
     private void produceTasksForExecContextInternal(SourceCodeImpl sourceCode, ExecContextCreationResult creationResult) {
         TxUtils.checkTxExists();
         ExecContextSyncService.getWithSyncVoidForCreation(creationResult.execContext.id, () ->
-                ExecContextGraphSyncService.getWithSyncVoidForCreation(creationResult.execContext.execContextGraphId, ()->
-                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(creationResult.execContext.execContextTaskStateId,
+                ExecContextGraphSyncService.getWithSyncVoidForCreation(creationResult.execContext.id, ()->
+                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(creationResult.execContext.id,
                             () -> {
                                 SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(
                                     sourceCode, creationResult.execContext);
@@ -266,24 +258,8 @@ public class ExecContextCreatorService {
         ec.updateParams(ecpy);
         ec.setValid(true);
 
-        ExecContextTaskState execContextTaskState = new ExecContextTaskState();
-        execContextTaskState.updateParams(new ExecContextTaskStateParams());
-        execContextTaskState.createdOn = System.currentTimeMillis();
-        execContextTaskState = execContextTaskStateRepository.save(execContextTaskState);
-        ec.execContextTaskStateId = execContextTaskState.id;
-
-        ExecContextGraph execContextGraph = new ExecContextGraph();
-        execContextGraph.updateParams(new ExecContextGraphParams());
-        execContextGraph.createdOn = System.currentTimeMillis();
-        execContextGraph = execContextGraphCache.save(execContextGraph);
-        ec.execContextGraphId = execContextGraph.id;
-
-        ExecContextVariableState bean = new ExecContextVariableState();
-        bean.updateParams(new ExecContextApiData.ExecContextVariableStates());
-        bean.createdOn = System.currentTimeMillis();
-        bean = execContextVariableStateCache.save(bean);
-        ec.execContextVariableStateId = bean.id;
-
+        // 041 Phase 21: no graph / task-state / variable-state record is created - the ExecContext's structure, states
+        // and variable-state entries live in its segments, the first of which production writes
         ec = execContextCache.save(ec);
         return ec;
     }

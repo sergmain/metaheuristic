@@ -427,9 +427,6 @@ CREATE TABLE mh_exec_context
     PARAMS                  LONGTEXT NOT NULL,
     IS_VALID                BOOLEAN  default false not null,
     STATE                   smallint not null default 0,
-    CTX_GRAPH_ID            INT UNSIGNED NOT NULL,
-    CTX_TASK_STATE_ID       INT UNSIGNED NOT NULL,
-    CTX_VARIABLE_STATE_ID   INT UNSIGNED NOT NULL,
     ROOT_EXEC_CONTEXT_ID    INT UNSIGNED,
     LATCH                   varchar(50)
 );
@@ -443,32 +440,44 @@ CREATE INDEX mh_exec_context_id_source_code_id_idx
 CREATE INDEX mh_exec_context_root_exec_context_id_idx
     ON mh_exec_context (ROOT_EXEC_CONTEXT_ID);
 
-CREATE TABLE mh_exec_context_graph
+# 041 ExecContext segments: one record per grafted line (with its nested subtree) plus the root segment
+CREATE TABLE mh_exec_context_segment
 (
-    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    ID                  bigint          NOT NULL PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
-    EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
+    EXEC_CONTEXT_ID     INT UNSIGNED    NOT NULL,
+    LINE_CTX_ID         VARCHAR(250)    NOT NULL,
+    FORK_TASK_ID        INT UNSIGNED    default NULL,
+    STRUCTURE_HASH      VARCHAR(64)     NOT NULL,
     CREATED_ON          bigint not null,
     PARAMS              LONGTEXT NOT NULL
 );
 
-CREATE TABLE mh_exec_context_task_state
+CREATE UNIQUE INDEX mh_exec_context_segment_ec_line_ctx_unq_idx
+    ON mh_exec_context_segment (EXEC_CONTEXT_ID, LINE_CTX_ID);
+
+CREATE INDEX mh_exec_context_segment_ec_fork_idx
+    ON mh_exec_context_segment (EXEC_CONTEXT_ID, FORK_TASK_ID);
+
+# ID is assigned: the writer allocates it from mh_ids (ExecContextSegmentIdService) before building the row, so
+# LINE_CTX_ID (seed + id, decision 10) is in the one INSERT.
+
+# 041 ExecContext segments: one record per join vertex
+CREATE TABLE mh_exec_context_join
 (
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
-    EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
-    CREATED_ON          bigint not null,
-    PARAMS              LONGTEXT NOT NULL
+    EXEC_CONTEXT_ID     INT UNSIGNED    NOT NULL,
+    JOIN_TASK_ID        INT UNSIGNED    NOT NULL,
+    LINES_REGISTERED    INT             NOT NULL DEFAULT 0,
+    LINES_FINISHED      INT             NOT NULL DEFAULT 0,
+    LINES_DEAD          INT             NOT NULL DEFAULT 0,
+    IS_CLOSED           BOOLEAN         NOT NULL DEFAULT FALSE,
+    CREATED_ON          bigint not null
 );
 
-CREATE TABLE mh_exec_context_variable_state
-(
-    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION             INT UNSIGNED    NOT NULL,
-    EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
-    CREATED_ON          bigint not null,
-    PARAMS              LONGTEXT NOT NULL
-);
+CREATE UNIQUE INDEX mh_exec_context_join_ec_join_task_unq_idx
+    ON mh_exec_context_join (EXEC_CONTEXT_ID, JOIN_TASK_ID);
 
 CREATE TABLE mh_experiment_result
 (

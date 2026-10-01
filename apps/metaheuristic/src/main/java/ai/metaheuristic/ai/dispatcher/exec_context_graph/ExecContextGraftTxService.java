@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateService;
+import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -65,6 +65,12 @@ import java.util.Set;
  *       SKIPPED DIRECTLY so NOT ONE dispatcher event fires during the graft.</li>
  * </ol>
  *
+ * <p>041-EXEC-CONTEXT-SEGMENTS-PLAN, Phase 8: the three writes land in the grafted line's own segment - Stage 1 creates it
+ * (its Tasks, their states), Stage 2 adds the variable-state entry to it, Stage 3 marks its line SKIPPED in it. None of
+ * them reads or writes the whole-ExecContext graph, task-state or variable-state record, and none touches another
+ * segment. The line's join is derived; a live line (RUN_NOW) registers its tails with that join, a line born SKIPPED
+ * (PLACE_NOW) never does. Locks: see {@link ExecContextGraftService} - an out-of-band PLACE_NOW holds none.
+ *
  * Error code prefix: {@code 831.}
  *
  * @author Sergio Lissner
@@ -75,16 +81,17 @@ import java.util.Set;
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class ExecContextGraftTxService {
 
-    private final ExecContextGraphService execContextGraphService;
     private final TaskProducingService taskProducingService;
     private final VariableTxService variableTxService;
     private final TaskRepository taskRepository;
-    private final ExecContextVariableStateService execContextVariableStateService;
+    private final ExecContextSegmentTxService segmentTxService;
 
     /**
      * Stage 1 - CREATE the grafted body FLAT under the target at {@code lineCtxId} (PRE_INIT), wire
      * the tail into the shared terminal only, and return the body-root HEAD task id.
      * Caller MUST hold the ExecContext / Graph / TaskState write locks.
+     * 041 Phase 8: the in-band form - the line goes into its own new segment, and its tail(s) are reported in
+     * {@code unwiredTailsOut} for the caller to register with the derived join once its block is complete.
      */
     @Transactional
     public Long createGroupTasksTx(
@@ -92,20 +99,23 @@ public class ExecContextGraftTxService {
             Long targetTaskId, String lineCtxId, String rootProcessCode,
             List<ExecContextGraftService.InputBinding> inputBindings, List<Long> unwiredTailsOut) {
         return createGroupTasksTx(sec, ecd, targetTaskId, lineCtxId, rootProcessCode, inputBindings, unwiredTailsOut,
-                new ArrayList<>());
+                new ArrayList<>(), ExecContextSegmentTxService.SegmentStart.OWN, false);
     }
 
     /**
      * Stage 1, also reporting the ids of the tasks it created into {@code createdTaskIdsOut} (ascending), so a
      * caller looking for one of the line's tasks searches the line rather than the whole ExecContext.
      * Caller MUST hold the ExecContext / Graph / TaskState write locks.
+     * 041 Phase 8: {@code segmentStart} is {@code SegmentStart.own(id)} when the line ctx was derived from an allocated
+     * segment id (decision 10), else {@code SegmentStart.OWN}; {@code registerTails} registers the line's tails with the
+     * derived join in this transaction (out-of-band RUN_NOW). Every tail is reported in {@code unwiredTailsOut}.
      */
     @Transactional
     public Long createGroupTasksTx(
             ExecContextApiData.SimpleExecContext sec, InternalFunctionData.ExecutionContextData ecd,
             Long targetTaskId, String lineCtxId, String rootProcessCode,
             List<ExecContextGraftService.InputBinding> inputBindings, List<Long> unwiredTailsOut,
-            List<Long> createdTaskIdsOut) {
+            List<Long> createdTaskIdsOut, ExecContextSegmentTxService.SegmentStart segmentStart, boolean registerTails) {
 
         // 1. Write the bound inputs at the fresh line ctx. The body's tasks declare these as inputs,
         //    so the variables must exist before the sub-branch is created/runnable.
@@ -119,12 +129,11 @@ public class ExecContextGraftTxService {
         //    the splitter itself uses.
         // Snapshot existing task ids so the newly-created grafted head can be identified afterward.
         // Ids only: the snapshot needs no task's params.
-        Set<Long> preExisting = new HashSet<>(taskRepository.findAllTaskIdsByExecContextId(sec.execContextId));
-
-        ExecContextData.GraphAndStates gas = execContextGraphService.prepareGraphAndStates(
-                sec.execContextGraphId, sec.execContextTaskStateId);
+        // 041 Phase 8: no snapshot - it read every Task id of the ExecContext per graft (O(N)). The created Tasks are the
+        // line of the new segment, read back below; and the whole-ExecContext graph and task state are no longer loaded.
         List<Long> lastIds = new ArrayList<>();
-        taskProducingService.createTasksForSubProcesses(gas, sec, ecd, lineCtxId, targetTaskId, lastIds);
+        // 041: a graft is its own segment (decision 7); its ctx allocation (decision 10) and join registration are Phase 8
+        taskProducingService.createTasksForSubProcesses(sec, ecd, lineCtxId, targetTaskId, lastIds, segmentStart);
 
         // LINE ISOLATION - wire this line's tail ONLY into the single shared downstream terminal;
         // ecd.descendants is the target's LIVE direct children, polluted by every earlier grafted line
@@ -136,25 +145,22 @@ public class ExecContextGraftTxService {
         // it - the DOT export always writes it and the import reads it back. So no Task is loaded per
         // descendant any more - one per earlier grafted line - and the resolver is the one the Spring-less
         // tests already drive the filter with.)
-        Set<ExecContextData.TaskVertex> terminalDescendants = filterTerminalDescendants(
-                ecd.descendants, lineCtxId, v -> v.taskContextId);
         // F1: if this line has NO terminal to wire into at graft time (its target's downstream is wired
         // LATER by the enclosing block - e.g. the target is the sequential chain tail), report the line's
         // tail(s) so the in-band RUN_NOW caller can rejoin them into the enclosing block's downstream
         // (createTasksForSubProcesses -> lastIds). Otherwise createEdges below wires this line's tail into
         // the shared terminal as usual.
-        if (terminalDescendants.isEmpty()) {
-            unwiredTailsOut.addAll(lastIds);
+        // 041 Phase 8: no edge is written - a line's join is derived from the segments (the Task after the fork in the
+        // fork's line, or recursively the enclosing line's join), so line isolation holds by construction and F1 needs
+        // no special case. Every tail is reported; registering them with the join is the caller's (in-band: after its
+        // block is complete, via lastIds) or this transaction's (registerTails). A PLACE_NOW line is born SKIPPED and is
+        // never registered: its join record stays unchanged.
+        unwiredTailsOut.addAll(lastIds);
+        if (registerTails) {
+            segmentTxService.registerLines(sec.execContextId, lastIds);
         }
-        execContextGraphService.createEdges(gas.graph(), lastIds, terminalDescendants);
-        execContextGraphService.save(gas);
 
-        final List<Long> created = new ArrayList<>();
-        for (Long id : taskRepository.findAllTaskIdsByExecContextId(sec.execContextId)) {
-            if (!preExisting.contains(id)) {
-                created.add(id);
-            }
-        }
+        final List<Long> created = segmentTxService.lineTaskIds(sec.execContextId, lineCtxId);
         created.sort(Long::compareTo);
         createdTaskIdsOut.addAll(created);
 
@@ -202,7 +208,8 @@ public class ExecContextGraftTxService {
         state.process = tpy.task.processCode;
         state.functionCode = tpy.task.function != null ? tpy.task.function.code : null;
         state.outputs = infos;
-        execContextVariableStateService.registerCreatedTasks(sec.execContextVariableStateId, List.of(state));
+        // 041 Phase 8: the entry goes into the grafted line's segment, not the whole-ExecContext variable-state record
+        segmentTxService.addVariableStates(sec.execContextId, lineCtxId, List.of(state));
 
         log.info("831.320 materialized+registered {} write-once output(s) for head #{} at ctx {}",
                 outputs.size(), headTaskId, lineCtxId);
@@ -218,18 +225,9 @@ public class ExecContextGraftTxService {
     @Transactional
     public void markLineSkippedTx(ExecContextApiData.SimpleExecContext sec, Long headTaskId, String headCtx) {
 
-        ExecContextData.ExecContextDAC dac = execContextGraphService.getExecContextDAC(
-                sec.execContextId, sec.execContextGraphId);
-        ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
-                dac, sec.execContextTaskStateId,
-                List.of(new TaskData.TaskWithStateAndTaskContextId(
-                        headTaskId, EnumsApi.TaskExecState.SKIPPED, headCtx)));
-
-        Set<Long> toSkip = new LinkedHashSet<>();
-        toSkip.add(headTaskId);
-        for (TaskData.TaskWithState t : status.childrenTasks) {
-            toSkip.add(t.taskId);
-        }
+        // 041 Phase 8: the SKIPPED closure of a freshly grafted line is the line from its head to its tail - its join
+        // always has a live parent - so only that line's segment is written; no whole-ExecContext record is read.
+        Set<Long> toSkip = new LinkedHashSet<>(segmentTxService.markLineSkipped(sec.execContextId, headCtx, headTaskId));
         final long now = System.currentTimeMillis();
         for (Long taskId : toSkip) {
             TaskSyncService.getWithSyncVoid(taskId, () -> {

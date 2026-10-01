@@ -20,8 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateService;
+import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
@@ -31,7 +30,6 @@ import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -65,9 +63,9 @@ public class SubProcessesTxService {
     private final InternalFunctionService internalFunctionService;
     private final GraftExpander graftExpander;
     private final TaskProducingService taskProducingService;
-    private final ExecContextGraphService execContextGraphService;
+    private final ExecContextSegmentTxService segmentTxService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final TaskRepository taskRepository;
-    private final ExecContextVariableStateService execContextVariableStateService;
     private final ExecContextCache execContextCache;
 
     @Transactional
@@ -132,23 +130,22 @@ public class SubProcessesTxService {
         }
 
         try {
-            ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
+            // 041 Phase 21: nothing whole-ExecContext is loaded - the subtree and the new lines live in segments
 
             // Remove old children and their entire sub-layer subtree from graph before creating new tasks.
             // Uses deriveParentTaskContextId walk to identify all sub-layers belonging to this wrapper.
             // Collects downstream vertices (e.g. mh.finish) that the subtree pointed to — they need to be reconnected.
             if (!oldChildren.isEmpty()) {
+                // 041 Phase 11: the subtree comes from the segments and leaves them (removeLines); no edge is reconnected -
+                // joins are derived
+                final Set<Long> subtree = oldSubtree(simpleExecContext.execContextId, oldChildren, taskParamsYaml.task.taskContextId);
+                segmentTxService.removeLines(simpleExecContext.execContextId, subtree);
                 Set<ExecContextData.TaskVertex> removedVertices = new java.util.LinkedHashSet<>();
-                Set<ExecContextData.TaskVertex> downstreamOfOldChildren = execContextGraphService.removeOldSubProcessChildren(
-                        graphAndStates.graph(), oldChildren, taskParamsYaml.task.taskContextId, removedVertices);
+                subtree.forEach(id -> removedVertices.add(new ExecContextData.TaskVertex(id)));
                 // Add downstream vertices to filteredDescendants so createEdges reconnects them
-                filteredDescendants.addAll(downstreamOfOldChildren);
 
                 // Clean up stale task state entries for all removed vertices (old children + their subtree)
-                ExecContextTaskStateParams stateParams =
-                        graphAndStates.states().getExecContextTaskStateParamsYaml();
                 for (ExecContextData.TaskVertex removed : removedVertices) {
-                    stateParams.states.remove(removed.taskId);
 
                     // Mark task as SKIPPED in DB so async internal function processing won't pick it up
                     TaskSyncService.getWithSyncVoid(removed.taskId, () -> {
@@ -165,22 +162,19 @@ public class SubProcessesTxService {
                     // Deregister from task queue
                     TaskProviderTopLevelService.deregisterTask(simpleExecContext.execContextId, removed.taskId);
                 }
-                graphAndStates.states().updateParams(stateParams);
 
                 // Remove stale entries from ExecContextVariableState so findVariableInAllInternalContexts
                 // won't find variables from removed (orphan) tasks
-                Set<Long> removedTaskIds = removedVertices.stream().map(v -> v.taskId).collect(Collectors.toSet());
-                ExecContextImpl ec = execContextCache.findById(simpleExecContext.execContextId);
-                if (ec != null && ec.execContextVariableStateId != null) {
-                    ExecContextVariableStateSyncService.getWithSyncNullableForCreation(ec.execContextVariableStateId,
-                            () -> { execContextVariableStateService.removeTaskStates(ec.execContextVariableStateId, removedTaskIds); return null; });
-                }
+                // (041: the entries left with their lines)
             }
 
             taskProducingService.createTasksForSubProcesses(
-                graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander);
+                    simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
+                // 041: a static sub-block written in the source stays in the segment of the line it is forked from
+                ExecContextSegmentTxService.SegmentStart.ENCLOSING);
 
-            execContextGraphService.createEdges(graphAndStates.graph(), lastIds, filteredDescendants);
+            // 041 Phase 7: the join of the new lines is derived from the segments; register them with it
+            segmentTxService.registerLines(simpleExecContext.execContextId, lastIds);
 
         } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
             throw e;
@@ -190,5 +184,44 @@ public class SubProcessesTxService {
             throw new BatchResourceProcessingException(es);
         }
         return null;
+    }
+
+    /**
+     * 041 Phase 11: the Tasks of the old sub-block children's subtree - their lines and every line forked, at any
+     * depth, from those lines' Tasks whose ctx lies under the wrapper's ctx (the same bound the whole-graph removal used:
+     * {@code deriveParentTaskContextId} reaches {@code wrapperCtx}). Downstream Tasks (the join, mh.finish) are outside.
+     */
+    private Set<Long> oldSubtree(Long execContextId, Set<ExecContextData.TaskVertex> oldChildren, String wrapperCtx) {
+        final ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentLineView view = segmentReadService.lineView(execContextId);
+        final Set<Long> out = new java.util.LinkedHashSet<>();
+        final Set<String> seenLines = new java.util.HashSet<>();
+        final java.util.Deque<ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Line> queue = new java.util.ArrayDeque<>();
+        oldChildren.forEach(v -> queue.add(view.lineOf(v.taskId)));
+        while (!queue.isEmpty()) {
+            final ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Line line = queue.poll();
+            if (!seenLines.add(line.ctx()) || !isUnderCtx(line.ctx(), wrapperCtx)) {
+                continue;
+            }
+            for (ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Vertex v : line.tasks()) {
+                out.add(v.taskId());
+                queue.addAll(view.linesForkedFrom(v.taskId()));
+            }
+        }
+        return out;
+    }
+
+    private static boolean isUnderCtx(String taskContextId, String ancestorCtx) {
+        String current = taskContextId;
+        for (int i = 0; i < 100; i++) {
+            final String parent = ContextUtils.deriveParentTaskContextId(current);
+            if (parent == null) {
+                return false;
+            }
+            if (parent.equals(ancestorCtx)) {
+                return true;
+            }
+            current = parent;
+        }
+        return false;
     }
 }

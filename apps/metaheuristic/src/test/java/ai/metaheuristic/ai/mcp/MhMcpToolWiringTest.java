@@ -65,9 +65,10 @@ public class MhMcpToolWiringTest {
         put("mh_get_task_info", "taskId");
         put("mh_reset_task", "taskId");
         put("mh_get_exec_context_info", "execContextId");
-        put("mh_get_exec_context_graph", "execContextGraphId");
-        put("mh_get_exec_context_task_state", "execContextTaskStateId");
-        put("mh_get_exec_context_variable_state", "execContextVariableStateId");
+        // 041 Phase 12: the three state tools are keyed by the ExecContext and read its segments
+        put("mh_get_exec_context_graph", "execContextId");
+        put("mh_get_exec_context_task_state", "execContextId");
+        put("mh_get_exec_context_variable_state", "execContextId");
         put("mh_get_source_code", "sourceCodeId");
         put("mh_archive_source_code", "sourceCodeId");
         put("mh_get_meta_storage_record", "id");
@@ -98,7 +99,7 @@ public class MhMcpToolWiringTest {
     private static final Set<String> NO_ARG_TOOLS = Set.of("mh_list_source_codes", "mh_list_processors", "mh_execution_gate_status");
 
     private static List<McpServerFeatures.SyncToolSpecification> specs() {
-        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
+        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
                 .getAllToolSpecifications();
     }
 

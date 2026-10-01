@@ -59,8 +59,8 @@ public class ExperimentResultProcessorFunction implements InternalFunction {
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
-        ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextGraphId, ()->
-                ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId, ()->
+        ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextId, ()->
+                ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextId, ()->
                         experimentResultService.storeExperimentToExperimentResult(simpleExecContext, taskParamsYaml)));
     }
 }

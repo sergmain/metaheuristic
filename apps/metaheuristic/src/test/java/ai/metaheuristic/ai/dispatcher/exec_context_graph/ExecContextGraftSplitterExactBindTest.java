@@ -19,11 +19,9 @@ package ai.metaheuristic.ai.dispatcher.exec_context_graph;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.MhSharedItTest;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
@@ -64,7 +62,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ExecContextGraftSplitterExactBindTest extends MhSharedItTest {
 
     @Autowired private VariableTxService variableTxService;
-    @Autowired private ExecContextVariableStateRepository execContextVariableStateRepository;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TaskRepository taskRepository;
     @Autowired private ExecContextGraftService execContextGraftService;
@@ -77,11 +74,7 @@ public class ExecContextGraftSplitterExactBindTest extends MhSharedItTest {
     private static final String PARENT_CTX = "1,2#0";
 
     private Long setupExecContextWithSplitterProcess() {
-        ExecContextVariableState ecvs = new ExecContextVariableState();
-        ecvs.createdOn = System.currentTimeMillis();
         ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
-        ecvs.updateParams(info);
-        ecvs = execContextVariableStateRepository.save(ecvs);
 
         ExecContextImpl ec = new ExecContextImpl();
         ec.sourceCodeId = 1L;
@@ -92,9 +85,6 @@ public class ExecContextGraftSplitterExactBindTest extends MhSharedItTest {
         // made the shared-IT per-test cleanup try to stop it, and this class is @Transactional, so that
         // cleanup can never run (see MhSharedItTest.resetSharedItStatePerTest).
         ec.state = EnumsApi.ExecContextState.FINISHED.code;
-        ec.execContextVariableStateId = ecvs.id;
-        ec.execContextGraphId = 0L;
-        ec.execContextTaskStateId = 0L;
 
         ExecContextParams pyaml = new ExecContextParams();
         ExecContextParams.Process splitter = new ExecContextParams.Process();
@@ -107,8 +97,6 @@ public class ExecContextGraftSplitterExactBindTest extends MhSharedItTest {
         ec.updateParams(pyaml);
 
         ec = execContextCache.save(ec);
-        ecvs.execContextId = ec.id;
-        execContextVariableStateRepository.save(ecvs);
         return ec.id;
     }
 
@@ -120,12 +108,10 @@ public class ExecContextGraftSplitterExactBindTest extends MhSharedItTest {
 
     private void registerInEcvs(Long ecId, String taskContextId, Long variableId) {
         ExecContextImpl ec = execContextCache.findById(ecId);
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: the entry is not stored for the lookup any more - it reads the DB only (the record-first path is gone)
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         ExecContextApiData.VariableInfo vi = new ExecContextApiData.VariableInfo(variableId, OUTPUT_VAR, EnumsApi.VariableContext.local, ".txt");
         info.states.add(new ExecContextApiData.VariableState(1L, 0L, 0L, taskContextId, "p", "f", null, List.of(vi)));
-        ecvs.updateParams(info);
-        execContextVariableStateRepository.save(ecvs);
     }
 
     private Long createSplitterTask(Long ecId) {

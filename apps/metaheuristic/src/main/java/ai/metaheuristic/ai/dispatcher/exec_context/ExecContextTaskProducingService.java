@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
@@ -64,7 +63,6 @@ public class ExecContextTaskProducingService {
     private final SourceCodeValidationService sourceCodeValidationService;
     private final ApplicationEventPublisher eventPublisher;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
-    private final ExecContextGraphService execContextGraphService;
     private final VariableTxService variableTxService;
 
     public SourceCodeApiData.TaskProducingResultComplex produceAndStartAllTasks(
@@ -87,7 +85,7 @@ public class ExecContextTaskProducingService {
 
         log.info("701.140 Start producing tasks for SourceCode {}, execContextId: #{}", sourceCode.uid, execContext.id);
 
-        ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(execContext.execContextGraphId, execContext.execContextTaskStateId);
+        // 041 Phase 21: nothing whole-ExecContext is loaded - the Tasks land in the root segment as they are produced
 
         // ensure every declared nullable input that nothing seeded gets a nullified row, so it
         // resolves like any other nullable variable (real id + null blob) in cache and non-cache paths
@@ -102,7 +100,7 @@ public class ExecContextTaskProducingService {
                 (name, contextId) -> variableTxService.createInitializedWithNull(name, execContext.id, contextId).id);
 
         // create all not dynamic tasks
-        TaskData.ProduceTaskResult produceTaskResult = produceTasksForExecContext(execContext, graphAndStates);
+        TaskData.ProduceTaskResult produceTaskResult = produceTasksForExecContext(execContext);
         if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
             log.info("701.160 Tasks were produced with status {}", produceTaskResult.status);
         }
@@ -126,7 +124,7 @@ public class ExecContextTaskProducingService {
         return result;
     }
 
-    private TaskData.ProduceTaskResult produceTasksForExecContext(ExecContextImpl execContext, ExecContextData.GraphAndStates graphAndStates) {
+    private TaskData.ProduceTaskResult produceTasksForExecContext(ExecContextImpl execContext) {
         final ExecContextParams execContextParamsYaml = execContext.getExecContextParamsYaml();
         DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
@@ -168,7 +166,7 @@ public class ExecContextTaskProducingService {
             final ExecContextParams.Process process = p;
             TaskData.ProduceTaskResult result = taskProducingService.produceTaskForProcess(
                 process, execContextParamsYaml, execContext.id, execContext.companyId,
-                graphAndStates, parentTaskIds,
+                parentTaskIds,
                 parentProcesses.isEmpty() ? EnumsApi.TaskExecState.INIT : EnumsApi.TaskExecState.PRE_INIT);
 
             if (result.status!= EnumsApi.TaskProducingStatus.OK) {

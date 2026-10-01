@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.event.events.ExecContextReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.StartTaskProcessingEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
@@ -60,9 +59,9 @@ import java.util.Map;
 public class ExecContextReadinessService {
 
     private final ExecContextCache execContextCache;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final ExecContextReconciliationTopLevelService execContextReconciliationTopLevelService;
-    private final ExecContextGraphService execContextGraphService;
     private final DispatcherParamsService dispatcherParamsService;
     private final TaskTxService taskTxService;
     private final ExecContextRepository execContextRepository;
@@ -109,7 +108,8 @@ public class ExecContextReadinessService {
 
         Map<Long, TaskApiData.TaskState> states = taskTxService.getExecStateOfTasks(execContextId);
 
-        final List<ExecContextData.TaskVertex> vertices = execContextGraphService.findAllForAssigning(execContext.execContextGraphId, execContext.execContextTaskStateId, true);
+        // 041 Phase 10: the ready set is read from the segments
+        final List<ExecContextData.TaskVertex> vertices = segmentReadService.findAllForAssigning(execContextId, true);
 
         List<Long> taskIds = vertices.stream().map(v -> v.taskId).toList();
 
@@ -132,7 +132,7 @@ public class ExecContextReadinessService {
                 }
             }
         }
-        execContextReconciliationTopLevelService.reconcileStates(execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId);
+        execContextReconciliationTopLevelService.reconcileStates(execContext.id);
     }
 
 }

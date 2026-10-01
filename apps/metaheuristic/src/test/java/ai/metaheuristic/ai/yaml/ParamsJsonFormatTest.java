@@ -17,10 +17,6 @@
 package ai.metaheuristic.ai.yaml;
 
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsUtils;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParams;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsUtils;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsUtils;
 import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParams;
 import ai.metaheuristic.ai.yaml.execution_gate.ExecutionGateParamsUtils;
 import ai.metaheuristic.api.ConstsApi;
@@ -235,50 +231,10 @@ public class ParamsJsonFormatTest {
     }
 
     // ------------------------------------------------------------------ ExecContextGraphParams
-
-    @Test
-    public void test_graphParams_isCompactJsonVersion1() {
-        final ExecContextGraphParams src = new ExecContextGraphParams();
-        src.graph = DOT;
-        assertCompactJsonV1(ExecContextGraphParamsUtils.BASE_UTILS.toString(src), "ExecContextGraphParams");
-    }
-
-    @Test
-    public void test_graphParams_roundTripKeepsGraph() {
-        final ExecContextGraphParams src = new ExecContextGraphParams();
-        src.graph = DOT;
-        final ExecContextGraphParams back = ExecContextGraphParamsUtils.BASE_UTILS.to(
-            ExecContextGraphParamsUtils.BASE_UTILS.toString(src));
-        assertEquals(DOT, back.graph);
-    }
-
     // ------------------------------------------------------------------ ExecContextTaskStateParams
-
-    private static ExecContextTaskStateParams fullTaskState() {
-        final ExecContextTaskStateParams src = new ExecContextTaskStateParams();
-        src.states.put(45064L, EnumsApi.TaskExecState.OK);
-        src.states.put(45065L, EnumsApi.TaskExecState.NONE);
-        src.states.put(45066L, EnumsApi.TaskExecState.ERROR);
-        src.triesWasMade.put(45064L, 2);
-        src.triesWasMade.put(45066L, 0);
-        return src;
-    }
-
-    @Test
-    public void test_taskStateParams_isCompactJsonVersion1() {
-        assertCompactJsonV1(ExecContextTaskStateParamsUtils.BASE_UTILS.toString(fullTaskState()), "ExecContextTaskStateParams");
-    }
-
-    @Test
-    public void test_taskStateParams_roundTripKeepsLongKeys() {
-        final ExecContextTaskStateParams src = fullTaskState();
-        final ExecContextTaskStateParams back = ExecContextTaskStateParamsUtils.BASE_UTILS.to(
-            ExecContextTaskStateParamsUtils.BASE_UTILS.toString(src));
-        // Map.equals compares keys with equals(): a key read back as String would not match the Long
-        assertEquals(src.states, back.states);
-        assertEquals(src.triesWasMade, back.triesWasMade);
-        assertEquals(EnumsApi.TaskExecState.OK, back.states.get(45064L));
-    }
+    // 041 Phase 21: both params families are gone with the whole-ExecContext records (their segment counterpart is
+    // ExecContextSegmentParams). The removed round-trip test noted: "Map.equals compares keys with equals(): a key read
+    // back as String would not match the Long"
 
     // ------------------------------------------------------------------ ExecutionGateParams
 

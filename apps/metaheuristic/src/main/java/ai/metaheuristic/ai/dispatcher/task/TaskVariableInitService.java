@@ -80,7 +80,7 @@ public class TaskVariableInitService {
                 if (ec==null) {
                     return;
                 }
-                taskVariableInitTxService.intiVariables(event, ec.execContextGraphId, ec.getExecContextParamsYaml());
+                taskVariableInitTxService.intiVariables(event, ec.getExecContextParamsYaml());
             });
         } catch (CommonRollbackException e) {
             //

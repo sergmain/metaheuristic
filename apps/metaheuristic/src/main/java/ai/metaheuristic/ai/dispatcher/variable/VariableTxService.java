@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -93,10 +92,7 @@ public class VariableTxService {
     private final GeneralBlobService generalBlobService;
     private final GeneralBlobTxService generalBlobTxService;
     private final DispatcherBlobStorage dispatcherBlobStorage;
-    private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final ExecContextRepository execContextRepository;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final ExecContextGraphRepository execContextGraphRepository;
 
     private Variable createInitialized(
             InputStream is, long size, String variable, @Nullable String filename,
@@ -492,23 +488,11 @@ public class VariableTxService {
         if (execContext == null) {
             return VARIABLE_OT_FOUND;
         }
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(execContext.execContextVariableStateId).orElse(null);
-        if (ecvs == null) {
-            Variable v = findVariableInAllInternalContextsViaDb(variable, taskContextId, execContextId);
-            return v==null ? VARIABLE_OT_FOUND : new VariableSearch(v,SearchResultType.found_db);
-        }
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: the whole-ExecContext variable-state record is gone (it had no entries since Phase 9, which
+        // put them into segments), so the walk below is what ran: an exact-ctx DB probe per level, then the full DB walk
 
         String currTaskContextId = taskContextId;
         while (!S.b(currTaskContextId)) {
-            String currLevel = ContextUtils.getLevel(currTaskContextId);
-            String currProcessCtxId = ContextUtils.getProcessContextId(currLevel);
-
-            Long variableId = findVariableIdInStates(info, variable, currTaskContextId, currProcessCtxId);
-            if (variableId != null) {
-                Variable v = variableRepository.findByIdAsSimple(variableId);
-                return v==null ? VARIABLE_OT_FOUND : new VariableSearch(v,SearchResultType.found_ec);
-            }
             // The ExecContextVariableState is populated asynchronously; a variable already written to the DB
             // at THIS (nearer) ctx may be absent from 'info' while a same-named FARTHER ancestor IS present
             // (e.g. a splitter / graft bind() variable created via createInputVariablesForSubProcess, which

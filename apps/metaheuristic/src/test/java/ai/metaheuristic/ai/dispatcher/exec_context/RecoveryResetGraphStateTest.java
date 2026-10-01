@@ -18,13 +18,10 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.events.ResetTasksWithErrorEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -98,11 +95,11 @@ import static org.junit.jupiter.api.Assertions.*;
 public class RecoveryResetGraphStateTest extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
+    @Autowired private ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
+    @Autowired private ai.metaheuristic.ai.dispatcher.repositories.ExecContextSegmentRepository segmentRepository;
     @Autowired private TxTestingService txTestingService;
     @Autowired private ExecContextCache execContextCache;
-    @Autowired private ExecContextGraphService execContextGraphService;
     @Autowired private ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
-    @Autowired private ExecContextTaskStateRepository execContextTaskStateRepository;
     @Autowired private TaskFinishingTxService taskFinishingTxService;
     @Autowired private TaskRepository taskRepository;
 
@@ -236,8 +233,8 @@ public class RecoveryResetGraphStateTest extends PreparingSourceCode {
     private void buildTwoVertexGraph(TaskImpl root, TaskImpl failing) {
         final Long execContextId = getExecContextForTest().id;
         ExecContextSyncService.getWithSyncVoid(execContextId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId,
+                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().id,
                                 () -> addVertices(root, failing))));
     }
 
@@ -280,19 +277,19 @@ public class RecoveryResetGraphStateTest extends PreparingSourceCode {
     private void setGraphState(Long taskId, EnumsApi.TaskExecState state) {
         final Long execContextId = getExecContextForTest().id;
         ExecContextSyncService.getWithSyncVoid(execContextId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId,
-                                () -> txSupportForTestingService.updateTaskExecState(
-                                        execContextGraphService.getExecContextDAC(execContextId, getExecContextForTest().execContextGraphId),
-                                        getExecContextForTest().execContextTaskStateId, taskId,
+                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().id,
+                                // 041 Phase 21: the state goes into the ExecContext's segments
+                                () -> txSupportForTestingService.updateTaskExecStateInSegments(
+                                        execContextId, taskId,
                                         state, CommonConsts.TOP_LEVEL_CONTEXT_ID))));
         refreshExecContext();
     }
 
     private EnumsApi.TaskExecState graphStateOf(Long taskId) {
         refreshExecContext();
-        return execContextGraphService.getAllTasksTopologically(
-                        getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)
+        // 041 Phase 21: the state stored in the Task's segment
+        return segmentReadService.allTasksTopologically(getExecContextForTest().id)
                 .stream()
                 .filter(t -> taskId.equals(t.taskId))
                 .map(t -> t.state)
@@ -301,10 +298,14 @@ public class RecoveryResetGraphStateTest extends PreparingSourceCode {
     }
 
     private int triesWasMadeOf(Long taskId) {
-        final ExecContextTaskState ects =
-                execContextTaskStateRepository.findById(getExecContextForTest().execContextTaskStateId).orElse(null);
-        assertNotNull(ects, "ExecContextTaskState wasn't found");
-        final Integer tries = ects.getExecContextTaskStateParamsYaml().triesWasMade.get(taskId);
+        // 041 Phase 21: the tries live in the Task's segment
+        Integer tries = null;
+        for (Long segmentId : segmentRepository.findIdsByExecContextId(getExecContextForTest().id)) {
+            final Integer t = segmentRepository.findById(segmentId).orElseThrow().getExecContextSegmentParams().triesWasMade.get(taskId);
+            if (t != null) {
+                tries = t;
+            }
+        }
         assertNotNull(tries, "no triesWasMade entry for task #" + taskId);
         return tries;
     }
@@ -317,8 +318,7 @@ public class RecoveryResetGraphStateTest extends PreparingSourceCode {
 
     private List<Long> assignableTaskIds() {
         refreshExecContext();
-        return execContextGraphService.findAllForAssigning(
-                        getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId, true)
+        return segmentReadService.findAllForAssigning(getExecContextForTest().id, true)
                 .stream().map(v -> v.taskId).toList();
     }
 

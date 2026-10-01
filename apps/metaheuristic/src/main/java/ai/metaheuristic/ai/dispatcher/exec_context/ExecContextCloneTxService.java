@@ -15,16 +15,10 @@
  */
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
@@ -53,9 +47,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExecContextCloneTxService {
 
     private final ExecContextRepository execContextRepository;
-    private final ExecContextGraphRepository execContextGraphRepository;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final TaskRepository taskRepository;
     private final VariableRepository variableRepository;
     private final TaskTxService taskTxService;
@@ -75,41 +66,18 @@ public class ExecContextCloneTxService {
         dst.completedOn = null;
         dst.valid = source.valid;
         dst.state = EnumsApi.ExecContextState.CLONING.code;
-        dst.execContextGraphId = 0L;          // placeholder, rewritten in stage 2
-        dst.execContextTaskStateId = 0L;      // placeholder, rewritten in stage 2
-        dst.execContextVariableStateId = 0L;  // placeholder, rewritten in stage 2
+        // 041 Phase 21: the three record pointers are gone with the records
+        // dst.execContextGraphId = 0L;          // placeholder, rewritten in stage 2
+        // dst.execContextTaskStateId = 0L;      // placeholder, rewritten in stage 2
+        // dst.execContextVariableStateId = 0L;  // placeholder, rewritten in stage 2
         dst.rootExecContextId = source.rootExecContextId;
         dst.latch = source.latch == null ? "" : source.latch;
         dst.setParams(source.getParams());
         return execContextRepository.save(dst);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public ExecContextGraph insertNewGraph(ExecContextGraph source, Long newExecContextId) {
-        ExecContextGraph dst = new ExecContextGraph();
-        dst.execContextId = newExecContextId;
-        dst.createdOn = System.currentTimeMillis();
-        dst.setParams(source.getParams());
-        return execContextGraphRepository.save(dst);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public ExecContextTaskState insertNewTaskState(ExecContextTaskState source, Long newExecContextId) {
-        ExecContextTaskState dst = new ExecContextTaskState();
-        dst.execContextId = newExecContextId;
-        dst.createdOn = System.currentTimeMillis();
-        dst.setParams(source.getParams());
-        return execContextTaskStateRepository.save(dst);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public ExecContextVariableState insertNewVariableState(ExecContextVariableState source, Long newExecContextId) {
-        ExecContextVariableState dst = new ExecContextVariableState();
-        dst.execContextId = newExecContextId;
-        dst.createdOn = System.currentTimeMillis();
-        dst.setParams(source.getParams());
-        return execContextVariableStateRepository.save(dst);
-    }
+    // 041 Phase 21: insertNewGraph / insertNewTaskState / insertNewVariableState are gone with the whole-ExecContext
+    // records - the clone copies segment and join records (ExecContextSegmentCloneTxService)
 
     /**
      * Insert one new Task. Returns the new (oldId, newId) pair. The caller
@@ -351,43 +319,11 @@ public class ExecContextCloneTxService {
         return new VariableClonedIds(sourceVariableId, saved.id);
     }
 
-    /**
-     * Stage 2: persist rewritten params for graph / task-state / variable-state
-     * and flip the new ExecContext to FINISHED.
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void writeRewrittenChildren(Long newExecContextId,
-                                       Long newGraphId, String newGraphParams,
-                                       Long newTaskStateId, String newTaskStateParams,
-                                       Long newVariableStateId, String newVariableStateParams) {
-        ExecContextGraph g = execContextGraphRepository.findById(newGraphId).orElseThrow();
-        g.setParams(newGraphParams);
-        execContextGraphRepository.save(g);
-
-        ExecContextTaskState ts = execContextTaskStateRepository.findById(newTaskStateId).orElseThrow();
-        ts.setParams(newTaskStateParams);
-        execContextTaskStateRepository.save(ts);
-
-        ExecContextVariableState vs = execContextVariableStateRepository.findById(newVariableStateId).orElseThrow();
-        vs.setParams(newVariableStateParams);
-        execContextVariableStateRepository.save(vs);
-    }
-
-    /**
-     * Stage 1 follow-up: once the graph / task-state / variable-state rows
-     * have ids, point the new ExecContext at them.
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void updateExecContextChildPointers(Long newExecContextId,
-                                               Long newGraphId,
-                                               Long newTaskStateId,
-                                               Long newVariableStateId) {
-        ExecContextImpl ec = execContextRepository.findById(newExecContextId).orElseThrow();
-        ec.execContextGraphId = newGraphId;
-        ec.execContextTaskStateId = newTaskStateId;
-        ec.execContextVariableStateId = newVariableStateId;
-        execContextRepository.save(ec);
-    }
+    // 041 Phase 21: removed with the whole-ExecContext records -
+    //   writeRewrittenChildren: "Stage 2: persist rewritten params for graph / task-state / variable-state
+    //   and flip the new ExecContext to FINISHED."
+    //   updateExecContextChildPointers: "Stage 1 follow-up: once the graph / task-state / variable-state rows
+    //   have ids, point the new ExecContext at them."
 
     /**
      * Commit: flip CLONING -> FINISHED on the new ExecContext.

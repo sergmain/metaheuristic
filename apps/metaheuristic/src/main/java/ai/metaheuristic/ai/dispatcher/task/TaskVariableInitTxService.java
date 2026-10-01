@@ -16,15 +16,12 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -62,16 +59,16 @@ import java.util.stream.Collectors;
 public class TaskVariableInitTxService {
 
     private final VariableTxService variableTxService;
-    private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextCache execContextCache;
     private final TaskExecStateService taskExecStateService;
     private final TaskRepository taskRepository;
     private final GlobalVariableRepository globalVariableRepository;
     private final EventPublisherService eventPublisherService;
     private final TaskTxService taskTxService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
 
     @Transactional(rollbackFor = CommonRollbackException.class)
-    public void intiVariables(InitVariablesEvent event, Long execContextGraphId, ExecContextParams execContextParamsYaml) {
+    public void intiVariables(InitVariablesEvent event, ExecContextParams execContextParamsYaml) {
         TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
         if (task==null) {
             throw new CommonRollbackException();
@@ -84,7 +81,7 @@ public class TaskVariableInitTxService {
             throw new CommonRollbackException();
         }
 
-        List<String> allParentTaskContextIds = getAllParentTaskContextIds(task, paramsYaml.task.init.parentTaskIds, paramsYaml.task.taskContextId, execContextGraphId);
+        List<String> allParentTaskContextIds = getAllParentTaskContextIds(task, paramsYaml.task.init.parentTaskIds, paramsYaml.task.taskContextId);
         if (allParentTaskContextIds!=null) {
             prepareVariables(execContextParamsYaml, task, allParentTaskContextIds);
         }
@@ -166,21 +163,26 @@ public class TaskVariableInitTxService {
     }
 
     @Nullable
-    private List<String> getAllParentTaskContextIds(TaskImpl task, List<Long> parentTaskIds, String taskContextId, Long execContextGraphId) {
-        ExecContextGraph ecg = execContextGraphCache.findById(execContextGraphId);
-        if (ecg==null) {
-            log.error("179.200 can't find ExecContextGraph #" + execContextGraphId);
+    private List<String> getAllParentTaskContextIds(TaskImpl task, List<Long> parentTaskIds, String taskContextId) {
+        // 041 Phase 10: the ancestors come from the segments - every line of the ExecContext (a paged read), as the whole
+        // graph did: a join's ancestors span every line resolving into it. O(N) per initialization, as the graph walk was.
+        final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService.Snapshot snapshot = segmentReadService.snapshot(task.execContextId);
+        if (snapshot.lines().isEmpty()) {
+            log.error("01.179.200 no segment for ExecContext #{}", task.execContextId);
             return null;
         }
+        final ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentStates.Adjacency adj =
+                ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentStates.Adjacency.of(snapshot.lines());
         Set<String> set = new HashSet<>();
         for (Long parentTaskId : parentTaskIds) {
-            ExecContextData.TaskVertex vertex = ExecContextGraphService.findVertexByTaskId(ecg, parentTaskId);
-            if (vertex==null) {
+            final ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Line parentLine = adj.index().lineOfTask().get(parentTaskId);
+            if (parentLine==null) {
                 throw new RuntimeException("179.240 vertex wasn't found for task #" + task.id);
             }
-            set.add(vertex.taskContextId);
-            Set<ExecContextData.TaskVertex> setTemp = ExecContextGraphService.findAncestors(ecg, vertex);
-            setTemp.stream().map(o->o.taskContextId).collect(Collectors.toCollection(()->set));
+            set.add(parentLine.ctx());
+            for (Long ancestor : ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentStates.ancestors(adj, parentTaskId)) {
+                set.add(adj.index().lineOf(ancestor).ctx());
+            }
         }
         set.add(taskContextId);
 

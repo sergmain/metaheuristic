@@ -16,14 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -55,9 +49,7 @@ import java.nio.file.Path;
 public class ExecContextStateDownloadService {
 
     private final ExecContextRepository execContextRepository;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final ExecContextGraphRepository execContextGraphRepository;
-    private final ExecContextVariableStateRepository execContextVariableStateRepository;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
 
     @Transactional(readOnly = true)
     public CleanerInfo downloadExecContextStates(Long execContextId) {
@@ -80,16 +72,19 @@ public class ExecContextStateDownloadService {
             Files.createDirectories(filesDir);
 
             // 1) ExecContextTaskState params
-            writeEntityParams(execContext.execContextTaskStateId, "exec-context-task-state.json",
-                    filesDir, resource, execContextTaskStateRepository);
+            // 041 Phase 12: graph, task states and variable-state entries live in the segments; the files carry what
+            // the three whole-ExecContext records carried, derived from them
+            Files.writeString(filesDir.resolve("exec-context-task-state.json"),
+                    ai.metaheuristic.commons.utils.JsonUtils.getMapper().writerWithDefaultPrettyPrinter().writeValueAsString(
+                            new java.util.TreeMap<>(segmentReadService.snapshot(execContextId).states())));
 
             // 2) ExecContextGraph params
-            writeEntityParams(execContext.execContextGraphId, "exec-context-graph.json",
-                    filesDir, resource, execContextGraphRepository);
+            Files.writeString(filesDir.resolve("exec-context-graph.dot"), segmentReadService.dot(execContextId));
 
             // 3) ExecContextVariableState params
-            writeEntityParams(execContext.execContextVariableStateId, "exec-context-variable-state.yaml",
-                    filesDir, resource, execContextVariableStateRepository);
+            Files.writeString(filesDir.resolve("exec-context-variable-state.json"),
+                    ai.metaheuristic.commons.utils.JsonUtils.getMapper().writerWithDefaultPrettyPrinter().writeValueAsString(
+                            segmentReadService.variableStates(execContextId)));
 
             // 4) Process DAG (only processesGraph from ExecContext.params)
             String processesGraph = execContext.getExecContextParamsYaml().processesGraph;
@@ -109,36 +104,5 @@ public class ExecContextStateDownloadService {
             resource.addErrorMessage("458.060 Error: " + e.getMessage());
             return resource;
         }
-    }
-
-    private void writeEntityParams(@Nullable Long entityId, String fileName, Path filesDir,
-                                   CleanerInfo resource,
-                                   Object repository) throws IOException {
-        if (entityId == null) {
-            log.warn("458.080 Entity id is null for {}", fileName);
-            return;
-        }
-        String params = getParamsFromRepository(entityId, repository);
-        if (params == null) {
-            log.warn("458.100 Entity #{} not found for {}", entityId, fileName);
-            return;
-        }
-        Files.writeString(filesDir.resolve(fileName), params);
-    }
-
-    private static @Nullable String getParamsFromRepository(Long entityId, Object repository) {
-        if (repository instanceof ExecContextTaskStateRepository repo) {
-            ExecContextTaskState entity = repo.findById(entityId).orElse(null);
-            return entity != null ? entity.getParams() : null;
-        }
-        if (repository instanceof ExecContextGraphRepository repo) {
-            ExecContextGraph entity = repo.findById(entityId).orElse(null);
-            return entity != null ? entity.getParams() : null;
-        }
-        if (repository instanceof ExecContextVariableStateRepository repo) {
-            ExecContextVariableState entity = repo.findById(entityId).orElse(null);
-            return entity != null ? entity.getParams() : null;
-        }
-        return null;
     }
 }

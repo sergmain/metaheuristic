@@ -312,9 +312,6 @@ CREATE TABLE MH_EXEC_CONTEXT
   PARAMS                TEXT NOT NULL,
   IS_VALID              BOOLEAN default false not null,
   STATE                 smallint not null default 0,
-  CTX_GRAPH_ID          NUMERIC(10, 0) NOT NULL,
-  CTX_TASK_STATE_ID     NUMERIC(10, 0) NOT NULL,
-  CTX_VARIABLE_STATE_ID  NUMERIC(10, 0) NOT NULL,
   ROOT_EXEC_CONTEXT_ID   NUMERIC(10, 0)
 );
 
@@ -327,32 +324,44 @@ CREATE INDEX MH_EXEC_CONTEXT_ID_SOURCE_CODE_ID_IDX
 CREATE INDEX MH_EXEC_CONTEXT_ROOT_EXEC_CONTEXT_ID_IDX
     ON MH_EXEC_CONTEXT (ROOT_EXEC_CONTEXT_ID);
 
-CREATE TABLE MH_EXEC_CONTEXT_GRAPH
+-- 041 ExecContext segments: one record per grafted line (with its nested subtree) plus the root segment
+CREATE TABLE MH_EXEC_CONTEXT_SEGMENT
 (
-    ID                SERIAL PRIMARY KEY,
+    ID                bigint NOT NULL PRIMARY KEY,
     VERSION           NUMERIC(5, 0)  NOT NULL,
-    EXEC_CONTEXT_ID   NUMERIC(10, 0) default NULL,
+    EXEC_CONTEXT_ID   NUMERIC(10, 0) NOT NULL,
+    LINE_CTX_ID       VARCHAR(250)   NOT NULL,
+    FORK_TASK_ID      NUMERIC(10, 0) default NULL,
+    STRUCTURE_HASH    VARCHAR(64)    NOT NULL,
     CREATED_ON        bigint not null,
     PARAMS            TEXT NOT NULL
 );
 
-CREATE TABLE MH_EXEC_CONTEXT_TASK_STATE
+CREATE UNIQUE INDEX mh_exec_context_segment_ec_line_ctx_unq_idx
+    ON MH_EXEC_CONTEXT_SEGMENT (EXEC_CONTEXT_ID, LINE_CTX_ID);
+
+CREATE INDEX mh_exec_context_segment_ec_fork_idx
+    ON MH_EXEC_CONTEXT_SEGMENT (EXEC_CONTEXT_ID, FORK_TASK_ID);
+
+-- ID is assigned: the writer allocates it from mh_ids (ExecContextSegmentIdService) before building the row, so
+-- LINE_CTX_ID (seed + id, decision 10) is in the one INSERT.
+
+-- 041 ExecContext segments: one record per join vertex
+CREATE TABLE MH_EXEC_CONTEXT_JOIN
 (
     ID                SERIAL PRIMARY KEY,
     VERSION           NUMERIC(5, 0)  NOT NULL,
-    EXEC_CONTEXT_ID   NUMERIC(10, 0) default NULL,
-    CREATED_ON        bigint not null,
-    PARAMS            TEXT NOT NULL
+    EXEC_CONTEXT_ID   NUMERIC(10, 0) NOT NULL,
+    JOIN_TASK_ID      NUMERIC(10, 0) NOT NULL,
+    LINES_REGISTERED  INT            NOT NULL DEFAULT 0,
+    LINES_FINISHED    INT            NOT NULL DEFAULT 0,
+    LINES_DEAD        INT            NOT NULL DEFAULT 0,
+    IS_CLOSED         BOOLEAN        NOT NULL DEFAULT FALSE,
+    CREATED_ON        bigint not null
 );
 
-CREATE TABLE MH_EXEC_CONTEXT_VARIABLE_STATE
-(
-    ID                SERIAL PRIMARY KEY,
-    VERSION           NUMERIC(5, 0)  NOT NULL,
-    EXEC_CONTEXT_ID   NUMERIC(10, 0) default NULL,
-    CREATED_ON        bigint not null,
-    PARAMS            TEXT NOT NULL
-);
+CREATE UNIQUE INDEX mh_exec_context_join_ec_join_task_unq_idx
+    ON MH_EXEC_CONTEXT_JOIN (EXEC_CONTEXT_ID, JOIN_TASK_ID);
 
 CREATE TABLE MH_EXPERIMENT_RESULT
 (

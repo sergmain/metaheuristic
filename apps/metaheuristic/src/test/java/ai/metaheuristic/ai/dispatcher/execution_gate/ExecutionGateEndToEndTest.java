@@ -146,8 +146,8 @@ public class ExecutionGateEndToEndTest extends PreparingSourceCode {
         final TaskImpl task = txTestingService.create(execContextId, TaskParamsYamlUtils.UTILS.toString(tpy));
 
         ExecContextSyncService.getWithSyncVoid(execContextId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId, () -> {
+                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
                             final OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(
                                     execContextId, List.of(),
                                     List.of(new TaskApiData.TaskWithContext(task.id, CommonConsts.TOP_LEVEL_CONTEXT_ID)));

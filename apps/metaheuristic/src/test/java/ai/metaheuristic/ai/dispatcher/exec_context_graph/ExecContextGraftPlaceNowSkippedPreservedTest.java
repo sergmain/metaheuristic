@@ -97,8 +97,8 @@ public class ExecContextGraftPlaceNowSkippedPreservedTest extends PreparingSourc
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(result.execContext.id, true)));
         final Long ecId = getExecContextForTest().id;
         ExecContextSyncService.getWithSyncVoid(ecId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(Objects.requireNonNull(getExecContextForTest().execContextGraphId), () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoid(Objects.requireNonNull(getExecContextForTest().execContextTaskStateId), () ->
+                ExecContextGraphSyncService.getWithSyncVoid(Objects.requireNonNull(getExecContextForTest().id), () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoid(Objects.requireNonNull(getExecContextForTest().id), () ->
                                 txSupportForTestingService.produceAndStartAllTasks(preparingSourceCodeData.getSourceCode(), ecId))));
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(ecId, true)));
         execContextStatusService.resetStatus();

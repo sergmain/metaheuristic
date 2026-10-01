@@ -19,11 +19,9 @@ import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -73,7 +71,6 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
     @Autowired private VariableTxService variableTxService;
     @Autowired private VariableRepository variableRepository;
     @Autowired private ExecContextRepository execContextRepository;
-    @Autowired private ExecContextVariableStateRepository execContextVariableStateRepository;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
 
@@ -99,12 +96,8 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
      */
     private Long setupExecContext(List<ExecContextApiData.VariableState> variableStates) {
         // Create and save ExecContextVariableState
-        ExecContextVariableState ecvs = new ExecContextVariableState();
-        ecvs.createdOn = System.currentTimeMillis();
         ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         info.states.addAll(variableStates);
-        ecvs.updateParams(info);
-        ecvs = execContextVariableStateRepository.save(ecvs);
 
         // Create and save ExecContext
         ExecContextImpl ec = new ExecContextImpl();
@@ -116,15 +109,10 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
         // STARTED made the shared-IT per-test cleanup try to stop it, and this class is @Transactional,
         // so that cleanup can never run (see MhSharedItTest.resetSharedItStatePerTest).
         ec.state = EnumsApi.ExecContextState.FINISHED.code;
-        ec.execContextVariableStateId = ecvs.id;
-        ec.execContextGraphId = 0L;
-        ec.execContextTaskStateId = 0L;
         ec.setParams("{\"version\":1,\"processes\":[],\"variables\":{\"inline\":{},\"inputs\":[],\"outputs\":[]}}");
         ec = execContextCache.save(ec);
 
         // Update the ecvs to link back
-        ecvs.execContextId = ec.id;
-        execContextVariableStateRepository.save(ecvs);
 
         return ec.id;
     }
@@ -150,11 +138,9 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
 
         // Update ExecContextVariableState with the variable info
         ExecContextImpl ec = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only (the record-first path is gone)
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         info.states.add(makeVariableState("1,2", created.id, currentVarName));
-        ecvs.updateParams(info);
-        execContextVariableStateRepository.save(ecvs);
 
         Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
         assertNotNull(found, "Variable at '1,2' should be found when searching from '1,2,5'");
@@ -171,11 +157,9 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
         Variable created = createVariable("1", execContextId);
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only (the record-first path is gone)
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         info.states.add(makeVariableState("1", created.id, currentVarName));
-        ecvs.updateParams(info);
-        execContextVariableStateRepository.save(ecvs);
 
         Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
         assertNotNull(found, "Variable at '1' should be found when searching from '1,2,5'");
@@ -191,11 +175,9 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
         Variable created = createVariable("1,2,5", execContextId);
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only (the record-first path is gone)
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         info.states.add(makeVariableState("1,2,5", created.id, currentVarName));
-        ecvs.updateParams(info);
-        execContextVariableStateRepository.save(ecvs);
 
         Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
         assertNotNull(found, "Variable at '1,2,5' should be found when searching from '1,2,5'");
@@ -217,11 +199,9 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
         Variable created = createVariable("1,2#1", execContextId);
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only (the record-first path is gone)
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         info.states.add(makeVariableState("1,2#1", created.id, currentVarName));
-        ecvs.updateParams(info);
-        execContextVariableStateRepository.save(ecvs);
 
         Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
         assertNotNull(found,
@@ -240,11 +220,9 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
         Variable created = createVariable("1,2#1", execContextId);
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only (the record-first path is gone)
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         info.states.add(makeVariableState("1,2#1", created.id, currentVarName));
-        ecvs.updateParams(info);
-        execContextVariableStateRepository.save(ecvs);
 
         Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2#1", execContextId);
         assertNotNull(found, "Variable at '1,2#1' should be found when searching from '1,2#1'");
@@ -261,11 +239,9 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
         Variable created = createVariable("1", execContextId);
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only (the record-first path is gone)
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         info.states.add(makeVariableState("1", created.id, currentVarName));
-        ecvs.updateParams(info);
-        execContextVariableStateRepository.save(ecvs);
 
         Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2#1", execContextId);
         assertNotNull(found, "Variable at '1' should be found when searching from '1,2#1'");
@@ -281,11 +257,9 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
         Variable created = createVariable("1,3", execContextId);
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only (the record-first path is gone)
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         info.states.add(makeVariableState("1,3", created.id, currentVarName));
-        ecvs.updateParams(info);
-        execContextVariableStateRepository.save(ecvs);
 
         Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
         assertNull(found, "Variable at '1,3' should NOT be found when searching from '1,2,5'");
@@ -377,14 +351,12 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
 
         // Add an unrelated VariableState entry — simulates partial async update
         ExecContextImpl ec = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only (the record-first path is gone)
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         ExecContextApiData.VariableInfo unrelatedVi = new ExecContextApiData.VariableInfo(999L, "otherVar", EnumsApi.VariableContext.local, ".txt");
         info.states.add(new ExecContextApiData.VariableState(
                 1L, 0L, 0L, "1", "some-process", "some-function",
                 null, List.of(unrelatedVi)));
-        ecvs.updateParams(info);
-        execContextVariableStateRepository.save(ecvs);
 
         Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
         assertNotNull(found,
@@ -400,14 +372,12 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
 
         // Add an unrelated VariableState entry — simulates partial async update
         ExecContextImpl ec = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only (the record-first path is gone)
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         ExecContextApiData.VariableInfo unrelatedVi = new ExecContextApiData.VariableInfo(999L, "otherVar", EnumsApi.VariableContext.local, ".txt");
         info.states.add(new ExecContextApiData.VariableState(
                 1L, 0L, 0L, "1", "some-process", "some-function",
                 null, List.of(unrelatedVi)));
-        ecvs.updateParams(info);
-        execContextVariableStateRepository.save(ecvs);
 
         Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5,6,7,10", execContextId);
         assertNotNull(found,
@@ -443,12 +413,10 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
 
         // Register BOTH in ExecContextVariableState — #1 first, #2 second
         ExecContextImpl ec = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only (the record-first path is gone)
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         info.states.add(makeVariableState("1,2,5,6,7|1|0|0#1", varBranch1.id, currentVarName));
         info.states.add(makeVariableState("1,2,5,6,7|1|0|0#2", varBranch2.id, currentVarName));
-        ecvs.updateParams(info);
-        execContextVariableStateRepository.save(ecvs);
 
         // Search from #2's context — should get varBranch2, but due to bug gets varBranch1
         Variable found = variableTxService.findVariableInAllInternalContexts(
@@ -475,11 +443,9 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
 
         // Register the variable in ExecContextVariableState at the correct taskContextId
         ExecContextImpl ec = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only (the record-first path is gone)
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         info.states.add(makeVariableState("1,2,5,6,7|0#1", created.id, currentVarName));
-        ecvs.updateParams(info);
-        execContextVariableStateRepository.save(ecvs);
 
         Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5,6,7,10", execContextId);
         assertNotNull(found,
@@ -511,11 +477,9 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
         Variable v = createVariable(taskContextId, execContextId);
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only (the record-first path is gone)
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
         info.states.add(makeVariableState(taskContextId, v.id, currentVarName));
-        ecvs.updateParams(info);
-        execContextVariableStateRepository.save(ecvs);
 
         return v;
     }
@@ -652,22 +616,18 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
                 execContextId, "1,2#1", EnumsApi.VariableType.text);
         // Register var1 in states
         ExecContextImpl ec1 = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs1 = execContextVariableStateRepository.findById(ec1.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info1 = ecvs1.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only
+        ExecContextApiData.ExecContextVariableStates info1 = new ExecContextApiData.ExecContextVariableStates();
         info1.states.add(makeVariableState("1,2#1", var1.id, currentVarName));
-        ecvs1.updateParams(info1);
-        execContextVariableStateRepository.save(ecvs1);
 
         byte[] data2 = "branch-2".getBytes(StandardCharsets.UTF_8);
         Variable var2 = variableTxService.createInitializedTx(
                 new ByteArrayInputStream(data2), data2.length, currentVarName, null,
                 execContextId, "1,2#2", EnumsApi.VariableType.text);
         ExecContextImpl ec2 = execContextCache.findById(execContextId);
-        ExecContextVariableState ecvs2 = execContextVariableStateRepository.findById(ec2.execContextVariableStateId).orElseThrow();
-        ExecContextApiData.ExecContextVariableStates info2 = ecvs2.getExecContextVariableStateInfo();
+        // 041 Phase 21: entries are not stored for the lookup any more - it reads the DB only
+        ExecContextApiData.ExecContextVariableStates info2 = new ExecContextApiData.ExecContextVariableStates();
         info2.states.add(makeVariableState("1,2#2", var2.id, currentVarName));
-        ecvs2.updateParams(info2);
-        execContextVariableStateRepository.save(ecvs2);
 
         // Search from deep child of branch #1
         Variable found = variableTxService.findVariableInAllInternalContexts(

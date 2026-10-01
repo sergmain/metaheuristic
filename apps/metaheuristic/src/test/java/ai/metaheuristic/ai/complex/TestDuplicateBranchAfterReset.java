@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
 import ai.metaheuristic.ai.dispatcher.task.TaskResetService;
@@ -104,10 +103,10 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
+    @Autowired private ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     @Autowired private TaskRepository taskRepository;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
-    @Autowired private ExecContextGraphService execContextGraphService;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TaskResetService taskResetService;
     @Autowired private MhInternalTaskPipelineRunner pipelineRunner;
@@ -149,8 +148,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
 
         // Record the root task id — TaskResetService needs it to find the descendants
         // subtree to reset.
-        List<ExecContextData.TaskVertex> rootVertices = execContextGraphService.findAllRootVertices(
-                getExecContextForTest().execContextGraphId);
+        List<ExecContextData.TaskVertex> rootVertices = rootVerticesOf(getExecContextForTest().id);
         assertEquals(1, rootVertices.size(), "DAG should have exactly one root (checkObjectives)");
         Long resetTaskId = rootVertices.getFirst().taskId;
 
@@ -163,8 +161,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
         assertEquals(EnumsApi.ExecContextState.FINISHED.code, getExecContextForTest().getState(),
                 "Phase 1 should reach FINISHED");
 
-        List<ExecContextData.TaskVertex> phase1Vertices = execContextGraphService.findAll(
-                getExecContextForTest().execContextGraphId);
+        List<ExecContextData.TaskVertex> phase1Vertices = verticesOf(getExecContextForTest().id);
         int taskCountAfterPhase1 = phase1Vertices.size();
         System.out.println("Task count after Phase 1: " + taskCountAfterPhase1);
         for (ExecContextData.TaskVertex v : phase1Vertices) {
@@ -178,8 +175,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
         taskResetService.resetTaskAndExecContext(getExecContextForTest().id, resetTaskId);
 
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
-        List<ExecContextData.TaskVertex> phase2Vertices = execContextGraphService.findAll(
-                getExecContextForTest().execContextGraphId);
+        List<ExecContextData.TaskVertex> phase2Vertices = verticesOf(getExecContextForTest().id);
         int taskCountAfterReset = phase2Vertices.size();
         System.out.println("Task count after reset: " + taskCountAfterReset);
 
@@ -215,8 +211,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
         assertEquals(EnumsApi.ExecContextState.FINISHED.code, getExecContextForTest().getState(),
                 "Phase 3 should reach FINISHED");
 
-        List<ExecContextData.TaskVertex> phase3Vertices = execContextGraphService.findAll(
-                getExecContextForTest().execContextGraphId);
+        List<ExecContextData.TaskVertex> phase3Vertices = verticesOf(getExecContextForTest().id);
         int taskCountAfterPhase3 = phase3Vertices.size();
         System.out.println("Task count after Phase 3: " + taskCountAfterPhase3);
         for (ExecContextData.TaskVertex v : phase3Vertices) {
@@ -233,5 +228,19 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
                         " tasks after Phase 3 but should have " + taskCountAfterPhase1 +
                         " (same as Phase 1). The old dynamically-created subprocess child was not " +
                         "removed before re-creating it.");
+    }
+
+    // 041 Phase 21: the graph derived from the ExecContext's segments (the whole-ExecContext graph record is gone)
+    private List<ExecContextData.TaskVertex> verticesOf(Long execContextId) {
+        return segmentReadService.graph(execContextId).nodes().values().stream()
+                .map(n -> new ExecContextData.TaskVertex(n.taskId(), n.ctx(), n.tag())).toList();
+    }
+
+    private List<ExecContextData.TaskVertex> rootVerticesOf(Long execContextId) {
+        final ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Graph g = segmentReadService.graph(execContextId);
+        final java.util.Set<Long> targets = new java.util.HashSet<>();
+        g.edges().forEach(e -> targets.add(e.to()));
+        return g.nodes().values().stream().filter(n -> !targets.contains(n.taskId()))
+                .map(n -> new ExecContextData.TaskVertex(n.taskId(), n.ctx(), n.tag())).toList();
     }
 }

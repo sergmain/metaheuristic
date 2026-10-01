@@ -18,8 +18,12 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
+
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
@@ -70,5 +74,56 @@ public class TaskFinishingUtilsTest {
         assertEquals("boom", fe.exec.console);
         assertEquals("fn", fe.exec.functionCode);
         assertFalse(fe.exec.isOk);
+    }
+
+    private static TaskParamsYaml.OutputVariable output(Long id, EnumsApi.DataSourcing sourcing, boolean uploaded) {
+        final TaskParamsYaml.OutputVariable o = new TaskParamsYaml.OutputVariable();
+        o.id = id;
+        o.context = EnumsApi.VariableContext.local;
+        o.name = "var-" + id;
+        o.sourcing = sourcing;
+        o.uploaded = uploaded;
+        return o;
+    }
+
+    // allOutputsUploaded(): the inited ids are a real in-memory store; production passes a Dispatcher-side Variable lookup
+    // through the same parameter
+
+    @Test
+    public void test_allOutputsUploaded_noOutputs() {
+        assertTrue(TaskFinishingUtils.allOutputsUploaded(List.of(), Set.<Long>of()::contains));
+    }
+
+    @Test
+    public void test_allOutputsUploaded_flaggedUploaded_variableNotInited() {
+        assertTrue(TaskFinishingUtils.allOutputsUploaded(
+                List.of(output(11L, EnumsApi.DataSourcing.dispatcher, true)), Set.<Long>of()::contains));
+    }
+
+    /** Task #7460: the output reached the Dispatcher (Variable inited) but the uploaded flag was never set. */
+    @Test
+    public void test_allOutputsUploaded_notFlagged_variableInited() {
+        assertTrue(TaskFinishingUtils.allOutputsUploaded(
+                List.of(output(5997L, EnumsApi.DataSourcing.dispatcher, false)), Set.of(5997L)::contains));
+    }
+
+    @Test
+    public void test_allOutputsUploaded_notFlagged_variableNotInited() {
+        assertFalse(TaskFinishingUtils.allOutputsUploaded(
+                List.of(output(21L, EnumsApi.DataSourcing.dispatcher, false)), Set.<Long>of()::contains));
+    }
+
+    @Test
+    public void test_allOutputsUploaded_oneOfTwoMissing() {
+        assertFalse(TaskFinishingUtils.allOutputsUploaded(
+                List.of(output(31L, EnumsApi.DataSourcing.dispatcher, false), output(32L, EnumsApi.DataSourcing.dispatcher, false)),
+                Set.of(31L)::contains));
+    }
+
+    @Test
+    public void test_allOutputsUploaded_nonDispatcherOutputIgnored() {
+        assertTrue(TaskFinishingUtils.allOutputsUploaded(
+                List.of(output(41L, EnumsApi.DataSourcing.disk, false), output(42L, EnumsApi.DataSourcing.dispatcher, true)),
+                Set.<Long>of()::contains));
     }
 }

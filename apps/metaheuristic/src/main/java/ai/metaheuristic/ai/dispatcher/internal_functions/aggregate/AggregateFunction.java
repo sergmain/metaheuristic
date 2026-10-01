@@ -183,7 +183,7 @@ public class AggregateFunction implements InternalFunction {
                             try {
                                 switch(resultType) {
                                     case zip -> {
-                                        String ext = execContextUtilsService.getExtensionForVariable(simpleExecContext.execContextVariableStateId, v.id, "");
+                                        String ext = execContextUtilsService.getExtensionForVariable(simpleExecContext.execContextId, v.id, "");
                                         Path varFile = taskContextDir.resolve(v.name + ext);
                                         if (produceMetadata) {
                                             mafpy.mapping.add(Map.of(varFile.getFileName().toString(), v.name));

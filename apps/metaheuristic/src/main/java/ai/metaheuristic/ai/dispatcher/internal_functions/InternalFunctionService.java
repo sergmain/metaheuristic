@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.commons.graph.ExecContextProcessGraphService;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParams;
@@ -53,7 +52,7 @@ import static ai.metaheuristic.ai.dispatcher.data.ExecContextData.*;
 public class InternalFunctionService {
 
     private final SourceCodeCache sourceCodeCache;
-    private final ExecContextGraphService execContextGraphService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
 
     public InternalFunctionData.ExecutionContextData getSubProcesses(ExecContextApiData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml, Long taskId) {
         SourceCodeImpl sourceCode = sourceCodeCache.findById(simpleExecContext.sourceCodeId);
@@ -62,7 +61,12 @@ public class InternalFunctionService {
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
                     "994.200 sourceCode wasn't found, sourceCodeId: " + simpleExecContext.sourceCodeId));
         }
-        Set<TaskVertex> descendants = execContextGraphService.findDirectDescendants(simpleExecContext.execContextGraphId, taskId);
+        // 041 Phase 10: the Task's direct children come from the segments; only the root line's last Task has none
+        final ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentLineView view = segmentReadService.lineView(simpleExecContext.execContextId);
+        Set<TaskVertex> descendants = new java.util.LinkedHashSet<>();
+        for (Long childId : ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentStates.childrenOf(view::lineOf, view::linesForkedFrom, taskId)) {
+            descendants.add(new TaskVertex(childId, view.lineOf(childId).ctx(), view.vertexOf(childId).tag()));
+        }
         if (descendants.isEmpty()) {
             return new InternalFunctionData.ExecutionContextData(
                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,

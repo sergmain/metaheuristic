@@ -79,8 +79,8 @@ public class AcceptanceTestFunction implements InternalFunction {
 
         executeAcceptanceTest(simpleExecContext, taskId, taskContextId, taskParamsYaml);
 
-        ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
-                ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+        ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextId, ()->
+                ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextId, ()->
                         subProcessesTxService.processSubProcesses(simpleExecContext, taskId, taskParamsYaml)));
 
         //noinspection unused

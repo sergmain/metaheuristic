@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.api.dispatcher.InternalFunction;
@@ -62,7 +61,6 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 public class PermuteValuesOfVariablesFunction implements InternalFunction {
 
     private final PermuteValuesOfVariablesService permuteValuesOfVariablesService;
-    private final ExecContextGraphService execContextGraphService;
     private final InternalFunctionService internalFunctionService;
     private final VariableTxService variableService;
     private final GlobalVariableTxService globalVariableService;
@@ -112,7 +110,8 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
                     "985.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
         }
 
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphService.findDescendants(simpleExecContext.execContextId, simpleExecContext.execContextGraphId, taskId);
+        // 041 Phase 12: the Task's direct children from the segments, as getSubProcesses computed them
+        Set<ExecContextData.TaskVertex> descendants = executionContextData.descendants;
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(broken_graph_error,
                     "985.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken");
@@ -154,8 +153,8 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
         final String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
-        ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextGraphId, ()->
-                ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId, ()->
+        ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextId, ()->
+                ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextId, ()->
                         permuteValuesOfVariablesService.createTaskForPermutations(
                                 simpleExecContext, taskId, executionContextData, descendants, subProcessContextId,
                                 inlineVariables)));

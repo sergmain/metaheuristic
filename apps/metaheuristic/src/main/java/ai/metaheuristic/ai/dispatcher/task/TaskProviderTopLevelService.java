@@ -270,7 +270,7 @@ public class TaskProviderTopLevelService {
                 // event will land at ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService#handleEvent
                 // logic behind this event doesn't do anything to other Tasks in DAG
                 eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
-                        execContextId, execContext.execContextTaskStateId));
+                        execContextId));
             }
         });
     }

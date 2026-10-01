@@ -21,6 +21,8 @@ import ai.metaheuristic.ai.dispatcher.event.events.InputVariablesInitedEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentVariableStateTxService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Serge
  * Date: 3/20/2021
  * Time: 1:03 AM
+ *
+ * <p>041-EXEC-CONTEXT-SEGMENTS-PLAN, Phase 9: the flushed entries go into segments
+ * ({@link ExecContextSegmentVariableStateTxService}), under the ExecContext's task-state lock - the lock every other
+ * writer of a segment holds - instead of the variable-state lock. A flush holds no other lock, so taking it adds no
+ * lock order. Write entries only through the flush: a caller already holding a Task or ExecContext lock must enqueue
+ * ({@link #registerVariableState}) rather than write.
  */
 @Service
 @Profile("dispatcher")
@@ -47,8 +55,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextVariableStateTopLevelService implements ShutdownInterface {
 
-    private final ExecContextVariableStateService execContextVariableStateService;
     private final ExecContextCache execContextCache;
+    private final ExecContextSegmentVariableStateTxService segmentVariableStateTxService;
 
     private static Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents = new HashMap<>();
     private static Map<Long, List<VariableUploadedEvent>> variableUploadedEvents = new HashMap<>();
@@ -141,12 +149,13 @@ public class ExecContextVariableStateTopLevelService implements ShutdownInterfac
             inputVarWriteLock.unlock();
         }
         for (Map.Entry<Long, List<InputVariablesInitedEvent>> entry : eventsTemp.entrySet()) {
-            Long execContextVariableStateId = getExecContextVariableStateId(entry.getKey());
-            if (execContextVariableStateId == null) {
+            // 041 Phase 9: into segments, under the task-state lock
+            Long execContextTaskStateId = getExecContextTaskStateId(entry.getKey());
+            if (execContextTaskStateId == null) {
                 continue;
             }
-            ExecContextVariableStateSyncService.getWithSyncVoid(execContextVariableStateId,
-                    () -> execContextVariableStateService.updateInputVariableStates(execContextVariableStateId, entry.getValue()));
+            ExecContextTaskStateSyncService.getWithSyncVoid(execContextTaskStateId,
+                    () -> segmentVariableStateTxService.updateInputVariableStates(entry.getKey(), entry.getValue()));
         }
         for (Map.Entry<Long, List<InputVariablesInitedEvent>> entry : eventsTemp.entrySet()) {
             entry.getValue().clear();
@@ -175,12 +184,13 @@ public class ExecContextVariableStateTopLevelService implements ShutdownInterfac
 
     private void processCreatedTasks(Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents) {
         for (Map.Entry<Long, List<ExecContextApiData.VariableState>> entry : taskCreatedEvents.entrySet()) {
-            Long execContextVariableStateId = getExecContextVariableStateId(entry.getKey());
-            if (execContextVariableStateId == null) {
+            // 041 Phase 9: into segments, under the task-state lock
+            Long execContextTaskStateId = getExecContextTaskStateId(entry.getKey());
+            if (execContextTaskStateId == null) {
                 return;
             }
-            ExecContextVariableStateSyncService.getWithSyncVoid(execContextVariableStateId,
-                    () -> execContextVariableStateService.registerCreatedTasks(execContextVariableStateId, entry.getValue()));
+            ExecContextTaskStateSyncService.getWithSyncVoid(execContextTaskStateId,
+                    () -> segmentVariableStateTxService.registerCreatedTasks(entry.getKey(), entry.getValue()));
         }
     }
 
@@ -195,7 +205,12 @@ public class ExecContextVariableStateTopLevelService implements ShutdownInterfac
     }
 
     public void registerVariableStateInternal(Long execContextId, List<VariableUploadedEvent> event, Long execContextVariableStateId) {
-        ExecContextVariableStateSyncService.getWithSyncVoid(execContextVariableStateId,
+        // 041 Phase 9: into segments, under the task-state lock; execContextVariableStateId is no longer used for locking
+        final Long execContextTaskStateId = getExecContextTaskStateId(execContextId);
+        if (execContextTaskStateId == null) {
+            return;
+        }
+        ExecContextTaskStateSyncService.getWithSyncVoid(execContextTaskStateId,
                 () -> registerVariableStateInternal(execContextId, execContextVariableStateId, event));
     }
 
@@ -205,13 +220,25 @@ public class ExecContextVariableStateTopLevelService implements ShutdownInterfac
         if (execContext==null) {
             return null;
         }
-        return execContext.execContextVariableStateId;
+        // 041 Phase 21: the locks are keyed by the ExecContext id; null still means "no such ExecContext"
+        return execContext.id;
+    }
+
+    @Nullable
+    private Long getExecContextTaskStateId(Long execContextId) {
+        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
+        if (execContext==null) {
+            return null;
+        }
+        // 041 Phase 21: the locks are keyed by the ExecContext id; null still means "no such ExecContext"
+        return execContext.id;
     }
 
     // this method is here to work around some strange situation
     // about calling transactional method from lambda
     private void registerVariableStateInternal(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> event) {
-        execContextVariableStateService.registerVariableStates(execContextId, execContextVariableStateId, event);
+        // 041 Phase 9: the producing Tasks' entries in their segments
+        segmentVariableStateTxService.registerVariableStates(execContextId, event);
     }
 
 

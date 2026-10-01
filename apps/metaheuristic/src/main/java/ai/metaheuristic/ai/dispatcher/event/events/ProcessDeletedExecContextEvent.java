@@ -26,7 +26,4 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ProcessDeletedExecContextEvent {
     public final Long execContextId;
-    public final Long execContextGraphId;
-    public final Long execContextTaskStateId;
-    public final Long execContextVariableStateId;
 }

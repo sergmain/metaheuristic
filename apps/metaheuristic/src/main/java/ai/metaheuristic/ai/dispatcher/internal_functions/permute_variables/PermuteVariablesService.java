@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.GraftExpander;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
 public class PermuteVariablesService {
 
     private final VariableService variableTopLevelService;
-    private final ExecContextGraphService execContextGraphService;
+    private final ExecContextSegmentTxService segmentTxService;
     private final TaskProducingService taskProducingService;
     private final GraftExpander graftExpander;
 
@@ -89,7 +89,7 @@ public class PermuteVariablesService {
 
         final AtomicInteger currTaskNumber = new AtomicInteger(0);
         final List<Long> lastIds = new ArrayList<>();
-        ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
+        // 041 Phase 21: nothing whole-ExecContext is loaded - the lines land in their own segments
 
         if (variablesAs== Enums.VariablesAs.permute) {
             final Permutation<VariableUtils.VariableHolder> permutation = new Permutation<>();
@@ -97,7 +97,7 @@ public class PermuteVariablesService {
                 try {
                     permutation.printCombination(holders, i + 1,
                             permutedVariables -> createTaskWIthVariables(
-                                graphAndStates, simpleExecContext, taskId, executionContextData, variableName, subProcessContextId,
+                                simpleExecContext, taskId, executionContextData, variableName, subProcessContextId,
                                 producePresentVariable, producePresentVariablePrefix, upperCaseFirstChar, presentVariable,
                                 currTaskNumber, lastIds, permutedVariables)
                     );
@@ -112,7 +112,7 @@ public class PermuteVariablesService {
         else if (variablesAs== Enums.VariablesAs.array) {
             try {
                     createTaskWIthVariables(
-                        graphAndStates, simpleExecContext, taskId, executionContextData, variableName, subProcessContextId,
+                        simpleExecContext, taskId, executionContextData, variableName, subProcessContextId,
                             producePresentVariable, producePresentVariablePrefix, upperCaseFirstChar, presentVariable,
                             currTaskNumber, lastIds, holders);
             }
@@ -125,11 +125,12 @@ public class PermuteVariablesService {
         else {
             throw new IllegalStateException("unknown Enums.VariablesAs - "+variablesAs);
         }
-        execContextGraphService.createEdges(graphAndStates.graph(), lastIds, descendants);
+        // 041 Phase 7: the join of the new lines is derived from the segments; register them with it
+        segmentTxService.registerLines(simpleExecContext.execContextId, lastIds);
     }
 
     private boolean createTaskWIthVariables(
-            ExecContextData.GraphAndStates graphAndStates, ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
+            ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
             String variableName, String subProcessContextId, boolean producePresentVariable, String producePresentVariablePrefix,
             boolean upperCaseFirstChar, List<Pair<VariableUtils.VariableHolder, Boolean>> presentVariable,
             AtomicInteger currTaskNumber, List<Long> lastIds, List<VariableUtils.VariableHolder> permutedVariables) {
@@ -162,7 +163,9 @@ public class PermuteVariablesService {
                 variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
 
         taskProducingService.createTasksForSubProcesses(
-            graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander);
+            simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
+            // 041: one line per permutation - the count comes from data, so each starts its own segment
+            ExecContextSegmentTxService.SegmentStart.OWN);
         return true;
     }
 

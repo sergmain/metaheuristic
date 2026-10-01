@@ -29,7 +29,6 @@ import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -108,7 +107,7 @@ public class BatchResultProcessorTxService {
     private final Globals globals;
     private final VariableTxService variableTxService;
     private final VariableRepository variableRepository;
-    private final ExecContextGraphService execContextGraphService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
     private final ProcessorCoreRepository processorCoreRepository;
@@ -183,8 +182,9 @@ public class BatchResultProcessorTxService {
         storeGlobalBatchStatus(simpleExecContext, taskContextId, taskParamsYaml, zipDir, taskId);
 
         // key - taskContextId, value - ExecContextData.TaskWithState
-        Map<String, List<TaskData.TaskWithState>> vertices = execContextGraphService.findVerticesByTaskContextIds(
-                simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId, prepared.keySet());
+        // 041 Phase 12: a ctx is one line; its Tasks and states come from the segment owning it
+        Map<String, List<TaskData.TaskWithState>> vertices = segmentReadService.tasksByCtx(
+                simpleExecContext.execContextId, prepared.keySet());
         for (Map.Entry<String, List<TaskData.TaskWithState>> entry : vertices.entrySet()) {
             boolean isOK = entry.getValue().stream().noneMatch(o->o.state!= EnumsApi.TaskExecState.OK);
             if (isOK) {
@@ -477,7 +477,8 @@ public class BatchResultProcessorTxService {
         final BatchStatusProcessor bs = new BatchStatusProcessor();
         bs.ok = true;
 
-        List<TaskData.TaskWithState> taskVertices = execContextGraphService.getAllTasksTopologically(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
+        // 041 Phase 12: every Task with its state, topologically, from the segments
+        List<TaskData.TaskWithState> taskVertices = segmentReadService.allTasksTopologically(simpleExecContext.execContextId);
         for (TaskData.TaskWithState taskVertex : taskVertices) {
             if (taskVertex.state== EnumsApi.TaskExecState.NONE || taskVertex.state== EnumsApi.TaskExecState.IN_PROGRESS) {
                 continue;

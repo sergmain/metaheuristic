@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.nop;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
@@ -48,7 +47,6 @@ public class NopFunction implements InternalFunction {
     private final SubProcessesTxService subProcessesTxService;
     private final InternalFunctionService internalFunctionService;
     private final TaskProducingService taskProducingService;
-    private final ExecContextGraphService execContextGraphService;
 
     @Override
     public String getCode() {
@@ -83,8 +81,8 @@ public class NopFunction implements InternalFunction {
             ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
 
-        ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
-                ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+        ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextId, ()->
+                ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextId, ()->
                     subProcessesTxService.processSubProcesses(simpleExecContext, taskId, taskParamsYaml)));
 
         log.debug("055.020 Nop function was invoked");

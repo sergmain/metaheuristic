@@ -120,14 +120,7 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
             "order by b.createdOn desc ")
     Slice<ExecContextsListItem> findBySourceCodeIdOrderByCreatedOnDesc(Pageable pageable, Long sourceCodeId);
 
-    @Query("SELECT t.execContextTaskStateId FROM ExecContextImpl t where t.id in :execContextIds")
-    Set<Long> findExecContextTaskStateIds(List<Long> execContextIds);
-
-    @Query("SELECT t.execContextVariableStateId FROM ExecContextImpl t where t.id in :execContextIds")
-    Set<Long> findExecContextVariableStateIds(List<Long> execContextIds);
-
-    @Query("SELECT t.execContextGraphId FROM ExecContextImpl t where t.id in :execContextIds")
-    Set<Long> findExecContextGraphIds(List<Long> execContextIds);
+    // 041 Phase 21: findExecContextTaskStateIds / findExecContextVariableStateIds / findExecContextGraphIds are gone
+    // with the whole-ExecContext records (their only reader was the orphan-record cleaner)
 
 }
-

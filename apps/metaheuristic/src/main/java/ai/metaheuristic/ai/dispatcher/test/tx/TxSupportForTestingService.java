@@ -22,11 +22,9 @@ import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.LogDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
@@ -64,9 +62,10 @@ public class TxSupportForTestingService {
 
     private final Globals globals;
     private final VariableRepository variableRepository;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentStateTxService segmentStateTxServiceForTest;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService segmentTxServiceForTest;
     private final VariableTxService variableTxService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
-    private final ExecContextGraphService execContextGraphService;
     private final FunctionCache functionCache;
     private final DispatcherBlobStorage dispatcherBlobStorage;
     private final ProcessorCache processorCache;
@@ -75,7 +74,6 @@ public class TxSupportForTestingService {
     private final ExecContextCache execContextCache;
     private final TaskResetTxService taskResetTxService;
     private final ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache sourceCodeCache;
-    private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final LogDataRepository logDataRepository;
 
     @Transactional
@@ -203,28 +201,20 @@ public class TxSupportForTestingService {
         }
     }
 
-    @Transactional
-    public ExecContextOperationStatusWithTaskList updateTaskExecState(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        return execContextGraphService.updateTaskExecState(execContextDAC, execContextTaskStateId, List.of(new TaskData.TaskWithStateAndTaskContextId(taskId, execState, taskContextId)));
-    }
+    // 041 Phase 21: updateTaskExecState / updateGraphWithResettingAllChildrenTasksWithTx / setStateForAllChildrenTasksInternal
+    // drove the whole-ExecContext graph and task-state record, which are gone; states change through the segments
 
+    /**
+     * 041 Phase 21: the counterpart of the removed {@code updateTaskExecState(dac, taskStateId, ...)} - the Task's state
+     * (and its SKIPPED closure) written into the ExecContext's segments. The caller holds the ExecContext's graph and
+     * task-state locks, as for every segment state write.
+     */
     @Transactional
-    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasksWithTx(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, Long taskId) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecStateInSegments(Long execContextId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        return execContextGraphService.updateTaskStatesWithResettingAllChildrenTasks(execContextDAC, execContextTaskStateId, taskId);
-    }
-
-    @Transactional
-    public void setStateForAllChildrenTasksInternal(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        execContextGraphService.setStateForAllChildrenTasks(execContextDAC, execContextTaskStateId, taskId, withTaskList, state);
+        return segmentStateTxServiceForTest.updateTaskExecStates(execContextId, List.of(new TaskData.TaskWithStateAndTaskContextId(taskId, execState, taskContextId)));
     }
 
     @Transactional
@@ -364,10 +354,14 @@ public class TxSupportForTestingService {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
-        ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(execContext.execContextGraphId, execContext.execContextTaskStateId);
-        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, taskIds, initialState);
-        execContextGraphService.save(graphAndStates);
-        return osr;
+        // 041 Phase 21: the whole-ExecContext graph is gone; Tasks join an ExecContext through its segments
+        // (ExecContextSegmentTxService), so adding them to a graph by hand has no counterpart
+        // 041 Phase 22: the counterpart is the production writer itself - a Task with no parent starts the root line, a
+        // Task at a ctx that has a line follows that line's tail (other parents: tails of lines joining it), a Task at a
+        // new ctx starts a line forked from its single parent, in the segment of that parent's line
+        segmentTxServiceForTest.addTasks(execContext.id, parentTaskIds, taskIds, initialState, null,
+                ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService.SegmentStart.ENCLOSING);
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @Transactional
@@ -392,27 +386,15 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState ecvs = new ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState();
-        ecvs.createdOn = System.currentTimeMillis();
-        ai.metaheuristic.api.data.exec_context.ExecContextApiData.ExecContextVariableStates info =
-                new ai.metaheuristic.api.data.exec_context.ExecContextApiData.ExecContextVariableStates();
-        ecvs.updateParams(info);
-        ecvs = execContextVariableStateRepository.save(ecvs);
-
+        // 041 Phase 21: no whole-ExecContext variable-state record any more
         ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl ec = new ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl();
         ec.sourceCodeId = 1L;
         ec.companyId = 1L;
         ec.accountId = 1L;
         ec.createdOn = System.currentTimeMillis();
         ec.state = ai.metaheuristic.api.EnumsApi.ExecContextState.STARTED.code;
-        ec.execContextVariableStateId = ecvs.id;
-        ec.execContextGraphId = 0L;
-        ec.execContextTaskStateId = 0L;
         ec.setParams("{\"version\":1,\"processes\":[],\"variables\":{\"inline\":{},\"inputs\":[],\"outputs\":[]}}");
         ec = execContextCache.save(ec);
-
-        ecvs.execContextId = ec.id;
-        execContextVariableStateRepository.save(ecvs);
 
         return ec.id;
     }
@@ -425,9 +407,6 @@ public class TxSupportForTestingService {
         ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec != null) {
             variableRepository.deleteByExecContextId(execContextId);
-            if (ec.execContextVariableStateId != null) {
-                execContextVariableStateRepository.deleteById(ec.execContextVariableStateId);
-            }
             execContextCache.deleteById(execContextId);
         }
     }

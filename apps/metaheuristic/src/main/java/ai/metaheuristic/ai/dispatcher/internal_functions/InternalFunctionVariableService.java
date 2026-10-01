@@ -51,9 +51,6 @@ public class InternalFunctionVariableService {
     private final GlobalVariableRepository globalVariableRepository;
     private final GlobalVariableTxService globalVariableService;
     private final ExecContextRepository execContextRepository;
-    private final ExecContextVariableStateRepository execContextVariableStateRepository;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final ExecContextGraphRepository execContextGraphRepository;
     private final VariableRepository variableRepository;
 
     public void storeToFile(VariableUtils.VariableHolder holder, Path file) {

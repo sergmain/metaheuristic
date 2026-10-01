@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextInListTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.ProcessDeletedExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskQueueCleanByExecContextIdTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeUtils;
@@ -87,9 +86,7 @@ public class ExecContextTxService {
     private final VariableTxService variableService;
     private final EventPublisherService eventPublisherService;
     private final ExecContextUtilsService execContextUtilsServices;
-    private final ExecContextGraphRepository execContextGraphRepository;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final ExecContextVariableStateRepository execContextVariableStateRepository;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, UserContext context) {
         ExecContextApiData.ExecContextsResult result = getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
@@ -124,22 +121,8 @@ public class ExecContextTxService {
 
     public @Nullable String getCompositeVersions(ExecContextImpl ec) {
         Integer ecV = ec.version;
-        ExecContextGraph execContextGraph = execContextGraphRepository.findById(ec.execContextGraphId).orElse(null);
-        if (execContextGraph==null) {
-            return null;
-        }
-        Integer gV = execContextGraph.version;
-        ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);
-        if (execContextTaskState==null) {
-            return null;
-        }
-        Integer tsV = execContextTaskState.version;
-        ExecContextVariableState execContextVariableState = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElse(null);
-        if (execContextVariableState==null) {
-            return null;
-        }
-        Integer vsV = execContextVariableState.version;
-        return ecV + "," + gV + "," + tsV + "," + vsV;
+        // 041 Phase 12: graph, task state and variable state live in the segment and join records
+        return ecV + "," + segmentReadService.changeVersion(ec.id);
     }
 
     public ExecContextApiData.RawExecContextStateResult getRawExecContextState(Long sourceCodeId, ExecContextImpl ec) {
@@ -149,7 +132,7 @@ public class ExecContextTxService {
         ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
         initInfoAboutSourceCode(sourceCodeId, result);
 
-        List<ExecContextApiData.VariableState> variableStates = execContextUtilsServices.getExecContextVariableStates(ec.execContextVariableStateId);
+        List<ExecContextApiData.VariableState> variableStates = execContextUtilsServices.getExecContextVariableStates(execContextId);
 
         ExecContextParams ecpy = ec.getExecContextParamsYaml();
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ecpy);
@@ -158,19 +141,12 @@ public class ExecContextTxService {
 
         // Filter out orphan tasks that were removed from the graph (e.g. after task reset)
         // but not yet cleaned up from DB by the Scheduler
-        ExecContextGraph execContextGraph = execContextGraphRepository.findById(ec.execContextGraphId).orElse(null);
-        List<long[]> taskEdges = null;
-        if (execContextGraph != null) {
-            var taskGraph = ExecContextGraphService.importExecContextGraph(execContextGraph.getExecContextGraphParamsYaml());
-            Set<Long> graphTaskIds = taskGraph.vertexSet().stream().map(v -> v.taskId).collect(Collectors.toSet());
-            taskStates.keySet().retainAll(graphTaskIds);
-
-            taskEdges = new ArrayList<>();
-            for (var edge : taskGraph.edgeSet()) {
-                var source = taskGraph.getEdgeSource(edge);
-                var target = taskGraph.getEdgeTarget(edge);
-                taskEdges.add(new long[]{source.taskId, target.taskId});
-            }
+        // 041 Phase 12: the graph is derived from the segments (decision 13)
+        ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Graph taskGraph = segmentReadService.graph(execContextId);
+        taskStates.keySet().retainAll(taskGraph.nodes().keySet());
+        List<long[]> taskEdges = new ArrayList<>();
+        for (ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentData.Edge edge : taskGraph.edges()) {
+            taskEdges.add(new long[]{edge.from(), edge.to()});
         }
 
         log.info("705.225 execContextId={}, variableStates.size={}, taskStates.size={}", execContextId, variableStates.size(), taskStates.size());
@@ -253,8 +229,8 @@ public class ExecContextTxService {
         if (ec==null) {
             return;
         }
-        eventPublisherService.publishProcessDeletedExecContextTxEvent(new ProcessDeletedExecContextTxEvent(
-                execContextId, ec.execContextGraphId, ec.execContextTaskStateId, ec.execContextVariableStateId));
+        // 041 Phase 21: the listener deletes the ExecContext's segment and join records in bounded steps
+        eventPublisherService.publishProcessDeletedExecContextTxEvent(new ProcessDeletedExecContextTxEvent(execContextId));
 
         List<Long> relatedIds = execContextRepository.findAllRelatedExecContextIds(execContextId);
         eventPublisherService.publishDeleteExecContextInListTxEvent(new DeleteExecContextInListTxEvent(relatedIds));
@@ -321,7 +297,7 @@ public class ExecContextTxService {
                 return resource;
             }
 
-            String ext = execContextUtilsServices.getExtensionForVariable(execContext.execContextVariableStateId, variableId, CommonConsts.BIN_EXT);
+            String ext = execContextUtilsServices.getExtensionForVariable(execContext.id, variableId, CommonConsts.BIN_EXT);
 
             String filename = S.f("variable-%s-%s%s", variableId, v.name, ext);
 
@@ -344,19 +320,6 @@ public class ExecContextTxService {
         }
     }
 
-    @Transactional
-    public void deleteOrphanExecContextGraph(Long execContextGraphId) {
-        execContextGraphRepository.deleteById(execContextGraphId);
-
-    }
-
-    @Transactional
-    public void deleteOrphanExecContextTaskState(Long execContextTaskStateId) {
-        execContextTaskStateRepository.deleteById(execContextTaskStateId);
-    }
-
-    @Transactional
-    public void deleteOrphanExecContextVariableState(Long execContextVariableStateId) {
-        execContextVariableStateRepository.deleteById(execContextVariableStateId);
-    }
+    // 041 Phase 21: deleteOrphanExecContextGraph / TaskState / VariableState are gone with the whole-ExecContext
+    // records; orphan segment and join records go through ExecContextChunkedDeletionTxService
 }

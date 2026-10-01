@@ -22,8 +22,8 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
@@ -60,7 +60,6 @@ import java.util.Map;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskProducingService {
 
-    private final ExecContextGraphService execContextGraphService;
     private final FunctionService functionTopLevelService;
     private final TaskTxService taskTxService;
     private final Globals globals;
@@ -69,14 +68,15 @@ public class TaskProducingService {
     private final GlobalVariableTxService globalVariableService;
     private final VariableTxService variableTxService;
     private final VariableRepository variableRepository;
+    private final ExecContextSegmentTxService segmentTxService;
 
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParams.Process process,
-            ExecContextParams execContextParamsYaml, Long execContextId, Long companyId, ExecContextData.GraphAndStates graphAndStates,
+            ExecContextParams execContextParamsYaml, Long execContextId, Long companyId,
             List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
         // Default: taskContextId is the Process's static internalContextId.
-        return produceTaskForProcess(process, execContextParamsYaml, execContextId, companyId, graphAndStates,
+        return produceTaskForProcess(process, execContextParamsYaml, execContextId, companyId,
                 parentTaskIds, taskExecState, p -> p.internalContextId);
     }
 
@@ -90,12 +90,13 @@ public class TaskProducingService {
      */
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParams.Process process,
-            ExecContextParams execContextParamsYaml, Long execContextId, Long companyId, ExecContextData.GraphAndStates graphAndStates,
+            ExecContextParams execContextParamsYaml, Long execContextId, Long companyId,
             List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState,
             java.util.function.Function<ExecContextParams.Process, String> taskContextIdResolver) {
         TxUtils.checkTxExists();
-        ExecContextGraphSyncService.checkWriteLockPresent(graphAndStates.graph().id);
-        ExecContextTaskStateSyncService.checkWriteLockPresent(graphAndStates.states().id);
+        // 041 Phase 21: both locks are keyed by the ExecContext id
+        ExecContextGraphSyncService.checkWriteLockPresent(execContextId);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextId);
 
         TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
 
@@ -116,7 +117,10 @@ public class TaskProducingService {
             log.info("(targetState.value!=t.execState)");
             throw new IllegalStateException("(targetState.value!=t.execState)");
         }
-        execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, taskWithContexts, targetState, process.tag);
+        // 041 Phase 7: the Task goes into its ExecContext's segments; the whole-ExecContext graph is no longer written.
+        // Top-level production: the first Task starts the root line, every next one follows its parent in that line.
+        segmentTxService.addTasks(execContextId, parentTaskIds, taskWithContexts, targetState, process.tag,
+                ExecContextSegmentTxService.SegmentStart.ENCLOSING);
 
         result.status = EnumsApi.TaskProducingStatus.OK;
         return result;
@@ -133,20 +137,25 @@ public class TaskProducingService {
     };
 
     public void createTasksForSubProcesses(
-            ExecContextData.GraphAndStates graphAndStates,
             ExecContextApiData.SimpleExecContext simpleExecContext, InternalFunctionData.ExecutionContextData executionContextData,
-            String currTaskContextId, Long parentTaskId, List<Long> lastIds) {
-        createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData,
-                currTaskContextId, parentTaskId, lastIds, GRAFT_NOT_SUPPORTED);
+            String currTaskContextId, Long parentTaskId, List<Long> lastIds, ExecContextSegmentTxService.SegmentStart segmentStart) {
+        createTasksForSubProcesses(simpleExecContext, executionContextData,
+                currTaskContextId, parentTaskId, lastIds, GRAFT_NOT_SUPPORTED, segmentStart);
     }
 
+    /**
+     * @param segmentStart where the new lines go (041 decision 7): OWN for lines whose count comes from data - a splitter's
+     *                     or a permute function's lines, a graft - and ENCLOSING for a static sub-block written in the
+     *                     source (an {@code mh.nop}'s {@code sequential} / {@code parallel})
+     */
     public void createTasksForSubProcesses(
-            ExecContextData.GraphAndStates graphAndStates,
             ExecContextApiData.SimpleExecContext simpleExecContext, InternalFunctionData.ExecutionContextData executionContextData,
-            String currTaskContextId, Long parentTaskId, List<Long> lastIds, GraftExpander graftExpander) {
+            String currTaskContextId, Long parentTaskId, List<Long> lastIds, GraftExpander graftExpander,
+            ExecContextSegmentTxService.SegmentStart segmentStart) {
         TxUtils.checkTxExists();
-        ExecContextGraphSyncService.checkWriteLockPresent(simpleExecContext.execContextGraphId);
-        ExecContextTaskStateSyncService.checkWriteLockPresent(simpleExecContext.execContextTaskStateId);
+        // 041 Phase 8: no graph / task-state write lock is required any more - this method writes neither whole-ExecContext
+        // record (Tasks go into segments, Phase 7), and an out-of-band PLACE_NOW graft calls it holding no lock at all
+        // (decision 10). The graphAndStates parameter went for the same reason: nothing here read it.
 
         ExecContextParams execContextParamsYaml = executionContextData.execContextParamsYaml;
         List<ExecContextApiData.ProcessVertex> subProcesses = executionContextData.subProcesses;
@@ -234,7 +243,8 @@ public class TaskProducingService {
                 throw new IllegalStateException("(targetState.value!=t.execState)");
             }
             List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), actualProcessContextId));
-            execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, currTaskIds, targetState, p.tag);
+            // 041 Phase 7: into the segments, not the whole-ExecContext graph
+            segmentTxService.addTasks(simpleExecContext.execContextId, parentTaskIds, currTaskIds, targetState, p.tag, segmentStart);
             createdInBlock.put(p.processCode, t.getId());
             if (process.logic == EnumsApi.SourceCodeSubProcessLogic.and) {
                 // Parallel: each subprocess branches from the original parent, collect ALL for downstream linking

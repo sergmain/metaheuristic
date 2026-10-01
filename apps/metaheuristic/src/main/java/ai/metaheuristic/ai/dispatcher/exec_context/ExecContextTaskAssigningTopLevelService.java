@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.events.*;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
@@ -62,9 +61,9 @@ import java.util.stream.Collectors;
 public class ExecContextTaskAssigningTopLevelService implements ShutdownInterface {
 
     private final Globals globals;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
     private final ExecContextCache execContextCache;
     private final ExecContextFSM execContextFSM;
-    private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final TaskCheckCachingService taskCheckCachingService;
     private final TaskFinishingTxService taskFinishingTxService;
@@ -170,12 +169,13 @@ public class ExecContextTaskAssigningTopLevelService implements ShutdownInterfac
         }
 
         if (System.currentTimeMillis() - mills > 10_000) {
-            eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContextId, execContext.execContextTaskStateId));
+            eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContextId));
             mills = System.currentTimeMillis();
         }
 
+        // 041 Phase 10: the ready set is read from the segments (ExecContextSegmentReadService), not the whole graph
         final List<ExecContextData.TaskVertex> vertices = ExecContextSyncService.getWithSync(execContextId,
-                () -> execContextGraphService.findAllForAssigning(execContext.execContextGraphId, execContext.execContextTaskStateId, true));
+                () -> segmentReadService.findAllForAssigning(execContextId, true));
 
         stat.found = vertices.size();
         log.info("703.140 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);

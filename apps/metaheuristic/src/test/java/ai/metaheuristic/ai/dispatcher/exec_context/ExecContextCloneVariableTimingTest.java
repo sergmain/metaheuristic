@@ -18,10 +18,8 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
@@ -83,7 +81,8 @@ public class ExecContextCloneVariableTimingTest extends PreparingSourceCode {
 
     @Autowired ExecContextCloneService cloneService;
     @Autowired ExecContextRepository execContextRepository;
-    @Autowired ExecContextVariableStateRepository ecvsRepo;
+    @Autowired ai.metaheuristic.ai.dispatcher.repositories.ExecContextSegmentRepository segmentRepository;
+    @Autowired ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentIdService segmentIdService;
     @Autowired VariableRepository variableRepository;
     @Autowired TxSupportForTestingService txSupport;
     @Autowired PlatformTransactionManager txManager;
@@ -160,20 +159,30 @@ public class ExecContextCloneVariableTimingTest extends PreparingSourceCode {
             }
             state.outputs = outs;
 
-            ExecContextApiData.ExecContextVariableStates states =
-                    new ExecContextApiData.ExecContextVariableStates();
-            states.states.add(state);
-
-            final String json;
-            try {
-                json = JsonUtils.getMapper().writeValueAsString(states);
-            } catch (Exception e) {
-                throw new RuntimeException("failed to serialize synthetic variable-state JSON", e);
+            // 041 Phase 21: the variable-state entries live in the segments - the entry goes into the root segment,
+            // created here when the fresh ExecContext has none yet
+            ai.metaheuristic.ai.dispatcher.beans.ExecContextSegment s = segmentRepository.findByExecContextIdAndLineCtxId(sourceEcId, "1");
+            final ai.metaheuristic.ai.yaml.exec_context_segment.ExecContextSegmentParams p;
+            if (s == null) {
+                s = new ai.metaheuristic.ai.dispatcher.beans.ExecContextSegment();
+                s.id = segmentIdService.allocate();
+                s.execContextId = ec.id;
+                s.lineCtxId = "1";
+                s.createdOn = System.currentTimeMillis();
+                p = new ai.metaheuristic.ai.yaml.exec_context_segment.ExecContextSegmentParams();
+                final ai.metaheuristic.ai.yaml.exec_context_segment.ExecContextSegmentParams.Line line =
+                        new ai.metaheuristic.ai.yaml.exec_context_segment.ExecContextSegmentParams.Line("1", null);
+                line.tasks.add(new ai.metaheuristic.ai.yaml.exec_context_segment.ExecContextSegmentParams.Vertex(state.taskId, null));
+                p.lines.add(line);
             }
-
-            ExecContextVariableState vs = ecvsRepo.findById(ec.execContextVariableStateId).orElseThrow();
-            vs.setParams(json);
-            ecvsRepo.save(vs);
+            else {
+                p = s.getExecContextSegmentParams();
+            }
+            p.variableStates.add(state);
+            s.updateParams(p);
+            s.structureHash = ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentStructureHash.structureHash(
+                    ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentParamsConverter.segment(s.lineCtxId, s.forkTaskId, p));
+            segmentRepository.save(s);
         });
     }
 }

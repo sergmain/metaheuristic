@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
@@ -25,13 +24,11 @@ import ai.metaheuristic.ai.dispatcher.event.events.TransferStateFromTaskQueueToE
 import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
@@ -62,7 +59,6 @@ public class ExecContextTaskStateService {
     private final ExecContextTaskStateTxService execContextTaskStateService;
     private final TaskRepository taskRepository;
     private final ExecContextCache execContextCache;
-    private final ExecContextGraphService execContextGraphService;
     private final TaskExecStateService taskExecStateService;
 
 
@@ -100,12 +96,11 @@ public class ExecContextTaskStateService {
         if (ec==null) {
             return;
         }
-        final ExecContextData.ExecContextDAC execContextDAC = execContextGraphService.getExecContextDAC(event.execContextId, ec.execContextGraphId);
         try {
             List<TaskData.TaskWithStateAndTaskContextId> taskWithStates = new ArrayList<>(event.taskIds.size()+10);
             log.debug("call ExecContextTaskStateTopLevelService.updateTaskExecStatesExecContext({}, {})", event.execContextId, taskWithStates);
-            ExecContextTaskState execContextTaskState = execContextGraphService.prepareExecContextTaskState(ec.execContextTaskStateId);
-            ExecContextTaskStateParams ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
+            // 041 Phase 9: neither the whole graph nor the whole task-state record is loaded; a Task whose segment state
+            // already equals its MH_TASK state is skipped inside the segment state change (SegmentStateChange.apply)
             for (Long taskId : event.taskIds) {
                 TaskImpl task = taskRepository.findByIdReadOnly(taskId);
                 if (task==null) {
@@ -116,16 +111,12 @@ public class ExecContextTaskStateService {
                     continue;
                 }
                 final EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(task.execState);
-                if (ectspy.states.get(taskId)==taskExecState) {
-                    log.warn("Task #{} was already updated to state {}", taskId, taskExecState);
-                    continue;
-                }
                 TaskParamsYaml taskParams = task.getTaskParamsYaml();
                 taskWithStates.add(new TaskData.TaskWithStateAndTaskContextId(taskId, taskExecState, taskParams.task.taskContextId));
             }
             if (!taskWithStates.isEmpty()) {
-                ExecContextTaskStateSyncService.getWithSyncNullable(ec.execContextTaskStateId,
-                    () -> updateTaskExecStatesExecContext(execContextDAC, ec.execContextTaskStateId, taskWithStates));
+                ExecContextTaskStateSyncService.getWithSyncNullable(ec.id,
+                    () -> updateTaskExecStatesExecContext(event.execContextId, taskWithStates));
             }
 
         }
@@ -139,8 +130,8 @@ public class ExecContextTaskStateService {
         }
     }
 
-    private OperationStatusRest updateTaskExecStatesExecContext(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
-        final ExecContextOperationStatusWithTaskList status = execContextTaskStateService.updateTaskExecStatesInGraph(execContextDAC, execContextTaskStateId, taskWithStates);
+    private OperationStatusRest updateTaskExecStatesExecContext(Long execContextId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
+        final ExecContextOperationStatusWithTaskList status = execContextTaskStateService.updateTaskExecStatesInGraph(execContextId, taskWithStates);
         persistSkippedTasksInDb(status.childrenTasks);
         return status.status;
     }
@@ -151,8 +142,8 @@ public class ExecContextTaskStateService {
             int i = 1;
             long mills = System.currentTimeMillis();
             do {
-                TaskQueue.TaskGroups taskGroup = ExecContextTaskStateSyncService.getWithSync(event.execContextTaskStateId,
-                    ()-> transferStateFromTaskQueueToExecContext(event.execContextId, event.execContextTaskStateId));
+                TaskQueue.TaskGroups taskGroup = ExecContextTaskStateSyncService.getWithSync(event.execContextId,
+                    ()-> transferStateFromTaskQueueToExecContext(event.execContextId));
                 if (taskGroup.groups.isEmpty()) {
                     break;
                 }
@@ -188,15 +179,14 @@ public class ExecContextTaskStateService {
         }
     }
 
-    public TaskQueue.TaskGroups transferStateFromTaskQueueToExecContext(Long execContextId, Long execContextTaskStateId) {
+    public TaskQueue.TaskGroups transferStateFromTaskQueueToExecContext(Long execContextId) {
         try {
             ExecContextImpl ec = execContextCache.findById(execContextId, true);
             if (ec==null) {
                 return TaskQueue.EMPTY;
             }
-            final ExecContextData.ExecContextDAC execContextDAC = execContextGraphService.getExecContextDAC(execContextId, ec.execContextGraphId);
-
-            final ExecContextTaskStateTxService.TransferStateResult result = execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextDAC, execContextId, execContextTaskStateId);
+            // 041 Phase 9: the whole graph is no longer loaded - states go into segments
+            final ExecContextTaskStateTxService.TransferStateResult result = execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextId);
             result.taskGroups().reset();
             persistSkippedTasksInDb(result.skippedTasks());
             return result.taskGroups();

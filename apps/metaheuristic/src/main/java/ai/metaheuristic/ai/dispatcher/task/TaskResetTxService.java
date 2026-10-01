@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
@@ -25,18 +24,14 @@ import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegiste
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingService;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.commons.S;
@@ -66,14 +61,14 @@ public class TaskResetTxService {
 
     private final ExecContextCache execContextCache;
     private final ExecContextTaskResettingService execContextTaskResettingService;
-    private final ExecContextGraphService execContextGraphService;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final EventPublisherService eventPublisherService;
     private final TaskRepository taskRepository;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
     private final TaskFinishingTxService taskFinishingTxService;
     private final VariableRepository variableRepository;
-    private final ExecContextVariableStateService execContextVariableStateService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentReadService segmentReadService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService segmentTxService;
+    private final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentStateTxService segmentStateTxService;
 
     @Transactional
     public void resetTaskAndExecContextTx(Long execContextId, Long taskId) {
@@ -88,8 +83,8 @@ public class TaskResetTxService {
         if (ec == null) {
             return;
         }
-        ExecContextTaskStateSyncService.checkWriteLockPresent(ec.execContextGraphId);
-        ExecContextTaskStateSyncService.checkWriteLockPresent(ec.execContextTaskStateId);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(ec.id);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(ec.id);
 
         // Set ExecContext to STARTED if it was FINISHED
         if (ec.state == EnumsApi.ExecContextState.FINISHED.code) {
@@ -109,8 +104,8 @@ public class TaskResetTxService {
         }
 
         // Find all descendant tasks in the DAG (downstream tasks including mh.finish)
-        Set<ExecContextData.TaskVertex> descendants =
-            execContextGraphService.findDescendants(execContextId, ec.execContextGraphId, taskId);
+        // 041 Phase 11: from the segments
+        Set<ExecContextData.TaskVertex> descendants = new LinkedHashSet<>(segmentReadService.descendants(execContextId, taskId));
 
         List<String > allTaskContextIds = descendants.stream().map(ExecContextData.TaskVertex::getTaskContextId).collect(Collectors.toList());
 
@@ -154,9 +149,8 @@ public class TaskResetTxService {
                     .collect(Collectors.toList());
 
             if (!forDeletion.isEmpty()) {
-                ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(
-                        ec.execContextGraphId, ec.execContextTaskStateId);
-                execContextGraphService.removeVertices(graphAndStates.graph(), forDeletion);
+                // 041 Phase 11: the splitter's old lines leave the segments (and their joins' records)
+                segmentTxService.removeLines(execContextId, forDeletion.stream().map(v -> v.taskId).collect(Collectors.toCollection(LinkedHashSet::new)));
                 forDeletion.forEach(v -> {
                     deletedTaskIds.add(v.taskId);
                     deletedCtxIds.add(v.taskContextId);
@@ -200,31 +194,25 @@ public class TaskResetTxService {
         int _=0;
 
         // Update graph state (ExecContextTaskState)
-        ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);
-        if (execContextTaskState == null) {
-            log.error("801.230 ExecContextTaskState #{} not found", ec.execContextTaskStateId);
-            return;
-        }
-        ExecContextTaskStateParams stateParams = execContextTaskState.getExecContextTaskStateParamsYaml();
-        stateParams.states.put(taskId, EnumsApi.TaskExecState.INIT);
+        // 041 Phase 11: the states go into the segments - the reset Task INIT, every remaining descendant NONE (as the
+        // task-state record had them; MH_TASK holds PRE_INIT for the descendants, and the hand-out order after a reset
+        // follows the segment states). Tails leaving OK / dead lower their joins' counts; a revived line that was never
+        // registered (born SKIPPED) registers itself.
+        final List<ai.metaheuristic.ai.dispatcher.data.TaskData.TaskWithStateAndTaskContextId> segmentStates = new java.util.ArrayList<>();
+        segmentStates.add(new ai.metaheuristic.ai.dispatcher.data.TaskData.TaskWithStateAndTaskContextId(taskId, EnumsApi.TaskExecState.INIT, taskContextId));
         for (ExecContextData.TaskVertex descendant : descendants) {
             if (deletedTaskIds.contains(descendant.taskId)) {
                 // Remove state entry for deleted tasks
-                stateParams.states.remove(descendant.taskId);
+                // (041: removed with its line by removeLines)
+                continue;
             }
-            else {
-                stateParams.states.put(descendant.taskId, EnumsApi.TaskExecState.NONE);
-            }
+            segmentStates.add(new ai.metaheuristic.ai.dispatcher.data.TaskData.TaskWithStateAndTaskContextId(descendant.taskId, EnumsApi.TaskExecState.NONE, descendant.taskContextId));
         }
-        execContextTaskState.updateParams(stateParams);
-        execContextTaskStateRepository.save(execContextTaskState);
+        segmentStateTxService.updateTaskExecStates(execContextId, segmentStates);
 
         // Remove stale entries from ExecContextVariableState for deleted tasks
         // so findVariableInAllInternalContexts won't find variables from removed (orphan) tasks
-        if (!deletedTaskIds.isEmpty() && ec.execContextVariableStateId != null) {
-            ExecContextVariableStateSyncService.getWithSyncNullableForCreation(ec.execContextVariableStateId,
-                    () -> { execContextVariableStateService.removeTaskStates(ec.execContextVariableStateId, deletedTaskIds); return null; });
-        }
+        // 041 Phase 11: the deleted Tasks' entries went with their lines (removeLines)
 
         // Trigger task assignment so the scheduler picks up the reset tasks
         eventPublisherService.handleFindUnassignedTasksAndRegisterInQueueEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());

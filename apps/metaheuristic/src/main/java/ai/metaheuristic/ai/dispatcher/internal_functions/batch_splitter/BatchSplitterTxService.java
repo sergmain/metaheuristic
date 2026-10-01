@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextSegmentTxService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.GraftExpander;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
@@ -69,7 +69,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class BatchSplitterTxService {
 
-    private final ExecContextGraphService execContextGraphService;
+    private final ExecContextSegmentTxService segmentTxService;
     private final InternalFunctionService internalFunctionService;
     private final TaskProducingService taskProducingService;
     private final GraftExpander graftExpander;
@@ -103,7 +103,7 @@ public class BatchSplitterTxService {
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
-        ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
+        // 041 Phase 21: nothing whole-ExecContext is loaded - the lines land in their own segments
 
         try {
             // do not remove try(Stream<Path>){}
@@ -120,7 +120,9 @@ public class BatchSplitterTxService {
                                 variableService.createInputVariablesForSubProcess(
                                         variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
 
-                                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander);
+                                // 041: a splitter's lines come from data - each starts its own segment
+                                taskProducingService.createTasksForSubProcesses(simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander,
+                                        ExecContextSegmentTxService.SegmentStart.OWN);
 
                             }
                             catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
@@ -138,7 +140,8 @@ public class BatchSplitterTxService {
             log.error(es, e);
             throw new BatchResourceProcessingException(es);
         }
-        execContextGraphService.createEdges(graphAndStates.graph(), lastIds, executionContextData.descendants);
+        // 041 Phase 7: the join of the new lines is derived from the segments; register them with it
+        segmentTxService.registerLines(simpleExecContext.execContextId, lastIds);
 
         eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
     }
@@ -171,4 +174,3 @@ public class BatchSplitterTxService {
 
 
 }
-
