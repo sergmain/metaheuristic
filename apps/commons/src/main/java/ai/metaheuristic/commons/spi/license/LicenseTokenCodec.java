@@ -184,8 +184,6 @@ public class LicenseTokenCodec {
      * version detector has nothing to sniff; the version claim is read here and named explicitly.
      */
     private static LicenseClaims toClaims(JWTClaimsSet cs) {
-        final Object ver = cs.getClaim("version");
-        final int version = ver instanceof Number n ? n.intValue() : 1;
-        return LicenseClaimsUtils.fromJson(version, cs.toString());
+        return LicenseClaimsUtils.BASE_JSON_UTILS.to(cs.toString());
     }
 }
