@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.VaultData;
+import ai.metaheuristic.ai.dispatcher.vault.VaultBootUnlockService;
 import ai.metaheuristic.ai.dispatcher.vault.VaultService;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,9 @@ import org.springframework.web.bind.annotation.*;
  * <p>All write/delete operations require the master passphrase as a
  * proof-of-knowledge gate even after the vault has been unlocked.
  *
+ * <p>The management company's accounts carry {@code ROLE_MAIN_ADMIN}, not {@code ROLE_ADMIN}, so both
+ * roles are admitted - each to the Vault of its own company, which is still taken from the principal.
+ *
  * @author Sergio Lissner
  */
 @RestController
@@ -45,12 +49,13 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @Profile("dispatcher")
 @CrossOrigin
-@PreAuthorize("hasAnyRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'MAIN_ADMIN')")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class VaultRestController {
 
     private final VaultService vaultService;
     private final UserContextService userContextService;
+    private final VaultBootUnlockService vaultBootUnlockService;
 
     @GetMapping("/status")
     public VaultData.VaultStatus status(Authentication authentication) {
@@ -111,5 +116,16 @@ public class VaultRestController {
         }
         boolean ok = vaultService.deleteApiKey(companyId, code);
         return ok ? new VaultData.OpResult(true) : new VaultData.OpResult("Entry not found or persistence failed");
+    }
+
+    /**
+     * Produce the value of {@code mh.dispatcher.vault.boot-unlock.encrypted-passphrase} that unlocks the
+     * management company's Vault at Dispatcher start. Management company only.
+     */
+    @PostMapping("/boot-unlock")
+    @PreAuthorize("hasAnyRole('MAIN_ADMIN')")
+    public VaultData.BootUnlockValue bootUnlock(@RequestBody VaultData.BootUnlockRequest request, Authentication authentication) {
+        UserContext ctx = userContextService.getContext(authentication);
+        return vaultBootUnlockService.bootUnlockValue(ctx.getCompanyId(), request.passphrase(), System::getenv);
     }
 }

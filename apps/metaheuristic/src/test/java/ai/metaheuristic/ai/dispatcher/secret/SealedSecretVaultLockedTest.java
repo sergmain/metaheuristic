@@ -155,6 +155,12 @@ public class SealedSecretVaultLockedTest {
             return opened.contains(companyUniqueId);
         }
 
+        /** A Vault exists once it was unlocked or holds an entry - locked or not, as the production one answers. */
+        @Override
+        public boolean hasVault(long companyUniqueId) {
+            return opened.contains(companyUniqueId) || entries.containsKey(companyUniqueId);
+        }
+
         @Override
         public Optional<byte[]> getKeyBytes(long companyUniqueId, String code) {
             if (!opened.contains(companyUniqueId)) {

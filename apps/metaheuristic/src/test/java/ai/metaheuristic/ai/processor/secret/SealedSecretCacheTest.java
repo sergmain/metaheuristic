@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.processor.secret;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.commons.security.SealedSecret;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -129,5 +130,27 @@ public class SealedSecretCacheTest {
 
         assertEquals(0, cache.size());
         assertNull(cache.get(7L, "a"));
+    }
+
+    /**
+     * The management company's key has priority over the same key of any other company, so a value cached
+     * under companyId=7 may BE the management key. A change in the management Vault must evict that keyCode
+     * for every company.
+     */
+    @Test
+    public void test_invalidate_ofManagementCompany_evictsKeyCodeForEveryCompany() {
+        SealedSecretCache cache = new SealedSecretCache();
+        long notAfter = System.currentTimeMillis() + 60_000L;
+        cache.put(Consts.MANAGEMENT_COMPANY_ID, "k", dummySealed(), "fp", notAfter);
+        cache.put(7L, "k", dummySealed(), "fp", notAfter);
+        cache.put(8L, "k", dummySealed(), "fp", notAfter);
+        cache.put(7L, "other", dummySealed(), "fp", notAfter);
+
+        cache.invalidate(Consts.MANAGEMENT_COMPANY_ID, "k");
+
+        assertNull(cache.get(Consts.MANAGEMENT_COMPANY_ID, "k"));
+        assertNull(cache.get(7L, "k"), "a management Vault change must evict this keyCode for every company");
+        assertNull(cache.get(8L, "k"), "a management Vault change must evict this keyCode for every company");
+        assertNotNull(cache.get(7L, "other"), "a different keyCode must survive");
     }
 }
