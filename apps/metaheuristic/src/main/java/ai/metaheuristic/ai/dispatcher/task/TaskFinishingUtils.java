@@ -18,7 +18,11 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import org.jspecify.annotations.Nullable;
+
+import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Pure helpers for the task-finishing path, extracted from {@link TaskFinishingTxService} so the
@@ -49,5 +53,24 @@ public class TaskFinishingUtils {
         functionExec.exec = new FunctionApiData.SystemExecResult(
                 functionCode, false, SYSTEM_ERROR_EXIT_CODE, console == null ? "<no console output>" : console);
         return functionExec;
+    }
+
+    /**
+     * Whether every dispatcher-sourced output of a Task has reached the Dispatcher.
+     *
+     * <p>An output counts as delivered when its Task-params {@code uploaded} flag is set, OR when its Variable is
+     * already inited on the Dispatcher. The second condition is the contract the rest of the system already uses:
+     * the upload endpoint answers OK for a Variable that is already inited, and the Processor, told by
+     * {@code /variable-status} that a Variable is inited, marks the output delivered and never uploads it again.
+     * In that case nothing on the Dispatcher ever sets the flag, so a check on the flag alone leaves the Task
+     * IN_PROGRESS forever with its result already received.
+     *
+     * @param outputs the Task's output variables
+     * @param isVariableInited whether the Variable with the given id is inited on the Dispatcher
+     */
+    public static boolean allOutputsUploaded(List<TaskParamsYaml.OutputVariable> outputs, Predicate<Long> isVariableInited) {
+        return outputs.isEmpty() || outputs.stream()
+                .filter(o->o.sourcing==EnumsApi.DataSourcing.dispatcher)
+                .allMatch(o->o.uploaded || isVariableInited.test(o.id));
     }
 }

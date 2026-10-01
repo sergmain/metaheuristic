@@ -18,9 +18,11 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.event.events.DeregisterTasksByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -42,6 +44,8 @@ import java.util.function.BiConsumer;
  * @author Serge
  * Date: 12/17/2020
  * Time: 8:00 PM
+ *
+ * <p>Error code prefix: {@code 01.318.} (unique to this class).
  */
 @Service
 @Profile("dispatcher")
@@ -53,6 +57,7 @@ public class TaskFinishingTopLevelService {
     private final TaskFinishingTxService taskFinishingTxService;
     private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher eventPublisher;
+    private final VariableRepository variableRepository;
 
     public void checkTaskCanBeFinished(Long taskId) {
         checkTaskCanBeFinishedInternal(taskId, this::finishAndStoreVariableInternal );
@@ -119,9 +124,7 @@ public class TaskFinishingTopLevelService {
         }
 
         TaskParamsYaml tpy = task.getTaskParamsYaml();
-        boolean allUploaded = tpy.task.outputs.isEmpty() || tpy.task.outputs.stream()
-                .filter(o->o.sourcing==EnumsApi.DataSourcing.dispatcher)
-                .allMatch(o->o.uploaded);
+        boolean allUploaded = TaskFinishingUtils.allOutputsUploaded(tpy.task.outputs, variableId -> isVariableInited(task.id, variableId));
 
         if (task.resultReceived!=0 && allUploaded) {
 
@@ -139,6 +142,16 @@ public class TaskFinishingTopLevelService {
     // this method is here because there was a problem with transactional method called from lambda
     private void finishAndStoreVariableInternal(Long taskId, ExecContextParams ecpy) {
         taskFinishingTxService.finishAsOkAndStoreVariable(taskId, ecpy);
+    }
+
+    /** Whether a Task's output Variable is inited on the Dispatcher - the fallback for an output whose uploaded flag was never set. */
+    private boolean isVariableInited(Long taskId, Long variableId) {
+        final Variable v = variableRepository.findByIdAsSimple(variableId);
+        final boolean inited = v!=null && v.inited;
+        if (inited) {
+            log.warn("01.318.090 Task #{}, output variable #{} is inited on the Dispatcher but not flagged as uploaded, counted as uploaded", taskId, variableId);
+        }
+        return inited;
     }
 
     private void finishWithErrorWithInternal(Long taskId, String console) {

@@ -165,6 +165,9 @@ public class ExecContextTaskResettingService {
         // Clear the fromCache flag so the task is no longer marked as served from cache.
         // Output variables are reset below, so the cached data is gone — the flag must reflect that.
         taskParams.task.fromCache = false;
+        // The output Variables are reset below (inited=false), so none of the outputs is uploaded any more. A stale
+        // uploaded=true would let the Task count its outputs as delivered on its next result, before the new upload.
+        taskParams.task.outputs.forEach(o -> o.uploaded = false);
         task.updateParams(taskParams);
 
         taskTxService.save(task);
