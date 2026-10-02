@@ -156,7 +156,6 @@ public class ProcessorTaskService {
             String groupDirName = taskGroupDir.getFileName().toString();
             String name = taskDir.getFileName().toString();
             long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);
-            log.info("Found dir of task with id: {}, {}, {}, {}", taskId, groupDirName, name, dispatcherUrl.url);
             Path taskYamlFile = taskDir.resolve(Consts.TASK_YAML);
             boolean exists = Files.exists(taskYamlFile);
             if (!exists || Files.size(taskYamlFile) == 0L) {
@@ -185,6 +184,11 @@ public class ProcessorTaskService {
                                 (functionExec.generalExec != null && !functionExec.generalExec.isOk))) {
                     markAsFinished(core, taskId, functionExec);
                 }
+
+                // must be checked after fixing the state - markAsFinished() changes this instance of task
+                if (isTaskForRerun(task)) {
+                    log.info("01.713.680 Found dir of task with id: {}, {}, {}, {}", taskId, groupDirName, name, dispatcherUrl.url);
+                }
             }
         } catch (IOException e) {
             String es = "713.140 Error";
@@ -196,6 +200,15 @@ public class ProcessorTaskService {
             deleteDir(taskDir, "Delete not valid dir of task " + taskDir);
         }
         return null;
+    }
+
+    /**
+     * A task loaded from disk will be re-run only if it wasn't completed, finished or reported.
+     * A reported but not finished task belongs to a finished ExecContext (see TaskAssetPreparer.fixedDelay()),
+     * TaskProcessor deletes such a task instead of running it.
+     */
+    public static boolean isTaskForRerun(ProcessorCoreTask task) {
+        return !task.completed && task.finishedOn == null && !task.reported;
     }
 
     public static void deleteDir(Path f, String info) {
