@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Function;
 
+import static ai.metaheuristic.ai.dispatcher.vault.VaultBootUnlockUtils.Status.CREATED;
 import static ai.metaheuristic.ai.dispatcher.vault.VaultBootUnlockUtils.Status.UNLOCKED;
 import static ai.metaheuristic.ai.dispatcher.vault.VaultBootUnlockUtils.Status.UNLOCK_FAILED;
 
@@ -47,6 +48,12 @@ import static ai.metaheuristic.ai.dispatcher.vault.VaultBootUnlockUtils.Status.U
  *
  * <p>❗ Never creates a Vault: a company without a persisted Vault is skipped, otherwise
  * {@link VaultService#unlock(long, String)} would create one whose master passphrase is the machine-held one.
+ *
+ * <p>⚠️ Superseded: a company without a stored Vault now gets one, created empty and open by
+ * {@link VaultService#unlock(long, String)} with the passphrase the admin entered when enabling auto-unlock.
+ * A locked Vault and a missing key are different errors (423 vs 410); with auto-unlock configured, a key
+ * that isn't there must read as "no such entry", not "Vault locked". The Vault is stored when its first
+ * entry is added, as any new Vault is.
  *
  * <p>Where the encrypted passphrase comes from: {@code ${mh.home}/vault-boot-unlock.txt}, which
  * {@link #bootUnlockValue} writes when the admin presses "Auto-unlock at restart" - nothing goes into
@@ -103,6 +110,7 @@ public class VaultBootUnlockService {
 
         final VaultBootUnlockUtils.Status status = switch (bp.status()) {
             case READY -> vaultService.unlock(companyUniqueId, Objects.requireNonNull(bp.passphrase())).opened ? UNLOCKED : UNLOCK_FAILED;
+            case READY_NO_VAULT -> vaultService.unlock(companyUniqueId, Objects.requireNonNull(bp.passphrase())).opened ? CREATED : UNLOCK_FAILED;
             default -> bp.status();
         };
 
@@ -117,7 +125,12 @@ public class VaultBootUnlockService {
             case UNLOCK_FAILED -> log.error("01.672.060 the recovered passphrase didn't open the Key Vault of companyUniqueId={} - was the passphrase changed?",
                 companyUniqueId);
             case UNLOCKED -> log.info("01.672.070 Key Vault of companyUniqueId={} unlocked at Dispatcher start", companyUniqueId);
+            case CREATED -> log.info("01.672.180 companyUniqueId={} had no stored Key Vault - created an empty one and unlocked it; it is stored when its first entry is added",
+                companyUniqueId);
             case READY -> {
+                // not a terminal status - resolved above
+            }
+            case READY_NO_VAULT -> {
                 // not a terminal status - resolved above
             }
         }

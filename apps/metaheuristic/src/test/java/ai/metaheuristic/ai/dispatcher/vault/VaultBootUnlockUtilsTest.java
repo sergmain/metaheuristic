@@ -121,12 +121,13 @@ public class VaultBootUnlockUtilsTest {
     }
 
     @Test
-    public void test_resolve_noVault_isNeverDecryptedNorUnlocked() throws Exception {
+    public void test_resolve_noVault_handsOutThePassphraseToCreateItEmpty() throws Exception {
         final String kek = newKek();
         final String enc = VaultBootUnlockUtils.encryptPassphrase(kek, PASSPHRASE, MGMT);
         final VaultBootUnlockUtils.BootPassphrase bp = VaultBootUnlockUtils.resolveBootPassphrase(enc, kek, MGMT, vaultsOf(7L));
-        assertEquals(VaultBootUnlockUtils.Status.NO_VAULT, bp.status());
-        assertNull(bp.passphrase(), "without a persisted Vault the passphrase must not be handed out - unlock() would create a Vault");
+        assertNotEquals(VaultBootUnlockUtils.Status.NO_VAULT, bp.status(), "a missing Vault no longer stops boot-unlock - it is created empty");
+        assertEquals(VaultBootUnlockUtils.Status.READY_NO_VAULT, bp.status());
+        assertEquals(PASSPHRASE, bp.passphrase(), "the passphrase is what the empty Vault is created with");
     }
 
     @Test

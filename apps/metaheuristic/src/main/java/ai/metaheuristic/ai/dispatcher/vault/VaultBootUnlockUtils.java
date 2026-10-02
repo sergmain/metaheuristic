@@ -52,18 +52,23 @@ public final class VaultBootUnlockUtils {
         /** encrypted passphrase configured, but the KEK environment variable is not set */
         KEK_MISSING,
         /** the company has no persisted Vault - boot-unlock never creates one */
+        // no longer produced: a missing Vault is created empty, see READY_NO_VAULT and CREATED
         NO_VAULT,
         /** wrong KEK, wrong company, tampered or malformed value */
         DECRYPT_FAILED,
         /** passphrase recovered, ready for {@code VaultService.unlock} */
         READY,
+        /** passphrase recovered, the company has no stored Vault - {@code VaultService.unlock} creates it empty */
+        READY_NO_VAULT,
         /** the recovered passphrase did not open the Vault */
         UNLOCK_FAILED,
         /** the Vault is open */
-        UNLOCKED
+        UNLOCKED,
+        /** no Vault was stored; an empty one was created and is open, stored when its first entry is added */
+        CREATED
     }
 
-    /** {@code passphrase} is non-null only for {@link Status#READY}. */
+    /** {@code passphrase} is non-null only for {@link Status#READY} and {@link Status#READY_NO_VAULT}. */
     public record BootPassphrase(Status status, @Nullable String passphrase) {}
 
     private VaultBootUnlockUtils() {
@@ -87,15 +92,16 @@ public final class VaultBootUnlockUtils {
         if (kekB64 == null || kekB64.isBlank()) {
             return new BootPassphrase(Status.KEK_MISSING, null);
         }
-        if (!hasPersistedVault.test(companyUniqueId)) {
-            return new BootPassphrase(Status.NO_VAULT, null);
-        }
+        final String passphrase;
         try {
-            return new BootPassphrase(Status.READY, decryptPassphrase(kekB64, encryptedB64, companyUniqueId));
+            passphrase = decryptPassphrase(kekB64, encryptedB64, companyUniqueId);
         }
         catch (Exception e) {
             return new BootPassphrase(Status.DECRYPT_FAILED, null);
         }
+        // A missing Vault is created empty with this passphrase, so that a key that isn't there reads as
+        // "no such entry" (410) instead of "Vault locked" (423) - two different errors.
+        return new BootPassphrase(hasPersistedVault.test(companyUniqueId) ? Status.READY : Status.READY_NO_VAULT, passphrase);
     }
 
     /** @return Base64 of [IV || ciphertext || tag] */

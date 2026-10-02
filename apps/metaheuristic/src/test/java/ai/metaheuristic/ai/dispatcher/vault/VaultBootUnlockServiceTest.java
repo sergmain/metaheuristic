@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.vault;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.MhSharedItTest;
@@ -39,6 +40,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -85,6 +87,7 @@ public class VaultBootUnlockServiceTest extends MhSharedItTest {
     @Autowired private CompanyTopLevelService companyTopLevelService;
     @Autowired private CompanyRepository companyRepository;
     @Autowired private WebApplicationContext webApplicationContext;
+    @Autowired private Globals globals;
 
     private MockMvc mockMvc;
 
@@ -147,16 +150,17 @@ public class VaultBootUnlockServiceTest extends MhSharedItTest {
     }
 
     @Test
-    public void test_bootUnlock_neverCreatesAVault() throws Exception {
+    public void test_bootUnlock_createsTheMissingVaultEmptyAndOpen() throws Exception {
         final long companyId = newCompany();
         final String kek = newKek();
 
         final VaultBootUnlockUtils.Status status = vaultBootUnlockService.bootUnlock(
             companyId, encrypted(kek, PASSPHRASE, companyId), KEK_ENV, Map.of(KEK_ENV, kek)::get);
 
-        assertEquals(VaultBootUnlockUtils.Status.NO_VAULT, status);
-        assertFalse(vaultService.isOpened(companyId));
-        assertFalse(vaultService.hasVault(companyId), "boot-unlock must not create a Vault with the machine-held passphrase");
+        assertNotEquals(VaultBootUnlockUtils.Status.NO_VAULT, status);
+        assertEquals(VaultBootUnlockUtils.Status.CREATED, status);
+        assertTrue(vaultService.isOpened(companyId), "a configured auto-unlock creates the missing Vault, empty and open");
+        assertTrue(vaultService.getApiKey(companyId, KEY_CODE).isEmpty(), "an absent key is now 'no such entry', not 'Vault locked'");
     }
 
     @Test
@@ -207,6 +211,35 @@ public class VaultBootUnlockServiceTest extends MhSharedItTest {
     }
 
     // ---------- role gate of /rest/v1/dispatcher/vault ----------
+
+    /**
+     * A Vault that was unlocked but never got an entry is not stored. Enabling auto-unlock on it is still valid:
+     * at the next start boot-unlock creates it empty and open, with the passphrase written here, so a missing
+     * key reads as "no such entry" rather than "Vault locked".
+     *
+     * <p>Uses the management company, the only one the endpoint serves. Safe on the shared DB: unlocking a new
+     * Vault stores nothing, and the in-memory state and the written file are removed in finally.
+     */
+    @Test
+    public void test_bootUnlockValue_onAVaultWithoutStoredEntry_isEnabled() throws Exception {
+        final long mgmt = Consts.MANAGEMENT_COMPANY_ID;
+        final String kekEnv = globals.dispatcher.vault.bootUnlock.kekEnv;
+        vaultService.resetForTests();
+        assertFalse(vaultService.hasVault(mgmt), "precondition: nothing stored for the management company");
+        try {
+            assertTrue(vaultService.unlock(mgmt, PASSPHRASE).opened);
+
+            final VaultData.BootUnlockValue value = vaultBootUnlockService.bootUnlockValue(
+                mgmt, PASSPHRASE, Map.of(kekEnv, newKek())::get);
+
+            assertNotNull(value.filePath);
+            assertTrue(Files.exists(Path.of(value.filePath)), "the value must have been written to mh.home");
+        }
+        finally {
+            vaultService.resetForTests();
+            Files.deleteIfExists(globals.getHome().resolve(VaultBootUnlockFileUtils.BOOT_UNLOCK_FILE));
+        }
+    }
 
     @Test
     @WithUserDetails("data")
