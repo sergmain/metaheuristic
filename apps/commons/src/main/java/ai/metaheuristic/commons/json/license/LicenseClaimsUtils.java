@@ -51,28 +51,4 @@ public class LicenseClaimsUtils {
             ),
             (AbstractParamsJsonUtils) DEFAULT_UTILS
         );
-
-    /**
-     * Enter the chain at an explicitly named version instead of letting the version detector sniff
-     * the JSON. Deserializes with that version's frozen class and upgrades to the version-less
-     * {@link LicenseClaims}.
-     *
-     * @param version the value of the payload's {@code version} claim
-     * @param json    the payload JSON
-     */
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    public static LicenseClaims fromJson(int version, String json) {
-        AbstractParamsJsonUtils jsonUtils = BASE_JSON_UTILS.getForVersion(version);
-        if (jsonUtils==null) {
-            throw new IllegalStateException("01.251.010 unsupported version of license claims: " + version);
-        }
-        BaseParams curr = jsonUtils.to(json);
-        do {
-            curr = jsonUtils.upgradeTo(curr);
-        } while ((jsonUtils=(AbstractParamsJsonUtils)jsonUtils.nextUtil())!=null);
-
-        final LicenseClaims p = (LicenseClaims) curr;
-        p.checkIntegrity();
-        return p;
-    }
 }

@@ -17,10 +17,13 @@
 package ai.metaheuristic.commons.json.license;
 
 import ai.metaheuristic.api.data.license.LicenseClaims;
+import ai.metaheuristic.commons.json.versioning_json.JsonForVersioning;
+import com.nimbusds.jwt.JWTClaimsSet;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -79,14 +82,14 @@ public class LicenseClaimsUtilsTest {
     }
 
     @Test
-    public void test_fromJson_readsNumericDateClaims() {
+    public void test_to_readsNumericDateClaims() {
         // exactly the shape a JWTClaimsSet serializes to: registered date claims as NumericDate.
         final String json = """
                 {"licensee":"ACME","edition":"TRIAL","version":1,\
                 "capabilities":["Cat.ALPHA"],"databases":["H2"],"storages":[],\
                 "iat":1780272000,"exp":1782864000,"installationId":"uuid-A"}""";
 
-        final LicenseClaims c = LicenseClaimsUtils.fromJson(1, json);
+        final LicenseClaims c = LicenseClaimsUtils.BASE_JSON_UTILS.to(json);
 
         assertEquals("ACME", c.licensee);
         assertEquals("TRIAL", c.edition);
@@ -100,11 +103,11 @@ public class LicenseClaimsUtilsTest {
     }
 
     @Test
-    public void test_fromJson_absentListsBecomeEmpty() {
+    public void test_to_absentListsBecomeEmpty() {
         final String json = """
                 {"licensee":"ACME","edition":"TRIAL","version":1,"exp":1782864000}""";
 
-        final LicenseClaims c = LicenseClaimsUtils.fromJson(1, json);
+        final LicenseClaims c = LicenseClaimsUtils.BASE_JSON_UTILS.to(json);
 
         assertTrue(c.capabilities.isEmpty());
         assertTrue(c.databases.isEmpty());
@@ -112,10 +115,55 @@ public class LicenseClaimsUtilsTest {
     }
 
     @Test
-    public void test_fromJson_unsupportedVersion_rejected() {
+    public void test_to_unsupportedVersion_rejected() {
         final String json = """
                 {"licensee":"ACME","edition":"TRIAL","version":7,"exp":1782864000}""";
 
-        assertThrows(RuntimeException.class, () -> LicenseClaimsUtils.fromJson(7, json));
+        assertThrows(RuntimeException.class, () -> LicenseClaimsUtils.BASE_JSON_UTILS.to(json));
+    }
+
+    @Test
+    public void test_claimsSetJson_versionClaimIsVisibleToDetector() {
+        // what LicenseTokenCodec holds after the signature check is a JWTClaimsSet; its toString() is the
+        // payload JSON, and the private "version" claim is a top-level field of it. 7 rather than 1, because
+        // 1 is also what the detector answers when it finds nothing.
+        final JWTClaimsSet cs = new JWTClaimsSet.Builder()
+                .claim("licensee", "ACME")
+                .claim("edition", "TRIAL")
+                .claim("version", 7)
+                .expirationTime(Date.from(EXP))
+                .build();
+
+        assertEquals(7, JsonForVersioning.getParamsVersion(cs.toString()).getActualVersion());
+    }
+
+    @Test
+    public void test_to_readsSignerShapedClaimsSet() {
+        // the claims set built the way LicenseSigner.toPayloadJson builds it: private claims named as the
+        // fields, registered dates as NumericDate, version as a private claim.
+        final JWTClaimsSet cs = new JWTClaimsSet.Builder()
+                .claim("licensee", "ACME Aerospace, Inc.")
+                .claim("edition", "ENTERPRISE")
+                .claim("capabilities", List.of("Cat.ALPHA", "Cat.BETA"))
+                .claim("databases", List.of("H2", "POSTGRES"))
+                .claim("storages", List.of())
+                .claim("version", 1)
+                .issueTime(Date.from(IAT))
+                .expirationTime(Date.from(EXP))
+                .claim("installationId", "uuid-A")
+                .build();
+
+        final LicenseClaims c = LicenseClaimsUtils.BASE_JSON_UTILS.to(cs.toString());
+
+        assertEquals(1, c.version);
+        assertEquals("ACME Aerospace, Inc.", c.licensee);
+        assertEquals("ENTERPRISE", c.edition);
+        assertEquals(List.of("Cat.ALPHA", "Cat.BETA"), c.capabilities);
+        assertEquals(List.of("H2", "POSTGRES"), c.databases);
+        assertTrue(c.storages.isEmpty());
+        assertEquals(IAT, c.iat);
+        assertEquals(EXP, c.exp);
+        assertNull(c.nbf);
+        assertEquals("uuid-A", c.installationId);
     }
 }

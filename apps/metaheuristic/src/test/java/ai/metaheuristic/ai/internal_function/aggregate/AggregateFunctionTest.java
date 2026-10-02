@@ -23,7 +23,9 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import java.util.List;
 import java.util.Map;
 
+import static ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction.TEXT_SEPARATOR;
 import static ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction.VARIABLES;
+import static ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction.getTextSeparator;
 import static ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction.getNamesOfVariables;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -52,5 +54,23 @@ public class AggregateFunctionTest {
 
 
 
+    }
+
+    @Test
+    public void test_getTextSeparator_defaultsToOneNewline() {
+        assertEquals("\n", getTextSeparator(List.of()));
+        assertEquals("\n", getTextSeparator(List.of(Map.of(VARIABLES, "aaa,bbb"))));
+    }
+
+    @Test
+    public void test_getTextSeparator_translatesEscapesAsWrittenInMhsc() {
+        // a .mhsc value "\n\n" arrives as backslash, n, backslash, n
+        assertEquals("\n\n", getTextSeparator(List.of(Map.of(TEXT_SEPARATOR, "\\n\\n"))));
+        assertEquals("\t", getTextSeparator(List.of(Map.of(TEXT_SEPARATOR, "\\t"))));
+    }
+
+    @Test
+    public void test_getTextSeparator_keepsPlainValues() {
+        assertEquals(" | ", getTextSeparator(List.of(Map.of(TEXT_SEPARATOR, " | "))));
     }
 }

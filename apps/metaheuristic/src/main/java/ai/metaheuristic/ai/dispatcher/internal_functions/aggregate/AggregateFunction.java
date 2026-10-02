@@ -87,6 +87,8 @@ public class AggregateFunction implements InternalFunction {
     public static final String VARIABLES = "variables";
     public static final String TYPE = "type";
     public static final String PRODUCE_METADATA = "produce-metadata";
+    public static final String TEXT_SEPARATOR = "text-separator";
+    public static final String DEFAULT_TEXT_SEPARATOR = "\n";
 
     private final VariableRepository variableRepository;
     private final VariableTxService variableTxService;
@@ -226,9 +228,17 @@ public class AggregateFunction implements InternalFunction {
                             ()-> variableTxService.storeDataInVariable(outputVariable, zipFile));
                 }
                 case text -> {
-                    String text = variables.stream().map(v-> variableTxService.getVariableDataAsString(v.id)).collect(Collectors.joining("\n\n"));
-                    VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
-                            ()-> variableTxService.storeStringInVariable(simpleExecContext.execContextId, taskId, outputVariable, text));
+                    if (variables.isEmpty()) {
+                        // nothing contributed - every collected Variable is nullified, or none exists:
+                        // the result is null (null in, null out), never a zero-length value (171.120)
+                        VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
+                                ()-> variableTxService.setVariableAsNull(taskId, outputVariable.id));
+                    }
+                    else {
+                        String text = variables.stream().map(v-> variableTxService.getVariableDataAsString(v.id)).collect(Collectors.joining(getTextSeparator(taskParamsYaml.task.metas)));
+                        VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
+                                ()-> variableTxService.storeStringInVariable(simpleExecContext.execContextId, taskId, outputVariable, text));
+                    }
                 }
                 case ww2003 -> {
                     Path ww2003File = tempDir.resolve("result-for-"+outputVariable.id+'-'+outputVariable.name+".xml");
@@ -248,6 +258,16 @@ public class AggregateFunction implements InternalFunction {
                 }
             }
         }
+    }
+
+    /**
+     * The separator placed between the values joined when type = "text": meta "text-separator", or a single
+     * newline when the meta is absent. The meta is defined as an escaped string - "\n", "\n\n", "\t" - never as
+     * a literal line break; its Java escape sequences are translated here.
+     */
+    public static String getTextSeparator(List<Map<String, String>> metas) {
+        final String value = MetaUtils.getValue(metas, TEXT_SEPARATOR);
+        return value==null ? DEFAULT_TEXT_SEPARATOR : value.translateEscapes();
     }
 
     @Nullable
