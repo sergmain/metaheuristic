@@ -24,6 +24,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.io.IOException;
 import java.security.*;
 
+/**
+ * No arguments: a 2048-bit RSA key pair.
+ * {@code kek} (or {@code --kek}): a KEK for the Key Vault boot-unlock of the Dispatcher, see {@link KekUtils}.
+ */
 @SpringBootApplication
 public class GenerateKeys implements CommandLineRunner {
 
@@ -33,6 +37,10 @@ public class GenerateKeys implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws GeneralSecurityException {
+        if (KekUtils.isKekCommand(args)) {
+            printKek();
+            return;
+        }
         CreateKeys myKeys = new CreateKeys(2048);
 
         String privateKey64 = myKeys.encodeBase64String(myKeys.getPrivateKey().getEncoded());
@@ -47,4 +55,18 @@ public class GenerateKeys implements CommandLineRunner {
             """);
 
    }
+
+    private static void printKek() {
+        // new SecureRandom() is the platform CSPRNG; getInstanceStrong() can block on some Linux setups
+        System.out.println("KEK in base64 format:\n" + KekUtils.generateKek(new SecureRandom()) + "\n\n");
+
+        System.out.println("""
+            Put it into the environment of the Dispatcher process, in the variable named by
+            mh.dispatcher.vault.boot-unlock.kek-env (default MH_VAULT_KEK), and restart the Dispatcher.
+            Then, as the management company's admin, open Settings -> Key Vault, unlock it and press
+            'Auto-unlock at restart' to get the line for application.properties.
+
+            !!! Phrase 'KEK in base64 format:' isn't a part of the key and must not be used or stored in file.
+            """);
+    }
 }
