@@ -68,16 +68,17 @@ public class GenerateKeys implements CommandLineRunner {
                mh.dispatcher.vault.boot-unlock.kek-env - then use the name given there.
             2. Restart the Dispatcher, so that the process sees the variable.
             3. Log in as the admin of the management company.
-            4. Open Settings -> Key Vault and unlock the Vault with the master passphrase.
+            4. Open Dispatcher -> Key Vault (left menu) and unlock the Vault with the master passphrase.
                The Vault must hold at least one entry - an empty Vault isn't stored, and boot-unlock skips it.
             5. Press 'Auto-unlock at restart', enter the master passphrase, press 'Generate'.
-            6. Copy the line shown on the page into application.properties of the Dispatcher.
-               It starts with: mh.dispatcher.vault.boot-unlock.encrypted-passphrase=
-            7. Restart the Dispatcher. From now on the Vault is unlocked at every start,
+               The Dispatcher saves the encrypted passphrase to vault-boot-unlock.txt in mh.home;
+               nothing has to be added to application.properties.
+            6. Restart the Dispatcher. From now on the Vault is unlocked at every start,
                and the log shows: 01.672.070 Key Vault of companyUniqueId=1 unlocked at Dispatcher start
 
-            The same KEK must be in the environment at every start. With a new KEK, repeat all steps:
-            the old line in application.properties no longer decrypts, so the Vault starts locked until step 7.
+            The same KEK must be in the environment at every start, and mh.home must survive redeploys -
+            the file is the only copy. With a new KEK, repeat all steps: the old file no longer decrypts,
+            so the Vault starts locked until step 6.
 
             !!! Phrase 'KEK in base64 format:' isn't a part of the key and must not be used or stored in file.
             """);
