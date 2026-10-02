@@ -95,4 +95,20 @@ public final class VaultBootUnlockFileUtils {
         }
         return file;
     }
+
+    /** State of {@code ${mh.home}/vault-boot-unlock.txt} for the startup log - never the content itself. */
+    public static String describeFile(Path home) {
+        final Path file = home.resolve(BOOT_UNLOCK_FILE).toAbsolutePath();
+        try {
+            if (!Files.exists(file)) {
+                return file + " does NOT exist";
+            }
+            return Files.readString(file, StandardCharsets.UTF_8).isBlank()
+                ? file + " exists but is blank"
+                : file + " exists, " + Files.size(file) + " bytes";
+        }
+        catch (IOException | RuntimeException e) {
+            return file + " can't be read: " + e.getMessage();
+        }
+    }
 }

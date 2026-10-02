@@ -73,8 +73,14 @@ public class VaultBootUnlockService {
     public void init() {
         try {
             final Globals.BootUnlock cfg = globals.dispatcher.vault.bootUnlock;
+            final Path home = globals.getHome();
+            // what boot-unlock is about to work with; presence only, never a value
+            log.info("01.672.170 Key Vault boot-unlock inputs: env {}: {}; {}; property {}: {}",
+                cfg.kekEnv, VaultBootUnlockUtils.describeKek(System.getenv(cfg.kekEnv)),
+                VaultBootUnlockFileUtils.describeFile(home),
+                PROPERTY_NAME, cfg.encryptedPassphrase == null || cfg.encryptedPassphrase.isBlank() ? "blank" : "set");
             bootUnlock(Consts.MANAGEMENT_COMPANY_ID,
-                VaultBootUnlockFileUtils.readEncryptedPassphrase(globals.getHome(), cfg.encryptedPassphrase),
+                VaultBootUnlockFileUtils.readEncryptedPassphrase(home, cfg.encryptedPassphrase),
                 cfg.kekEnv, System::getenv);
         }
         catch (Throwable th) {

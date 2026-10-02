@@ -133,4 +133,22 @@ public final class VaultBootUnlockUtils {
     static byte[] aad(long companyUniqueId) {
         return (AAD_PREFIX + companyUniqueId).getBytes(StandardCharsets.UTF_8);
     }
+
+    /**
+     * State of the KEK environment variable for the startup log - never the value itself.
+     *
+     * @param kekB64 value of the KEK environment variable, as read
+     */
+    public static String describeKek(@Nullable String kekB64) {
+        if (kekB64 == null || kekB64.isBlank()) {
+            return "NOT set";
+        }
+        try {
+            Arrays.fill(decodeKek(kekB64), (byte) 0);
+            return "set, Base64 of " + KEK_LEN + " bytes";
+        }
+        catch (IllegalArgumentException e) {
+            return "set, but NOT Base64 of " + KEK_LEN + " bytes";
+        }
+    }
 }
