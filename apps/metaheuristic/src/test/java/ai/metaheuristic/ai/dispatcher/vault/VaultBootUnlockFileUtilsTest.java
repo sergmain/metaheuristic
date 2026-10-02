@@ -130,4 +130,25 @@ public class VaultBootUnlockFileUtilsTest {
         assertNotNull(read);
         assertEquals("master pp", VaultBootUnlockUtils.decryptPassphrase(kek, read, 1L));
     }
+
+    @Test
+    public void test_describeFile_absent(@TempDir Path home) {
+        final String d = VaultBootUnlockFileUtils.describeFile(home);
+        assertTrue(d.endsWith("vault-boot-unlock.txt does NOT exist"), d);
+        assertTrue(d.startsWith(home.toAbsolutePath().toString()), "the log must show which mh.home was looked at: " + d);
+    }
+
+    @Test
+    public void test_describeFile_blank(@TempDir Path home) throws Exception {
+        Files.writeString(home.resolve(VaultBootUnlockFileUtils.BOOT_UNLOCK_FILE), " \n", StandardCharsets.UTF_8);
+        assertTrue(VaultBootUnlockFileUtils.describeFile(home).endsWith(" exists but is blank"));
+    }
+
+    @Test
+    public void test_describeFile_present_showsSizeNeverContent(@TempDir Path home) throws Exception {
+        VaultBootUnlockFileUtils.writeEncryptedPassphrase(home, VALUE);
+        final String d = VaultBootUnlockFileUtils.describeFile(home);
+        assertTrue(d.endsWith(" exists, " + VALUE.length() + " bytes"), d);
+        assertFalse(d.contains(VALUE));
+    }
 }

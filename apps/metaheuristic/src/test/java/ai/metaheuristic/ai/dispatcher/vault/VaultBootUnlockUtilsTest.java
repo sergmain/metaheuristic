@@ -153,4 +153,24 @@ public class VaultBootUnlockUtilsTest {
         assertEquals(VaultBootUnlockUtils.Status.READY, bp.status());
         assertEquals(PASSPHRASE, bp.passphrase());
     }
+
+    @Test
+    public void test_describeKek_notSet() {
+        assertEquals("NOT set", VaultBootUnlockUtils.describeKek(null));
+        assertEquals("NOT set", VaultBootUnlockUtils.describeKek("  "));
+    }
+
+    @Test
+    public void test_describeKek_valid_neverContainsTheValue() {
+        final String kek = newKek();
+        final String d = VaultBootUnlockUtils.describeKek(kek);
+        assertEquals("set, Base64 of 32 bytes", d);
+        assertFalse(d.contains(kek));
+    }
+
+    @Test
+    public void test_describeKek_wrongLengthOrNotBase64() {
+        assertEquals("set, but NOT Base64 of 32 bytes", VaultBootUnlockUtils.describeKek(Base64.getEncoder().encodeToString(new byte[16])));
+        assertEquals("set, but NOT Base64 of 32 bytes", VaultBootUnlockUtils.describeKek("not-base64-!!"));
+    }
 }
