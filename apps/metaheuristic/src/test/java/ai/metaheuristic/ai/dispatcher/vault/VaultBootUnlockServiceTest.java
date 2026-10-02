@@ -28,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.cache.test.autoconfigure.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,6 +39,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Map;
@@ -112,11 +114,8 @@ public class VaultBootUnlockServiceTest extends MhSharedItTest {
         return companyId;
     }
 
-    private static Globals.BootUnlock cfg(String kek, String passphrase, long companyId) throws Exception {
-        final Globals.BootUnlock cfg = new Globals.BootUnlock();
-        cfg.kekEnv = KEK_ENV;
-        cfg.encryptedPassphrase = VaultBootUnlockUtils.encryptPassphrase(kek, passphrase, companyId);
-        return cfg;
+    private static String encrypted(String kek, String passphrase, long companyId) throws Exception {
+        return VaultBootUnlockUtils.encryptPassphrase(kek, passphrase, companyId);
     }
 
     @Test
@@ -125,12 +124,26 @@ public class VaultBootUnlockServiceTest extends MhSharedItTest {
         final String kek = newKek();
 
         final VaultBootUnlockUtils.Status status = vaultBootUnlockService.bootUnlock(
-            companyId, cfg(kek, PASSPHRASE, companyId), Map.of(KEK_ENV, kek)::get);
+            companyId, encrypted(kek, PASSPHRASE, companyId), KEK_ENV, Map.of(KEK_ENV, kek)::get);
 
         assertEquals(VaultBootUnlockUtils.Status.UNLOCKED, status);
         assertTrue(vaultService.isOpened(companyId));
         assertEquals(SECRET, vaultService.getApiKey(companyId, KEY_CODE).orElseThrow(),
             "the entry persisted before the 'restart' must be readable after boot-unlock");
+    }
+
+    /** The startup path: the value written to {@code ${mh.home}/vault-boot-unlock.txt} is read back and opens the Vault. */
+    @Test
+    public void test_bootUnlock_opensThePersistedVault_fromTheFileInMhHome(@TempDir Path mhHome) throws Exception {
+        final long companyId = companyWithLockedVault();
+        final String kek = newKek();
+        VaultBootUnlockFileUtils.writeEncryptedPassphrase(mhHome, encrypted(kek, PASSPHRASE, companyId));
+
+        final VaultBootUnlockUtils.Status status = vaultBootUnlockService.bootUnlock(
+            companyId, VaultBootUnlockFileUtils.readEncryptedPassphrase(mhHome, null), KEK_ENV, Map.of(KEK_ENV, kek)::get);
+
+        assertEquals(VaultBootUnlockUtils.Status.UNLOCKED, status);
+        assertEquals(SECRET, vaultService.getApiKey(companyId, KEY_CODE).orElseThrow());
     }
 
     @Test
@@ -139,7 +152,7 @@ public class VaultBootUnlockServiceTest extends MhSharedItTest {
         final String kek = newKek();
 
         final VaultBootUnlockUtils.Status status = vaultBootUnlockService.bootUnlock(
-            companyId, cfg(kek, PASSPHRASE, companyId), Map.of(KEK_ENV, kek)::get);
+            companyId, encrypted(kek, PASSPHRASE, companyId), KEK_ENV, Map.of(KEK_ENV, kek)::get);
 
         assertEquals(VaultBootUnlockUtils.Status.NO_VAULT, status);
         assertFalse(vaultService.isOpened(companyId));
@@ -152,7 +165,7 @@ public class VaultBootUnlockServiceTest extends MhSharedItTest {
         final String kek = newKek();
 
         final VaultBootUnlockUtils.Status status = vaultBootUnlockService.bootUnlock(
-            companyId, cfg(kek, "not the vault passphrase", companyId), Map.of(KEK_ENV, kek)::get);
+            companyId, encrypted(kek, "not the vault passphrase", companyId), KEK_ENV, Map.of(KEK_ENV, kek)::get);
 
         assertEquals(VaultBootUnlockUtils.Status.UNLOCK_FAILED, status);
         assertFalse(vaultService.isOpened(companyId));
@@ -163,7 +176,7 @@ public class VaultBootUnlockServiceTest extends MhSharedItTest {
         final long companyId = companyWithLockedVault();
 
         final VaultBootUnlockUtils.Status status = vaultBootUnlockService.bootUnlock(
-            companyId, cfg(newKek(), PASSPHRASE, companyId), Map.<String, String>of()::get);
+            companyId, encrypted(newKek(), PASSPHRASE, companyId), KEK_ENV, Map.<String, String>of()::get);
 
         assertEquals(VaultBootUnlockUtils.Status.KEK_MISSING, status);
         assertFalse(vaultService.isOpened(companyId));
@@ -174,7 +187,7 @@ public class VaultBootUnlockServiceTest extends MhSharedItTest {
         final long companyId = companyWithLockedVault();
 
         final VaultBootUnlockUtils.Status status = vaultBootUnlockService.bootUnlock(
-            companyId, new Globals.BootUnlock(), Map.of(KEK_ENV, newKek())::get);
+            companyId, null, KEK_ENV, Map.of(KEK_ENV, newKek())::get);
 
         assertEquals(VaultBootUnlockUtils.Status.NOT_CONFIGURED, status);
         assertFalse(vaultService.isOpened(companyId));
@@ -188,7 +201,7 @@ public class VaultBootUnlockServiceTest extends MhSharedItTest {
         final VaultData.BootUnlockValue value = vaultBootUnlockService.bootUnlockValue(
             companyId, PASSPHRASE, Map.of(KEK_ENV, newKek())::get);
 
-        assertNull(value.encryptedPassphrase);
+        assertNull(value.filePath, "a refused request must not have written the boot-unlock file");
         assertNotNull(value.errorMessages);
         assertTrue(value.errorMessages.getFirst().startsWith("01.672.080 "), value.errorMessages.getFirst());
     }

@@ -165,21 +165,22 @@ public class VaultData {
      * Value to put into application.properties so the management company's Vault is unlocked at
      * Dispatcher start. {@code propertyName}={@code encryptedPassphrase} is the line to add; the KEK must
      * be present in the environment variable {@code kekEnv} of the Dispatcher process.
+     *
+     * <p>⚠️ Superseded: the Dispatcher now writes the value itself, to {@code ${mh.home}/vault-boot-unlock.txt},
+     * and reads it at start - nothing goes into application.properties. {@code filePath} is where it was
+     * written; the KEK must still be in the environment variable {@code kekEnv} at every start.
      */
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class BootUnlockValue extends BaseDataClass {
         @Nullable
-        public String propertyName;
-        @Nullable
-        public String encryptedPassphrase;
+        public String filePath;
         @Nullable
         public String kekEnv;
 
-        public BootUnlockValue(String propertyName, String encryptedPassphrase, String kekEnv) {
-            this.propertyName = propertyName;
-            this.encryptedPassphrase = encryptedPassphrase;
+        public BootUnlockValue(String filePath, String kekEnv) {
+            this.filePath = filePath;
             this.kekEnv = kekEnv;
         }
 

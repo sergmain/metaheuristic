@@ -378,6 +378,10 @@ public class Globals {
      * <p>A blank {@code encryptedPassphrase} means not configured: the Vault stays locked after a restart,
      * exactly as before. The value is produced by the Dispatcher itself, from the Key Vault page of the
      * management company, so it is encrypted with the same KEK that decrypts it.
+     *
+     * <p>⚠️ Superseded in part: the Key Vault page now writes the encrypted passphrase to
+     * {@code ${mh.home}/vault-boot-unlock.txt}, and that file is read at start. {@code encryptedPassphrase}
+     * is only a fallback, used when the file is absent; {@code kekEnv} is unchanged.
      */
     @Getter
     @Setter

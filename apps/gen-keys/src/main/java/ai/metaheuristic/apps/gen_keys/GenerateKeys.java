@@ -61,10 +61,24 @@ public class GenerateKeys implements CommandLineRunner {
         System.out.println("KEK in base64 format:\n" + KekUtils.generateKek(new SecureRandom()) + "\n\n");
 
         System.out.println("""
-            Put it into the environment of the Dispatcher process, in the variable named by
-            mh.dispatcher.vault.boot-unlock.kek-env (default MH_VAULT_KEK), and restart the Dispatcher.
-            Then, as the management company's admin, open Settings -> Key Vault, unlock it and press
-            'Auto-unlock at restart' to get the line for application.properties.
+            How to make the management company's Key Vault unlock itself at Dispatcher start:
+
+            1. Set an environment variable for the Dispatcher process, with the KEK above as its value.
+               Variable name: MH_VAULT_KEK, unless application.properties sets
+               mh.dispatcher.vault.boot-unlock.kek-env - then use the name given there.
+            2. Restart the Dispatcher, so that the process sees the variable.
+            3. Log in as the admin of the management company.
+            4. Open Dispatcher -> Key Vault (left menu) and unlock the Vault with the master passphrase.
+               The Vault must hold at least one entry - an empty Vault isn't stored, and boot-unlock skips it.
+            5. Press 'Auto-unlock at restart', enter the master passphrase, press 'Generate'.
+               The Dispatcher saves the encrypted passphrase to vault-boot-unlock.txt in mh.home;
+               nothing has to be added to application.properties.
+            6. Restart the Dispatcher. From now on the Vault is unlocked at every start,
+               and the log shows: 01.672.070 Key Vault of companyUniqueId=1 unlocked at Dispatcher start
+
+            The same KEK must be in the environment at every start, and mh.home must survive redeploys -
+            the file is the only copy. With a new KEK, repeat all steps: the old file no longer decrypts,
+            so the Vault starts locked until step 6.
 
             !!! Phrase 'KEK in base64 format:' isn't a part of the key and must not be used or stored in file.
             """);
