@@ -40,8 +40,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Meta storage on the V3 harness - real Spring context, real H2, real Liquibase-created table.
@@ -415,5 +417,57 @@ public class MetaStorageServiceTest extends MhSharedItTest {
         final Page<String> synthetic = metaStorageSyntheticService.listKeys(companyId, type, PageRequest.of(0, MetaStorageService.ROWS_IN_TABLE));
         assertEquals(0, synthetic.getTotalElements(), "PHASE #5: a production write is not paged by the synthetic store");
         assertEquals(0, synthetic.getTotalPages());
+    }
+
+    /**
+     * The listing's "Last updated": one GROUP BY per store yielding each table with the LATEST
+     * UPDATED_AT of its records.
+     *
+     * <p>⚠️ On the shared DB the cross-company read returns every other test's tables too, so it is
+     * filtered to this test's companies, per harness 0.4.6.
+     */
+    @Test
+    public void test_typeStatsReportTheLatestUpdatedAtOfEachTable() {
+        final Long companyId = SharedItEnv.uniqueLong();
+        final Long otherCompanyId = SharedItEnv.uniqueLong();
+        final String type = SharedItEnv.uniqueCode("stats");
+
+        // PHASE #1: a first record, then a second one written strictly later. The await is the writer
+        // re-trying until the clock has moved - not a sleep - so max() and min() are distinguishable.
+        metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(type, "k-1", "b1")));
+        final long first = metaStorageRepository.findByNaturalKey(companyId, type, "k-1").updatedAt;
+        await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(5)).until(() -> {
+            metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(type, "k-2", "b2")));
+            return metaStorageRepository.findByNaturalKey(companyId, type, "k-2").updatedAt > first;
+        });
+        final long latest = metaStorageRepository.findByNaturalKey(companyId, type, "k-2").updatedAt;
+
+        // PHASE #2: the single-company read - one entry per table, carrying the LATEST write
+        final List<MetaStorageData.TypeStat> own = metaStorageRepository.findTypeStatsByCompanyId(companyId);
+        assertEquals(List.of(new MetaStorageData.TypeStat(companyId, type, latest)), own,
+                "PHASE #2: two records are one table, and its last update is the later of the two writes");
+        assertNotEquals(first, latest, "PHASE #2: the two writes are distinguishable, so max() is what was asserted");
+
+        // PHASE #3: the same name under another company is another table with its own last write
+        metaStorageService.upsert(otherCompanyId, List.of(new MetaStorageData.Record(type, "k-1", "x")));
+        final long otherLatest = metaStorageRepository.findByNaturalKey(otherCompanyId, type, "k-1").updatedAt;
+        final List<MetaStorageData.TypeStat> all = metaStorageRepository.findAllTypeStats().stream()
+                .filter(s -> companyId.equals(s.companyId()) || otherCompanyId.equals(s.companyId()))
+                .toList();
+        assertEquals(List.of(new MetaStorageData.TypeStat(companyId, type, latest),
+                        new MetaStorageData.TypeStat(otherCompanyId, type, otherLatest)), all,
+                "PHASE #3: ordered by company, one entry per (company, table)");
+        assertEquals(List.of(new MetaStorageData.TypeStat(companyId, type, latest)),
+                metaStorageRepository.findTypeStatsByCompanyId(companyId), "PHASE #3: the single-company read stays in its company");
+
+        // PHASE #4: the synthetic store aggregates its own records only
+        assertEquals(List.of(), metaStorageSyntheticRepository.findTypeStatsByCompanyId(companyId),
+                "PHASE #4: nothing was written to the synthetic store");
+        metaStorageSyntheticService.upsert(companyId, List.of(new MetaStorageData.Record(type, "s-1", "s")));
+        final long syntheticLatest = metaStorageSyntheticRepository.findByNaturalKey(companyId, type, "s-1").updatedAt;
+        assertEquals(List.of(new MetaStorageData.TypeStat(companyId, type, syntheticLatest)),
+                metaStorageSyntheticRepository.findTypeStatsByCompanyId(companyId));
+        assertTrue(metaStorageSyntheticRepository.findAllTypeStats()
+                .contains(new MetaStorageData.TypeStat(companyId, type, syntheticLatest)));
     }
 }

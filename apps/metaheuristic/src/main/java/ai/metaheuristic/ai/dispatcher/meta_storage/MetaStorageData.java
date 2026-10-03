@@ -54,4 +54,25 @@ public class MetaStorageData {
      * {@code MetaStorageRepository} and {@code MetaStorageSyntheticRepository}.
      */
     public record TypeRef(Long companyId, String type) {}
+
+    /**
+     * One meta table together with when it was last written to - the latest {@code UPDATED_AT} over
+     * its records.
+     *
+     * <p>Kept apart from {@link TypeRef} on purpose: TypeRef is the IDENTITY of a table and is used as
+     * a map key, and a timestamp inside it would make two references to the same table unequal.
+     *
+     * <p>{@code lastUpdatedAt} is a record-level fact, so - unlike the registry's CREATED_ON - every
+     * listed table has one: a table exists only by virtue of its records, and every record carries
+     * {@code UPDATED_AT}. ⚠️ It is the time of the latest WRITE, not of the latest change of content:
+     * an upsert that stores the same body again moves it forward too.
+     *
+     * <p>Used as a JPQL constructor target - {@code max(...)} of a {@code long} attribute arrives as a
+     * {@code Long}, hence the boxed type.
+     */
+    public record TypeStat(Long companyId, String type, Long lastUpdatedAt) {
+        public TypeRef ref() {
+            return new TypeRef(companyId, type);
+        }
+    }
 }
