@@ -80,19 +80,29 @@ public final class MetaStorageIndexUtils {
      * @param companyNameByCompanyId the owner-company lookup, or {@code id -> null} for a caller
      *             scoped to a single company. ❗ Returning null here is what leaves the column empty,
      *             so entitlement is expressed by the lambda and never re-derived inside this method.
+     * @param createdOnByTable the registry's CREATED_ON, keyed by the same pair as the descriptions.
+     *             Null for a table with no descriptor. A separate lookup from the description on
+     *             purpose: CREATED_ON is a column and the description lives in PARAMS, so a descriptor
+     *             whose PARAMS do not parse loses its description and still has an age.
      */
     public static List<MetaStorageViewData.MetaTableItem> index(
             List<MetaStorageData.TypeRef> refs,
             Function<MetaStorageData.TypeRef, @Nullable String> descriptionByTable,
-            Function<Long, @Nullable String> companyNameByCompanyId) {
+            Function<Long, @Nullable String> companyNameByCompanyId,
+            Function<MetaStorageData.TypeRef, @Nullable Long> createdOnByTable) {
 
         final List<MetaStorageViewData.MetaTableItem> result = new ArrayList<>(refs.size());
         for (MetaStorageData.TypeRef ref : refs) {
+            final String desc = descriptionByTable.apply(ref);
             result.add(new MetaStorageViewData.MetaTableItem(
                     ref.companyId(),
                     companyNameByCompanyId.apply(ref.companyId()),
                     ref.type(),
-                    descriptionOrPlaceholder(descriptionByTable.apply(ref))));
+                    descriptionOrPlaceholder(desc),
+                    // the same rule descriptionOrPlaceholder applies, so `described` and the
+                    // placeholder can never disagree about one table
+                    desc!=null && !desc.isBlank(),
+                    createdOnByTable.apply(ref)));
         }
         return result;
     }

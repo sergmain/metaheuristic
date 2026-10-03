@@ -41,8 +41,19 @@ public class MetaStorageViewData {
      *
      * <p>{@code description} is never null: a table with no descriptor in MH_META_STORAGE_REGISTRY
      * carries the placeholder instead, so the UI renders one shape rather than branching on absence.
+     *
+     * <p>{@code described} says whether {@code description} is a real description or that
+     * placeholder. ❗ It exists so the UI never has to recognise the placeholder by its wording - an
+     * edit form that pre-filled itself with the placeholder text would save it as a description.
+     *
+     * <p>{@code createdOn} is MH_META_STORAGE_REGISTRY.CREATED_ON - stamped when the table's descriptor
+     * was first registered and preserved by every later update, which makes it the one recorded answer
+     * to how old the table is. Null when the table has no descriptor: a table exists only by virtue of
+     * records carrying its name, and no record keeps a creation time of its own. ⚠️ Read from the
+     * column, not from PARAMS, so a descriptor whose PARAMS no longer parse still reports its age.
      */
-    public record MetaTableItem(Long companyId, @Nullable String companyName, String metaTable, String description) {}
+    public record MetaTableItem(Long companyId, @Nullable String companyName, String metaTable, String description,
+                                boolean described, @Nullable Long createdOn) {}
 
     /**
      * One tab's worth of the index.
@@ -130,5 +141,22 @@ public class MetaStorageViewData {
             Long companyId, String metaTable, boolean production,
             String targetMetaTable, boolean targetProduction,
             int copied, boolean descriptorCopied,
+            EnumsApi.OperationStatus status, List<String> errorMessages, List<String> infoMessages) {}
+
+    /**
+     * What editing one meta table's description stored.
+     *
+     * <p>{@code status}, {@code errorMessages} and {@code infoMessages} are read by the UI's
+     * notifications interceptor, as on {@link MetaTableCloneResult}.
+     *
+     * @param companyId   the partition the edit ran in, as the server resolved it
+     * @param description the description as stored - stripped of surrounding whitespace; null when
+     *                    the edit was refused
+     * @param created     true when the table had no descriptor and one was registered carrying only
+     *                    this description; false when an existing descriptor got a new description
+     *                    and kept every other field
+     */
+    public record MetaTableDescriptionResult(
+            Long companyId, String metaTable, boolean production, @Nullable String description, boolean created,
             EnumsApi.OperationStatus status, List<String> errorMessages, List<String> infoMessages) {}
 }
