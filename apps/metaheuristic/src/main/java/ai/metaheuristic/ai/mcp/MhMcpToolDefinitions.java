@@ -40,6 +40,8 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageSyntheticService;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageCloneService;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageCloneUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageSyntheticRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
@@ -120,6 +122,8 @@ import java.util.stream.Stream;
  *   mh_delete_meta_storage_record      — delete one record addressed by its natural key
  *   mh_list_meta_storage_rec_keys      — every recKey for one (companyId, type), bodies unread
  *   mh_upsert_meta_storage_record      — insert or update one record, addressed by its natural key
+ *   mh_clone_meta_storage_table        — clone a whole meta table under a new name, inside its own store
+ *   mh_copy_meta_storage_table_between_domains — copy a whole meta table into the other store
  *   mh_list_dispatcher_event_types     — every dispatcher event type recorded in a range of months, with counts
  *   mh_list_dispatcher_events          — dispatcher events of a range of months by type and contextId, paged by id
  *
@@ -164,6 +168,7 @@ public class MhMcpToolDefinitions {
     private final MetaStorageRegistryTxService metaStorageRegistryTxService;
     private final ai.metaheuristic.ai.dispatcher.vault.VaultService vaultService;
     private final DispatcherEventQueryService dispatcherEventQueryService;
+    private final MetaStorageCloneService metaStorageCloneService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -495,6 +500,8 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(LIST_META_STORAGE_REGISTRY_TOOL, this::handleListMetaStorageRegistry),
                 new McpServerFeatures.SyncToolSpecification(GET_META_STORAGE_REGISTRY_TOOL, this::handleGetMetaStorageRegistry),
                 new McpServerFeatures.SyncToolSpecification(UPSERT_META_STORAGE_REGISTRY_TOOL, this::handleUpsertMetaStorageRegistry),
+                new McpServerFeatures.SyncToolSpecification(CLONE_META_STORAGE_TABLE_TOOL, this::handleCloneMetaStorageTable),
+                new McpServerFeatures.SyncToolSpecification(COPY_META_STORAGE_TABLE_BETWEEN_DOMAINS_TOOL, this::handleCopyMetaStorageTableBetweenDomains),
                 new McpServerFeatures.SyncToolSpecification(EXEC_CONTEXT_TARGET_STATE_TOOL, this::handleExecContextTargetState),
                 new McpServerFeatures.SyncToolSpecification(GET_TASK_INFO_TOOL, this::handleGetTaskInfo),
                 new McpServerFeatures.SyncToolSpecification(RESET_TASK_TOOL, this::handleResetTask),
@@ -1132,6 +1139,123 @@ public class MhMcpToolDefinitions {
         // guarantee that is for one place to decide what writing means
         final MetaStorageRegistry saved = metaStorageRegistryTxService.upsert(companyId, metaTable, prod, p);
         return toCallToolResult(new UpsertMetaStorageRegistryResultDto(true, created, toDto(saved)));
+    }
+    // ==================== Tool 31: clone a meta table inside its domain ====================
+
+    /**
+     * Only an exact {@code true} - the rule {@link #syntheticFromProduction} applies to
+     * {@code production}, applied to a flag of another name. Absent, false, "TRUE" and a typo all
+     * answer false, and every flag read this way is one whose true side writes into MH_META_STORAGE.
+     */
+    private static boolean explicitlyTrue(Map<String, Object> arguments, String key) {
+        final Object raw = arguments.get(key);
+        if (raw instanceof Boolean b) {
+            return b;
+        }
+        return raw!=null && "true".equals(String.valueOf(raw).strip());
+    }
+
+    /**
+     * What one clone produced - for both clone tools, which differ only in how the two stores are
+     * chosen.
+     *
+     * @param production       the source store
+     * @param targetProduction the store written
+     * @param copied           records written into the target
+     * @param descriptorCopied whether the source's registry descriptor went with the table
+     */
+    public record CloneMetaStorageTableDto(
+            boolean ok, Long companyId, String type, boolean production, String targetType, boolean targetProduction,
+            int copied, boolean descriptorCopied, String message) {}
+
+    private static final Tool CLONE_META_STORAGE_TABLE_TOOL = Tool.builder("mh_clone_meta_storage_table",
+                    objectSchema(
+                            Map.of(
+                                    "companyId", Map.of("type", "integer",
+                                            "description", "Owning company id - the COMPANY_ID column. Source and clone are both in this company."),
+                                    "type", Map.of("type", "string",
+                                            "description", "The meta table to clone - the TYPE column. It is read, never changed."),
+                                    "targetType", Map.of("type", "string",
+                                            "description", "The name of the clone. Must differ from 'type' and must not exist yet in the store: no record and no descriptor under it."),
+                                    "production", Map.of("type", "boolean",
+                                            "description", "Optional. true clones inside the PRODUCTION table MH_META_STORAGE; absent or false inside MH_META_STORAGE_SYNTHETIC. Both tables are in the same store.")),
+                            List.of("companyId", "type", "targetType")))
+            .title("Clone a meta table inside its domain")
+            .description("Copy EVERY record of one (companyId, type) to a NEW type in the same store, recKeys and bodies "
+                    + "unchanged, and copy the table's registry descriptor with it when there is one. The source is not "
+                    + "touched. A clone only CREATES a table: it is refused, with nothing written, when the target already "
+                    + "holds any record or a descriptor - it never merges into or overwrites an existing table. Records "
+                    + "are copied in rounds of " + MetaStorageCloneUtils.CLONE_CHUNK_SIZE + ", one transaction each; if a "
+                    + "round fails the result says how many records were written and the target must be dropped before "
+                    + "retrying. To copy into the OTHER store use mh_copy_meta_storage_table_between_domains.")
+            .build();
+
+    private CallToolResult handleCloneMetaStorageTable(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final Long companyId = getRequiredLong(arguments, "companyId");
+        final String type = getRequiredString(arguments, "type");
+        final String targetType = getRequiredString(arguments, "targetType");
+        final boolean production = !syntheticFromProduction(arguments);
+        log.info("01.260.720 MCP cloneMetaStorageTable(companyId={}, type={}, targetType={}, production={})",
+                companyId, type, targetType, production);
+
+        return cloneResult(companyId, type, production, targetType, production);
+    }
+
+    // ==================== Tool 32: copy a meta table between domains ====================
+
+    private static final Tool COPY_META_STORAGE_TABLE_BETWEEN_DOMAINS_TOOL = Tool.builder("mh_copy_meta_storage_table_between_domains",
+                    objectSchema(
+                            Map.of(
+                                    "companyId", Map.of("type", "integer",
+                                            "description", "Owning company id - the COMPANY_ID column. Source and copy are both in this company."),
+                                    "type", Map.of("type", "string",
+                                            "description", "The meta table to copy - the TYPE column, in the SOURCE store. It is read, never changed."),
+                                    "targetType", Map.of("type", "string",
+                                            "description", "Optional. The name of the copy in the target store; absent means the same name as 'type'. Must not exist yet in the target store: no record and no descriptor under it."),
+                                    "targetProduction", Map.of("type", "boolean",
+                                            "description", "Optional. true copies FROM MH_META_STORAGE_SYNTHETIC INTO the PRODUCTION table MH_META_STORAGE; absent or false copies from MH_META_STORAGE into MH_META_STORAGE_SYNTHETIC. Writing into production is asked for EXPLICITLY - a record written there cannot be un-written by re-running.")),
+                            List.of("companyId", "type")))
+            .title("Copy a meta table between domains")
+            .description("Copy EVERY record of one (companyId, type) from one store into the other - production to "
+                    + "synthetic, or with targetProduction=true synthetic to production - recKeys and bodies unchanged, "
+                    + "and copy the table's registry descriptor with it when there is one. The source is not touched. "
+                    + "The same name in the other store is a different table, so copying under the same name is the "
+                    + "ordinary case. Refused, with nothing written, when the target already holds any record or a "
+                    + "descriptor - it never merges into or overwrites an existing table. Records are copied in rounds "
+                    + "of " + MetaStorageCloneUtils.CLONE_CHUNK_SIZE + ", one transaction each; if a round fails the "
+                    + "result says how many records were written and the target must be dropped before retrying. To "
+                    + "clone inside one store use mh_clone_meta_storage_table.")
+            .build();
+
+    private CallToolResult handleCopyMetaStorageTableBetweenDomains(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final Long companyId = getRequiredLong(arguments, "companyId");
+        final String type = getRequiredString(arguments, "type");
+        final String requestedTarget = blankToNull(optionalString(arguments, "targetType"));
+        final String targetType = requestedTarget==null ? type : requestedTarget;
+        // the TARGET is what has to be asked for, because writing into production is the irreversible side;
+        // the source is then the other store by definition
+        final boolean targetProduction = explicitlyTrue(arguments, "targetProduction");
+        final boolean production = !targetProduction;
+        log.info("01.260.740 MCP copyMetaStorageTableBetweenDomains(companyId={}, type={}, targetType={}, targetProduction={})",
+                companyId, type, targetType, targetProduction);
+
+        return cloneResult(companyId, type, production, targetType, targetProduction);
+    }
+
+    /** A refused or incomplete clone is a tool failure - isError - so a caller that does not read the body still sees it. */
+    private CallToolResult cloneResult(Long companyId, String type, boolean production, String targetType, boolean targetProduction) {
+        final MetaStorageCloneService.CloneResult r =
+                metaStorageCloneService.clone(companyId, type, production, targetType, targetProduction);
+        if (!r.ok()) {
+            return errorResult(r.error()==null ? "unknown error" : r.error());
+        }
+        return toCallToolResult(new CloneMetaStorageTableDto(true, companyId, type, production, targetType, targetProduction,
+                r.copied(), r.descriptorCopied(),
+                "Cloned " + r.copied() + " record(s) of '" + type + "' in " + MetaStorageCloneUtils.storeName(production)
+                        + " into '" + targetType + "' in " + MetaStorageCloneUtils.storeName(targetProduction)
+                        + (r.descriptorCopied() ? ", with its registry descriptor" : ", which had no registry descriptor")));
     }
     // ==================== Tool 3: set an ExecContext's target state ====================
 

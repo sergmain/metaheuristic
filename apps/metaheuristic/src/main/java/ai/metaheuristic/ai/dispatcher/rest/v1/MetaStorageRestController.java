@@ -21,6 +21,8 @@ import ai.metaheuristic.ai.dispatcher.beans.MetaStorageRegistry;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.MetaStorageViewData;
 import ai.metaheuristic.ai.dispatcher.data.SimpleCompany;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageCloneService;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageCloneUtils;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageDownloadService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageDropService;
@@ -33,6 +35,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageSyntheticRepository;
 import ai.metaheuristic.ai.sec.SecConsts;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
+import ai.metaheuristic.api.EnumsApi;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,6 +96,7 @@ public class MetaStorageRestController {
     private final UserContextService userContextService;
     private final MetaStorageDropService metaStorageDropService;
     private final MetaStorageDownloadService metaStorageDownloadService;
+    private final MetaStorageCloneService metaStorageCloneService;
 
     /**
      * One tab of the index: every meta table the caller is entitled to, with its description.
@@ -222,6 +226,46 @@ public class MetaStorageRestController {
                 metaTable, scopedCompanyId, production, authentication.getName());
         final MetaStorageDropService.DropResult r = metaStorageDropService.drop(scopedCompanyId, metaTable, production);
         return new MetaStorageViewData.MetaTableDropResult(scopedCompanyId, metaTable, production, r.deleted(), r.hadDescriptor());
+    }
+
+    /**
+     * Clone one whole meta table into a new one: inside its domain when {@code targetProduction}
+     * equals {@code production}, between domains when it does not.
+     *
+     * <p>❗ Both store flags are REQUIRED, for the reason the drop gives: this writes, and a write into
+     * MH_META_STORAGE cannot be undone, so which store receives the records has to be stated rather than
+     * be the outcome of an omitted parameter.
+     *
+     * <p>❗ {@code companyId} goes through {@link #scopeCompanyId} exactly as on the drop. Source and
+     * target are in that one company: a clone never moves data between tenants.
+     *
+     * <p>A refused or incomplete clone is an ordinary response with {@code status=ERROR} and the reason
+     * in {@code errorMessages}, not an HTTP error - the request was well-formed and the server knows
+     * exactly why it did not, or did not fully, do it.
+     */
+    @PostMapping("/meta-tables/{metaTable}/clone")
+    public MetaStorageViewData.MetaTableCloneResult cloneMetaTable(
+            Authentication authentication,
+            @PathVariable("metaTable") String metaTable,
+            @RequestParam(name = "companyId", required = false) @Nullable Long companyId,
+            @RequestParam(name = "production") boolean production,
+            @RequestParam(name = "targetMetaTable") String targetMetaTable,
+            @RequestParam(name = "targetProduction") boolean targetProduction) {
+
+        final Long scopedCompanyId = scopeCompanyId(authentication, companyId);
+        log.info("01.945.060 clone of meta table '{}' of company #{} (production={}) into '{}' (production={}) requested by '{}'",
+                metaTable, scopedCompanyId, production, targetMetaTable, targetProduction, authentication.getName());
+        final MetaStorageCloneService.CloneResult r =
+                metaStorageCloneService.clone(scopedCompanyId, metaTable, production, targetMetaTable, targetProduction);
+
+        return r.ok()
+                ? new MetaStorageViewData.MetaTableCloneResult(scopedCompanyId, metaTable, production, targetMetaTable, targetProduction,
+                        r.copied(), r.descriptorCopied(), EnumsApi.OperationStatus.OK, List.of(),
+                        List.of("Meta table '" + metaTable + "' was cloned into '" + targetMetaTable + "' in "
+                                + MetaStorageCloneUtils.storeName(targetProduction) + ": " + r.copied() + " record(s)"
+                                + (r.descriptorCopied() ? ", with its descriptor" : ", it had no descriptor")))
+                : new MetaStorageViewData.MetaTableCloneResult(scopedCompanyId, metaTable, production, targetMetaTable, targetProduction,
+                        r.copied(), false, EnumsApi.OperationStatus.ERROR, List.of(r.error()), List.of());
     }
 
     /**

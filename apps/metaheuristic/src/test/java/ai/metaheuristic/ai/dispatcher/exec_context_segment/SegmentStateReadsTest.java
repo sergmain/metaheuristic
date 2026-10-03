@@ -200,7 +200,7 @@ public class SegmentStateReadsTest extends PreparingSourceCode {
     private MhMcpToolDefinitions mcp() {
         // positions: 4 = ExecContextCache, 6 = ExecContextSegmentReadService (041 Phase 21: three record repositories gone); the three tools read nothing else
         return new MhMcpToolDefinitions(null, null, null, execContextCache, null, segmentReadService,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     private static CallToolResult call(MhMcpToolDefinitions defs, String tool, Long execContextId) {

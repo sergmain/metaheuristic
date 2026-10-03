@@ -85,6 +85,10 @@ public class MhMcpToolWiringTest {
         put("mh_list_meta_storage_registry", "companyId");
         put("mh_get_meta_storage_registry", "companyId");
         put("mh_upsert_meta_storage_registry", "companyId");
+        // both clone tools are scoped to a company as well, so a swap between them is caught by
+        // MhMcpMetaStorageToolTest, which calls each by name and reads which store it wrote
+        put("mh_clone_meta_storage_table", "companyId");
+        put("mh_copy_meta_storage_table_between_domains", "companyId");
         // not an id: this one is resolved from a repo url, and 'repo' is the first argument its handler asks for
         put("mh_import_bundle_from_git", "repo");
         // the company whose Key Vault is checked - the only argument it takes
@@ -99,7 +103,7 @@ public class MhMcpToolWiringTest {
     private static final Set<String> NO_ARG_TOOLS = Set.of("mh_list_source_codes", "mh_list_processors", "mh_execution_gate_status");
 
     private static List<McpServerFeatures.SyncToolSpecification> specs() {
-        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
+        return new MhMcpToolDefinitions(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
                 .getAllToolSpecifications();
     }
 

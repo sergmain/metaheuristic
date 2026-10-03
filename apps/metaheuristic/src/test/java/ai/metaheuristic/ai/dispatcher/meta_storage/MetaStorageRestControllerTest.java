@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.SharedItEnv;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRegistryRepository;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.api.data.meta_storage.MetaStorageRegistryParams;
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -58,6 +59,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
@@ -254,6 +256,141 @@ public class MetaStorageRestControllerTest extends MhSharedItTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.deleted").value(0))
                 .andExpect(jsonPath("$.hadDescriptor").value(false));
+    }
+
+    // ---------- clone ----------
+
+    /** One string out of the response body - the messages are long, so they are checked by prefix with JUnit. */
+    private static String jsonString(MvcResult result, String path) throws Exception {
+        return JsonPath.read(result.getResponse().getContentAsString(), path);
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    public void test_cloneInsideProductionReportsOkAndWritesTheNewTable() throws Exception {
+        final String source = SharedItEnv.uniqueCode("ms-clone-src");
+        final String target = SharedItEnv.uniqueCode("ms-clone-dst");
+
+        // PHASE #1: a production table with a descriptor
+        metaStorageService.upsert(ADMIN_COMPANY_ID, List.of(rec(source, "k-1", "p1"), rec(source, "k-2", "p2")));
+        metaStorageRegistryTxService.upsert(ADMIN_COMPANY_ID, source, true, desc("production " + source));
+
+        // PHASE #2: clone it inside production
+        final MvcResult result = mockMvc.perform(post(META_TABLES + source + "/clone")
+                        .param("production", "true")
+                        .param("targetMetaTable", target)
+                        .param("targetProduction", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.companyId").value((int) ADMIN_COMPANY_ID))
+                .andExpect(jsonPath("$.metaTable").value(source))
+                .andExpect(jsonPath("$.production").value(true))
+                .andExpect(jsonPath("$.targetMetaTable").value(target))
+                .andExpect(jsonPath("$.targetProduction").value(true))
+                .andExpect(jsonPath("$.copied").value(2))
+                .andExpect(jsonPath("$.descriptorCopied").value(true))
+                .andExpect(jsonPath("$.status").value("OK"))
+                .andExpect(jsonPath("$.errorMessages.length()").value(0))
+                .andExpect(jsonPath("$.infoMessages.length()").value(1))
+                .andReturn();
+        assertTrue(jsonString(result, "$.infoMessages[0]").contains("'" + target + "'"),
+                "PHASE #2: the toast names the new table: " + jsonString(result, "$.infoMessages[0]"));
+
+        // PHASE #3: the new table and its descriptor are in production, and only there
+        assertEquals(List.of("k-1", "k-2"), metaStorageService.listKeys(ADMIN_COMPANY_ID, target), "PHASE #3: target records");
+        assertTrue(hasDescriptor(ADMIN_COMPANY_ID, target, true), "PHASE #3: target descriptor");
+        assertEquals(List.of(), metaStorageSyntheticService.listKeys(ADMIN_COMPANY_ID, target), "PHASE #3: nothing in synthetic");
+        assertEquals(List.of("k-1", "k-2"), metaStorageService.listKeys(ADMIN_COMPANY_ID, source), "PHASE #3: the source is untouched");
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    public void test_copyBetweenDomainsLandsInTheOtherStore() throws Exception {
+        final String table = SharedItEnv.uniqueCode("ms-copy-dom");
+        metaStorageSyntheticService.upsert(ADMIN_COMPANY_ID, List.of(rec(table, "k-1", "s1")));
+
+        // synthetic -> production, same name: the two stores hold two different tables
+        mockMvc.perform(post(META_TABLES + table + "/clone")
+                        .param("production", "false")
+                        .param("targetMetaTable", table)
+                        .param("targetProduction", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.copied").value(1))
+                .andExpect(jsonPath("$.descriptorCopied").value(false))
+                .andExpect(jsonPath("$.status").value("OK"));
+
+        assertEquals(List.of(rec(table, "k-1", "s1")), metaStorageService.select(ADMIN_COMPANY_ID, table, null),
+                "the synthetic record is now also a production record, body included");
+        assertEquals(List.of("k-1"), metaStorageSyntheticService.listKeys(ADMIN_COMPANY_ID, table), "the source stays");
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    public void test_aRefusedCloneIsAnErrorStatusRatherThanAnHttpError() throws Exception {
+        final String source = SharedItEnv.uniqueCode("ms-clone-busy-src");
+        final String target = SharedItEnv.uniqueCode("ms-clone-busy-dst");
+        metaStorageService.upsert(ADMIN_COMPANY_ID, List.of(rec(source, "k-1", "new")));
+        metaStorageSyntheticService.upsert(ADMIN_COMPANY_ID, List.of(rec(target, "k-1", "old")));
+
+        final MvcResult result = mockMvc.perform(post(META_TABLES + source + "/clone")
+                        .param("production", "true")
+                        .param("targetMetaTable", target)
+                        .param("targetProduction", "false"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ERROR"))
+                .andExpect(jsonPath("$.copied").value(0))
+                .andExpect(jsonPath("$.infoMessages.length()").value(0))
+                .andReturn();
+        assertTrue(jsonString(result, "$.errorMessages[0]").startsWith("01.952.060 "), jsonString(result, "$.errorMessages[0]"));
+
+        assertEquals(List.of(rec(target, "k-1", "old")), metaStorageSyntheticService.select(ADMIN_COMPANY_ID, target, null),
+                "the existing target is neither overwritten nor merged into");
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    public void test_cloneRefusesARequestThatDoesNotStateBothStores() throws Exception {
+        final String source = SharedItEnv.uniqueCode("ms-clone-noflag-src");
+        final String target = SharedItEnv.uniqueCode("ms-clone-noflag-dst");
+        metaStorageService.upsert(ADMIN_COMPANY_ID, List.of(rec(source, "k-1", "p1")));
+
+        // no default for a write: forgetting either flag must not pick a store
+        mockMvc.perform(post(META_TABLES + source + "/clone")
+                        .param("production", "true")
+                        .param("targetMetaTable", target))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post(META_TABLES + source + "/clone")
+                        .param("targetMetaTable", target)
+                        .param("targetProduction", "true"))
+                .andExpect(status().isBadRequest());
+
+        assertEquals(List.of(), metaStorageService.listKeys(ADMIN_COMPANY_ID, target), "nothing written to production");
+        assertEquals(List.of(), metaStorageSyntheticService.listKeys(ADMIN_COMPANY_ID, target), "nothing written to synthetic");
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    public void test_anAdminCannotCloneAnotherCompanysTableByNamingItsId() throws Exception {
+        final String source = SharedItEnv.uniqueCode("ms-clone-tenant-src");
+        final String target = SharedItEnv.uniqueCode("ms-clone-tenant-dst");
+        final Long otherCompanyId = SharedItEnv.uniqueLong();
+
+        // PHASE #1: the same table name in the admin's company and in a foreign one
+        metaStorageService.upsert(ADMIN_COMPANY_ID, List.of(rec(source, "mine", "m")));
+        metaStorageService.upsert(otherCompanyId, List.of(rec(source, "theirs", "t")));
+
+        // PHASE #2: an ADMIN names the foreign company - the clone runs in their own company instead
+        mockMvc.perform(post(META_TABLES + source + "/clone")
+                        .param("companyId", String.valueOf(otherCompanyId))
+                        .param("production", "true")
+                        .param("targetMetaTable", target)
+                        .param("targetProduction", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.companyId").value((int) ADMIN_COMPANY_ID))
+                .andExpect(jsonPath("$.copied").value(1));
+
+        // PHASE #3: the admin's own table was the one cloned; the foreign company has no new table
+        assertEquals(List.of("mine"), metaStorageService.listKeys(ADMIN_COMPANY_ID, target), "PHASE #3: cloned in the admin's company");
+        assertEquals(List.of(), metaStorageService.listKeys(otherCompanyId, target), "PHASE #3: nothing written into another company");
     }
 
     // ---------- download ----------

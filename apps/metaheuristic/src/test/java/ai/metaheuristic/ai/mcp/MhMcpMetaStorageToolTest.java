@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.MhSharedItTest;
 import ai.metaheuristic.ai.SharedItEnv;
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorage;
 import ai.metaheuristic.ai.dispatcher.beans.MetaStorageSynthetic;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageCloneService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageSyntheticService;
@@ -84,6 +85,8 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
     private static final String DELETE_TOOL = "mh_delete_meta_storage_record";
     private static final String KEYS_TOOL = "mh_list_meta_storage_rec_keys";
     private static final String UPSERT_TOOL = "mh_upsert_meta_storage_record";
+    private static final String CLONE_TOOL = "mh_clone_meta_storage_table";
+    private static final String COPY_BETWEEN_DOMAINS_TOOL = "mh_copy_meta_storage_table_between_domains";
 
     /** Map.of takes no varargs past a point and the flag is the only part that varies per call. */
     /** ❗ The value is Object, not boolean: several phases below hand this the string forms and the
@@ -108,6 +111,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
     @Autowired private MetaStorageSyntheticService metaStorageSyntheticService;
     @Autowired private MetaStorageRepository metaStorageRepository;
     @Autowired private MetaStorageSyntheticRepository metaStorageSyntheticRepository;
+    @Autowired private MetaStorageCloneService metaStorageCloneService;
 
     private CallToolResult call(Map<String, Object> arguments) {
         return call(TOOL_NAME, arguments);
@@ -117,7 +121,7 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         final MhMcpToolDefinitions definitions = new MhMcpToolDefinitions(
                 null, null, null, null, null, null, null, null, null, null, null, null, null,
                 metaStorageRepository, metaStorageSyntheticRepository, metaStorageService, metaStorageSyntheticService,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, metaStorageCloneService);
         final McpServerFeatures.SyncToolSpecification spec = definitions.getAllToolSpecifications().stream()
                 .filter(s -> toolName.equals(s.tool().name()))
                 .findFirst()
@@ -570,5 +574,94 @@ public class MhMcpMetaStorageToolTest extends MhSharedItTest {
         assertTrue(textOf(numericBody).contains("must be a string"), "PHASE #9: " + textOf(numericBody));
         assertNull(metaStorageRepository.findByNaturalKey(companyId, type, absentKey),
                 "PHASE #9: a rejected body must not have created the record");
+    }
+
+    // ---------- clone tools ----------
+
+    /**
+     * mh_clone_meta_storage_table stays inside the store 'production' selects. The same source name is
+     * populated in BOTH stores with different bodies, so a clone that read or wrote the wrong store
+     * cannot produce the expected records by accident.
+     */
+    @Test
+    public void test_cloneToolClonesInsideTheStoreProductionSelects() {
+        final Long companyId = SharedItEnv.uniqueLong();
+        final String source = SharedItEnv.uniqueCode("mcp-clone-src");
+        final String prodTarget = SharedItEnv.uniqueCode("mcp-clone-prod");
+        final String synthTarget = SharedItEnv.uniqueCode("mcp-clone-synth");
+
+        metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(source, "k-1", "from-production")));
+        metaStorageSyntheticService.upsert(companyId, List.of(new MetaStorageData.Record(source, "k-1", "from-synthetic")));
+
+        // PHASE #1: production=true clones inside MH_META_STORAGE
+        final CallToolResult inProduction = call(CLONE_TOOL,
+                Map.of("companyId", companyId, "type", source, "targetType", prodTarget, "production", true));
+        assertEquals(Boolean.FALSE, inProduction.isError(), "PHASE #1: " + textOf(inProduction));
+        assertTrue(textOf(inProduction).contains("\"copied\" : 1"), "PHASE #1: " + textOf(inProduction));
+        assertTrue(textOf(inProduction).contains("\"targetProduction\" : true"), "PHASE #1: " + textOf(inProduction));
+        assertEquals(List.of(new MetaStorageData.Record(prodTarget, "k-1", "from-production")),
+                metaStorageService.select(companyId, prodTarget, null), "PHASE #1: the production body, in production");
+        assertEquals(List.of(), metaStorageSyntheticService.listKeys(companyId, prodTarget), "PHASE #1: nothing in synthetic");
+
+        // PHASE #2: omitting the flag clones inside MH_META_STORAGE_SYNTHETIC
+        final CallToolResult inSynthetic = call(CLONE_TOOL,
+                Map.of("companyId", companyId, "type", source, "targetType", synthTarget));
+        assertEquals(Boolean.FALSE, inSynthetic.isError(), "PHASE #2: " + textOf(inSynthetic));
+        assertEquals(List.of(new MetaStorageData.Record(synthTarget, "k-1", "from-synthetic")),
+                metaStorageSyntheticService.select(companyId, synthTarget, null), "PHASE #2: the synthetic body, in synthetic");
+        assertEquals(List.of(), metaStorageService.listKeys(companyId, synthTarget), "PHASE #2: nothing in production");
+    }
+
+    /**
+     * mh_copy_meta_storage_table_between_domains writes into production only on an exact
+     * targetProduction=true; everything else copies production -> synthetic.
+     */
+    @Test
+    public void test_copyBetweenDomainsWritesProductionOnlyOnAnExplicitTrue() {
+        final Long companyId = SharedItEnv.uniqueLong();
+        final String prodOnly = SharedItEnv.uniqueCode("mcp-copy-prod");
+        final String synthOnly = SharedItEnv.uniqueCode("mcp-copy-synth");
+        final String renamed = SharedItEnv.uniqueCode("mcp-copy-renamed");
+
+        metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(prodOnly, "k-1", "p")));
+        metaStorageSyntheticService.upsert(companyId, List.of(new MetaStorageData.Record(synthOnly, "k-1", "s")));
+
+        // PHASE #1: no flag, no targetType - production -> synthetic under the same name
+        final CallToolResult down = call(COPY_BETWEEN_DOMAINS_TOOL, Map.of("companyId", companyId, "type", prodOnly));
+        assertEquals(Boolean.FALSE, down.isError(), "PHASE #1: " + textOf(down));
+        assertTrue(textOf(down).contains("\"production\" : true"), "PHASE #1: the source is production: " + textOf(down));
+        assertTrue(textOf(down).contains("\"targetProduction\" : false"), "PHASE #1: " + textOf(down));
+        assertEquals(List.of(new MetaStorageData.Record(prodOnly, "k-1", "p")),
+                metaStorageSyntheticService.select(companyId, prodOnly, null), "PHASE #1: same name, synthetic store");
+
+        // PHASE #2: an upper-cased "TRUE" is not an explicit true - it is read as production -> synthetic,
+        // where this name holds nothing, so the copy is refused and production stays untouched
+        final CallToolResult notExplicit = call(COPY_BETWEEN_DOMAINS_TOOL,
+                Map.of("companyId", companyId, "type", synthOnly, "targetProduction", "TRUE"));
+        assertEquals(Boolean.TRUE, notExplicit.isError(), "PHASE #2: " + textOf(notExplicit));
+        assertTrue(textOf(notExplicit).contains("01.952.040 "), "PHASE #2: " + textOf(notExplicit));
+        assertEquals(List.of(), metaStorageService.listKeys(companyId, synthOnly), "PHASE #2: nothing reached production");
+
+        // PHASE #3: targetProduction=true copies synthetic -> production, here under a new name
+        final CallToolResult up = call(COPY_BETWEEN_DOMAINS_TOOL,
+                Map.of("companyId", companyId, "type", synthOnly, "targetType", renamed, "targetProduction", true));
+        assertEquals(Boolean.FALSE, up.isError(), "PHASE #3: " + textOf(up));
+        assertEquals(List.of(new MetaStorageData.Record(renamed, "k-1", "s")),
+                metaStorageService.select(companyId, renamed, null), "PHASE #3: renamed, in production");
+        assertEquals(List.of("k-1"), metaStorageSyntheticService.listKeys(companyId, synthOnly), "PHASE #3: the source stays");
+    }
+
+    /** A refused clone is a tool error, so a caller that only checks isError cannot mistake it for success. */
+    @Test
+    public void test_aRefusedCloneIsAToolError() {
+        final Long companyId = SharedItEnv.uniqueLong();
+        final String table = SharedItEnv.uniqueCode("mcp-clone-self");
+        metaStorageService.upsert(companyId, List.of(new MetaStorageData.Record(table, "k-1", "b")));
+
+        final CallToolResult self = call(CLONE_TOOL,
+                Map.of("companyId", companyId, "type", table, "targetType", table, "production", true));
+        assertEquals(Boolean.TRUE, self.isError(), textOf(self));
+        assertTrue(textOf(self).startsWith("01.952.020 "), textOf(self));
+        assertEquals(List.of("k-1"), metaStorageService.listKeys(companyId, table));
     }
 }
