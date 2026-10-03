@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.commons.json.license;
 
-import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.license.LicenseClaims;
 import ai.metaheuristic.commons.json.versioning_json.AbstractParamsJsonUtils;
 import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;

@@ -34,20 +34,19 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  * Verify side of ONE license token. Nimbus-direct (no Spring Security OAuth2 decoder),
  * container-aware: JWTParser dispatches, and only a SignedJWT (compact JWS) is accepted today - a
  * PlainJWT (alg:none) or an EncryptedJWT (JWE, future) is rejected structurally, before any claim
  * is trusted.
- *
+ * <br/>
  * Enforces the header contract (ES256, typ=license+jws, kid present), signature over the EC public
  * key selected by kid, each header failure reporting its OWN state so the reader is sent to the
  * field that actually failed rather than to the signature, the mandatory exp, optional installation_id binding, and the exp/nbf window
  * with +-60s leeway (Appendix F). Pure and Spring-less: the clock, install id and key resolver are
  * all parameters.
- *
+ * <br/>
  * Deliberately NOT checked here: the running database and storage. Those are properties of the
  * installation, not of a token, and are decided once against the union of every valid license
  * (LicenseUnionUtils) - a license that does not list the running database is not invalid, it simply

@@ -131,7 +131,7 @@ public class MetaStorageRestController {
         // owner-company column empty, and nothing inside the join re-decides who may see what.
         final Function<Long, @Nullable String> companyNames = acrossCompanies
                 ? companyNameResolver(refs)
-                : id -> null;
+                : _ -> null;
 
         return new MetaStorageViewData.MetaTablesResult(production, acrossCompanies,
                 MetaStorageIndexUtils.index(refs, descriptions::get, companyNames, createdOn::get, lastUpdatedAt::get));
