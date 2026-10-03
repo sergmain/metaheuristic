@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.MhSharedItTest;
 import ai.metaheuristic.ai.SharedItEnv;
 import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRegistryRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.MetaStorageRepository;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.api.data.meta_storage.MetaStorageRegistryParams;
 import com.jayway.jsonpath.JsonPath;
@@ -96,6 +97,7 @@ public class MetaStorageRestControllerTest extends MhSharedItTest {
     @Autowired MetaStorageSyntheticService metaStorageSyntheticService;
     @Autowired MetaStorageRegistryTxService metaStorageRegistryTxService;
     @Autowired MetaStorageRegistryRepository metaStorageRegistryRepository;
+    @Autowired MetaStorageRepository metaStorageRepository;
 
     private MockMvc mockMvc;
 
@@ -428,6 +430,12 @@ public class MetaStorageRestControllerTest extends MhSharedItTest {
         assertEquals(MetaStorageIndexUtils.NO_DESCRIPTION, u.get("description"));
         assertEquals(Boolean.FALSE, u.get("described"), "the placeholder is not a description");
         assertNull(u.get("createdOn"), "no descriptor, no recorded creation time");
+
+        // Last updated is a fact about the records, so the undescribed table has one as well
+        assertEquals(metaStorageRepository.findByNaturalKey(ADMIN_COMPANY_ID, described, "k-1").updatedAt,
+                ((Number) d.get("lastUpdatedAt")).longValue(), "the latest UPDATED_AT of the table's records");
+        assertEquals(metaStorageRepository.findByNaturalKey(ADMIN_COMPANY_ID, undescribed, "k-1").updatedAt,
+                ((Number) u.get("lastUpdatedAt")).longValue(), "a table without a descriptor still has a last write");
     }
 
     // ---------- description ----------

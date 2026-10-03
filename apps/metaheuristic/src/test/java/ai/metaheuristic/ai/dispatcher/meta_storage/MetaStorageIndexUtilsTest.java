@@ -114,6 +114,7 @@ public class MetaStorageIndexUtilsTest {
                 List.of(ref(7L, "drone-reqs"), ref(7L, "audit-log")),
                 descriptions::get,
                 id -> null,
+                t -> null,
                 t -> null);
 
         assertEquals(2, items.size());
@@ -128,6 +129,7 @@ public class MetaStorageIndexUtilsTest {
                 List.of(ref(7L, "described"), ref(7L, "undescribed")),
                 descriptions(ref(7L, "described"), "it is described")::get,
                 id -> null,
+                t -> null,
                 t -> null);
 
         // PHASE #2: the listing is driven by the store, not by the registry - a table with no
@@ -144,6 +146,7 @@ public class MetaStorageIndexUtilsTest {
                 List.of(ref(42L, "zeta"), ref(2L, "alpha"), ref(7L, "mu")),
                 t -> null,
                 id -> null,
+                t -> null,
                 t -> null);
 
         assertEquals(List.of("zeta", "alpha", "mu"),
@@ -152,7 +155,7 @@ public class MetaStorageIndexUtilsTest {
 
     @Test
     public void test_index_emptyStoreYieldsEmptyIndex() {
-        assertEquals(List.of(), MetaStorageIndexUtils.index(List.of(), t -> "unused", id -> "unused", t -> 1L));
+        assertEquals(List.of(), MetaStorageIndexUtils.index(List.of(), t -> "unused", id -> "unused", t -> 1L, t -> 2L));
     }
 
     // ---------- index: the same name under two companies ----------
@@ -167,6 +170,7 @@ public class MetaStorageIndexUtilsTest {
                         ref(2L, "drone-reqs"), "Acme's drone requirements",
                         ref(7L, "drone-reqs"), "Globex's drone requirements")::get,
                 id -> "company-" + id,
+                t -> null,
                 t -> null);
 
         assertEquals(2, items.size(), "PHASE #1: two entries, one per partition");
@@ -186,6 +190,7 @@ public class MetaStorageIndexUtilsTest {
                 List.of(ref(2L, "drone-reqs"), ref(7L, "drone-reqs")),
                 descriptions(ref(2L, "drone-reqs"), "Acme's drone requirements")::get,
                 id -> "company-" + id,
+                t -> null,
                 t -> null);
 
         assertEquals("Acme's drone requirements", items.get(0).description());
@@ -203,6 +208,7 @@ public class MetaStorageIndexUtilsTest {
                 List.of(ref(2L, "alpha"), ref(7L, "beta")),
                 t -> null,
                 names::get,
+                t -> null,
                 t -> null);
 
         assertEquals("Acme", items.get(0).companyName());
@@ -217,6 +223,7 @@ public class MetaStorageIndexUtilsTest {
                 List.of(ref(7L, "alpha"), ref(7L, "beta")),
                 t -> null,
                 id -> null,
+                t -> null,
                 t -> null);
 
         assertTrue(items.stream().allMatch(i -> i.companyName()==null),
@@ -233,6 +240,7 @@ public class MetaStorageIndexUtilsTest {
                 List.of(ref(42L, "orphan")),
                 t -> null,
                 id -> "#" + id,
+                t -> null,
                 t -> null);
 
         assertEquals("#42", items.get(0).companyName());
@@ -251,6 +259,7 @@ public class MetaStorageIndexUtilsTest {
                 List.of(ref(7L, "real"), ref(7L, "blank"), ref(7L, "none")),
                 d::get,
                 id -> null,
+                t -> null,
                 t -> null);
 
         assertTrue(items.get(0).described(), "a real description");
@@ -271,7 +280,8 @@ public class MetaStorageIndexUtilsTest {
                 List.of(ref(7L, "registered"), ref(7L, "unparseable"), ref(7L, "none")),
                 descriptions(ref(7L, "registered"), "registered table")::get,
                 id -> null,
-                createdOn::get);
+                createdOn::get,
+                t -> null);
 
         assertEquals(1_759_500_000_000L, items.get(0).createdOn());
         assertEquals(1_759_400_000_000L, items.get(1).createdOn(), "the age survives an unreadable payload");
@@ -288,9 +298,34 @@ public class MetaStorageIndexUtilsTest {
                 List.of(ref(2L, "drone-reqs"), ref(7L, "drone-reqs")),
                 t -> null,
                 id -> null,
-                createdOn::get);
+                createdOn::get,
+                t -> null);
 
         assertEquals(1_759_500_000_000L, items.get(0).createdOn());
         assertNull(items.get(1).createdOn(), "company 7's table does not borrow company 2's age");
+    }
+
+    // ---------- index: lastUpdatedAt ----------
+
+    @Test
+    public void test_index_lastUpdatedAtIsPerTableAndIndependentOfTheDescriptor() {
+        // the same name under two companies, and a table nobody described - each has its own last write
+        final Map<MetaStorageData.TypeRef, Long> lastUpdated = Map.of(
+                ref(2L, "drone-reqs"), 1_759_600_000_000L,
+                ref(7L, "drone-reqs"), 1_759_700_000_000L,
+                ref(7L, "undescribed"), 1_759_800_000_000L);
+
+        final List<MetaStorageViewData.MetaTableItem> items = MetaStorageIndexUtils.index(
+                List.of(ref(2L, "drone-reqs"), ref(7L, "drone-reqs"), ref(7L, "undescribed")),
+                descriptions(ref(2L, "drone-reqs"), "Acme's drone requirements")::get,
+                id -> null,
+                t -> null,
+                lastUpdated::get);
+
+        assertEquals(1_759_600_000_000L, items.get(0).lastUpdatedAt());
+        assertEquals(1_759_700_000_000L, items.get(1).lastUpdatedAt(), "company 7's table has its own last write");
+        assertEquals(1_759_800_000_000L, items.get(2).lastUpdatedAt(),
+                "a table without a descriptor still has a last write - it is a fact about its records");
+        assertNull(items.get(2).createdOn(), "while it has no recorded creation time");
     }
 }

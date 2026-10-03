@@ -109,4 +109,23 @@ public interface MetaStorageRepository extends JpaRepository<MetaStorage, Long> 
     @Query("SELECT new ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData$TypeRef(m.companyId, m.type) " +
            "FROM MetaStorage m GROUP BY m.companyId, m.type ORDER BY m.companyId, m.type")
     List<MetaStorageData.TypeRef> findAllTypeRefs();
+
+    /**
+     * Every meta table in this store, across every company, with the latest UPDATED_AT of its records
+     * - the management-company listing in one GROUP BY. Same grouping and ordering as
+     * {@link #findAllTypeRefs}, plus the aggregate.
+     */
+    @Transactional(readOnly = true)
+    @Query("SELECT new ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData$TypeStat(m.companyId, m.type, max(m.updatedAt)) " +
+           "FROM MetaStorage m GROUP BY m.companyId, m.type ORDER BY m.companyId, m.type")
+    List<MetaStorageData.TypeStat> findAllTypeStats();
+
+    /**
+     * The meta tables of ONE company, with the latest UPDATED_AT of each - the single-company listing.
+     * Ordered by type, as {@link #findDistinctTypes} is.
+     */
+    @Transactional(readOnly = true)
+    @Query("SELECT new ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData$TypeStat(m.companyId, m.type, max(m.updatedAt)) " +
+           "FROM MetaStorage m WHERE m.companyId=:companyId GROUP BY m.companyId, m.type ORDER BY m.type")
+    List<MetaStorageData.TypeStat> findTypeStatsByCompanyId(@Param("companyId") Long companyId);
 }

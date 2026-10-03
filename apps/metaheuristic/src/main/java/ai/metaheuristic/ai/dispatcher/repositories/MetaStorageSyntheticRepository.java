@@ -98,4 +98,19 @@ public interface MetaStorageSyntheticRepository extends JpaRepository<MetaStorag
     @Query("SELECT new ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData$TypeRef(m.companyId, m.type) " +
            "FROM MetaStorageSynthetic m GROUP BY m.companyId, m.type ORDER BY m.companyId, m.type")
     List<MetaStorageData.TypeRef> findAllTypeRefs();
+
+    /**
+     * The synthetic twin of {@code MetaStorageRepository#findAllTypeStats}; the reasoning there applies
+     * here unchanged.
+     */
+    @Transactional(readOnly = true)
+    @Query("SELECT new ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData$TypeStat(m.companyId, m.type, max(m.updatedAt)) " +
+           "FROM MetaStorageSynthetic m GROUP BY m.companyId, m.type ORDER BY m.companyId, m.type")
+    List<MetaStorageData.TypeStat> findAllTypeStats();
+
+    /** The synthetic twin of {@code MetaStorageRepository#findTypeStatsByCompanyId}. */
+    @Transactional(readOnly = true)
+    @Query("SELECT new ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData$TypeStat(m.companyId, m.type, max(m.updatedAt)) " +
+           "FROM MetaStorageSynthetic m WHERE m.companyId=:companyId GROUP BY m.companyId, m.type ORDER BY m.type")
+    List<MetaStorageData.TypeStat> findTypeStatsByCompanyId(@Param("companyId") Long companyId);
 }

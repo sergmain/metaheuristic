@@ -84,12 +84,14 @@ public final class MetaStorageIndexUtils {
      *             Null for a table with no descriptor. A separate lookup from the description on
      *             purpose: CREATED_ON is a column and the description lives in PARAMS, so a descriptor
      *             whose PARAMS do not parse loses its description and still has an age.
+     * @param lastUpdatedByTable the latest UPDATED_AT of the table's records, keyed by the same pair.
      */
     public static List<MetaStorageViewData.MetaTableItem> index(
             List<MetaStorageData.TypeRef> refs,
             Function<MetaStorageData.TypeRef, @Nullable String> descriptionByTable,
             Function<Long, @Nullable String> companyNameByCompanyId,
-            Function<MetaStorageData.TypeRef, @Nullable Long> createdOnByTable) {
+            Function<MetaStorageData.TypeRef, @Nullable Long> createdOnByTable,
+            Function<MetaStorageData.TypeRef, @Nullable Long> lastUpdatedByTable) {
 
         final List<MetaStorageViewData.MetaTableItem> result = new ArrayList<>(refs.size());
         for (MetaStorageData.TypeRef ref : refs) {
@@ -102,7 +104,8 @@ public final class MetaStorageIndexUtils {
                     // the same rule descriptionOrPlaceholder applies, so `described` and the
                     // placeholder can never disagree about one table
                     desc!=null && !desc.isBlank(),
-                    createdOnByTable.apply(ref)));
+                    createdOnByTable.apply(ref),
+                    lastUpdatedByTable.apply(ref)));
         }
         return result;
     }

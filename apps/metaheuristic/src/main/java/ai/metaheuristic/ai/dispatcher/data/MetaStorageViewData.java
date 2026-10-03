@@ -51,9 +51,13 @@ public class MetaStorageViewData {
      * to how old the table is. Null when the table has no descriptor: a table exists only by virtue of
      * records carrying its name, and no record keeps a creation time of its own. ⚠️ Read from the
      * column, not from PARAMS, so a descriptor whose PARAMS no longer parse still reports its age.
+     *
+     * <p>{@code lastUpdatedAt} is the latest UPDATED_AT over the table's records - when anything was
+     * last written to it. A record-level fact, so every listed table has one; nullable only because
+     * the index receives it through a lookup that could, in principle, miss.
      */
     public record MetaTableItem(Long companyId, @Nullable String companyName, String metaTable, String description,
-                                boolean described, @Nullable Long createdOn) {}
+                                boolean described, @Nullable Long createdOn, @Nullable Long lastUpdatedAt) {}
 
     /**
      * One tab's worth of the index.

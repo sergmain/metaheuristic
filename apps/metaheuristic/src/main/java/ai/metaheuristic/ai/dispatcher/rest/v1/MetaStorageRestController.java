@@ -114,9 +114,12 @@ public class MetaStorageRestController {
 
         final boolean acrossCompanies = isMainAdmin(authentication);
 
-        final List<MetaStorageData.TypeRef> refs = acrossCompanies
-                ? allTypeRefs(production)
-                : ownTypeRefs(userContextService.getContext(authentication).getCompanyId(), production);
+        // One GROUP BY per tab answers both which tables exist and when each was last written to.
+        final List<MetaStorageData.TypeStat> stats = acrossCompanies
+                ? allTypeStats(production)
+                : ownTypeStats(userContextService.getContext(authentication).getCompanyId(), production);
+        final List<MetaStorageData.TypeRef> refs = stats.stream().map(MetaStorageData.TypeStat::ref).toList();
+        final Map<MetaStorageData.TypeRef, Long> lastUpdatedAt = lastUpdatedAtByTable(stats);
 
         // One read for every description on the tab, rather than one lookup per table.
         // The same single read of the registry also gives every table's CREATED_ON.
@@ -131,19 +134,27 @@ public class MetaStorageRestController {
                 : id -> null;
 
         return new MetaStorageViewData.MetaTablesResult(production, acrossCompanies,
-                MetaStorageIndexUtils.index(refs, descriptions::get, companyNames, createdOn::get));
+                MetaStorageIndexUtils.index(refs, descriptions::get, companyNames, createdOn::get, lastUpdatedAt::get));
     }
 
-    private List<MetaStorageData.TypeRef> allTypeRefs(boolean production) {
+    private List<MetaStorageData.TypeStat> allTypeStats(boolean production) {
         return production
-                ? metaStorageRepository.findAllTypeRefs()
-                : metaStorageSyntheticRepository.findAllTypeRefs();
+                ? metaStorageRepository.findAllTypeStats()
+                : metaStorageSyntheticRepository.findAllTypeStats();
     }
 
-    private List<MetaStorageData.TypeRef> ownTypeRefs(Long companyId, boolean production) {
-        return MetaStorageIndexUtils.toTypeRefs(companyId, production
-                ? metaStorageService.listTypes(companyId)
-                : metaStorageSyntheticService.listTypes(companyId));
+    private List<MetaStorageData.TypeStat> ownTypeStats(Long companyId, boolean production) {
+        return production
+                ? metaStorageRepository.findTypeStatsByCompanyId(companyId)
+                : metaStorageSyntheticRepository.findTypeStatsByCompanyId(companyId);
+    }
+
+    private static Map<MetaStorageData.TypeRef, Long> lastUpdatedAtByTable(List<MetaStorageData.TypeStat> stats) {
+        final Map<MetaStorageData.TypeRef, Long> result = new HashMap<>();
+        for (MetaStorageData.TypeStat s : stats) {
+            result.put(s.ref(), s.lastUpdatedAt());
+        }
+        return result;
     }
 
     /**
