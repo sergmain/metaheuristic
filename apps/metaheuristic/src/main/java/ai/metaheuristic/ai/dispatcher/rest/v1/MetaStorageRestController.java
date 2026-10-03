@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.data.SimpleCompany;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageCloneService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageCloneUtils;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageData;
+import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageDescriptionService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageDownloadService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageDropService;
 import ai.metaheuristic.ai.dispatcher.meta_storage.MetaStorageIndexUtils;
@@ -97,6 +98,7 @@ public class MetaStorageRestController {
     private final MetaStorageDropService metaStorageDropService;
     private final MetaStorageDownloadService metaStorageDownloadService;
     private final MetaStorageCloneService metaStorageCloneService;
+    private final MetaStorageDescriptionService metaStorageDescriptionService;
 
     /**
      * One tab of the index: every meta table the caller is entitled to, with its description.
@@ -117,7 +119,10 @@ public class MetaStorageRestController {
                 : ownTypeRefs(userContextService.getContext(authentication).getCompanyId(), production);
 
         // One read for every description on the tab, rather than one lookup per table.
-        final Map<MetaStorageData.TypeRef, String> descriptions = descriptionsByTable(production);
+        // The same single read of the registry also gives every table's CREATED_ON.
+        final List<MetaStorageRegistry> descriptors = metaStorageRegistryRepository.findAllByProd(production);
+        final Map<MetaStorageData.TypeRef, String> descriptions = descriptionsByTable(descriptors, production);
+        final Map<MetaStorageData.TypeRef, Long> createdOn = createdOnByTable(descriptors);
 
         // ❗ The entitlement difference is carried entirely by this lambda - id -> null leaves the
         // owner-company column empty, and nothing inside the join re-decides who may see what.
@@ -126,7 +131,7 @@ public class MetaStorageRestController {
                 : id -> null;
 
         return new MetaStorageViewData.MetaTablesResult(production, acrossCompanies,
-                MetaStorageIndexUtils.index(refs, descriptions::get, companyNames));
+                MetaStorageIndexUtils.index(refs, descriptions::get, companyNames, createdOn::get));
     }
 
     private List<MetaStorageData.TypeRef> allTypeRefs(boolean production) {
@@ -269,6 +274,40 @@ public class MetaStorageRestController {
     }
 
     /**
+     * Set the description of one meta table - the {@code desc} of its registry descriptor in the
+     * chosen store. A table with a descriptor keeps every other field of it and its CREATED_ON; a
+     * table without one gets a descriptor carrying only the description.
+     *
+     * <p>{@code description} arrives as a form field rather than in the query string: it is free text
+     * of any length up to the limit, and a URL is the wrong place for it.
+     *
+     * <p>❗ {@code production} is REQUIRED, as on every write here - which store's descriptor changes
+     * has to be stated. {@code companyId} is scoped exactly as on the drop.
+     */
+    @PostMapping("/meta-tables/{metaTable}/description")
+    public MetaStorageViewData.MetaTableDescriptionResult updateDescription(
+            Authentication authentication,
+            @PathVariable("metaTable") String metaTable,
+            @RequestParam(name = "companyId", required = false) @Nullable Long companyId,
+            @RequestParam(name = "production") boolean production,
+            @RequestParam(name = "description") String description) {
+
+        final Long scopedCompanyId = scopeCompanyId(authentication, companyId);
+        log.info("01.945.080 description of meta table '{}' of company #{} (production={}) edited by '{}'",
+                metaTable, scopedCompanyId, production, authentication.getName());
+        final MetaStorageDescriptionService.DescriptionResult r =
+                metaStorageDescriptionService.updateDescription(scopedCompanyId, metaTable, production, description);
+
+        return r.ok()
+                ? new MetaStorageViewData.MetaTableDescriptionResult(scopedCompanyId, metaTable, production, r.description(), r.created(),
+                        EnumsApi.OperationStatus.OK, List.of(),
+                        List.of("Description of meta table '" + metaTable + "' in " + MetaStorageCloneUtils.storeName(production)
+                                + (r.created() ? " was registered" : " was updated")))
+                : new MetaStorageViewData.MetaTableDescriptionResult(scopedCompanyId, metaTable, production, null, false,
+                        EnumsApi.OperationStatus.ERROR, List.of(r.error()), List.of());
+    }
+
+    /**
      * One whole meta table as a zip: a directory named after the table, one file per record holding
      * the body verbatim. Built synchronously in a temp dir, streamed, then removed by
      * {@code CleanerInterceptor}.
@@ -316,9 +355,9 @@ public class MetaStorageRestController {
      * alternative - letting it propagate - loses the whole listing to one malformed row, and the
      * listing is how an operator would find that row in the first place.
      */
-    private Map<MetaStorageData.TypeRef, String> descriptionsByTable(boolean production) {
+    private Map<MetaStorageData.TypeRef, String> descriptionsByTable(List<MetaStorageRegistry> descriptors, boolean production) {
         final Map<MetaStorageData.TypeRef, String> result = new HashMap<>();
-        for (MetaStorageRegistry r : metaStorageRegistryRepository.findAllByProd(production)) {
+        for (MetaStorageRegistry r : descriptors) {
             if (r.metaTable==null || r.companyId==null) {
                 continue;
             }
@@ -329,6 +368,23 @@ public class MetaStorageRestController {
                 log.warn("01.945.020 PARAMS of the descriptor of meta table '{}' (prod={}) can't be parsed, "
                         + "the table will be listed without a description, error: {}", r.metaTable, production, th.getMessage());
             }
+        }
+        return result;
+    }
+
+    /**
+     * CREATED_ON keyed by (companyId, metaTable), the same pair as the descriptions.
+     *
+     * <p>Read from the column, so - unlike the description - it needs no PARAMS parse and cannot be
+     * lost to a malformed one.
+     */
+    private static Map<MetaStorageData.TypeRef, Long> createdOnByTable(List<MetaStorageRegistry> descriptors) {
+        final Map<MetaStorageData.TypeRef, Long> result = new HashMap<>();
+        for (MetaStorageRegistry r : descriptors) {
+            if (r.metaTable==null || r.companyId==null) {
+                continue;
+            }
+            result.put(new MetaStorageData.TypeRef(r.companyId, r.metaTable), r.createdOn);
         }
         return result;
     }

@@ -393,6 +393,129 @@ public class MetaStorageRestControllerTest extends MhSharedItTest {
         assertEquals(List.of(), metaStorageService.listKeys(otherCompanyId, target), "PHASE #3: nothing written into another company");
     }
 
+    // ---------- listing: createdOn and described ----------
+
+    /**
+     * One table's entry in the listing. ⚠️ The shared DB holds every other test's tables of company 2
+     * too, so the entry is found by its unique name rather than by position.
+     */
+    private static Map<String, Object> listedTable(MvcResult result, String metaTable) throws Exception {
+        final List<Map<String, Object>> found = JsonPath.read(result.getResponse().getContentAsString(),
+                "$.tables[?(@.metaTable == '" + metaTable + "')]");
+        assertEquals(1, found.size(), "exactly one entry for " + metaTable + ": " + found);
+        return found.get(0);
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    public void test_listingCarriesCreatedOnAndDescribedFromTheRegistry() throws Exception {
+        final String described = SharedItEnv.uniqueCode("ms-list-desc");
+        final String undescribed = SharedItEnv.uniqueCode("ms-list-nodesc");
+        metaStorageService.upsert(ADMIN_COMPANY_ID, List.of(rec(described, "k-1", "b"), rec(undescribed, "k-1", "b")));
+        metaStorageRegistryTxService.upsert(ADMIN_COMPANY_ID, described, true, desc("what " + described + " is for"));
+        final long createdOn = metaStorageRegistryRepository.findByCompanyIdAndMetaTableAndProd(ADMIN_COMPANY_ID, described, true).createdOn;
+
+        final MvcResult result = mockMvc.perform(get("/rest/v1/dispatcher/meta-storage/meta-tables").param("production", "true"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        final Map<String, Object> d = listedTable(result, described);
+        assertEquals("what " + described + " is for", d.get("description"));
+        assertEquals(Boolean.TRUE, d.get("described"));
+        assertEquals(createdOn, ((Number) d.get("createdOn")).longValue(), "the registry's CREATED_ON");
+
+        final Map<String, Object> u = listedTable(result, undescribed);
+        assertEquals(MetaStorageIndexUtils.NO_DESCRIPTION, u.get("description"));
+        assertEquals(Boolean.FALSE, u.get("described"), "the placeholder is not a description");
+        assertNull(u.get("createdOn"), "no descriptor, no recorded creation time");
+    }
+
+    // ---------- description ----------
+
+    @Test
+    @WithUserDetails("admin")
+    public void test_descriptionIsSetFromAFormFieldAndListedAfterwards() throws Exception {
+        final String table = SharedItEnv.uniqueCode("ms-desc-set");
+        metaStorageSyntheticService.upsert(ADMIN_COMPANY_ID, List.of(rec(table, "k-1", "b")));
+
+        mockMvc.perform(post(META_TABLES + table + "/description")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("production", "false")
+                        .param("description", "  drone requirements, one record per reqId\n"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.companyId").value((int) ADMIN_COMPANY_ID))
+                .andExpect(jsonPath("$.metaTable").value(table))
+                .andExpect(jsonPath("$.production").value(false))
+                .andExpect(jsonPath("$.description").value("drone requirements, one record per reqId"))
+                .andExpect(jsonPath("$.created").value(true))
+                .andExpect(jsonPath("$.status").value("OK"))
+                .andExpect(jsonPath("$.errorMessages.length()").value(0))
+                .andExpect(jsonPath("$.infoMessages.length()").value(1));
+
+        assertTrue(hasDescriptor(ADMIN_COMPANY_ID, table, false), "registered in the synthetic store");
+        assertFalse(hasDescriptor(ADMIN_COMPANY_ID, table, true), "and only there");
+
+        final MvcResult listing = mockMvc.perform(get("/rest/v1/dispatcher/meta-storage/meta-tables").param("production", "false"))
+                .andExpect(status().isOk())
+                .andReturn();
+        final Map<String, Object> item = listedTable(listing, table);
+        assertEquals("drone requirements, one record per reqId", item.get("description"));
+        assertEquals(Boolean.TRUE, item.get("described"));
+        assertNotNull(item.get("createdOn"), "a freshly registered descriptor has an age");
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    public void test_aDescriptionForATableWithoutRecordsIsAnErrorStatus() throws Exception {
+        final String table = SharedItEnv.uniqueCode("ms-desc-ghost");
+
+        final MvcResult result = mockMvc.perform(post(META_TABLES + table + "/description")
+                        .param("production", "true")
+                        .param("description", "describes nothing"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ERROR"))
+                .andExpect(jsonPath("$.created").value(false))
+                .andReturn();
+        assertTrue(jsonString(result, "$.errorMessages[0]").startsWith("01.955.020 "), jsonString(result, "$.errorMessages[0]"));
+        assertFalse(hasDescriptor(ADMIN_COMPANY_ID, table, true));
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    public void test_descriptionRefusesARequestThatDoesNotStateTheStore() throws Exception {
+        final String table = SharedItEnv.uniqueCode("ms-desc-noflag");
+        metaStorageService.upsert(ADMIN_COMPANY_ID, List.of(rec(table, "k-1", "b")));
+
+        mockMvc.perform(post(META_TABLES + table + "/description").param("description", "text"))
+                .andExpect(status().isBadRequest());
+
+        assertFalse(hasDescriptor(ADMIN_COMPANY_ID, table, true));
+        assertFalse(hasDescriptor(ADMIN_COMPANY_ID, table, false));
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    public void test_anAdminCannotEditAnotherCompanysDescriptionByNamingItsId() throws Exception {
+        final String table = SharedItEnv.uniqueCode("ms-desc-tenant");
+        final Long otherCompanyId = SharedItEnv.uniqueLong();
+        metaStorageService.upsert(ADMIN_COMPANY_ID, List.of(rec(table, "mine", "m")));
+        metaStorageService.upsert(otherCompanyId, List.of(rec(table, "theirs", "t")));
+        metaStorageRegistryTxService.upsert(otherCompanyId, table, true, desc("theirs"));
+
+        mockMvc.perform(post(META_TABLES + table + "/description")
+                        .param("companyId", String.valueOf(otherCompanyId))
+                        .param("production", "true")
+                        .param("description", "written by the admin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.companyId").value((int) ADMIN_COMPANY_ID))
+                .andExpect(jsonPath("$.status").value("OK"));
+
+        assertEquals("theirs", metaStorageRegistryRepository.findByCompanyIdAndMetaTableAndProd(otherCompanyId, table, true)
+                .getMetaStorageRegistryParams().desc, "another company's description is out of an ADMIN's reach");
+        assertEquals("written by the admin", metaStorageRegistryRepository.findByCompanyIdAndMetaTableAndProd(ADMIN_COMPANY_ID, table, true)
+                .getMetaStorageRegistryParams().desc, "the edit ran in the admin's own company");
+    }
+
     // ---------- download ----------
 
     @Test
