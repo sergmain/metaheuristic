@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
+import ai.metaheuristic.api.EnumsApi;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -105,4 +106,29 @@ public class MetaStorageViewData {
      */
     public record MetaTableDropResult(
             Long companyId, String metaTable, boolean production, int deleted, boolean hadDescriptor) {}
+
+    /**
+     * What cloning one meta table produced - inside its domain (same store, new name) or between
+     * domains (into the other store).
+     *
+     * <p>{@code status}, {@code errorMessages} and {@code infoMessages} carry the names the UI's
+     * notifications interceptor reads from every response body, so the outcome is reported to the user
+     * by the same mechanism every other MH operation uses - a refusal is a toast saying why, not a
+     * silent no-op the screen has to interpret.
+     *
+     * @param companyId        the partition the clone ran in, as the server resolved it - for a caller not
+     *                         entitled across companies this is their own company whatever they asked for
+     * @param metaTable        the source table
+     * @param production       the source store
+     * @param targetMetaTable  the table written
+     * @param targetProduction the store written. Equal to {@code production} for a clone inside a domain.
+     * @param copied           records written into the target; on a copy that stopped part-way, how many
+     *                         are there now
+     * @param descriptorCopied whether the source's registry descriptor went with the table
+     */
+    public record MetaTableCloneResult(
+            Long companyId, String metaTable, boolean production,
+            String targetMetaTable, boolean targetProduction,
+            int copied, boolean descriptorCopied,
+            EnumsApi.OperationStatus status, List<String> errorMessages, List<String> infoMessages) {}
 }
