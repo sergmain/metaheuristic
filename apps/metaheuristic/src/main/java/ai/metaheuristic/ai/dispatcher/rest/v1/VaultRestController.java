@@ -47,6 +47,8 @@ import org.springframework.web.bind.annotation.*;
  * <p>The management company's accounts carry {@code ROLE_MAIN_ADMIN}, not {@code ROLE_ADMIN}, so both
  * roles are admitted - each to the Vault of its own company, which is still taken from the principal.
  *
+ * <p>Error code prefix: {@code 01.674.} (unique to this class).
+ *
  * @author Sergio Lissner
  */
 @RestController
@@ -126,6 +128,9 @@ public class VaultRestController {
     /**
      * The secret of one entry - the only call that returns a secret. The response goes out with
      * {@code Cache-Control: no-store}, applied to every response by {@code MultiHttpSecurityConfig}.
+     *
+     * <p>Every read attempt, granted or refused, is logged at WARN: who asked, for which entry, and how it
+     * ended. Neither the secret nor the passphrase is ever logged.
      */
     @PostMapping("/entries/{companyId}/{code}/reveal")
     public VaultData.SecretResult revealSecret(
@@ -134,8 +139,12 @@ public class VaultRestController {
             @RequestBody VaultData.RevealSecretRequest request,
             Authentication authentication) {
         UserContext ctx = userContextService.getContext(authentication);
-        return VaultRevealUtils.revealSecret(ctx.getCompanyId(), companyId, code, request.passphrase(),
+        VaultData.SecretResult result = VaultRevealUtils.revealSecret(ctx.getCompanyId(), companyId, code, request.passphrase(),
                 vaultService::isOpened, vaultService::verifyPassphrase, vaultService::getApiKey);
+        log.warn("01.674.010 Vault secret read, user: {}, accountId: {}, user's companyId: {}, entry companyId: {}, code: {}, outcome: {}",
+                ctx.getUsername(), ctx.getAccountId(), ctx.getCompanyId(), companyId, code,
+                result.secret != null ? "revealed" : "refused " + result.errorMessages);
+        return result;
     }
 
     /**
