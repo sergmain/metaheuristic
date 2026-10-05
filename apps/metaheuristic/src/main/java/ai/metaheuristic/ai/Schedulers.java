@@ -39,6 +39,7 @@ import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
 import ai.metaheuristic.ai.processor.event.ProcessorEventBusService;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
+import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import ai.metaheuristic.ai.standalone.FrontendCheckerService;
 import ai.metaheuristic.api.EnumsApi;
 import jakarta.annotation.PostConstruct;
@@ -96,9 +97,19 @@ public class Schedulers {
     @RequiredArgsConstructor(onConstructor_={@Autowired}) 
     @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("dispatcher")
-    public static class UpdateBatchStatusesSchedulingConfig implements SchedulingConfigurer {
+    public static class UpdateBatchStatusesSchedulingConfig implements SchedulingConfigurer, ShutdownInterface {
         private final Globals globals;
         private final BatchTxService batchService;
+
+        private boolean shutdown = false;
+
+        public void shutdown() {
+            shutdown = true;
+        }
+
+        public boolean isShutdown() {
+            return shutdown;
+        }
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
@@ -110,7 +121,7 @@ public class Schedulers {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
-            if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
+            if (isShutdown() || globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
                 return;
             }
             log.info("Invoking batchService.updateBatchStatuses()");

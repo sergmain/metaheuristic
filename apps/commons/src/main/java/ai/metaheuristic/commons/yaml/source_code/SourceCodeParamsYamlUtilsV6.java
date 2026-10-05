@@ -22,7 +22,6 @@ import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
@@ -110,7 +109,7 @@ public class SourceCodeParamsYamlUtilsV6
     }
 
     private static void toVariable(List<SourceCodeParamsYamlV6.VariableV6> src, List<SourceCodeParamsYaml.Variable> trg) {
-        src.stream().map(v -> new SourceCodeParamsYaml.Variable(v.name, v.getSourcing(), v.git, v.disk, v.parentContext, v.array, v.type, v.getNullable(), v.ext, v.mutable)).forEach(trg::add);
+        src.stream().map(v -> new SourceCodeParamsYaml.Variable(v.name, v.getSourcing(), v.git, v.disk, v.parentContext, v.array, v.type, v.getNullable(), v.ext, null)).forEach(trg::add);
     }
 
     @Override

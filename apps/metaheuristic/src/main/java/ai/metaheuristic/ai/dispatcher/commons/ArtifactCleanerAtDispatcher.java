@@ -47,6 +47,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextChunkedDeletionTxService.*;
+
 /**
  * Periodic cleaning of orphan and obsolete dispatcher data.
  *
@@ -130,21 +132,27 @@ public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
     public void fixedDelay() {
         TxUtils.checkTxNotExists();
 
-        deleteOrphanExecContexts();
-
         if (isShutdown() || isShutdown()) {
             return;
         }
+        run(this::deleteOrphanExecContexts);
 
         // do not change the order of calling
-        deleteOrphanAndObsoletedBatches();
-        deleteOrphanTasks();
-        deleteOrphanSegmentsAndJoins();
+        run(this::deleteOrphanAndObsoletedBatches);
+        run(this::deleteOrphanTasks);
+        run(this::deleteOrphanSegmentsAndJoins);
         // mechanic behind how to decide that Variable is orphan needs to be re-written
 //        deleteOrphanVariables();
-        deleteOrphanCacheData();
-        deleteObsoleteEvents();
-        deleteOrphanCores();
+        run(this::deleteOrphanCacheData);
+        run(this::deleteObsoleteEvents);
+        run(this::deleteOrphanCores);
+    }
+
+    private void run(Runnable runnable) {
+        if (isShutdown() || isShutdown()) {
+            return;
+        }
+        runnable.run();
     }
 
     private void deleteOrphanCores() {
@@ -355,16 +363,14 @@ public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
         log.info("01.510.900 start deleteOrphanSegmentsAndJoins()");
         final Set<Long> orphan = new java.util.TreeSet<>(segmentRepository.findAllExecContextIds());
         orphan.addAll(joinRepository.findAllExecContextIds());
-        orphan.removeAll(execContextRepository.findAllIds());
-        final Set<ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextChunkedDeletionTxService.Kind> kinds = java.util.EnumSet.of(
-                ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextChunkedDeletionTxService.Kind.SEGMENT,
-                ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextChunkedDeletionTxService.Kind.JOIN);
+        execContextRepository.findAllIds().forEach(orphan::remove);
+        final Set<Kind> kinds = java.util.EnumSet.of(Kind.SEGMENT, Kind.JOIN);
         for (Long execContextId : orphan) {
             while (true) {
                 if (isShutdown()) {
                     return;
                 }
-                final ai.metaheuristic.ai.dispatcher.exec_context_segment.ExecContextChunkedDeletionTxService.Step step;
+                final Step step;
                 try {
                     step = chunkedDeletionTxService.deleteStep(execContextId, SEGMENT_DELETION_BOUND, kinds);
                 }

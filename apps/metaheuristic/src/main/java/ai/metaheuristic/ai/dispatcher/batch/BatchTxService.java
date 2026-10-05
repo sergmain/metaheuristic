@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
+import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
@@ -85,7 +86,7 @@ import java.util.function.BiFunction;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class BatchTxService {
+public class BatchTxService implements ShutdownInterface {
 
     private final Globals globals;
     private final SourceCodeCache sourceCodeCache;
@@ -99,6 +100,16 @@ public class BatchTxService {
     private final BatchHelperService batchHelperService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ApplicationEventPublisher eventPublisher;
+
+    private boolean shutdown = false;
+
+    public void shutdown() {
+        shutdown = true;
+    }
+
+    public boolean isShutdown() {
+        return shutdown;
+    }
 
     private void changeStateToProcessing(Batch b) {
         if (b.execState != Enums.BatchExecState.Preparing.code && b.execState != Enums.BatchExecState.Processing.code) {
