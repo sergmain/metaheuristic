@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -94,10 +95,16 @@ public class VaultData {
      * Full entry: title + secret. Returned by the listing endpoint when the
      * vault is unlocked. Per design: once the vault is open the UI shows secrets
      * in plain text.
+     *
+     * <p>⚠️ Superseded: the listing carries no secret - only the company and the code. A secret is
+     * returned one at a time, by the passphrase-gated reveal endpoint, as {@link SecretResult}.
      */
-    public record Entry(long companyId, String code, String secret) {}
+    public record Entry(long companyId, String code) {}
 
-    /** Response wrapper for listing all entries (titles + secrets when unlocked). */
+    /**
+     * Response wrapper for listing all entries (titles + secrets when unlocked).
+     * ⚠️ Superseded: titles only, see {@link Entry}.
+     */
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
@@ -160,6 +167,43 @@ public class VaultData {
 
     /** Body for producing the boot-unlock value. Passphrase is the proof-of-knowledge gate. */
     public record BootUnlockRequest(String passphrase) {}
+
+    /** Body for revealing one entry's secret. Passphrase is the proof-of-knowledge gate. */
+    public record RevealSecretRequest(String passphrase) {}
+
+    /**
+     * The secret of one entry, returned only after the master passphrase was verified.
+     * {@code secret} is null whenever {@code errorMessages} is not empty.
+     * The secret is excluded from {@code toString()} so that logging this object never logs it.
+     */
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class SecretResult extends BaseDataClass {
+        @ToString.Exclude
+        @Nullable
+        public String secret;
+
+        public static SecretResult ofSecret(String secret) {
+            SecretResult r = new SecretResult();
+            r.secret = secret;
+            return r;
+        }
+
+        public static SecretResult ofError(String error) {
+            SecretResult r = new SecretResult();
+            r.addErrorMessage(error);
+            return r;
+        }
+
+        @JsonCreator
+        public SecretResult(
+                @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+                @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
+    }
 
     /**
      * Value to put into application.properties so the management company's Vault is unlocked at

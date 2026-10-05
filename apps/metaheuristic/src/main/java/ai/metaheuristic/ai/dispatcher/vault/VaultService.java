@@ -294,6 +294,9 @@ public class VaultService {
      * Returns empty list when locked or when the company has no entries.
      * Per design, once the vault is unlocked the UI is allowed to show secrets
      * in plain text.
+     *
+     * <p>⚠️ Superseded: the list carries codes only, never a secret - a secret is revealed one entry at a
+     * time, after the master passphrase is verified, see {@code VaultRevealUtils}.
      */
     public List<VaultData.Entry> listEntries(long companyUniqueId) {
         UnlockedState s = unlocked.get(companyUniqueId);
@@ -302,8 +305,8 @@ public class VaultService {
         }
         synchronized (s.lock) {
             List<VaultData.Entry> out = new ArrayList<>(s.entries.size());
-            for (Map.Entry<String, String> e : s.entries.entrySet()) {
-                out.add(new VaultData.Entry(companyUniqueId, e.getKey(), e.getValue()));
+            for (String code : s.entries.keySet()) {
+                out.add(new VaultData.Entry(companyUniqueId, code));
             }
             return out;
         }

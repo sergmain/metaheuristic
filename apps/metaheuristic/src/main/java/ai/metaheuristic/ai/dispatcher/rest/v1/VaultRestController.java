@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.VaultData;
 import ai.metaheuristic.ai.dispatcher.vault.VaultBootUnlockService;
+import ai.metaheuristic.ai.dispatcher.vault.VaultRevealUtils;
 import ai.metaheuristic.ai.dispatcher.vault.VaultService;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,10 @@ import org.springframework.web.bind.annotation.*;
  * authenticated principal, never from the request body or path. Cross-company
  * read or delete is structurally impossible: list is filtered by principal,
  * delete refuses if the path companyId does not match the principal.
+ *
+ * <p>The list carries codes only. A secret leaves the Dispatcher only through
+ * {@code POST /entries/{companyId}/{code}/reveal}, one entry at a time, gated by the master
+ * passphrase and refused for a path companyId other than the principal's - see {@link VaultRevealUtils}.
  *
  * <p>All write/delete operations require the master passphrase as a
  * proof-of-knowledge gate even after the vault has been unlocked.
@@ -116,6 +121,21 @@ public class VaultRestController {
         }
         boolean ok = vaultService.deleteApiKey(companyId, code);
         return ok ? new VaultData.OpResult(true) : new VaultData.OpResult("Entry not found or persistence failed");
+    }
+
+    /**
+     * The secret of one entry - the only call that returns a secret. The response goes out with
+     * {@code Cache-Control: no-store}, applied to every response by {@code MultiHttpSecurityConfig}.
+     */
+    @PostMapping("/entries/{companyId}/{code}/reveal")
+    public VaultData.SecretResult revealSecret(
+            @PathVariable long companyId,
+            @PathVariable String code,
+            @RequestBody VaultData.RevealSecretRequest request,
+            Authentication authentication) {
+        UserContext ctx = userContextService.getContext(authentication);
+        return VaultRevealUtils.revealSecret(ctx.getCompanyId(), companyId, code, request.passphrase(),
+                vaultService::isOpened, vaultService::verifyPassphrase, vaultService::getApiKey);
     }
 
     /**

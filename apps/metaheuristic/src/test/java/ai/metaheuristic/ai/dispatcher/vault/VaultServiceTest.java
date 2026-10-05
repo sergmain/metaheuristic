@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.vault;
 
 import ai.metaheuristic.ai.dispatcher.data.VaultData;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
@@ -265,7 +266,7 @@ class VaultServiceTest {
     }
 
     @Test
-    void listEntries_returnsCodesAndSecrets_inInsertionOrder() {
+    void listEntries_returnsCodes_inInsertionOrder() {
         VaultService service = newVaultService(new FakeVaultTxService());
         service.unlock(7L, "pass");
         service.putApiKey(7L, "openai", "secret-1");
@@ -275,10 +276,8 @@ class VaultServiceTest {
         assertEquals(2, entries.size());
         assertEquals(7L, entries.get(0).companyId());
         assertEquals("openai", entries.get(0).code());
-        assertEquals("secret-1", entries.get(0).secret());
         assertEquals(7L, entries.get(1).companyId());
         assertEquals("anthropic", entries.get(1).code());
-        assertEquals("secret-3", entries.get(1).secret());
     }
 
     @Test
@@ -293,11 +292,27 @@ class VaultServiceTest {
         var entriesFor2 = service.listEntries(2L);
         assertEquals(1, entriesFor2.size());
         assertEquals(2L, entriesFor2.get(0).companyId());
-        assertEquals("tenant-2-secret", entriesFor2.get(0).secret());
+        assertEquals("openai", entriesFor2.get(0).code());
 
         var entriesFor7 = service.listEntries(7L);
         assertEquals(1, entriesFor7.size());
         assertEquals(7L, entriesFor7.get(0).companyId());
+    }
+
+    /**
+     * What the listing endpoint puts on the wire: {@code EntriesList} serialized the way the REST layer
+     * returns it. The code of every entry is listed; whether the secret travels with it is what this pins.
+     */
+    @Test
+    void listEntries_wireJson_secretExposure() {
+        VaultService service = newVaultService(new FakeVaultTxService());
+        service.unlock(7L, "pass");
+        service.putApiKey(7L, "openai", "secret-on-the-wire-1");
+
+        final String json = JsonUtils.getMapper().writeValueAsString(new VaultData.EntriesList(service.listEntries(7L), true));
+
+        assertTrue(json.contains("\"openai\""), "the code must be listed, json: " + json);
+        assertFalse(json.contains("secret-on-the-wire-1"), "the secret must not travel with the listing, json: " + json);
     }
 
     // ---- deleteApiKey ----------------------------------------------------------------
