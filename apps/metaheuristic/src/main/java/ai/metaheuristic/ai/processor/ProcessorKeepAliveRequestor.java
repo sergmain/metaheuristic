@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
 import ai.metaheuristic.ai.shutdown.ShutdownInterface;
+import ai.metaheuristic.ai.shutdown.ProcessorShutdownInterface;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -49,7 +50,7 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
 @SuppressWarnings("DuplicatedCode")
 @Slf4j
-public class ProcessorKeepAliveRequestor implements ShutdownInterface {
+public class ProcessorKeepAliveRequestor implements ProcessorShutdownInterface {
 
     private final DispatcherUrl dispatcherUrl;
     private final Globals globals;
@@ -85,12 +86,14 @@ public class ProcessorKeepAliveRequestor implements ShutdownInterface {
         this.dispatcherRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.KEEP_ALIVE_REST_URL;
     }
 
-    private boolean shutdown = false;
+    private volatile boolean shutdown = false;
 
+    @Override
     public void shutdown() {
         shutdown = true;
     }
 
+    @Override
     public boolean isShutdown() {
         return shutdown;
     }
@@ -147,6 +150,9 @@ public class ProcessorKeepAliveRequestor implements ShutdownInterface {
                 log.error("776.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
                 return;
             }
+            if (isShutdown()) {
+                return;
+            }
             processorKeepAliveProcessor.processKeepAliveResponseParamYaml(dispatcherUrl, responseParamYaml);
 
         } catch (Throwable e) {
@@ -154,5 +160,4 @@ public class ProcessorKeepAliveRequestor implements ShutdownInterface {
         }
     }
 }
-
 

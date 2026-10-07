@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponsePar
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
+import ai.metaheuristic.ai.shutdown.ProcessorShutdownInterface;
 import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
@@ -48,7 +49,7 @@ import java.util.Random;
  */
 // TODO p5 2023-11-16 combine with ProcessorKeepAliveRequestor ?
 @Slf4j
-public class FunctionRepositoryRequestor {
+public class FunctionRepositoryRequestor implements ProcessorShutdownInterface {
 
     private final Globals globals;
     private final FunctionRepositoryProcessorService functionRepositoryProcessorService;
@@ -81,12 +82,14 @@ public class FunctionRepositoryRequestor {
         this.dispatcherRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.FUNCTION_REPOSITORY_REST_URL;
     }
 
-    private boolean shutdown = false;
+    private volatile boolean shutdown = false;
 
+    @Override
     public void shutdown() {
         shutdown = true;
     }
 
+    @Override
     public boolean isShutdown() {
         return shutdown;
     }
@@ -108,6 +111,9 @@ public class FunctionRepositoryRequestor {
 
             final FunctionRepositoryResponseParams responseParams = makeQuery(frrp);
             if (responseParams == null) {
+                return;
+            }
+            if (isShutdown()) {
                 return;
             }
             FunctionRepositoryRequestParams immediateResponse = functionRepositoryProcessorService.processFunctionRepositoryResponseParams(processorEnvironment, dispatcherUrl, responseParams, frrp.processorId);

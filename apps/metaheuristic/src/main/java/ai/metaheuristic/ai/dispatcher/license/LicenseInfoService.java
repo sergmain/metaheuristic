@@ -24,6 +24,7 @@ import ai.metaheuristic.commons.spi.license.DeploymentValues;
 import ai.metaheuristic.commons.spi.license.LicenseAggregate;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.commons.spi.license.SignedFileLicenseSource;
+import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
@@ -78,7 +79,7 @@ import java.util.Set;
 @Profile(Consts.SIGNED_FILE_LM_PROFILE)
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
-public class LicenseInfoService {
+public class LicenseInfoService implements ShutdownInterface {
 
     private final SignedFileLicenseSource licenseSource;
     private final LicenseArtifactRepository licenseArtifactRepository;
@@ -86,14 +87,31 @@ public class LicenseInfoService {
     private final DeploymentValuesResolverHolder deploymentValuesResolverHolder;
     private final LicenseTokenSupplier licenseTokenSupplier;
 
-    public LicenseInfoData.LicenseInfo info() {
+    private volatile boolean shutdown = false;
+
+    @Override
+    public boolean isShutdown() {
+        return shutdown;
+    }
+
+    @Override
+    public void shutdown() {
+        shutdown = true;
+    }
+
+    public LicenseInfoData.LicenseStatusResult info() {
+        if (isShutdown()) {
+            final LicenseInfoData.LicenseStatusResult result = new LicenseInfoData.LicenseStatusResult();
+            result.addErrorMessage("01.257.020 Shutdown in progress");
+            return result;
+        }
         final LicenseAggregate aggregate = licenseSource.currentResult();
         final DeploymentValues deployment = deploymentValuesResolverHolder.current();
 
-        return new LicenseInfoData.LicenseInfo(
+        return new LicenseInfoData.LicenseStatusResult(new LicenseInfoData.LicenseInfo(
                 effective(aggregate, deployment),
                 LicenseInfoUtils.breakdown(
-                        aggregate.licenses(), liveRowsByTokenHash(), directoryTokenHashes()));
+                        aggregate.licenses(), liveRowsByTokenHash(), directoryTokenHashes())));
     }
 
     /**
@@ -101,10 +119,15 @@ public class LicenseInfoService {
      * breakdown, so no MH_LICENSE_ARTIFACT query — because this is called on navigation rather than
      * on an admin opening a page.
      */
-    public LicenseInfoData.Capabilities capabilities() {
+    public LicenseInfoData.CapabilitiesResult capabilities() {
+        if (isShutdown()) {
+            final LicenseInfoData.CapabilitiesResult result = new LicenseInfoData.CapabilitiesResult();
+            result.addErrorMessage("01.257.030 Shutdown in progress");
+            return result;
+        }
         final LicenseAggregate aggregate = licenseSource.currentResult();
-        return new LicenseInfoData.Capabilities(
-                aggregate.entitlements().valid(), sorted(aggregate.capabilities()));
+        return new LicenseInfoData.CapabilitiesResult(new LicenseInfoData.Capabilities(
+                aggregate.entitlements().valid(), sorted(aggregate.capabilities())));
     }
 
     private LicenseInfoData.EffectiveEntitlement effective(LicenseAggregate aggregate, DeploymentValues deployment) {

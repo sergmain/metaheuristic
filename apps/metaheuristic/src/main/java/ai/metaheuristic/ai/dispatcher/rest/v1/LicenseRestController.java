@@ -85,11 +85,14 @@ public class LicenseRestController {
     @PreAuthorize("hasAnyRole('MAIN_ADMIN')")
     public LicenseInfoData.LicenseStatusResult status() {
         try {
-            final LicenseInfoData.LicenseInfo info = licenseInfoService.info();
+            final LicenseInfoData.LicenseStatusResult result = licenseInfoService.info();
             if (log.isInfoEnabled()) {
-                log.info("01.265.010 licenseInfoService.info() returned: {}", info);
+                log.info("01.265.010 licenseInfoService.info() returned: {}", result.info);
             }
-            return new LicenseInfoData.LicenseStatusResult(info);
+            if (log.isErrorEnabled() && result.errorMessages!=null) {
+                log.error("01.265.012 licenseInfoService.info() returned errorMessages: {}", result.errorMessages);
+            }
+            return result;
         }
         catch (Throwable th) {
             log.error("01.265.015 error while reading the license status", th);
@@ -116,11 +119,14 @@ public class LicenseRestController {
     @PreAuthorize("isAuthenticated()")
     public LicenseInfoData.CapabilitiesResult capabilities() {
         try {
-            final LicenseInfoData.Capabilities capabilities = licenseInfoService.capabilities();
+            final LicenseInfoData.CapabilitiesResult result = licenseInfoService.capabilities();
             if (log.isInfoEnabled()) {
-                log.info("01.265.030 licenseInfoService.capabilities() returned: {}", capabilities);
+                log.info("01.265.030 licenseInfoService.capabilities() returned: {}", result.info);
             }
-            return new LicenseInfoData.CapabilitiesResult(capabilities);
+            if (log.isErrorEnabled() && result.errorMessages!=null) {
+                log.error("01.265.032 licenseInfoService.capabilities() returned errorMessages: {}", result.errorMessages);
+            }
+            return result;
         }
         catch (Throwable th) {
             log.error("01.265.035 error while reading the license capabilities", th);
