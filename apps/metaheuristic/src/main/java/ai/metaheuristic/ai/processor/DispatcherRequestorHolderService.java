@@ -44,7 +44,7 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 @Profile("processor")
 public class DispatcherRequestorHolderService implements ShutdownInterface {
 
-    private boolean shutdown = false;
+    private volatile boolean shutdown = false;
 
     public void shutdown() {
             dispatcherRequestorMap.forEach((k,v) -> {

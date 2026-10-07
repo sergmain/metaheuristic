@@ -127,7 +127,7 @@ public class MhMcpServerConfig implements ShutdownInterface {
         return transportProvider.getRouterFunction();
     }
 
-    private boolean shutdown = false;
+    private volatile boolean shutdown = false;
 
     public boolean isShutdown() {
         return shutdown;

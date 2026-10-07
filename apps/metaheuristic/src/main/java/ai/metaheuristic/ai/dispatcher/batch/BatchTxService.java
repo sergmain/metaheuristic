@@ -101,7 +101,7 @@ public class BatchTxService implements ShutdownInterface {
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ApplicationEventPublisher eventPublisher;
 
-    private boolean shutdown = false;
+    private volatile boolean shutdown = false;
 
     public void shutdown() {
         shutdown = true;

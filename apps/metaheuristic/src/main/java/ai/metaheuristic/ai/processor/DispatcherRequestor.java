@@ -136,7 +136,7 @@ public class DispatcherRequestor implements ShutdownInterface {
         }
     }
 
-    private boolean shutdown = false;
+    private volatile boolean shutdown = false;
 
     @Override
     public boolean isShutdown() {

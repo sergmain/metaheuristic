@@ -149,7 +149,7 @@ public class LuceneIndexService implements ShutdownInterface {
     /** Cached Analyzer instance — StandardAnalyzer is thread-safe and immutable. */
     private final Analyzer analyzer = new StandardAnalyzer();
 
-    private boolean shutdown = false;
+    private volatile boolean shutdown = false;
 
     public boolean isShutdown() {
         return shutdown;

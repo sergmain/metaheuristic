@@ -96,7 +96,7 @@ public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
     private static final AtomicInteger busy = new AtomicInteger(0);
     private static long mills = 0L;
 
-    private boolean shutdown = false;
+    private volatile boolean shutdown = false;
 
     public void shutdown() {
         shutdown = true;

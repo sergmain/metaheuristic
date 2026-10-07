@@ -71,7 +71,7 @@ public class ExecContextTaskAssigningTopLevelService implements ShutdownInterfac
     private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
 
-    private boolean shutdown = false;
+    private volatile boolean shutdown = false;
 
     public void shutdown() {
         shutdown = true;

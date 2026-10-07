@@ -101,7 +101,7 @@ public class Schedulers {
         private final Globals globals;
         private final BatchTxService batchService;
 
-        private boolean shutdown = false;
+        private volatile boolean shutdown = false;
 
         public void shutdown() {
             shutdown = true;
