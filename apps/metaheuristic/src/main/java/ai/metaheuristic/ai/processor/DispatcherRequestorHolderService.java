@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.functions.FunctionRepositoryRequestor;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
-import ai.metaheuristic.ai.shutdown.ShutdownInterface;
+import ai.metaheuristic.ai.shutdown.ProcessorShutdownInterface;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,15 +42,19 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 //@EnableScheduling
 @Slf4j
 @Profile("processor")
-public class DispatcherRequestorHolderService implements ShutdownInterface {
+public class DispatcherRequestorHolderService implements ProcessorShutdownInterface {
 
     private volatile boolean shutdown = false;
 
     public void shutdown() {
-            dispatcherRequestorMap.forEach((k,v) -> {
-                v.functionRepositoryRequestor.shutdown();
-                v.processorKeepAliveRequestor.shutdown();
-                v.dispatcherRequestor.shutdown();
+        shutdown = true;
+        dispatcherRequestorMap.forEach((k,v) -> {
+            log.warn("inform {}, {}  about shutdown", k.url, v.functionRepositoryRequestor.getClass().getSimpleName());
+            v.functionRepositoryRequestor.shutdown();
+            log.warn("inform {}, {}  about shutdown", k.url, v.processorKeepAliveRequestor.getClass().getSimpleName());
+            v.processorKeepAliveRequestor.shutdown();
+            log.warn("inform {}, {}  about shutdown", k.url, v.dispatcherRequestor.getClass().getSimpleName());
+            v.dispatcherRequestor.shutdown();
         });
     }
 

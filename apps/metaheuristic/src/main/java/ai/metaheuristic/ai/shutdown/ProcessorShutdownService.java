@@ -65,7 +65,7 @@ public class ProcessorShutdownService {
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             List<CompletableFuture<Void>> futures = new ArrayList<>();
             for (ProcessorShutdownInterface shutdown : shutdowns) {
-                log.warn("inform "+shutdown.getClass().getSimpleName()+" about shutdown");
+                log.warn("inform {} about shutdown", shutdown.getClass().getSimpleName());
                 futures.add(CompletableFuture.runAsync(() -> {
                     try {
                         shutdown.shutdown();

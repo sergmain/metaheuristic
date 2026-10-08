@@ -113,6 +113,7 @@ public class FunctionRepositoryRequestor implements ProcessorShutdownInterface {
             if (responseParams == null) {
                 return;
             }
+            // second check after makeQuery(frrp);
             if (isShutdown()) {
                 return;
             }
