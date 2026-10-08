@@ -53,9 +53,7 @@ import java.util.Set;
  * <p>Error code prefix: {@code 01.257.} (unique to this class).
  *
  * @author Serge
- */
-@Service
-/**
+ * <br/>
  * ❗ Bound to the presence of an OFFLINE backend, not to a single profile name.
  *
  * <p>This is the licence-ADMIN surface: install a signed file, remove one, list what is installed.
@@ -75,6 +73,7 @@ import java.util.Set;
  * configuration that declares the source. The open-set concern it was chosen for is now met by
  * naming the backend family once in {@link ai.metaheuristic.ai.Consts#SIGNED_FILE_LM_PROFILE}.
  */
+@Service
 @Profile(Consts.SIGNED_FILE_LM_PROFILE)
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
@@ -99,18 +98,33 @@ public class LicenseInfoService implements ShutdownInterface {
     }
 
     public LicenseInfoData.LicenseStatusResult info() {
-        if (isShutdown()) {
-            final LicenseInfoData.LicenseStatusResult result = new LicenseInfoData.LicenseStatusResult();
-            result.addErrorMessage("01.257.020 Shutdown in progress");
+        LicenseInfoData.LicenseStatusResult result = getLicenseStatusResult();
+        if (result != null) {
             return result;
         }
         final LicenseAggregate aggregate = licenseSource.currentResult();
         final DeploymentValues deployment = deploymentValuesResolverHolder.current();
 
-        return new LicenseInfoData.LicenseStatusResult(new LicenseInfoData.LicenseInfo(
-                effective(aggregate, deployment),
-                LicenseInfoUtils.breakdown(
-                        aggregate.licenses(), liveRowsByTokenHash(), directoryTokenHashes())));
+        LicenseInfoData.LicenseStatusResult licenseStatusResult = new LicenseInfoData.LicenseStatusResult(
+            new LicenseInfoData.LicenseInfo(effective(aggregate, deployment),
+            LicenseInfoUtils.breakdown(aggregate.licenses(), liveRowsByTokenHash(), directoryTokenHashes()))
+        );
+
+        result = getLicenseStatusResult();
+        if (result != null) {
+            return result;
+        }
+
+        return licenseStatusResult;
+    }
+
+    private LicenseInfoData.@Nullable LicenseStatusResult getLicenseStatusResult() {
+        if (isShutdown()) {
+            final LicenseInfoData.LicenseStatusResult result = new LicenseInfoData.LicenseStatusResult();
+            result.addErrorMessage("01.257.020 Shutdown in progress");
+            return result;
+        }
+        return null;
     }
 
     /**
@@ -172,7 +186,7 @@ public class LicenseInfoService implements ShutdownInterface {
     }
 
     @Nullable
-    private LicenseArtifactParams toParams(LicenseArtifact row) {
+    private static LicenseArtifactParams toParams(LicenseArtifact row) {
         try {
             return LicenseArtifactParamsJsonUtils.BASE_JSON_UTILS.to(row.params);
         }

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.license;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.LicenseArtifact;
 import ai.metaheuristic.ai.dispatcher.repositories.LicenseArtifactRepository;
+import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import ai.metaheuristic.commons.json.license.LicenseArtifactParamsJsonUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,10 +56,22 @@ import java.util.List;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
-public class LicenseTokenSupplier {
+public class LicenseTokenSupplier implements ShutdownInterface {
 
     private final Globals globals;
     private final LicenseArtifactRepository licenseArtifactRepository;
+
+    private volatile boolean shutdown = false;
+
+    @Override
+    public boolean isShutdown() {
+        return shutdown;
+    }
+
+    @Override
+    public void shutdown() {
+        shutdown = true;
+    }
 
     /** Directory first, then rows — a stable order so the admin breakdown does not shuffle. */
     public Collection<String> tokens() {
@@ -85,6 +98,9 @@ public class LicenseTokenSupplier {
      * for a token that had both.
      */
     public List<String> directoryTokens() {
+        if (isShutdown()) {
+            return List.of();
+        }
         return LicenseDirScanUtils.scanDir(licenseDir());
     }
 
