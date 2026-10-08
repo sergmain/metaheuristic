@@ -20,7 +20,10 @@ import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
@@ -30,10 +33,16 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Processor-side counterpart of {@link ShutdownService}: on context close, informs every
  * {@link ProcessorShutdownInterface} bean about the shutdown and waits until each one has returned.
+ *
+ * <p>Triggered by {@link ContextClosedEvent}, with {@code @PreDestroy} only as a fallback - see
+ * {@link ShutdownService} for why a {@code @PreDestroy} alone runs only after the web server's
+ * graceful shutdown. {@link #started} makes the work run exactly once, whichever entry point comes
+ * first.
  *
  * @author Sergio Lissner
  * Date: 10/7/2026
@@ -45,10 +54,31 @@ import java.util.concurrent.Executors;
 public class ProcessorShutdownService {
 
     public final List<ProcessorShutdownInterface> shutdowns;
+    private final ApplicationContext applicationContext;
+
+    private final AtomicBoolean started = new AtomicBoolean(false);
+
+    /**
+     * Runs before any {@code SmartLifecycle} bean is stopped, i.e. before the web server's graceful
+     * shutdown. {@code HIGHEST_PRECEDENCE} puts it ahead of every other {@link ContextClosedEvent}
+     * listener, so everything those listeners tear down is still alive while the requestors stop.
+     */
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    @EventListener
+    public void onContextClosed(ContextClosedEvent event) {
+        // a child context's ContextClosedEvent is re-published to the listeners of its parent
+        if (event.getApplicationContext() != applicationContext) {
+            return;
+        }
+        preDestroy();
+    }
 
     @Order(Ordered.HIGHEST_PRECEDENCE)
     @PreDestroy
     public void preDestroy() {
+        if (!started.compareAndSet(false, true)) {
+            return;
+        }
         try {
             preDestroyInternal();
         } finally {
