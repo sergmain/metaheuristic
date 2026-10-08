@@ -136,8 +136,16 @@ public class MhMcpServerConfig implements ShutdownInterface {
     public void shutdown() {
         shutdown = true;
         if (mcpSyncServer != null) {
-            mcpSyncServer.close();
-            log.info("260.520 Metaheuristic MCP Server shut down");
+            Thread.startVirtualThread(this::extracted);
         }
+    }
+
+    private synchronized void extracted() {
+        if (mcpSyncServer==null) {
+            return;
+        }
+        mcpSyncServer.close();
+        mcpSyncServer = null;
+        log.info("260.520 Metaheuristic MCP Server shut down");
     }
 }
