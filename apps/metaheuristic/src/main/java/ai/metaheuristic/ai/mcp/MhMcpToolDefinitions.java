@@ -126,6 +126,7 @@ import java.util.stream.Stream;
  *   mh_copy_meta_storage_table_between_domains — copy a whole meta table into the other store
  *   mh_list_dispatcher_event_types     — every dispatcher event type recorded in a range of months, with counts
  *   mh_list_dispatcher_events          — dispatcher events of a range of months by type and contextId, paged by id
+ *   mh_wait_exec_context               — long-poll an ExecContext until terminal, a Task in ERROR, or any change
  *
  * <p>Error code prefix: {@code 01.260.} (unique to this class).
  *
@@ -506,6 +507,7 @@ public class MhMcpToolDefinitions {
                 new McpServerFeatures.SyncToolSpecification(GET_TASK_INFO_TOOL, this::handleGetTaskInfo),
                 new McpServerFeatures.SyncToolSpecification(RESET_TASK_TOOL, this::handleResetTask),
                 new McpServerFeatures.SyncToolSpecification(GET_EXEC_CONTEXT_INFO_TOOL, this::handleGetExecContextInfo),
+                new McpServerFeatures.SyncToolSpecification(WAIT_EXEC_CONTEXT_TOOL, this::handleWaitExecContext),
                 new McpServerFeatures.SyncToolSpecification(GET_EXEC_CONTEXT_GRAPH_TOOL, this::handleGetExecContextGraph),
                 new McpServerFeatures.SyncToolSpecification(GET_EXEC_CONTEXT_TASK_STATE_TOOL, this::handleGetExecContextTaskState),
                 new McpServerFeatures.SyncToolSpecification(GET_EXEC_CONTEXT_VARIABLE_STATE_TOOL, this::handleGetExecContextVariableState),
@@ -1370,7 +1372,9 @@ public class MhMcpToolDefinitions {
                     + "STOPPED, or DOESNT_EXIST. Any other stateName (STARTED, NONE, ...) means the "
                     + "run is still in progress and you must keep polling. Returns: state (numeric), "
                     + "stateName, sourceCodeId, companyId, accountId, graph/task-state/variable-state ids, "
-                    + "root id, createdOn/completedOn timestamps, and validity flag.")
+                    + "root id, createdOn/completedOn timestamps, and validity flag. "
+                    + "Prefer mh_wait_exec_context for waiting: it waits inside the Dispatcher, one call per wait "
+                    + "window instead of one per poll.")
             .build();
 
     private CallToolResult handleGetExecContextInfo(McpSyncServerExchange exchange, CallToolRequest request) {
@@ -1917,6 +1921,114 @@ public class MhMcpToolDefinitions {
 
         return toCallToolResult(dispatcherEventQueryService.listEvents(
                 fromPeriod, toPeriod, eventTypes, eventTypePrefix, contextId, afterId, limit));
+    }
+
+    // ==================== Tool 31: long-poll an ExecContext ====================
+
+    /**
+     * ⚠️ Kept under Tomcat's default 30-second async request timeout. Whether the Streamable HTTP transport answers a
+     * tools/call over an async response wasn't verified, so a longer wait could be cut by the container instead of
+     * ending as a timedOut result. Raise both together once a longer call is known to come back whole.
+     */
+    public static final int DEFAULT_WAIT_SECONDS = 25;
+    public static final int MAX_WAIT_SECONDS = 25;
+    public static final long WAIT_POLL_MILLIS = 1000;
+
+    private static final Tool WAIT_EXEC_CONTEXT_TOOL = Tool.builder("mh_wait_exec_context",
+                    objectSchema(
+                            Map.of(
+                                    "execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext"),
+                                    "until", Map.of("type", "string",
+                                            "enum", List.of("TERMINAL", "ANY_ERROR", "STATE_CHANGED"),
+                                            "description", "TERMINAL - the ExecContext is FINISHED, ERROR, STOPPED or DOESNT_EXIST; "
+                                                    + "ANY_ERROR - a Task is in ERROR (ERROR_WITH_RECOVERY doesn't count, such a Task "
+                                                    + "is re-run); STATE_CHANGED - anything changed since sinceVersion"),
+                                    "sinceVersion", Map.of("type", "string",
+                                            "description", "Optional. The version a previous call returned, for STATE_CHANGED. "
+                                                    + "Without it STATE_CHANGED returns at once, with the current version"),
+                                    "maxSeconds", Map.of("type", "integer",
+                                            "description", "Optional, default " + DEFAULT_WAIT_SECONDS + ", at most " + MAX_WAIT_SECONDS
+                                                    + ". The longest this one call waits")),
+                            List.of("execContextId", "until")))
+            .title("Wait for an ExecContext")
+            .description("Long-poll an ExecContext: returns when the condition in 'until' holds, when the ExecContext is in a "
+                    + "terminal state (FINISHED, ERROR, STOPPED, DOESNT_EXIST - nothing more will change, whatever was asked), "
+                    + "or after maxSeconds, whichever comes first. Use it instead of calling mh_get_exec_context_info in a "
+                    + "loop: the waiting happens inside the Dispatcher. Returns met / terminal / timedOut, stateName, a "
+                    + "version, the number of Tasks per state and up to " + ExecContextWaitUtils.MAX_ERROR_TASK_IDS
+                    + " ids of Tasks in ERROR (details: mh_get_task_info). To wait longer than one call allows, call again; "
+                    + "for STATE_CHANGED pass the returned version as sinceVersion - a change landing between two calls is "
+                    + "reported by the next one, not lost.")
+            .build();
+
+    public record WaitExecContextDto(
+            Long execContextId,
+            String until,
+            boolean met,
+            boolean terminal,
+            boolean timedOut,
+            String stateName,
+            String version,
+            long waitedMillis,
+            Map<String, Integer> taskStateCounts,
+            List<Long> firstErrorTaskIds
+    ) {}
+
+    private CallToolResult handleWaitExecContext(McpSyncServerExchange exchange, CallToolRequest request) {
+        final Map<String, Object> arguments = request.arguments();
+        final Long execContextId = getRequiredLong(arguments, "execContextId");
+        final ExecContextWaitUtils.Until until = getRequiredUntil(arguments, "until");
+        final String sinceVersion = blankToNull(optionalString(arguments, "sinceVersion"));
+        final Integer maxSecondsArg = getOptionalInt(arguments, "maxSeconds");
+        final int maxSeconds = maxSecondsArg == null ? DEFAULT_WAIT_SECONDS : maxSecondsArg;
+        if (maxSeconds < 1 || maxSeconds > MAX_WAIT_SECONDS) {
+            throw new IllegalArgumentException("01.260.780 Parameter 'maxSeconds' must be 1.." + MAX_WAIT_SECONDS + ", was: " + maxSeconds);
+        }
+        log.info("01.260.760 MCP waitExecContext(execContextId={}, until={}, sinceVersion={}, maxSeconds={})",
+                execContextId, until, sinceVersion, maxSeconds);
+        if (execContextCache.findById(execContextId, true) == null) {
+            return errorResult("ExecContext #" + execContextId + " not found");
+        }
+        final ExecContextWaitUtils.WaitResult r = ExecContextWaitUtils.await(
+                until, sinceVersion, maxSeconds * 1000L, WAIT_POLL_MILLIS,
+                () -> probeExecContext(execContextId),
+                () -> segmentReadService.snapshot(execContextId).states(),
+                System::currentTimeMillis,
+                MhMcpToolDefinitions::sleepWhileWaiting);
+        return toCallToolResult(new WaitExecContextDto(execContextId, until.name(), r.met(), r.terminal(), r.timedOut(),
+                r.stateName(), r.version(), r.waitedMillis(), r.taskStateCounts(), r.firstErrorTaskIds()));
+    }
+
+    /** The cheap probe: the cached ExecContext's state and the segments' change version - no segment is loaded. */
+    private ExecContextWaitUtils.@Nullable Probe probeExecContext(Long execContextId) {
+        final ExecContextImpl ec = execContextCache.findById(execContextId, true);
+        return ec == null ? null : new ExecContextWaitUtils.Probe(
+                EnumsApi.ExecContextState.toState(ec.state), segmentReadService.changeVersion(execContextId));
+    }
+
+    private static void sleepWhileWaiting(long millis) {
+        try {
+            Thread.sleep(millis);
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("01.260.800 Waiting for the ExecContext was interrupted", e);
+        }
+    }
+
+    /**
+     * Rejected by name rather than defaulted, on the grounds {@link #getRequiredMode} gives: each value waits for
+     * something different, and a guessed one would answer a question the caller didn't ask.
+     */
+    private static ExecContextWaitUtils.Until getRequiredUntil(Map<String, Object> arguments, String key) {
+        final String value = getRequiredString(arguments, key);
+        for (ExecContextWaitUtils.Until until : ExecContextWaitUtils.Until.values()) {
+            if (until.name().equalsIgnoreCase(value)) {
+                return until;
+            }
+        }
+        throw new IllegalArgumentException("01.260.790 Parameter '" + key + "' must be one of "
+                + Stream.of(ExecContextWaitUtils.Until.values()).map(Enum::name).toList() + ", was: " + value);
     }
 
     // ==================== Utility methods ====================

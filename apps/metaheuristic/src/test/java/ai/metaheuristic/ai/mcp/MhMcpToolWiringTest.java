@@ -65,6 +65,9 @@ public class MhMcpToolWiringTest {
         put("mh_get_task_info", "taskId");
         put("mh_reset_task", "taskId");
         put("mh_get_exec_context_info", "execContextId");
+        // the long-poll resolves the ExecContext before 'until', so a swap with another execContextId tool is caught by
+        // MhMcpWaitExecContextToolTest, which calls it by name and reads its own rejections
+        put("mh_wait_exec_context", "execContextId");
         // 041 Phase 12: the three state tools are keyed by the ExecContext and read its segments
         put("mh_get_exec_context_graph", "execContextId");
         put("mh_get_exec_context_task_state", "execContextId");
