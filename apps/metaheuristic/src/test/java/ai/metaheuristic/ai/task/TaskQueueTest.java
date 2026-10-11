@@ -429,4 +429,61 @@ public class TaskQueueTest {
         assertEquals(1, taskQueue.groupCount(), "Should be able to add tasks after resetAll");
         assertTrue(taskQueue.alreadyRegistered(301L), "Newly added task should be registered");
     }
+
+    /**
+     * Test: TaskQueue.TaskGroups.reset() after a collected group stopped being ready for transferring.
+     *
+     * Context (ExecContext #247, 2026-10-10): ExecContextTaskStateService.transferStateFromTaskQueueToExecContext()
+     * collects the groups ready for transferring, writes their states into the segments in its own Tx - the SKIPPED
+     * closure of an ERROR Task included - and only then calls TaskGroups.reset() and persists the closure in MH_TASK.
+     * Between the collecting and the reset(), a recovery reset (ExecContextTaskResettingService.resetTask() ->
+     * SetTaskExecStateInQueueTxEvent) put one Task of a collected group back to NONE. reset() threw
+     * IllegalStateException("(!groupReadyForTransferring(group))"), the closure never reached MH_TASK, and the dead
+     * branch's Task #30776 stayed PRE_INIT, so its join never became ready.
+     *
+     * The groups here mirror that run: one group finished OK, one group with an ERROR Task and Tasks finished with
+     * recovery, one of which is reset to NONE after the groups were collected.
+     */
+    @Test
+    public void test_taskGroupsReset_groupNotReadyAnyMoreAfterCollecting() {
+        final Long execContextId = 247L;
+        final TaskQueue taskQueue = new TaskQueue(1, 5);
+
+        final List<Long> okGroup = List.of(30742L, 30743L, 30744L, 30745L, 30746L);
+        final List<Long> errorGroup = List.of(30754L, 30759L, 30769L, 30775L, 30779L);
+        for (Long taskId : okGroup) {
+            taskQueue.addNewTask(createTask(execContextId, taskId, 0));
+        }
+        for (Long taskId : errorGroup) {
+            taskQueue.addNewTask(createTask(execContextId, taskId, 0));
+        }
+        assertEquals(2, taskQueue.groupCount(), "PHASE #1: 10 Tasks of one ExecContext and one priority fill two groups of 5");
+
+        taskQueue.lock(execContextId);
+        for (Long taskId : okGroup) {
+            taskQueue.startTaskProcessing(execContextId, taskId);
+            taskQueue.setTaskExecState(execContextId, taskId, EnumsApi.TaskExecState.OK);
+        }
+        for (Long taskId : errorGroup) {
+            taskQueue.startTaskProcessing(execContextId, taskId);
+            taskQueue.setTaskExecState(execContextId, taskId,
+                    taskId == 30775L ? EnumsApi.TaskExecState.ERROR : EnumsApi.TaskExecState.ERROR_WITH_RECOVERY);
+        }
+
+        final TaskQueue.TaskGroups groups = taskQueue.getTaskGroupForTransferring(execContextId);
+        assertEquals(2, groups.groups.size(), "PHASE #2: both groups are ready for transferring");
+
+        // the recovery reset of Task #30769 lands after the groups were collected
+        taskQueue.setTaskExecState(execContextId, 30769L, EnumsApi.TaskExecState.NONE);
+
+        // a group that isn't ready any more is left in the queue - it is transferred again once it is ready
+        assertDoesNotThrow(groups::reset, "PHASE #3: reset() of the collected groups");
+
+        assertFalse(taskQueue.alreadyRegistered(30742L), "PHASE #4: the OK group was reset");
+        final TaskQueue.AllocatedTask retried = taskQueue.alreadyRegisteredAsTask(30769L);
+        assertNotNull(retried, "PHASE #4: Task #30769, reset for a retry, must stay in the queue");
+        assertEquals(EnumsApi.TaskExecState.NONE, retried.state, "PHASE #4: Task #30769 is NONE in the queue");
+        assertFalse(retried.assigned, "PHASE #4: Task #30769 is free for assigning");
+        assertTrue(taskQueue.alreadyRegistered(30775L), "PHASE #4: the group of Task #30769 stays in the queue, ERROR Task #30775 with it");
+    }
 }

@@ -30,6 +30,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * <p>Error code prefix: {@code 01.029.} (unique to this class).
+ *
  * @author Serge
  * Date: 12/16/2020
  * Time: 3:09 AM
@@ -75,7 +77,11 @@ public class TaskQueue {
         public void reset() {
             for (TaskGroup group : groups) {
                 if (!groupReadyForTransferring(group)) {
-                    throw new IllegalStateException("(!groupReadyForTransferring(group))");
+                    // a Task of this group was put back for a retry (a recovery reset to NONE) after the group had been
+                    // collected for transferring. Resetting the group would drop that Task from the queue, so the group
+                    // stays and is transferred again once all its Tasks are finished.
+                    log.info("01.029.440 a group of ExecContext #{} isn't ready for transferring any more, it stays in the queue", group.execContextId);
+                    continue;
                 }
                 group.reset();
             }
