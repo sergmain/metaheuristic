@@ -52,6 +52,12 @@ import java.util.List;
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 import static ai.metaheuristic.api.EnumsApi.DataType;
 
+/**
+ * The {@link VariableProvider} for Variables sourced from the Dispatcher: downloads input Variables and uploads
+ * output Variables.
+ *
+ * <p>Error code prefix: {@code 01.331.} (unique to this class).
+ */
 @Service
 @Slf4j
 @Profile("processor")
@@ -93,13 +99,13 @@ public class DispatcherVariableProvider implements VariableProvider {
                 case array:
                     return prepareArrayVariable(taskDir, variable);
                 default:
-                    es = "812.007 Unknown context: " + variable.context+ ", variableId: " +  variable.id;
+                    es = "01.331.007 Unknown context: " + variable.context+ ", variableId: " +  variable.id;
                     log.error(es);
                     throw new BreakFromLambdaException(es);
             }
         }
         catch (WrongVersionOfParamsException e) {
-            String es = "812.010 Error while processing task #"+task.getTaskId()+", variable #" + variable.id;
+            String es = "01.331.010 Error while processing task #"+task.getTaskId()+", variable #" + variable.id;
             log.error(es, e);
             throw new BreakFromLambdaException(e);
         }
