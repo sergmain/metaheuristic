@@ -158,22 +158,23 @@ public class DispatcherVariableProvider implements VariableProvider {
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig) {
         Path outputVariableFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR).resolve(outputVariable.id.toString());
+        final String violation = OutputVariableContractUtils.findViolation(outputVariableFile, outputVariable);
+        if (violation!=null) {
+            log.error(violation);
+            return new FunctionApiData.SystemExecResult(functionConfig.code,false, -1, violation);
+        }
         if (Files.exists(outputVariableFile)) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputVariableFile.toAbsolutePath());
             UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariableFile, outputVariable.id, core, dispatcher.dispatcherLookup);
             uploadVariableService.add(uploadVariableTask);
             return null;
         }
-        else if (Boolean.TRUE.equals(outputVariable.getNullable())) {
+        else {
+            // the contract admits an absent file only for a nullable output Variable
             log.info("Register an upload task for setting a variable #{} as null", outputVariable.id);
             UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariable.id, true, core, dispatcher.dispatcherLookup);
             uploadVariableService.add(uploadVariableTask);
             return null;
-        }
-        else {
-            String es = "Result data file doesn't exist, resultDataFile: " + outputVariableFile.toAbsolutePath();
-            log.error(es);
-            return new FunctionApiData.SystemExecResult(functionConfig.code,false, -1, es);
         }
     }
 

@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.processor.secret.TaskSecretPlan;
 import ai.metaheuristic.ai.processor.security.ProcessorKeyPair;
 import ai.metaheuristic.ai.processor.tasks.DownloadSealedSecretTask;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
+import ai.metaheuristic.ai.processor.variable_providers.OutputVariableContractUtils;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
 import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.EnvServiceUtils;
@@ -467,11 +468,9 @@ public class TaskProcessor {
                 if (isOk) {
                     if (isOk && systemExecResult.isOk()) {
                         try {
-                            for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
-                                VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);
-                                generalExec = resourceProvider.processOutputVariable(
-                                        core, taskDir, dispatcher, task, processorState, outputVariable, mainFunctionConfig);
-                            }
+                            generalExec = OutputVariableContractUtils.processOutputVariables(taskParamYaml.task.outputs,
+                                    outputVariable -> resourceProviderFactory.getVariableProvider(outputVariable.sourcing).processOutputVariable(
+                                            core, taskDir, dispatcher, task, processorState, outputVariable, mainFunctionConfig));
                         }
                         catch (Throwable th) {
                             generalExec = new FunctionApiData.SystemExecResult(
