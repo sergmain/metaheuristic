@@ -36,8 +36,10 @@
 
 
 
+    <!-- 2026-10-20: default-template bounds every region not declared below (the query-results region, Legal / RG / NRVV
+         entities): without it a region Hibernate creates on the fly gets heap(Long.MAX_VALUE) entries, eternal -->
     <service>
-        <jsr107:defaults enable-statistics="false"/>
+        <jsr107:defaults default-template="default-template" enable-statistics="false"/>
     </service>
     <!--
         <service>
@@ -88,6 +90,23 @@
         <heap>1000</heap>
     </cache-template>
 
+    <!-- 2026-10-20: TaskImpl - params avg 0.8 KB / max 2.8 KB, function exec results avg 0.7 KB / max 18 KB (the latest 5000
+         Tasks); a Task is hot while it is assigned and while its result arrives -->
+    <cache-template name="template-2000-10-minute">
+        <expiry>
+            <ttl unit="minutes">10</ttl>
+        </expiry>
+        <heap>2000</heap>
+    </cache-template>
+
+    <!-- 2026-10-20: ExecContextImpl - params avg 17 KB / max 65 KB (the latest 1000); ~370 ExecContexts a day -->
+    <cache-template name="template-200-1-hour">
+        <expiry>
+            <ttl unit="hours">1</ttl>
+        </expiry>
+        <heap>200</heap>
+    </cache-template>
+
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.Account" uses-template="template-1000-1-day">
     </cache>
 
@@ -100,7 +119,7 @@
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState" uses-template="template-100-1-day">
     </cache>
 
-    <cache alias="ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl" uses-template="template-1000-1-day">
+    <cache alias="ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl" uses-template="template-200-1-hour">
     </cache>
 
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph" uses-template="template-1000-1-day">
@@ -124,7 +143,7 @@
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.DispatcherEvent" uses-template="template-1000-5-minute">
     </cache>
 
-    <cache alias="ai.metaheuristic.ai.dispatcher.beans.TaskImpl" uses-template="template-5000-60-minute">
+    <cache alias="ai.metaheuristic.ai.dispatcher.beans.TaskImpl" uses-template="template-2000-10-minute">
     </cache>
 
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.ExperimentResult" uses-template="template-100-10-minute">
@@ -139,6 +158,18 @@
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.Batch" uses-template="default-template">
     </cache>
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.Series" uses-template="default-template">
+    </cache>
+
+    <!-- 2026-10-20: the query cache (hibernate.cache.use_query_cache=true). Its update timestamps - one entry per table - must
+         never be evicted or expire (Hibernate's documentation); the cached query results are bounded -->
+    <cache alias="default-update-timestamps-region">
+        <expiry>
+            <none/>
+        </expiry>
+        <heap>10000</heap>
+    </cache>
+
+    <cache alias="default-query-results-region" uses-template="template-1000-5-minute">
     </cache>
 
 </config>
