@@ -182,12 +182,7 @@ public class ProcessorTaskService {
                 // enforce the hidden contract of 'console' for a task which was stored on disk before it was enforced:
                 // only the text related to an error is allowed there, a cleaned console is written to task.yaml immediately
                 if (functionExec != null) {
-                    try {
-                        ProcessorSyncHolder.writeLock.lock();
-                        enforceConsoleContract(task, functionExec, taskDir, taskYamlFile);
-                    } finally {
-                        ProcessorSyncHolder.writeLock.unlock();
-                    }
+                    enforceConsoleContract(task, functionExec, taskDir, taskYamlFile);
                 }
                 if (functionExec != null &&
                         ((functionExec.generalExec != null && !functionExec.exec.isOk) ||
@@ -255,9 +250,14 @@ public class ProcessorTaskService {
         if (!cleanConsoleOfOkExecs(functionExec)) {
             return false;
         }
-        task.setFunctionExecResult(FunctionExecUtils.toString(functionExec));
-        actualSave(task, taskDir, taskYaml);
-        return true;
+        try {
+            ProcessorSyncHolder.writeLock.lock();
+            task.setFunctionExecResult(FunctionExecUtils.toString(functionExec));
+            actualSave(task, taskDir, taskYaml);
+            return true;
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
+        }
     }
 
     public static void deleteDir(Path f, String info) {
