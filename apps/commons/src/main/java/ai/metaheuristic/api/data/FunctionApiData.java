@@ -39,6 +39,11 @@ public class FunctionApiData {
         public String functionCode;
         public boolean isOk;
         public int exitCode;
+        /**
+         * Contract: only the text related to an error of a Function. Everything else a Dispatcher needs
+         * must be returned via output Variables. The Processor stores an empty console for an exec with
+         * exitCode==0 and isOk==true.
+         */
         public String console;
     }
 

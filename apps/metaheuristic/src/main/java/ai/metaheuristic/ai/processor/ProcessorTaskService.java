@@ -179,6 +179,16 @@ public class ProcessorTaskService {
 
                 // fix state of task
                 FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
+                // enforce the hidden contract of 'console' for a task which was stored on disk before it was enforced:
+                // only the text related to an error is allowed there, a cleaned console is written to task.yaml immediately
+                if (functionExec != null) {
+                    try {
+                        ProcessorSyncHolder.writeLock.lock();
+                        enforceConsoleContract(task, functionExec, taskDir, taskYamlFile);
+                    } finally {
+                        ProcessorSyncHolder.writeLock.unlock();
+                    }
+                }
                 if (functionExec != null &&
                         ((functionExec.generalExec != null && !functionExec.exec.isOk) ||
                                 (functionExec.generalExec != null && !functionExec.generalExec.isOk))) {
@@ -209,6 +219,45 @@ public class ProcessorTaskService {
      */
     public static boolean isTaskForRerun(ProcessorCoreTask task) {
         return !task.completed && task.finishedOn == null && !task.reported;
+    }
+
+    /**
+     * The hidden contract of {@link FunctionApiData.SystemExecResult#console}: only the text related to an error of
+     * a Function is allowed there. Everything else the Dispatcher needs must be returned via output Variables.
+     * The console of a successful exec - exitCode==0 and isOk==true - is cleaned. The console of any other exec is kept
+     * as is, including an inconsistent one with exitCode==0 and isOk==false, which isn't a successful exec.
+     * Static on purpose - it's testable without a Spring context.
+     *
+     * @return true when at least one console was cleaned, i.e. functionExec was changed
+     */
+    public static boolean cleanConsoleOfOkExecs(FunctionApiData.FunctionExec functionExec) {
+        final List<FunctionApiData.SystemExecResult> okExecsWithConsole = Stream.of(
+                        Stream.ofNullable(functionExec.exec),
+                        Stream.ofNullable(functionExec.preExecs).flatMap(List::stream),
+                        Stream.ofNullable(functionExec.postExecs).flatMap(List::stream),
+                        Stream.ofNullable(functionExec.generalExec))
+                .flatMap(s -> s)
+                .filter(o -> o.isOk && o.exitCode == 0 && !"".equals(o.console))
+                .toList();
+        okExecsWithConsole.forEach(o -> o.console = "");
+        return !okExecsWithConsole.isEmpty();
+    }
+
+    /**
+     * Enforces the contract of 'console' (see {@link #cleanConsoleOfOkExecs}) on a stored task: when a console was
+     * cleaned, the task with the cleaned functionExec is written to taskYaml immediately via {@link #actualSave}.
+     * Nothing is written when there was nothing to clean.
+     * Path-based and static on purpose - it's testable without a Spring context.
+     *
+     * @return true when a console was cleaned and the task was written
+     */
+    public static boolean enforceConsoleContract(ProcessorCoreTask task, FunctionApiData.FunctionExec functionExec, Path taskDir, Path taskYaml) throws IOException {
+        if (!cleanConsoleOfOkExecs(functionExec)) {
+            return false;
+        }
+        task.setFunctionExecResult(FunctionExecUtils.toString(functionExec));
+        actualSave(task, taskDir, taskYaml);
+        return true;
     }
 
     public static void deleteDir(Path f, String info) {
@@ -413,6 +462,8 @@ public class ProcessorTaskService {
                 }
                 task.setFinishedOn(System.currentTimeMillis());
                 task.setReported(false);
+                // only the text related to an error is allowed in 'console', see cleanConsoleOfOkExecs()
+                cleanConsoleOfOkExecs(functionExec);
                 task.setFunctionExecResult(FunctionExecUtils.toString(functionExec));
 
                 save(core, task);
