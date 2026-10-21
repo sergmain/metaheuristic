@@ -75,6 +75,7 @@ public class ProcessorService {
     private final GitSourcingService gitSourcingService;
     private final CurrentExecState currentExecState;
     private final ProcessorKeyPair processorKeyPair;
+    private final FinishedExecContextsService finishedExecContextsService;
 
 //    @Value("${logging.file.name:#{null}}")
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")
@@ -167,6 +168,7 @@ public class ProcessorService {
         try {
             ProcessorSyncHolder.writeLock.lock();
             currentExecState.registerDelta(core.dispatcherUrl, task.execContextId, task.state);
+            finishedExecContextsService.registerDelta(core.dispatcherUrl, task.execContextId, task.state);
             processorTaskService.createTask(core, task);
         } finally {
             ProcessorSyncHolder.writeLock.unlock();

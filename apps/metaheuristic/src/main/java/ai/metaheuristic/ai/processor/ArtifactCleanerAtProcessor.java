@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -68,14 +69,23 @@ public class ArtifactCleanerAtProcessor {
             if (Files.notExists(dispatcherDir)) {
                 Files.createDirectories(dispatcherDir);
             }
-            List<ProcessorCoreTask> all = processorTaskService.findAllForCore(core);
-            for (ProcessorCoreTask task : all) {
-                if (currentExecState.isState(core.dispatcherUrl, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
-                    log.warn("Delete obsolete task, id {}, url {}", task.getTaskId(), core.dispatcherUrl.url);
+            // every Task with a dir, including the Tasks of FINISHED ExecContexts which weren't loaded at startup
+            List<ProcessorTaskService.TaskShortInfo> all = processorTaskService.findAllTaskShortInfosForCore(core);
+            // the loaded Tasks, key - taskId
+            final Map<Long, ProcessorCoreTask> loaded = processorTaskService.findAllForCore(core).stream()
+                    .collect(Collectors.toMap(t -> t.taskId, t -> t, (t1, t2) -> t1));
+            for (ProcessorTaskService.TaskShortInfo info : all) {
+                if (currentExecState.isState(core.dispatcherUrl, info.execContextId(), EnumsApi.ExecContextState.DOESNT_EXIST)) {
+                    log.warn("Delete obsolete task, id {}, url {}", info.id(), core.dispatcherUrl.url);
                     for (Map.Entry<EnumsApi.ExecContextState, String> entry : currentExecState.getExecContextsNormalized(core.dispatcherUrl).entrySet()) {
                         log.warn("'   {}: {}", entry.getKey(), entry.getValue());
                     }
-                    processorTaskService.delete(core, task.getTaskId());
+                    processorTaskService.delete(core, info.id());
+                    continue;
+                }
+                // a not loaded Task - of a FINISHED ExecContext - has nothing more to clean than its whole dir, as above
+                final ProcessorCoreTask task = loaded.get(info.id());
+                if (task == null) {
                     continue;
                 }
                 final boolean done = task.delivered && task.completed;

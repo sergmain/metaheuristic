@@ -48,6 +48,7 @@ public class ProcessorKeepAliveProcessor {
     private final ProcessorEnvironment processorEnvironment;
     private final CurrentExecState currentExecState;
     private final SealedSecretCache sealedSecretCache;
+    private final FinishedExecContextsService finishedExecContextsService;
 
     public void processKeepAliveResponseParamYaml(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
 //        log.debug("776.020 DispatcherCommParamsYaml:\n{}", responseParamYaml);
@@ -114,6 +115,7 @@ public class ProcessorKeepAliveProcessor {
 
     private void processExecContextStatus(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml.ExecContextStatus execContextStatus) {
         currentExecState.register(dispatcherUrl, execContextStatus.statuses);
+        finishedExecContextsService.registerFull(dispatcherUrl, execContextStatus.statuses);
     }
 
     // processing at processor side

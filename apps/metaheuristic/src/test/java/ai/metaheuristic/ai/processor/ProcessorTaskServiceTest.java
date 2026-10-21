@@ -21,12 +21,19 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
+import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.sec.AdditionalCustomUserDetails;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTaskUtils;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
@@ -40,6 +47,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -96,7 +104,8 @@ class ProcessorTaskServiceTest {
     // ---- startup scan of task dirs: the log must list only tasks which will be re-run ----
     // Every @Test uses its own taskIds - the logger is shared by @Test methods running concurrently.
 
-    private record StartedProcessor(ProcessorTaskService service, ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {}
+    private record StartedProcessor(ProcessorTaskService service, ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
+                                    Globals globals, ProcessorEnvironment processorEnvironment) {}
 
     private record Restart(StartedProcessor processor, List<String> messages) {}
 
@@ -115,13 +124,17 @@ class ProcessorTaskServiceTest {
         userDetails.init();
         final ProcessorEnvironment processorEnvironment = new ProcessorEnvironment(globals, userDetails, null);
 
-        final ProcessorTaskService service = new ProcessorTaskService(globals, null, processorEnvironment);
+        // as Spring does it: the dependency is post-constructed - its files are read - before ProcessorTaskService
+        final FinishedExecContextsService finishedExecContextsService = new FinishedExecContextsService(globals, processorEnvironment);
+        finishedExecContextsService.postConstruct();
+
+        final ProcessorTaskService service = new ProcessorTaskService(globals, null, processorEnvironment, finishedExecContextsService);
         service.postConstruct();
 
         final Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> cores =
             processorEnvironment.getProcessorEnv().metadataParams().getAllEnabledRefsForCores();
         assertEquals(1, cores.size(), "standalone processor must have exactly one enabled core");
-        return new StartedProcessor(service, cores.iterator().next());
+        return new StartedProcessor(service, cores.iterator().next(), globals, processorEnvironment);
     }
 
     private static Restart restartCapturingLog(Path processorPath) {
@@ -453,5 +466,100 @@ class ProcessorTaskServiceTest {
 
         assertTrue(Files.notExists(taskDir.resolve(Consts.TASK_YAML + ".bak")), "nothing was cleaned, task.yaml must not be re-written");
         assertEquals("Traceback (most recent call last)", functionExecIn(taskYaml).exec.console);
+    }
+
+    // ---- startup: Tasks of FINISHED ExecContexts ----
+    // Every @Test uses its own taskIds and execContextIds.
+
+    /** the file of FINISHED ExecContexts of a Dispatcher - in the processor dir, beside env.yaml and metadata.yaml */
+    private static Path finishedExecContextsFile(Path processorPath, StartedProcessor processor) {
+        return processorPath.resolve("finished-exec-contexts-" + MetadataParams.asCode(processor.core().dispatcherUrl) + ".json");
+    }
+
+    @Test
+    public void test_postConstruct_taskOfFinishedExecContext(@TempDir Path processorPath) throws IOException {
+        final StartedProcessor first = startStandaloneProcessor(processorPath);
+
+        final ProcessorCoreTask ofFinished = newTask(first, 9911L);
+        ofFinished.execContextId = 911L;
+        seedTaskOnDisk(first, ofFinished);
+        final ProcessorCoreTask ofActive = newTask(first, 9912L);
+        ofActive.execContextId = 912L;
+        seedTaskOnDisk(first, ofActive);
+        Files.writeString(finishedExecContextsFile(processorPath, first), "{\"ids\":[911,913]}");
+
+        final StartedProcessor restarted = startStandaloneProcessor(processorPath);
+
+        // PHASE #3: a Task of a FINISHED ExecContext isn't loaded, so it's never selected for execution
+        assertNull(restarted.service().findByIdForCore(restarted.core(), 9911L), "task #9911 of FINISHED ExecContext #911 must not be loaded");
+        assertEquals(List.of(9912L), tasksSelectedForExecution(restarted));
+
+        assertNotNull(restarted.service().findByIdForCore(restarted.core(), 9912L), "task #9912 of not FINISHED ExecContext #912 must be loaded");
+        assertTrue(Files.exists(restarted.service().prepareTaskDir(restarted.core(), 9911L).resolve(Consts.TASK_YAML)),
+            "the dir of task #9911 must be kept on disk");
+    }
+
+    /** the dir of a task, resolved without creating it - unlike prepareTaskDir() */
+    private static Path taskDirOf(Path processorPath, StartedProcessor processor, long taskId) {
+        final Path dispatcherDir = processorPath.resolve(processor.core().coreCode).resolve(Consts.TASK_DIR)
+            .resolve(MetadataParams.asCode(processor.core().dispatcherUrl));
+        return DirUtils.getPoweredPath(dispatcherDir, taskId);
+    }
+
+    @Test
+    public void test_artifactCleaner_notLoadedTaskOfDeletedExecContext(@TempDir Path processorPath) throws IOException {
+        final StartedProcessor first = startStandaloneProcessor(processorPath);
+
+        final ProcessorCoreTask ofFinished = newTask(first, 9921L);
+        ofFinished.execContextId = 921L;
+        seedTaskOnDisk(first, ofFinished);
+        final ProcessorCoreTask ofStarted = newTask(first, 9922L);
+        ofStarted.execContextId = 922L;
+        seedTaskOnDisk(first, ofStarted);
+        Files.writeString(finishedExecContextsFile(processorPath, first), "{\"ids\":[921]}");
+
+        final StartedProcessor restarted = startStandaloneProcessor(processorPath);
+        assertNull(restarted.service().findByIdForCore(restarted.core(), 9921L), "task #9921 of FINISHED ExecContext #921 isn't loaded");
+
+        // then ExecContext #921 is deleted at the Dispatcher - the full snapshot holds only #922
+        final CurrentExecState currentExecState = new CurrentExecState();
+        currentExecState.register(restarted.core().dispatcherUrl, Map.of(EnumsApi.ExecContextState.STARTED, "922"));
+        new ArtifactCleanerAtProcessor(restarted.service(), currentExecState, restarted.globals(), restarted.processorEnvironment()).fixedDelay();
+
+        // PHASE #4: the cleaner sees every Task with a dir - the dir of the not loaded task #9921 is deleted too
+        assertTrue(Files.notExists(taskDirOf(processorPath, restarted, 9921L)), "the dir of task #9921 of deleted ExecContext #921 must be deleted");
+
+        assertTrue(Files.exists(taskDirOf(processorPath, restarted, 9922L)), "the dir of task #9922 of STARTED ExecContext #922 must stay");
+        assertNotNull(restarted.service().findByIdForCore(restarted.core(), 9922L));
+    }
+
+    @Test
+    public void test_artifactCleaner_taskCreatedAtRuntime_ofDeletedExecContext(@TempDir Path processorPath) {
+        final StartedProcessor processor = startStandaloneProcessor(processorPath);
+
+        final TaskParamsYaml tpy = new TaskParamsYaml();
+        tpy.task.execContextId = 931L;
+        tpy.task.processCode = "process-1";
+        tpy.task.context = EnumsApi.FunctionExecContext.external;
+        tpy.task.function = new TaskParamsYaml.FunctionConfig();
+        tpy.task.function.code = "mh.test-function";
+        tpy.task.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+        tpy.task.function.targets.put(CommonConsts.MH_DEFAULT_OS_KEY, new TaskParamsYaml.Target("src", "fn.py"));
+        final DispatcherCommParamsYaml.AssignedTask assigned = new DispatcherCommParamsYaml.AssignedTask();
+        assigned.taskId = 9931L;
+        assigned.execContextId = 931L;
+        assigned.state = EnumsApi.ExecContextState.STARTED;
+        assigned.params = TaskParamsYamlUtils.UTILS.toString(tpy);
+        processor.service().createTask(processor.core(), assigned);
+        assertTrue(Files.exists(taskDirOf(processorPath, processor, 9931L)), "createTask() must create the dir of task #9931");
+
+        // ExecContext #931 is deleted at the Dispatcher - the full snapshot holds only #932
+        final CurrentExecState currentExecState = new CurrentExecState();
+        currentExecState.register(processor.core().dispatcherUrl, Map.of(EnumsApi.ExecContextState.STARTED, "932"));
+        new ArtifactCleanerAtProcessor(processor.service(), currentExecState, processor.globals(), processor.processorEnvironment()).fixedDelay();
+
+        assertTrue(Files.notExists(taskDirOf(processorPath, processor, 9931L)), "the dir of task #9931 of deleted ExecContext #931 must be deleted");
+        assertNull(processor.service().findByIdForCore(processor.core(), 9931L));
+        assertEquals(List.of(), processor.service().findAllTaskShortInfosForCore(processor.core()), "a deleted task must leave allTasks too");
     }
 }

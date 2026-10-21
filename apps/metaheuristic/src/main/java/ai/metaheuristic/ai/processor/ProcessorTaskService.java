@@ -54,6 +54,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -73,6 +74,8 @@ public class ProcessorTaskService {
     private final Globals globals;
     private final CurrentExecState currentExecState;
     private final ProcessorEnvironment processorEnvironment;
+    // read the files of FINISHED ExecContexts in its postConstruct(), i.e. before init() of this service
+    private final FinishedExecContextsService finishedExecContextsService;
 
     /**
      * key - code of core
@@ -85,6 +88,26 @@ public class ProcessorTaskService {
      * Value - ProcessorCoreTask
      */
     private final ConcurrentHashMap<String, Map<DispatcherUrl, Map<Long, ProcessorCoreTask>>> map = new ConcurrentHashMap<>();
+
+    /**
+     * A Task with a dir on disk - what ArtifactCleanerAtProcessor needs to clean the dir of a Task which isn't loaded.
+     */
+    public record TaskShortInfo(long id, @Nullable Long execContextId) {}
+
+    /**
+     * Every Task with a dir on disk, including the Tasks of FINISHED ExecContexts which weren't loaded into {@link #map}
+     * at startup. ArtifactCleanerAtProcessor cleans by it, so the dir of a not loaded Task is deleted as well once
+     * its ExecContext doesn't exist any more.
+     * key - DispatcherUrl
+     * value:
+     * Map of:
+     * key - code of core
+     * value:
+     * Map of:
+     * key - taskId,
+     * value - TaskShortInfo
+     */
+    private final ConcurrentHashMap<DispatcherUrl, ConcurrentHashMap<String, ConcurrentHashMap<Long, TaskShortInfo>>> allTasks = new ConcurrentHashMap<>();
 
     public Path processorPath;
 
@@ -105,6 +128,8 @@ public class ProcessorTaskService {
     @SneakyThrows
     private void init(Path processorPath) {
         final LinkedList<CompletableFuture<Void>> list = new LinkedList<>();
+        // Tasks of FINISHED ExecContexts which weren't loaded
+        final LongAdder ofFinished = new LongAdder();
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.getProcessorEnv().metadataParams().getAllEnabledRefsForCores()) {
 
@@ -128,7 +153,7 @@ public class ProcessorTaskService {
                             }
                             try {
                                 try (final Stream<Path> stream = Files.list(p)) {
-                                    stream.map(taskDir -> CompletableFuture.supplyAsync(() -> processTaskDir(core, taskDir, taskGroupDir, dispatcherUrl), executor))
+                                    stream.map(taskDir -> CompletableFuture.supplyAsync(() -> processTaskDir(core, taskDir, taskGroupDir, dispatcherUrl, ofFinished), executor))
                                         .collect(Collectors.toCollection(() -> list));
                                 }
                             } catch (IOException e) {
@@ -146,9 +171,13 @@ public class ProcessorTaskService {
             }
             CompletableFuture.allOf(list.toArray(CompletableFuture[]::new)).join();
         }
+        if (ofFinished.sum() > 0) {
+            log.info("01.713.700 {} Task(s) of FINISHED ExecContexts weren't loaded, their dirs are kept as is", ofFinished.sum());
+        }
     }
 
-    private Void processTaskDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, Path taskGroupDir, DispatcherUrl dispatcherUrl) {
+    private Void processTaskDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, Path taskGroupDir, DispatcherUrl dispatcherUrl,
+                                LongAdder ofFinished) {
         try {
             if (!Thread.currentThread().isVirtual()) {
                 throw new IllegalStateException("(!Thread.currentThread().isVirtual())");
@@ -173,6 +202,13 @@ public class ProcessorTaskService {
                 if (task.taskId==null || taskId!=task.taskId) {
                     deleteDir(taskDir, "713.110 Delete not valid dir of task " + taskDir);
                     log.warn("713.115 task #{} from dispatcher {} is broken - (task.taskId==null || taskId!=task.taskId). Will be deleted", taskId, dispatcherUrl);
+                    return null;
+                }
+                // the dir is known in any case, a Task of a FINISHED ExecContext included
+                getAllTasksForProcessorCore(core).put(taskId, new TaskShortInfo(taskId, task.execContextId));
+                if (finishedExecContextsService.isFinished(dispatcherUrl, task.execContextId)) {
+                    // there is nothing to do with a Task of a FINISHED ExecContext - it isn't loaded, its dir is kept as is
+                    ofFinished.increment();
                     return null;
                 }
                 addTakToCore(core, task);
@@ -540,6 +576,17 @@ public class ProcessorTaskService {
         return map.computeIfAbsent(core.coreCode, k -> new HashMap<>()).computeIfAbsent(core.dispatcherUrl, m -> new HashMap<>());
     }
 
+    private Map<Long, TaskShortInfo> getAllTasksForProcessorCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
+        return allTasks.computeIfAbsent(core.dispatcherUrl, k -> new ConcurrentHashMap<>()).computeIfAbsent(core.coreCode, k -> new ConcurrentHashMap<>());
+    }
+
+    /**
+     * @return every Task of the core with a dir on disk, including the Tasks of FINISHED ExecContexts which weren't loaded at startup
+     */
+    public List<TaskShortInfo> findAllTaskShortInfosForCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
+        return List.copyOf(getAllTasksForProcessorCore(core).values());
+    }
+
     public List<ProcessorCoreTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, boolean assetsPreparedStatus) {
         try {
             ProcessorSyncHolder.writeLock.lock();
@@ -627,6 +674,7 @@ public class ProcessorTaskService {
                 Files.createDirectories(taskDir);
                 Path taskYamlFile = taskDir.resolve(Consts.TASK_YAML);
                 Files.writeString(taskYamlFile, ProcessorTaskUtils.toString(task), StandardCharsets.UTF_8, CREATE, WRITE, TRUNCATE_EXISTING);
+                getAllTasksForProcessorCore(core).put(task.taskId, new TaskShortInfo(task.taskId, task.execContextId));
             } catch (Throwable th) {
                 String es = "713.540 Error";
                 log.error(es, th);
@@ -763,6 +811,7 @@ public class ProcessorTaskService {
                     log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
                 }
                 mapTask.remove(taskId);
+                getAllTasksForProcessorCore(core).remove(taskId);
                 if (log.isDebugEnabled()) {
                     log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
                 }
