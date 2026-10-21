@@ -55,6 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -111,6 +112,19 @@ public class ProcessorTaskService {
 
     public Path processorPath;
 
+    /**
+     * @return the key of the lock of a Task, see {@link ProcessorTaskSyncService} - the absolute path to its task.yaml,
+     * resolved as {@link #save} resolves it. Static and Path-based on purpose - it's testable without a Spring context.
+     */
+    public static String taskYamlKey(Path processorPath, ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId) {
+        final Path dispatcherDir = processorPath.resolve(core.coreCode).resolve(Consts.TASK_DIR).resolve(MetadataParams.asCode(core.dispatcherUrl));
+        return ProcessorTaskSyncService.key(DirUtils.getPoweredPath(dispatcherDir, taskId).resolve(Consts.TASK_YAML));
+    }
+
+    private String taskYamlKey(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId) {
+        return taskYamlKey(processorPath, core, taskId);
+    }
+
    @PostConstruct
     public void postConstruct() {
        if (globals.testing || !globals.processor.enabled) {
@@ -127,12 +141,13 @@ public class ProcessorTaskService {
 
     @SneakyThrows
     private void init(Path processorPath) {
+        // stage 1 - the dirs of Tasks which don't belong to a FINISHED ExecContext, see collectTaskDir()
+        final LinkedList<CompletableFuture<@Nullable TaskDir>> collected = new LinkedList<>();
+        // stage 2 - what's done with the dir of each collected Task, see processTaskDir()
         final LinkedList<CompletableFuture<Void>> list = new LinkedList<>();
         // Tasks of FINISHED ExecContexts which weren't loaded
         final LongAdder ofFinished = new LongAdder();
-        // a fixed pool of platform threads, one per CPU core; named, so a thread dump of a slow startup shows who is who
-        try (ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),
-                Thread.ofPlatform().name("processor-task-init-", 0).factory())) {
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.getProcessorEnv().metadataParams().getAllEnabledRefsForCores()) {
 
                 Path processorDir = processorPath.resolve(core.coreCode);
@@ -155,8 +170,8 @@ public class ProcessorTaskService {
                             }
                             try {
                                 try (final Stream<Path> stream = Files.list(p)) {
-                                    stream.map(taskDir -> CompletableFuture.supplyAsync(() -> processTaskDir(core, taskDir, taskGroupDir, dispatcherUrl, ofFinished), executor))
-                                        .collect(Collectors.toCollection(() -> list));
+                                    stream.map(taskDir -> CompletableFuture.supplyAsync(() -> collectTaskDir(core, taskDir, taskGroupDir, dispatcherUrl, ofFinished), executor))
+                                        .collect(Collectors.toCollection(() -> collected));
                                 }
                             } catch (IOException e) {
                                 String es = "713.040 Error";
@@ -171,6 +186,14 @@ public class ProcessorTaskService {
                     throw new RuntimeException(es, e);
                 }
             }
+            CompletableFuture.allOf(collected.toArray(CompletableFuture[]::new)).join();
+        }
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            collected.stream()
+                    .map(CompletableFuture::join)
+                    .filter(Objects::nonNull)
+                    .map(d -> CompletableFuture.supplyAsync(() -> processTaskDir(d.core(), d.taskDir(), d.taskGroupDir(), d.dispatcherUrl(), ofFinished), executor))
+                    .collect(Collectors.toCollection(() -> list));
             CompletableFuture.allOf(list.toArray(CompletableFuture[]::new)).join();
         }
         if (ofFinished.sum() > 0) {
@@ -178,12 +201,77 @@ public class ProcessorTaskService {
         }
     }
 
+    /** a dir of a Task which goes to stage 2 of the startup scan, processTaskDir() */
+    private record TaskDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, Path taskGroupDir, DispatcherUrl dispatcherUrl) {}
+
+    private static final String EXEC_CONTEXT_ID_KEY = "execContextId:";
+
+    /**
+     * Stage 1 of the startup scan. A Task of a FINISHED ExecContext is registered as a Task with a dir and skipped - its
+     * task.yaml isn't parsed and its dir is kept as is. Every other dir goes to stage 2, processTaskDir(), unchanged -
+     * including a dir whose ExecContext can't be read here: processTaskDir() parses task.yaml as a whole and checks again.
+     *
+     * @return the dir for stage 2, or null for a skipped Task
+     */
+    private @Nullable TaskDir collectTaskDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, Path taskGroupDir,
+                                             DispatcherUrl dispatcherUrl, LongAdder ofFinished) {
+        final Long execContextId = readExecContextId(taskDir.resolve(Consts.TASK_YAML));
+        if (execContextId != null && finishedExecContextsService.isFinished(dispatcherUrl, execContextId)) {
+            final Long taskId = taskIdOf(taskGroupDir, taskDir);
+            if (taskId != null) {
+                getAllTasksForProcessorCore(core).put(taskId, new TaskShortInfo(taskId, execContextId));
+                ofFinished.increment();
+                return null;
+            }
+        }
+        return new TaskDir(core, taskDir, taskGroupDir, dispatcherUrl);
+    }
+
+    /**
+     * The id of the ExecContext of a Task, read from its task.yaml without parsing the whole file: the value of the
+     * top-level key 'execContextId', i.e. at the very start of a line. A nested key of the same name - TaskParamsYaml
+     * in 'params' has one - is indented, so it's never taken for it. Lines are read only up to the key.
+     * Path-based and static on purpose - it's testable without a Spring context.
+     *
+     * @return the id, or null when there isn't a readable one
+     */
+    public static @Nullable Long readExecContextId(Path taskYaml) {
+        if (Files.notExists(taskYaml)) {
+            return null;
+        }
+        try (Stream<String> lines = Files.lines(taskYaml, StandardCharsets.UTF_8)) {
+            return lines.filter(l -> l.startsWith(EXEC_CONTEXT_ID_KEY))
+                    .findFirst()
+                    .map(l -> toLongOrNull(l.substring(EXEC_CONTEXT_ID_KEY.length()).strip()))
+                    .orElse(null);
+        } catch (Throwable th) {
+            return null;
+        }
+    }
+
+    private static @Nullable Long toLongOrNull(String s) {
+        try {
+            return Long.valueOf(s);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** @return the id of a Task from the names of its dirs, as processTaskDir() computes it, or null when they aren't numbers */
+    private static @Nullable Long taskIdOf(Path taskGroupDir, Path taskDir) {
+        try {
+            return Long.parseLong(taskGroupDir.getFileName().toString()) * DigitUtils.DIV + Long.parseLong(taskDir.getFileName().toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     private Void processTaskDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, Path taskGroupDir, DispatcherUrl dispatcherUrl,
                                 LongAdder ofFinished) {
         try {
-//            if (!Thread.currentThread().isVirtual()) {
-//                throw new IllegalStateException("(!Thread.currentThread().isVirtual())");
-//            }
+            if (!Thread.currentThread().isVirtual()) {
+                throw new IllegalStateException("(!Thread.currentThread().isVirtual())");
+            }
             String groupDirName = taskGroupDir.getFileName().toString();
             String name = taskDir.getFileName().toString();
             long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);
@@ -208,6 +296,7 @@ public class ProcessorTaskService {
                 }
                 // the dir is known in any case, a Task of a FINISHED ExecContext included
                 getAllTasksForProcessorCore(core).put(taskId, new TaskShortInfo(taskId, task.execContextId));
+                // usually already skipped by stage 1, collectTaskDir() - here for a Task whose execContextId it couldn't read
                 if (finishedExecContextsService.isFinished(dispatcherUrl, task.execContextId)) {
                     // there is nothing to do with a Task of a FINISHED ExecContext - it isn't loaded, its dir is kept as is
                     ofFinished.increment();
@@ -280,6 +369,7 @@ public class ProcessorTaskService {
      * Enforces the contract of 'console' (see {@link #cleanConsoleOfOkExecs}) on a stored task: when a console was
      * cleaned, the task with the cleaned functionExec is written to taskYaml immediately via {@link #actualSave}.
      * Nothing is written when there was nothing to clean.
+     * Under the lock of this Task only - see {@link ProcessorTaskSyncService}, the key is taskYaml.
      * Path-based and static on purpose - it's testable without a Spring context.
      *
      * @return true when a console was cleaned and the task was written
@@ -288,13 +378,14 @@ public class ProcessorTaskService {
         if (!cleanConsoleOfOkExecs(functionExec)) {
             return false;
         }
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(ProcessorTaskSyncService.key(taskYaml));
         try {
-            ProcessorSyncHolder.writeLock.lock();
+            lock.lock();
             task.setFunctionExecResult(FunctionExecUtils.toString(functionExec));
             actualSave(task, taskDir, taskYaml);
             return true;
         } finally {
-            ProcessorSyncHolder.writeLock.unlock();
+            lock.unlock();
         }
     }
 
@@ -308,8 +399,9 @@ public class ProcessorTaskService {
     }
 
     public void setReportedOn(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId) {
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, taskId));
         try {
-            ProcessorSyncHolder.writeLock.lock();
+            lock.lock();
             log.info("713.200 setReportedOn({}, {})", core.dispatcherUrl, taskId);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
@@ -320,13 +412,14 @@ public class ProcessorTaskService {
             task.setReportedOn(System.currentTimeMillis());
             save(core, task);
         } finally {
-            ProcessorSyncHolder.writeLock.unlock();
+            lock.unlock();
         }
     }
 
     public void setInputAsEmpty(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId, String variableId) {
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, taskId));
         try {
-            ProcessorSyncHolder.writeLock.lock();
+            lock.lock();
             log.info("713.240 setInputAsEmpty({}, {})", core.dispatcherUrl, taskId);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
@@ -346,13 +439,14 @@ public class ProcessorTaskService {
 
             save(core, task);
         } finally {
-            ProcessorSyncHolder.writeLock.unlock();
+            lock.unlock();
         }
     }
 
     public void setDelivered(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, taskId));
         try {
-            ProcessorSyncHolder.writeLock.lock();
+            lock.lock();
 
             log.info("713.280 setDelivered({}, {})", core.dispatcherUrl.url, taskId);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
@@ -381,13 +475,14 @@ public class ProcessorTaskService {
             }
             save(core, task);
         } finally {
-            ProcessorSyncHolder.writeLock.unlock();
+            lock.unlock();
         }
     }
 
     public void setVariableUploadedAndCompleted(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, Long outputVariableId) {
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, taskId));
         try {
-            ProcessorSyncHolder.writeLock.lock();
+            lock.lock();
             log.info("setResourceUploadedAndCompleted({}, {}, {})", core.dispatcherUrl, taskId, outputVariableId);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
@@ -398,14 +493,15 @@ public class ProcessorTaskService {
             task.setCompleted(task.isDelivered());
             save(core, task);
         } finally {
-            ProcessorSyncHolder.writeLock.unlock();
+            lock.unlock();
         }
     }
 
     @SuppressWarnings("unused")
     public void setCompleted(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, taskId));
         try {
-            ProcessorSyncHolder.writeLock.lock();
+            lock.lock();
             log.info("setCompleted({}, {})", core.dispatcherUrl, taskId);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
@@ -415,24 +511,27 @@ public class ProcessorTaskService {
             task.setCompleted(true);
             save(core, task);
         } finally {
-            ProcessorSyncHolder.writeLock.unlock();
+            lock.unlock();
         }
     }
 
     public List<ProcessorCoreTask> getForReporting(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        try {
-            ProcessorSyncHolder.readLock.lock();
-            List<ProcessorCoreTask> result = getTasksForProcessorCore(core).values().stream()
-                .filter(o -> o.finishedOn != null)
-                .filter(processorTask -> !processorTask.isReported() ||
-                    (!processorTask.isDelivered() &&
-                        (processorTask.getReportedOn() == null || (System.currentTimeMillis() - processorTask.getReportedOn()) > 60_000)))
-                .collect(Collectors.toList());
-            return result;
-        } finally {
-            ProcessorSyncHolder.readLock.unlock();
-        }
+        // the state of each task - several fields - is read under the lock of that task
+        List<ProcessorCoreTask> result = getTasksForProcessorCore(core).values().stream()
+            .filter(o -> ProcessorTaskSyncService.getWithReadSync(taskYamlKey(core, o.taskId), () -> isForReporting(o)))
+            .collect(Collectors.toList());
+        return result;
     }
+
+    private static boolean isForReporting(ProcessorCoreTask processorTask) {
+        return processorTask.finishedOn != null &&
+            (!processorTask.isReported() ||
+                (!processorTask.isDelivered() &&
+                    (processorTask.getReportedOn() == null || (System.currentTimeMillis() - processorTask.getReportedOn()) > 60_000)));
+    }
+
+    /** the state of a task which is reported - read in one go, under the lock of the task */
+    private record ReportState(boolean delivered, boolean reported, @Nullable String functionExecResult) {}
 
     public ProcessorCommParamsYaml.@Nullable ReportTaskProcessingResult reportTaskProcessingResult(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
         final List<ProcessorCoreTask> list = getForReporting(core);
@@ -442,17 +541,21 @@ public class ProcessorTaskService {
         log.info("Number of tasks for reporting: " + list.size());
         final ProcessorCommParamsYaml.ReportTaskProcessingResult processingResult = new ProcessorCommParamsYaml.ReportTaskProcessingResult();
         for (ProcessorCoreTask task : list) {
-            if (task.isDelivered() && !task.isReported()) {
-                log.warn("713.380 This state need to be investigated: (task.isDelivered() && !task.isReported())==true");
+            // read under the lock of the task, so a task which is being finished right now isn't reported half-done;
+            // setReportedOn() below locks it for writing
+            final ReportState state = ProcessorTaskSyncService.getWithReadSync(taskYamlKey(core, task.taskId),
+                    () -> new ReportState(task.isDelivered(), task.isReported(), task.getFunctionExecResult()));
+            if (state.delivered() && !state.reported()) {
+                log.warn("01.713.380 This state need to be investigated: (task.isDelivered() && !task.isReported())==true");
             }
             // TODO 2019-07-12 do we need to check against task.isReported()? isn't task.isDelivered() just enough?
             //  2020-09-26 until 713.105 (task.isDelivered() && !task.isReported() ) will be fixed, this check is correct
             //  2020-11-23 looks like 713.105 can occur in case when a task was finished with status ERROR
-            if (task.isDelivered() && task.isReported()) {
+            if (state.delivered() && state.reported()) {
                 continue;
             }
             final ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result =
-                    new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getFunctionExecResult());
+                    new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), state.functionExecResult());
             processingResult.results.add(result);
             setReportedOn(core, task.taskId);
         }
@@ -460,20 +563,17 @@ public class ProcessorTaskService {
     }
 
     public void markAsFinishedWithError(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId, String es) {
-        try {
-            ProcessorSyncHolder.writeLock.lock();
-            markAsFinished(core, taskId,
-                    new FunctionApiData.FunctionExec(
-                            null, null, null,
-                            new FunctionApiData.SystemExecResult("system-error", false, -992, es)));
-        } finally {
-            ProcessorSyncHolder.writeLock.unlock();
-        }
+        // markAsFinished() locks the task itself - a nested lock of the same task isn't allowed
+        markAsFinished(core, taskId,
+                new FunctionApiData.FunctionExec(
+                        null, null, null,
+                        new FunctionApiData.SystemExecResult("system-error", false, -992, es)));
     }
 
     void markAsFinished(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, FunctionApiData.FunctionExec functionExec) {
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, taskId));
         try {
-            ProcessorSyncHolder.writeLock.lock();
+            lock.lock();
             log.info("markAsFinished({}, #{}, {})", core.dispatcherUrl.url, taskId, functionExec);
 
             processorEnvironment.getProcessorEnv().metadataParams().removeQuota(core.dispatcherUrl.url, taskId);
@@ -507,13 +607,14 @@ public class ProcessorTaskService {
                 save(core, task);
             }
         } finally {
-            ProcessorSyncHolder.writeLock.unlock();
+            lock.unlock();
         }
     }
 
     void markAsAssetPrepared(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, boolean status) {
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, taskId));
         try {
-            ProcessorSyncHolder.writeLock.lock();
+            lock.lock();
             log.info("markAsAssetPrepared(dispatcherUrl: {}, taskId: {}, status: {})", core.dispatcherUrl, taskId, status);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
@@ -523,7 +624,7 @@ public class ProcessorTaskService {
                 save(core, task);
             }
         } finally {
-            ProcessorSyncHolder.writeLock.unlock();
+            lock.unlock();
         }
     }
 
@@ -542,23 +643,28 @@ public class ProcessorTaskService {
     }
 
     public List<ProcessorCoreTask> findAllByCompletedIsFalse(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        try {
-            ProcessorSyncHolder.writeLock.lock();
-            List<ProcessorCoreTask> list = new ArrayList<>();
-            for (ProcessorCoreTask task : getTasksForProcessorCore(core).values()) {
-                if (!task.completed) {
-                    if (task.finishedOn != null && task.reported && task.delivered && task.output.outputStatuses.stream().allMatch(o -> o.uploaded)) {
-                        task.completed = true;
-                        save(core, task);
-                    } else {
-                        list.add(task);
-                    }
-                }
+        List<ProcessorCoreTask> list = new ArrayList<>();
+        for (ProcessorCoreTask task : getTasksForProcessorCore(core).values()) {
+            // decided - and the task completed when everything is done - under the lock of the task
+            if (!ProcessorTaskSyncService.getWithSync(taskYamlKey(core, task.taskId), () -> completeIfAllDone(core, task))) {
+                list.add(task);
             }
-            return list;
-        } finally {
-            ProcessorSyncHolder.writeLock.unlock();
         }
+        return list;
+    }
+
+    /**
+     * Must be called under the write lock of the task.
+     * @return task.completed - after the task was completed, when everything about it is done
+     */
+    private boolean completeIfAllDone(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task) {
+        if (!task.completed && task.finishedOn != null && task.reported && task.delivered && task.output.outputStatuses.stream().allMatch(o -> o.uploaded)
+                // still in the map - a task deleted after it was found must not be written, save() would create its dir again
+                && getTasksForProcessorCore(core).get(task.taskId) == task) {
+            task.completed = true;
+            save(core, task);
+        }
+        return task.completed;
     }
 
     private Map<Long, ProcessorCoreTask> getTasksForDispatcherUrl(ProcessorAndCoreData.DispatcherUrl dispatcherUrl) {
@@ -575,7 +681,8 @@ public class ProcessorTaskService {
     }
 
     private Map<Long, ProcessorCoreTask> getTasksForProcessorCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        return map.computeIfAbsent(core.coreCode, k -> new HashMap<>()).computeIfAbsent(core.dispatcherUrl, m -> new HashMap<>());
+        // concurrent maps - there isn't any lock over all tasks, only the lock of each task, see ProcessorTaskSyncService
+        return map.computeIfAbsent(core.coreCode, k -> new ConcurrentHashMap<>()).computeIfAbsent(core.dispatcherUrl, m -> new ConcurrentHashMap<>());
     }
 
     private Map<Long, TaskShortInfo> getAllTasksForProcessorCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
@@ -590,43 +697,36 @@ public class ProcessorTaskService {
     }
 
     public List<ProcessorCoreTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, boolean assetsPreparedStatus) {
-        try {
-            ProcessorSyncHolder.writeLock.lock();
-
-            List<ProcessorCoreTask> list = new ArrayList<>();
-            Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getTasksForProcessorCore(core);
-            List<Long> forDeletion = new ArrayList<>();
-            for (ProcessorCoreTask task : mapForDispatcherUrl.values()) {
+        List<ProcessorCoreTask> list = new ArrayList<>();
+        Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getTasksForProcessorCore(core);
+        List<Long> forDeletion = new ArrayList<>();
+        for (ProcessorCoreTask task : mapForDispatcherUrl.values()) {
+            // the state of the task - several fields - is read under the lock of the task
+            ProcessorTaskSyncService.getWithReadSyncVoid(taskYamlKey(core, task.taskId), () -> {
                 if (S.b(task.dispatcherUrl)) {
                     forDeletion.add(task.taskId);
                 }
                 if (!task.completed && task.finishedOn == null && task.assetsPrepared == assetsPreparedStatus) {
                     list.add(task);
                 }
-            }
-            forDeletion.forEach(id -> {
-                log.warn("713.480 task #{} from dispatcher {} was deleted from global map with tasks", id, core.dispatcherUrl.url);
-                mapForDispatcherUrl.remove(id);
             });
-            return list;
-        } finally {
-            ProcessorSyncHolder.writeLock.unlock();
         }
+        forDeletion.forEach(id -> {
+            log.warn("01.713.480 task #{} from dispatcher {} was deleted from global map with tasks", id, core.dispatcherUrl.url);
+            mapForDispatcherUrl.remove(id);
+        });
+        return list;
     }
 
     public void addTakToCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task) {
-        try {
-            ProcessorSyncHolder.writeLock.lock();
-            getTasksForProcessorCore(core).put(task.taskId, task);
-        } finally {
-            ProcessorSyncHolder.writeLock.unlock();
-        }
+        getTasksForProcessorCore(core).put(task.taskId, task);
     }
 
     @SneakyThrows
     public void createTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.AssignedTask assignedTask) {
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, assignedTask.taskId));
         try {
-            ProcessorSyncHolder.writeLock.lock();
+            lock.lock();
             processorEnvironment.getProcessorEnv().metadataParams().registerTaskQuota(core.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
 
             log.info("713.500 Prepare new task #{} on core #{}", assignedTask.taskId, core.coreId);
@@ -683,14 +783,15 @@ public class ProcessorTaskService {
                 throw new RuntimeException(es, th);
             }
         } finally {
-            ProcessorSyncHolder.writeLock.unlock();
+            lock.unlock();
         }
     }
 
     @Nullable
     public ProcessorCoreTask resetTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, taskId));
         try {
-            ProcessorSyncHolder.writeLock.lock();
+            lock.lock();
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 return null;
@@ -698,14 +799,15 @@ public class ProcessorTaskService {
             task.setLaunchedOn(null);
             return save(core, task);
         } finally {
-            ProcessorSyncHolder.writeLock.unlock();
+            lock.unlock();
         }
     }
 
     @Nullable
     public ProcessorCoreTask setLaunchOn(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId) {
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, taskId));
         try {
-            ProcessorSyncHolder.writeLock.lock();
+            lock.lock();
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 return null;
@@ -713,16 +815,22 @@ public class ProcessorTaskService {
             task.setLaunchedOn(System.currentTimeMillis());
             return save(core, task);
         } finally {
-            ProcessorSyncHolder.writeLock.unlock();
+            lock.unlock();
         }
     }
 
     @SneakyThrows
     private ProcessorCoreTask save(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task) {
+        // a task is changed and written only under its own write lock, see ProcessorTaskSyncService
+        ProcessorTaskSyncService.checkWriteLockPresent(taskYamlKey(core, task.taskId));
         Path taskDir = prepareTaskDir(core, task.taskId);
         Path taskYaml = taskDir.resolve(Consts.TASK_YAML);
 
-        return actualSave(task, taskDir, taskYaml);
+        final ProcessorCoreTask saved = actualSave(task, taskDir, taskYaml);
+        // publishes the changed state to readers which don't lock the task: an update of a ConcurrentHashMap
+        // happens-before a retrieval which sees it. replace() never adds again a task which was deleted from the map
+        getTasksForProcessorCore(core).replace(task.taskId, task);
+        return saved;
     }
 
     public static ProcessorCoreTask actualSave(ProcessorCoreTask task, Path taskDir, Path taskYaml) throws IOException {
@@ -747,48 +855,30 @@ public class ProcessorTaskService {
 
     @Nullable
     public ProcessorCoreTask findByIdForCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
-        try {
-            ProcessorSyncHolder.readLock.lock();
-
-            return getTasksForProcessorCore(core)
-                    .entrySet()
-                    .stream()
-                    .filter(e -> e.getValue().taskId.equals(taskId))
-                    .findFirst()
-                    .map(Map.Entry::getValue)
-                    .orElse(null);
-        } finally {
-            ProcessorSyncHolder.readLock.unlock();
-        }
+        return getTasksForProcessorCore(core)
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue().taskId.equals(taskId))
+                .findFirst()
+                .map(Map.Entry::getValue)
+                .orElse(null);
     }
 
     public List<ProcessorCoreTask> findAllForCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        try {
-            ProcessorSyncHolder.readLock.lock();
-
-            Collection<ProcessorCoreTask> values = getTasksForProcessorCore(core).values();
-            return List.copyOf(values);
-        } finally {
-            ProcessorSyncHolder.readLock.unlock();
-        }
+        Collection<ProcessorCoreTask> values = getTasksForProcessorCore(core).values();
+        return List.copyOf(values);
     }
 
     public List<String> findCoreCodesWithTaskId(Long taskId) {
         List<String> codes = new ArrayList<>();
-        try {
-            ProcessorSyncHolder.readLock.lock();
-            for (Map.Entry<String, Map<DispatcherUrl, Map<Long, ProcessorCoreTask>>> entry : map.entrySet()) {
-                for (Map.Entry<DispatcherUrl, Map<Long, ProcessorCoreTask>> dispatcherUrlMapEntry : entry.getValue().entrySet()) {
-                    for (Map.Entry<Long, ProcessorCoreTask> longProcessorCoreTaskEntry : dispatcherUrlMapEntry.getValue().entrySet()) {
-                        if (longProcessorCoreTaskEntry.getKey().equals(taskId)) {
-                            codes.add(entry.getKey());
-                        }
+        for (Map.Entry<String, Map<DispatcherUrl, Map<Long, ProcessorCoreTask>>> entry : map.entrySet()) {
+            for (Map.Entry<DispatcherUrl, Map<Long, ProcessorCoreTask>> dispatcherUrlMapEntry : entry.getValue().entrySet()) {
+                for (Map.Entry<Long, ProcessorCoreTask> longProcessorCoreTaskEntry : dispatcherUrlMapEntry.getValue().entrySet()) {
+                    if (longProcessorCoreTaskEntry.getKey().equals(taskId)) {
+                        codes.add(entry.getKey());
                     }
                 }
             }
-
-        } finally {
-            ProcessorSyncHolder.readLock.unlock();
         }
         return codes;
     }
@@ -801,8 +891,9 @@ public class ProcessorTaskService {
         final Path dispatcherDir = processorTaskDir.resolve(processorState.dispatcherCode);
         final Path taskDir = DirUtils.getPoweredPath(dispatcherDir, taskId);
 
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, taskId));
         try {
-            ProcessorSyncHolder.writeLock.lock();
+            lock.lock();
             processorEnvironment.getProcessorEnv().metadataParams().removeQuota(core.dispatcherUrl.url, taskId);
             try {
                 if (Files.exists(taskDir)) {
@@ -823,7 +914,7 @@ public class ProcessorTaskService {
                 log.error("713.600 Error deleting task " + taskId, th);
             }
         } finally {
-            ProcessorSyncHolder.writeLock.unlock();
+            lock.unlock();
         }
     }
 
@@ -851,15 +942,16 @@ public class ProcessorTaskService {
         final Path dispatcherDir = processorTaskDir.resolve(processorState.dispatcherCode);
         final Path taskDir = DirUtils.getPoweredPath(dispatcherDir, taskId);
 
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, taskId));
         try {
-            ProcessorSyncHolder.writeLock.lock();
+            lock.lock();
             if (deleteTaskAssetDir(taskDir)) {
                 log.info("01.713.640 asset dir of task #{} was deleted, url {}", taskId, core.dispatcherUrl.url);
             }
         } catch (Throwable th) {
             log.error("01.713.660 Error deleting asset dir of task " + taskId, th);
         } finally {
-            ProcessorSyncHolder.writeLock.unlock();
+            lock.unlock();
         }
     }
 

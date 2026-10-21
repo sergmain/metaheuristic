@@ -562,4 +562,92 @@ class ProcessorTaskServiceTest {
         assertNull(processor.service().findByIdForCore(processor.core(), 9931L));
         assertEquals(List.of(), processor.service().findAllTaskShortInfosForCore(processor.core()), "a deleted task must leave allTasks too");
     }
+
+    @Test
+    public void test_postConstruct_brokenTaskYamlOfFinishedExecContext(@TempDir Path processorPath) throws IOException {
+        final StartedProcessor first = startStandaloneProcessor(processorPath);
+
+        // task.yaml which can't be parsed as a whole, but names its ExecContext in the top-level key
+        final Path taskDir = first.service().prepareTaskDir(first.core(), 9951L);
+        Files.writeString(taskDir.resolve(Consts.TASK_YAML), "execContextId: 951\nparams: [unclosed\n");
+        Files.writeString(finishedExecContextsFile(processorPath, first), "{\"ids\":[951]}");
+
+        final StartedProcessor restarted = startStandaloneProcessor(processorPath);
+
+        // PHASE #5: stage 1 reads only execContextId - a Task of a FINISHED ExecContext isn't parsed, its dir is kept as is
+        assertTrue(Files.exists(taskDirOf(processorPath, restarted, 9951L)), "the dir of task #9951 must be kept");
+        assertNull(restarted.service().findByIdForCore(restarted.core(), 9951L));
+        assertEquals(List.of(new ProcessorTaskService.TaskShortInfo(9951L, 951L)), restarted.service().findAllTaskShortInfosForCore(restarted.core()),
+            "the dir of task #9951 is known to the cleaner");
+    }
+
+    // ---- stage 1: execContextId read from task.yaml without parsing it ----
+
+    /** TaskParamsYaml as it travels in ProcessorCoreTask.params - with a nested 'execContextId' of its own */
+    private static String taskParams(long execContextId) {
+        final TaskParamsYaml tpy = new TaskParamsYaml();
+        tpy.task.execContextId = execContextId;
+        tpy.task.processCode = "process-1";
+        tpy.task.context = EnumsApi.FunctionExecContext.external;
+        tpy.task.function = new TaskParamsYaml.FunctionConfig();
+        tpy.task.function.code = "mh.test-function";
+        tpy.task.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+        tpy.task.function.targets.put(CommonConsts.MH_DEFAULT_OS_KEY, new TaskParamsYaml.Target("src", "fn.py"));
+        return TaskParamsYamlUtils.UTILS.toString(tpy);
+    }
+
+    @Test
+    public void test_readExecContextId_fromTaskYamlWrittenByProcessor(@TempDir Path taskDir) throws IOException {
+        final ProcessorCoreTask task = new ProcessorCoreTask();
+        task.taskId = 9961L;
+        task.execContextId = 961L;
+        task.params = taskParams(12345L);
+        task.functionExecResult = FunctionExecUtils.toString(new FunctionApiData.FunctionExec(ok("mh.test-function", ""), null, null, null));
+        final Path taskYaml = taskDir.resolve(Consts.TASK_YAML);
+        ProcessorTaskService.actualSave(task, taskDir, taskYaml);
+        assertTrue(Files.readString(taskYaml).contains("execContextId: 12345"), "the nested execContextId of params must be in the file");
+
+        assertEquals(961L, ProcessorTaskService.readExecContextId(taskYaml), "the top-level execContextId, not the nested one of params");
+    }
+
+    @Test
+    public void test_readExecContextId_nestedOneIsNeverTaken(@TempDir Path taskDir) throws IOException {
+        // no top-level execContextId - only the nested one in params is in the file
+        final ProcessorCoreTask task = new ProcessorCoreTask();
+        task.taskId = 9962L;
+        task.params = taskParams(12345L);
+        final Path taskYaml = taskDir.resolve(Consts.TASK_YAML);
+        ProcessorTaskService.actualSave(task, taskDir, taskYaml);
+
+        assertNull(ProcessorTaskService.readExecContextId(taskYaml));
+    }
+
+    @Test
+    public void test_readExecContextId_notReadable_isNull(@TempDir Path dir) throws IOException {
+        assertNull(ProcessorTaskService.readExecContextId(dir.resolve("absent.yaml")));
+        assertNull(ProcessorTaskService.readExecContextId(Files.writeString(dir.resolve("empty.yaml"), "")));
+        assertNull(ProcessorTaskService.readExecContextId(Files.writeString(dir.resolve("no-key.yaml"), "taskId: 1\n")));
+        assertNull(ProcessorTaskService.readExecContextId(Files.writeString(dir.resolve("not-a-number.yaml"), "execContextId: abc\n")));
+        assertNull(ProcessorTaskService.readExecContextId(Files.writeString(dir.resolve("indented.yaml"), "params:\n  execContextId: 5\n")));
+    }
+
+    @Test
+    public void test_postConstruct_taskOfNotFinishedExecContext_goesToStage2(@TempDir Path processorPath) throws IOException {
+        final StartedProcessor first = startStandaloneProcessor(processorPath);
+
+        // stage 1 can't read execContextId of task #9971 - a broken task.yaml goes to stage 2, which deletes it, as before
+        final Path brokenDir = first.service().prepareTaskDir(first.core(), 9971L);
+        Files.writeString(brokenDir.resolve(Consts.TASK_YAML), "params: [unclosed\n");
+        // task #9972 of not FINISHED ExecContext #972 is loaded by stage 2
+        final ProcessorCoreTask ofActive = newTask(first, 9972L);
+        ofActive.execContextId = 972L;
+        seedTaskOnDisk(first, ofActive);
+        Files.writeString(finishedExecContextsFile(processorPath, first), "{\"ids\":[971]}");
+
+        final StartedProcessor restarted = startStandaloneProcessor(processorPath);
+
+        assertTrue(Files.notExists(taskDirOf(processorPath, restarted, 9971L)), "a broken task.yaml without readable execContextId is deleted by stage 2");
+        assertNotNull(restarted.service().findByIdForCore(restarted.core(), 9972L));
+        assertEquals(List.of(9972L), tasksSelectedForExecution(restarted));
+    }
 }

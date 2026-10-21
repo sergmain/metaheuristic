@@ -165,14 +165,11 @@ public class ProcessorService {
     }
 
     public void assignTasks(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.AssignedTask task) {
-        try {
-            ProcessorSyncHolder.writeLock.lock();
-            currentExecState.registerDelta(core.dispatcherUrl, task.execContextId, task.state);
-            finishedExecContextsService.registerDelta(core.dispatcherUrl, task.execContextId, task.state);
-            processorTaskService.createTask(core, task);
-        } finally {
-            ProcessorSyncHolder.writeLock.unlock();
-        }
+        // each of these locks itself - CurrentExecState and FinishedExecContextsService their state, createTask() the task,
+        // so there is no lock here: a nested lock of the same task isn't allowed
+        currentExecState.registerDelta(core.dispatcherUrl, task.execContextId, task.state);
+        finishedExecContextsService.registerDelta(core.dispatcherUrl, task.execContextId, task.state);
+        processorTaskService.createTask(core, task);
     }
 
     @Nullable
