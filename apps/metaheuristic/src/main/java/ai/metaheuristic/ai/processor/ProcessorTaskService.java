@@ -130,7 +130,9 @@ public class ProcessorTaskService {
         final LinkedList<CompletableFuture<Void>> list = new LinkedList<>();
         // Tasks of FINISHED ExecContexts which weren't loaded
         final LongAdder ofFinished = new LongAdder();
-        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+        // a fixed pool of platform threads, one per CPU core; named, so a thread dump of a slow startup shows who is who
+        try (ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),
+                Thread.ofPlatform().name("processor-task-init-", 0).factory())) {
             for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.getProcessorEnv().metadataParams().getAllEnabledRefsForCores()) {
 
                 Path processorDir = processorPath.resolve(core.coreCode);
@@ -179,9 +181,9 @@ public class ProcessorTaskService {
     private Void processTaskDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, Path taskGroupDir, DispatcherUrl dispatcherUrl,
                                 LongAdder ofFinished) {
         try {
-            if (!Thread.currentThread().isVirtual()) {
-                throw new IllegalStateException("(!Thread.currentThread().isVirtual())");
-            }
+//            if (!Thread.currentThread().isVirtual()) {
+//                throw new IllegalStateException("(!Thread.currentThread().isVirtual())");
+//            }
             String groupDirName = taskGroupDir.getFileName().toString();
             String name = taskDir.getFileName().toString();
             long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);
