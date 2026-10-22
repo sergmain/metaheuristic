@@ -150,7 +150,7 @@ public class MhMcpToolWiringTest {
                     assertNotNull(expectedArg, "unknown tool, update this test: " + toolName);
 
                     CallToolResult result = s.callHandler()
-                            .apply(null, new CallToolRequest(toolName, Map.of()));
+                            .apply(null, CallToolRequest.builder(toolName).arguments(Map.of()).build());
 
                     assertEquals(Boolean.TRUE, result.isError(), toolName);
                     String text = textOf(result);
@@ -169,7 +169,7 @@ public class MhMcpToolWiringTest {
                     .orElseThrow(() -> new AssertionError("not registered: " + toolName));
 
             CallToolResult result = spec.callHandler()
-                    .apply(null, new CallToolRequest(toolName, Map.of()));
+                    .apply(null, CallToolRequest.builder(toolName).arguments(Map.of()).build());
 
             // no required argument to probe, so it runs on to the null service - reaching it proves
             // a handler is attached, and the guard turns the failure into a readable tool error

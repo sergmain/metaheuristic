@@ -51,7 +51,7 @@ public class MhMcpWaitExecContextToolTest {
                 .filter(s -> TOOL.equals(s.tool().name()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("not registered: " + TOOL));
-        return spec.callHandler().apply(null, new CallToolRequest(TOOL, arguments));
+        return spec.callHandler().apply(null, CallToolRequest.builder(TOOL).arguments(arguments).build());
     }
 
     private static String textOf(CallToolResult result) {

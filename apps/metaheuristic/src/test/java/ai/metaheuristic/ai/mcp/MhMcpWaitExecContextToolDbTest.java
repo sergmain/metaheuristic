@@ -90,7 +90,7 @@ public class MhMcpWaitExecContextToolDbTest extends PreparingSourceCode {
                 .filter(s -> TOOL.equals(s.tool().name()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("not registered: " + TOOL))
-                .callHandler().apply(null, new CallToolRequest(TOOL, arguments));
+                .callHandler().apply(null, CallToolRequest.builder(TOOL).arguments(arguments).build());
     }
 
     private static String textOf(CallToolResult result) {

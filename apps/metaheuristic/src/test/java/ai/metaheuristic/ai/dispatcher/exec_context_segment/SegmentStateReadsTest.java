@@ -207,7 +207,7 @@ public class SegmentStateReadsTest extends PreparingSourceCode {
         final McpServerFeatures.SyncToolSpecification spec = defs.getAllToolSpecifications().stream()
                 .filter(s -> tool.equals(s.tool().name())).findFirst()
                 .orElseThrow(() -> new AssertionError(tool + " is not registered"));
-        return spec.callHandler().apply(null, new CallToolRequest(tool, Map.of("execContextId", execContextId)));
+        return spec.callHandler().apply(null, CallToolRequest.builder(tool).arguments(Map.of("execContextId", execContextId)).build());
     }
 
     private static String textOf(CallToolResult result) {

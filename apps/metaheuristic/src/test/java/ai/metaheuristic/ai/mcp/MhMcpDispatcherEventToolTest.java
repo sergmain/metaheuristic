@@ -80,7 +80,7 @@ public class MhMcpDispatcherEventToolTest extends MhSharedItTest {
                 .filter(s -> toolName.equals(s.tool().name()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError(toolName + " is not registered"));
-        return spec.callHandler().apply(null, new CallToolRequest(toolName, arguments));
+        return spec.callHandler().apply(null, CallToolRequest.builder(toolName).arguments(arguments).build());
     }
 
     private static String textOf(CallToolResult result) {
