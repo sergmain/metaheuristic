@@ -88,9 +88,12 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
         this.postProcessingDelay = postProcessingDelay.toMillis();
     }
 
-    public void shutdown() {
+    public synchronized void shutdown() {
+        if (shutdown) {
+            return;
+        }
         shutdown = true;
-        clearQueue();
+        Thread.startVirtualThread(this::clearQueue);
     }
 
     public boolean isShutdown() {

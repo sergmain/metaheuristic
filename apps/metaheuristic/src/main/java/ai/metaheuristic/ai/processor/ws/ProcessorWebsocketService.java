@@ -40,7 +40,6 @@ public class ProcessorWebsocketService {
         }
 
         @Override
-        @NonNull
         public Type getPayloadType(StompHeaders headers) {
             return String.class;
         }
@@ -84,19 +83,19 @@ public class ProcessorWebsocketService {
 
         public void terminateWsThread() {
             if (wsThread!=null) {
-                log.debug("Start terminating ws thread, " + url);
+                log.debug("Start terminating ws thread, {}", url);
                 wsThread.interrupt();
                 wsThread = null;
-                log.debug("\tws thread was terminated, " + url);
+                log.debug("\tws thread was terminated, {}", url);
             }
         }
 
         public void terminateMainThread() {
             if (mainThread!=null) {
-                log.debug("Start terminating main thread, " + url);
+                log.debug("Start terminating main thread, {}", url);
                 mainThread.interrupt();
                 mainThread = null;
-                log.debug("\tmain thread was terminated, " + url);
+                log.debug("\tmain thread was terminated, {}", url);
             }
         }
 
@@ -142,12 +141,12 @@ public class ProcessorWebsocketService {
         }
 
         private boolean connectToServer()  {
-            log.debug("start processing CompletableFuture, " + url);
+            log.debug("start processing CompletableFuture, {}", url);
             inProcess.set(true);
             try {
                 CompletableFuture<@Nullable StompSession> future = stompClient.connectAsync(url, sessionHandler);
 
-                log.debug("\twaiting for completion, " + url);
+                log.debug("\twaiting for completion, {}", url);
                 StompSession session = future.get();
                 if (session!=null) {
                     StompHeaders headers = new StompHeaders();
@@ -155,7 +154,7 @@ public class ProcessorWebsocketService {
                     headers.setDestination("/topic/events");
                     session.subscribe(headers, new MyStompFrameHandler(url, eventConsumerFunc));
                     sessionHandler.initialized = true;
-                    log.debug("\tinitialization of session was completed, " + url);
+                    log.debug("\tinitialization of session was completed, {}", url);
                 }
                 else {
                     log.debug("\tsession is null, " + url);
@@ -167,7 +166,7 @@ public class ProcessorWebsocketService {
             }
             catch(Throwable e) {
                 if (!"IOException: The remote computer refused the network connection".equals(ExceptionUtils.getRootCauseMessage(e))) {
-                    log.error("Error, " + url, e);
+                    log.error("Error, {}", url, e);
                 }
             }
             finally {
@@ -195,14 +194,14 @@ public class ProcessorWebsocketService {
 
         @Override
         public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
-            log.debug("afterConnected(), " + url+ ", " + statusFunc.get());
+            log.debug("afterConnected(), {}, {}", url, statusFunc.get());
             // ...
         }
 
         @Override
         public void handleException(StompSession session, @Nullable StompCommand command,
                                     StompHeaders headers, byte[] payload, Throwable exception) {
-            log.debug("handleException(), " + url+ ", " + statusFunc.get());
+            log.debug("handleException(), {}, {}", url, statusFunc.get());
         }
 
         /**
@@ -210,7 +209,7 @@ public class ProcessorWebsocketService {
          */
         @Override
         public void handleTransportError(StompSession session, Throwable exception) {
-            log.debug("handleTransportError(), " + url + ", " + statusFunc.get());
+            log.debug("handleTransportError(), {}, {}", url, statusFunc.get());
             terminateOnErrorFunc.run();
         }
     }

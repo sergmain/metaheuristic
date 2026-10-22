@@ -667,19 +667,6 @@ public class ProcessorTaskService {
         return task.completed;
     }
 
-    private Map<Long, ProcessorCoreTask> getTasksForDispatcherUrl(ProcessorAndCoreData.DispatcherUrl dispatcherUrl) {
-        Map<Long, ProcessorCoreTask> result = new HashMap<>();
-
-        for (Map<DispatcherUrl, Map<Long, ProcessorCoreTask>> value : map.values()) {
-            for (Map.Entry<DispatcherUrl, Map<Long, ProcessorCoreTask>> entry : value.entrySet()) {
-                if (entry.getKey().equals(dispatcherUrl)) {
-                    result.putAll(entry.getValue());
-                }
-            }
-        }
-        return result;
-    }
-
     private Map<Long, ProcessorCoreTask> getTasksForProcessorCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
         // concurrent maps - there isn't any lock over all tasks, only the lock of each task, see ProcessorTaskSyncService
         return map.computeIfAbsent(core.coreCode, k -> new ConcurrentHashMap<>()).computeIfAbsent(core.dispatcherUrl, m -> new ConcurrentHashMap<>());

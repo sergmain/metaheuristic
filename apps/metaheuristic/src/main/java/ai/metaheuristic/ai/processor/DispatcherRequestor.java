@@ -226,9 +226,14 @@ public class DispatcherRequestor implements ShutdownInterface {
             final String url = dispatcherRestUrl + '/' + R.nextInt(100_000, 1_000_000);
             String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(pcpy);
 
+            if (isShutdown()) {
+                return;
+            }
             log.info("Start to request a dispatcher at {}, quotas: {}", url, pcpy.request.currentQuota);
-
             final String result = RestUtils.makeRequest(restTemplate, url, yaml, dispatcher.authHeader, dispatcherRestUrl);
+            if (isShutdown()) {
+                return;
+            }
 
             if (result == null) {
                 log.warn("777.210 Dispatcher returned null as a result");
