@@ -294,6 +294,11 @@ public class BundleUtils {
             Files.createDirectories(tempFuncPath);
 
             final BundleData.FunctionConfigAndFile fcy = getFunctionConfigYaml(p);
+            // Rules the bundle declares for every Function in it go in BEFORE verification and before the
+            // descriptor is written back, so they are checked and shipped exactly like rules the Function
+            // declares itself - the Dispatcher never needs to know where a rule came from.
+            fcy.config().function.analyzers =
+                    FunctionAnalyzerUtils.withBundleAnalyzers(fcy.config().function.analyzers, bundleCfg.analyzers);
             if (verify(fcy, p)) {
                 throw new BundleProcessingException("Error while verification was encountered.");
             }

@@ -19,10 +19,12 @@ package ai.metaheuristic.commons.yaml.bundle_cfg;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.jspecify.annotations.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +53,16 @@ public class BundleCfgUtilsV1
         BundleCfgYaml trg = new BundleCfgYaml();
 
         src.bundleConfig.stream().map(o->new BundleCfgYaml.BundleConfig(o.path, o.type)).collect(Collectors.toCollection(()->trg.bundleConfig));
+
+        // mapped explicitly, as FunctionConfigYamlUtilsV3 maps a Function's own analyzers: the element types
+        // differ per version, so a shallow copy would put V1 objects into a version-less list
+        if (src.analyzers!=null) {
+            trg.analyzers = new ArrayList<>();
+            for (BundleCfgYamlV1.AnalyzerV1 a : src.analyzers) {
+                ArrayList<String> regex = a.regex!=null ? new ArrayList<>(a.regex) : new ArrayList<>();
+                trg.analyzers.add(new FunctionConfigYaml.Analyzer(a.name, regex, a.timeout, a.incrementTries, a.scope));
+            }
+        }
 
         trg.checkIntegrity();
         return trg;

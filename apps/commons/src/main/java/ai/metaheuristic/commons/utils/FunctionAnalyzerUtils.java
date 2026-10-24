@@ -186,4 +186,76 @@ public class FunctionAnalyzerUtils {
                     "01.323.120 analyzer '" + analyzer.name + "' declares scope '" + analyzer.scope + "', which only the dispatcher may set");
         }
     }
+
+    /**
+     * What is wrong with an analyzer rule a descriptor declares, or an empty list when nothing is.
+     *
+     * <p>The checks {@code FunctionConfigYaml.checkIntegrity} applies to a Function's own rules, for rules
+     * declared where there is no Function to name - the {@code analyzers} block of a bundle. Collected
+     * rather than thrown, so one parse reports every broken rule at once.
+     */
+    public static List<String> checkDeclared(FunctionConfigYaml.Analyzer analyzer) {
+        final List<String> problems = new ArrayList<>();
+        if (S.b(analyzer.name)) {
+            problems.add("an analyzer has no name");
+            return problems;
+        }
+        try {
+            checkScopeAllowedInDescriptor(analyzer);
+            parseTimeout(analyzer.timeout);
+        }
+        catch (IllegalStateException e) {
+            problems.add(S.f("analyzer '%s': %s", analyzer.name, e.getMessage()));
+        }
+        if (analyzer.regex == null || analyzer.regex.isEmpty()) {
+            problems.add(S.f("analyzer '%s' declares no regex, so it can never match", analyzer.name));
+            return problems;
+        }
+        for (String regex : analyzer.regex) {
+            try {
+                Pattern.compile(regex);
+            }
+            catch (PatternSyntaxException e) {
+                problems.add(S.f("analyzer '%s' declares a regex which doesn't compile: %s", analyzer.name, regex));
+            }
+        }
+        return problems;
+    }
+
+    /**
+     * A Function's own analyzer rules followed by the rules its bundle declares for every Function in it.
+     *
+     * <p>⚠️ CONCATENATED, the way {@code ExecutionGateService} joins dispatcher-level and Function-level
+     * rules - never merged by name, because a label is not an identity. The Function's own rules come
+     * FIRST: first hit wins downstream, so this is the only order in which a Function can still refine
+     * what the same console text means for it.
+     *
+     * <p>A bundle rule equal in every field to a rule already in the list is skipped. Nothing is lost -
+     * the earlier copy is consulted first and would always win - and a Function that still declares the
+     * bundle's rules itself does not carry each of them twice. It also makes the merge idempotent: a
+     * descriptor that already went through it comes out unchanged.
+     *
+     * <p>Returns {@code own} itself when the bundle declares nothing, so a Function packaged by a bundle
+     * without analyzers comes out exactly as its author wrote it - null stays null. Otherwise every rule
+     * in the result is a copy, and neither input is changed.
+     */
+    public static @Nullable List<FunctionConfigYaml.Analyzer> withBundleAnalyzers(
+            @Nullable List<FunctionConfigYaml.Analyzer> own, @Nullable List<FunctionConfigYaml.Analyzer> bundle) {
+
+        if (bundle == null || bundle.isEmpty()) {
+            return own;
+        }
+        final List<FunctionConfigYaml.Analyzer> result = new ArrayList<>();
+        if (own != null) {
+            for (FunctionConfigYaml.Analyzer analyzer : own) {
+                result.add(analyzer.clone());
+            }
+        }
+        for (FunctionConfigYaml.Analyzer analyzer : bundle) {
+            if (!result.contains(analyzer)) {
+                result.add(analyzer.clone());
+            }
+        }
+        return result;
+    }
 }

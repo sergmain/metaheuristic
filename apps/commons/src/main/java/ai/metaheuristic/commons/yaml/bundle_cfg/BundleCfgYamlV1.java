@@ -19,6 +19,9 @@ package ai.metaheuristic.commons.yaml.bundle_cfg;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -47,4 +50,21 @@ public class BundleCfgYamlV1 implements BaseParams {
     }
 
     public final List<BundleConfigV1> bundleConfig = new ArrayList<>();
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AnalyzerV1 {
+        public String name;
+        public @Nullable List<String> regex = new ArrayList<>();
+        public String timeout;
+        public boolean incrementTries;
+        public EnumsApi.GateScope scope;
+    }
+
+    /**
+     * Analyzer rules for every Function of this bundle. @Nullable per the @Nullable-exception rule of the
+     * multi-versioning mechanic - no version bump.
+     */
+    public @Nullable List<AnalyzerV1> analyzers;
 }
