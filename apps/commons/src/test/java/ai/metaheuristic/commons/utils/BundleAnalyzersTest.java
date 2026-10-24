@@ -323,18 +323,26 @@ public class BundleAnalyzersTest {
 
     @Test
     public void test_package_bundleAnalyzersAppliedToEveryFunction(@TempDir Path baseDir) throws Exception {
+        // ❗ A bundle never rewrites a Function's descriptor: a Function may be signed, and the rules its
+        // bundle declares are bundle data, joined only at runtime. The descriptors come out of packaging
+        // exactly as their authors wrote them, whatever the bundle declares.
         final BundleData.Cfg cfg = packageBundle(baseDir, BUNDLE_WITH_ANALYZERS);
 
         final FunctionConfigYaml a = packagedFunction(cfg, "fn-a");
         assertNotNull(a.function.analyzers);
-        assertEquals(List.of("own-rule", "shared-usage-limit", "shared-quota"), names(a.function.analyzers),
-                "fn-a: its own rule first, then the bundle's");
+        assertEquals(List.of("own-rule"), names(a.function.analyzers),
+                "fn-a: only its own rule, the bundle's must not be copied in");
 
         final FunctionConfigYaml b = packagedFunction(cfg, "fn-b");
-        assertNotNull(b.function.analyzers, "fn-b declares none itself and must still get the bundle's");
-        assertEquals(List.of("shared-usage-limit", "shared-quota"), names(b.function.analyzers));
+        assertNull(b.function.analyzers, "fn-b declares none itself and must stay without");
 
-        final FunctionConfigYaml.Analyzer quota = b.function.analyzers.get(1);
+        // the bundle's rules travel with the bundle itself
+        final BundleCfgYaml packagedBundle = BundleCfgYamlUtils.UTILS.to(
+                Files.readString(cfg.workingDir.resolve(CommonConsts.MH_BUNDLE_YAML)));
+        assertNotNull(packagedBundle.analyzers);
+        assertEquals(List.of("shared-usage-limit", "shared-quota"), names(packagedBundle.analyzers));
+
+        final FunctionConfigYaml.Analyzer quota = packagedBundle.analyzers.get(1);
         assertEquals(List.of("failed with status 429"), quota.regex);
         assertEquals("20min", quota.timeout);
         assertTrue(quota.incrementTries);

@@ -73,6 +73,8 @@ public class BundleCfgYaml implements BaseParams {
      * {@code analyzers} block. Applied when the bundle is packaged (BundleUtils.processFunctions), after
      * the Function's own rules - see FunctionAnalyzerUtils.withBundleAnalyzers - so the descriptor that
      * reaches the Dispatcher already carries them and nothing downstream knows where a rule came from.
+     * (Superseded: never copied into a Function's descriptor - a Function may be signed. These rules travel
+     * in the packaged mh-bundle.yaml and are joined with the Function's own only at runtime.)
      *
      * <p>@Nullable per the @Nullable-exception rule of the multi-versioning mechanic - no version bump.
      * null means the bundle declares none, which is the normal case.

@@ -297,8 +297,10 @@ public class BundleUtils {
             // Rules the bundle declares for every Function in it go in BEFORE verification and before the
             // descriptor is written back, so they are checked and shipped exactly like rules the Function
             // declares itself - the Dispatcher never needs to know where a rule came from.
-            fcy.config().function.analyzers =
-                    FunctionAnalyzerUtils.withBundleAnalyzers(fcy.config().function.analyzers, bundleCfg.analyzers);
+            // (Superseded: a bundle never rewrites a Function's descriptor. A Function may be signed and may
+            // have been packaged elsewhere, so its descriptor is the author's, and a Dispatcher that already
+            // has the code ignores a re-import anyway (FunctionService 295.240). The bundle's rules travel in
+            // the packaged mh-bundle.yaml and are joined with the Function's own only at runtime.)
             if (verify(fcy, p)) {
                 throw new BundleProcessingException("Error while verification was encountered.");
             }
