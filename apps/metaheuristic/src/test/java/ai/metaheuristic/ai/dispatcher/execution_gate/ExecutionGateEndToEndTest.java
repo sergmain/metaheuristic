@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.execution_gate;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.MhComplexTestConfig;
+import ai.metaheuristic.ai.SharedItEnv;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecutionGate;
@@ -103,6 +104,7 @@ public class ExecutionGateEndToEndTest extends PreparingSourceCode {
     @Autowired private Globals globals;
 
     private final List<String> blockedFunctionCodes = new ArrayList<>();
+    private final List<String> blockedApiKeys = new ArrayList<>();
 
     @Override
     public SourceCodeUriAndLang getSourceCodeAndLang() {
@@ -121,6 +123,14 @@ public class ExecutionGateEndToEndTest extends PreparingSourceCode {
             }
         }
         blockedFunctionCodes.clear();
+        for (String key : blockedApiKeys) {
+            executionGateService.release(EnumsApi.GateScope.api, key);
+            final ExecutionGate leftover = executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.api.name(), key);
+            if (leftover != null) {
+                executionGateRepository.delete(leftover);
+            }
+        }
+        blockedApiKeys.clear();
         TaskQueueService.resetQueue();
     }
 
@@ -212,6 +222,69 @@ public class ExecutionGateEndToEndTest extends PreparingSourceCode {
 
         assertNotEquals(Enums.TaskRejectingStatus.function_is_quarantined, afterRelease.rejected.get(queuedTaskId),
                 "a released block must stop being a reason - otherwise a block could never be lifted");
+    }
+
+    @Test
+    public void test_aFailureRecognisedOnlyByMhShippedRulesBlocksTheApiKey() {
+        // ---- nothing but mh-api-analyzers.yaml can recognise this failure ------------------------
+        // no operator rule, and a Function code the dispatcher has never seen - so it has no descriptor
+        // and no rules of its own. The only rules left are the ones read from the classpath at start.
+        globals.dispatcher.executionGate.analyzers.clear();
+        final String functionCode = "e2e-fn-mh-" + System.nanoTime() + ":1.0";
+        final String keyCode = SharedItEnv.uniqueCode("E2E_ANTHROPIC_KEY");
+
+        final DispatcherContext context = new DispatcherContext(getAccount(), getCompany());
+        final ExecContextCreatorService.ExecContextCreationResult result =
+                txSupportForTestingService.createExecContext(getSourceCode(), context.asUserExecContext());
+        setExecContextForTest(result.execContext);
+        final Long execContextId = getExecContextForTest().id;
+        final String apiKey = getExecContextForTest().companyId + ":" + keyCode;
+        blockedApiKeys.add(apiKey);
+
+        final TaskParamsYaml tpy = taskParams(execContextId, functionCode);
+        tpy.task.function.api = new TaskParamsYaml.Api(keyCode);
+        final TaskImpl task = txTestingService.create(execContextId, TaskParamsYamlUtils.UTILS.toString(tpy));
+
+        ExecContextSyncService.getWithSyncVoid(execContextId, () ->
+                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
+                            final OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(
+                                    execContextId, List.of(),
+                                    List.of(new TaskApiData.TaskWithContext(task.id, CommonConsts.TOP_LEVEL_CONTEXT_ID)));
+                            assertEquals(EnumsApi.OperationStatus.OK, osr.status);
+                        })));
+
+        assertNull(executionGateService.blockedUntil(EnumsApi.GateScope.api, apiKey),
+                "setup failed: nothing may be blocked before the Task fails");
+
+        // ---- the Task fails with what AnthropicApiExecutor prints on a 429 -------------------------
+        TaskSyncService.getWithSyncVoid(task.id, () -> taskFinishingTxService.finishWithErrorWithTx(
+                task.id, "API response status: 429\n" +
+                        "777.100 Anthropic API call failed with status 429; body={\"type\":\"error\",\"error\":{\"type\":\"rate_limit_error\"}}"));
+
+        final TaskImpl failed = taskRepository.findByIdReadOnly(task.id);
+        assertNotNull(failed);
+        assertEquals(EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value, failed.execState,
+                "setup failed: the Task must reach ERROR_WITH_RECOVERY for the recovery pass to see it");
+
+        // ---- the real recovery pass runs ---------------------------------------------------------
+        execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(new ResetTasksWithErrorEvent(execContextId));
+
+        // ---- EFFECT 1: the KEY is blocked, by the rule MH ships ----------------------------------
+        final ExecutionGate row = executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.api.name(), apiKey);
+        assertNotNull(row, "the recovery pass must have opened a block on the API key - only mh-api-analyzers.yaml declares a rule for this console");
+        assertEquals("api-quota-exhausted", row.reasonCode, "the shipped rule's name becomes the recorded reason");
+        assertTrue(row.blockedUntil > System.currentTimeMillis(), "the block must still be live");
+        assertEquals(task.id, row.getExecutionGateParamsYaml().triggeredByTaskId,
+                "the row must say which Task's failure opened it");
+
+        // ---- EFFECT 2: the block reached memory, where admission reads it ------------------------
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+                .until(() -> executionGateService.blockedUntil(EnumsApi.GateScope.api, apiKey) != null);
+
+        // ---- and nothing was blocked on the Function: the rule's scope is the key ----------------
+        assertNull(executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.function.name(), functionCode),
+                "api-quota-exhausted is scope api - the Function itself must stay unblocked");
     }
 
     private static ProcessorData.ProcessorAndCoreParams processorAndCore() {

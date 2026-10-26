@@ -127,6 +127,17 @@ public class ExecutionGateService {
     private final Map<String, List<FunctionConfigYaml.Analyzer>> analyzersByFunctionCode = new ConcurrentHashMap<>();
 
     /**
+     * The analyzer rules MH ships for every Function, from mh-api-analyzers.yaml - read once, here, when
+     * the Dispatcher starts, and joined into every Function's rules by {@link #loadAnalyzers}.
+     *
+     * <p>❗ A missing or broken file fails the start, see {@link ExecutionGateUtils#readApiAnalyzers}. Being
+     * fixed for the life of the process is also why {@link #analyzersByFunctionCode} still needs no
+     * invalidation: a changed file arrives only with a new MH build, i.e. a restart.
+     */
+    private final List<FunctionConfigYaml.Analyzer> mhApiAnalyzers =
+            ExecutionGateUtils.readApiAnalyzers(ExecutionGateUtils.MH_API_ANALYZERS_YAML);
+
+    /**
      * The company an ExecContext belongs to. Cached for the same reason as the analyzers above: this is
      * consulted for every candidate Task on every poll, and an ExecContext's company never changes.
      */
@@ -134,6 +145,8 @@ public class ExecutionGateService {
 
     @PostConstruct
     public void loadCommittedRecords() {
+        log.info("01.320.180 {} analyzer rule(s) from {} apply to every Function",
+                mhApiAnalyzers.size(), ExecutionGateUtils.MH_API_ANALYZERS_YAML);
         try {
             final long now = System.currentTimeMillis();
             final List<ExecutionGate> live = executionGateRepository.findAllLive(now);
@@ -345,6 +358,9 @@ public class ExecutionGateService {
 
     /**
      * The analyzer rules declared by a Function, or an empty list when it declares none.
+     * (Now: every rule that applies to the Function - the operator's, the Function's own, then the rules MH
+     * ships in mh-api-analyzers.yaml - joined by {@link ExecutionGateUtils#joinAnalyzers}. It is empty only
+     * when all three are.)
      *
      * <p>⚠️ A Function that cannot be found is treated as declaring none rather than as an error. This
      * runs while handling a failure that has already happened, and a Function deleted since the Task
@@ -365,20 +381,16 @@ public class ExecutionGateService {
         final ai.metaheuristic.ai.dispatcher.beans.Function function = functionService.findByCode(functionCode);
         if (function == null) {
             log.warn("01.320.120 function {} wasn't found while reading its analyzers", functionCode);
-            return dispatcherLevel;
+            // the rules MH ships still apply: they don't depend on the Function's descriptor
+            return ExecutionGateUtils.joinAnalyzers(dispatcherLevel, List.of(), mhApiAnalyzers);
         }
         final List<FunctionConfigYaml.Analyzer> functionLevel =
                 ExecutionGateUtils.copyAnalyzers(function.getFunctionConfigYaml().function.analyzers);
 
-        if (dispatcherLevel.isEmpty()) {
-            return functionLevel;
-        }
-        if (functionLevel.isEmpty()) {
-            return dispatcherLevel;
-        }
         // dispatcher rules first, so an operator's rule is consulted before a Function author's when
         // both match the same console — first hit wins downstream
-        return Stream.concat(dispatcherLevel.stream(), functionLevel.stream()).toList();
+        // (and MH's own rules from mh-api-analyzers.yaml last, the most general - see joinAnalyzers)
+        return ExecutionGateUtils.joinAnalyzers(dispatcherLevel, functionLevel, mhApiAnalyzers);
     }
 
     /** Has this Processor reported this Function ready? Consulting an entry also renews its lifetime. */

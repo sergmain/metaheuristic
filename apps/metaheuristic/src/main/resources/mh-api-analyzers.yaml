@@ -1,0 +1,137 @@
+# mh-api-analyzers.yaml - analyzer rules shipped with MH itself.
+#
+# Read once when the Dispatcher starts (ExecutionGateService) and applied to EVERY Function, exactly as
+# a Function's own 'analyzers' block is applied: same rule format, same validation, same matching.
+# Rules from this file are consulted AFTER the operator's rules (mh.dispatcher.execution-gate.analyzers)
+# and after the Function's own, so both can still refine what the same console text means.
+#
+# Validated like a Function descriptor: 'global' and 'company' scope are rejected here - those are the
+# operator's, in application.properties. A broken rule fails the Dispatcher's start.
+#
+# Version 1 was copied verbatim from the analyzers block of
+# doc-processing-angular/java/call-cc-func/function-pkg/fn-call-cc/mh-function.yaml (mhdg-rg.call-cc);
+# the comments below were written for that Function and are kept as they were.
+
+version: 1
+
+# What this Function's own failure output means. The dispatcher does not interpret console
+# text; it applies the rules declared here. Each match withholds work from the declared
+# scope for the declared time instead of retrying immediately into the same wall.
+#
+# Patterns are matched with find() against the console, case-sensitively and with no
+# implicit flags. They are anchored on what AnthropicApiExecutor provably prints on a
+# non-2xx response:
+#     API response status: <code>
+#     777.100 Anthropic API call failed with status <code>; body=<first 2000 chars>
+# so both the status line and the API's own error type in the body snippet are matchable.
+analyzers:
+  # Quota exhausted. Every Task using this key would hit the same wall, so the block is on
+  # the KEY, not on this Function and not on the Processor that happened to run it.
+  # incrementTries: false - the Task did nothing wrong and must not spend a retry on it.
+  - name: api-quota-exhausted
+    regex:
+      - 'Anthropic API call failed with status 429'
+      - '"type":"rate_limit_error"'
+    timeout: 20min
+    incrementTries: false
+    scope: api
+
+  # Provider-side transient trouble: 529 overloaded, 500 internal. Shorter than a quota
+  # block because these clear on their own in minutes.
+  - name: api-provider-unavailable
+    regex:
+      - 'Anthropic API call failed with status 529'
+      - 'Anthropic API call failed with status 500'
+      - '"type":"overloaded_error"'
+      - '"type":"api_error"'
+    timeout: 5min
+    incrementTries: false
+    scope: api
+
+  # A rejected credential is NOT transient: waiting does not fix a wrong or revoked key.
+  # The block still exists to stop every queued Task hammering the provider with a bad
+  # key, but incrementTries is TRUE here - the Task should exhaust its retries and land in
+  # ERROR so a human is told, rather than retrying free of charge forever.
+  - name: api-credentials-rejected
+    regex:
+      - 'Anthropic API call failed with status 401'
+      - 'Anthropic API call failed with status 403'
+      - '"type":"authentication_error"'
+      - '"type":"permission_error"'
+    timeout: 30min
+    incrementTries: true
+    scope: api
+
+  # ── CLI-side quota, not API-side ────────────────────────────────────────────────────────────
+  # The three rules above read a NON-2XX HTTP RESPONSE from the Anthropic Messages API. The two
+  # below read a CLI that refused to start work at all because the account it is logged into has
+  # spent its allowance. Nothing HTTP is involved, the text comes from the CLI's own stdout, and
+  # the thing that is exhausted is a subscription rather than a keyCode — so these cannot be extra
+  # regexes on 'api-quota-exhausted' even though the operator-visible symptom is the same wall.
+  #
+  # scope: processor, and that is the whole reason these are separate rules. A CLI's credentials
+  # are installed on the box it runs on. Blocking 'api' would key the block on
+  # (companyId:ANTHROPIC_API_KEY), which is not what ran out and which would withhold work from
+  # the API path that is still perfectly healthy. Blocking 'function' would stand down every
+  # Processor on the installation, including boxes logged into a different account with allowance
+  # left. Only the Processor that produced the message is known to be out.
+  #
+  # incrementTries: false — the Task did not misbehave, it arrived at a spent account.
+  # timeout: 1h — these windows reset on the provider's schedule (hours away, per the message
+  # text itself), not in minutes. Shorter would buy nothing but a longer series of free failures;
+  # a hit after the block lifts simply re-blocks, and the gate keeps the longer of two deadlines.
+
+  # ChatGPT / Codex CLI. Observed console text:
+  #     You've hit your usage limit. Visit https://chatgpt.com/codex/settings/usage to purchase
+  #     more credits or try again at Jul 22nd, 2026 9:15 PM.
+  # The apostrophe is matched with '.' deliberately: the CLI renders it as ASCII ' or as the
+  # typographic ’ depending on terminal encoding, and a rule that misses on encoding is a rule
+  # that silently never fires. The settings URL is a second, independent anchor — any one hit is
+  # enough, so it still catches a run whose wording was reworded upstream.
+  - name: cli-usage-limit-chatgpt
+    regex:
+      - 'You.ve hit your usage limit'
+      - 'chatgpt\.com/codex/settings/usage'
+    timeout: 1h
+    incrementTries: false
+    scope: processor
+
+  # Claude Code CLI (llm_provider="cc"). CcExecutor prints the CLI's console verbatim into this
+  # Function's own stdout, so the CLI's wording is what reaches the analyzer. Two anchors: the
+  # sentence CC prints when the account allowance is spent, and the shorter status-line form it
+  # uses for the rolling window.
+  - name: cli-usage-limit-cc
+    regex:
+      - 'Claude usage limit reached'
+      - '5-hour limit reached'
+    timeout: 1h
+    incrementTries: false
+    scope: processor
+
+  # Claude Code CLI (llm_provider="cc") whose OAuth login on the Processor box has lapsed. Observed
+  # console text, from a production run and from a bare `claude --print` run:
+  #     Failed to authenticate: OAuth session expired and could not be refreshed
+  # Not a regex on 'cli-usage-limit-cc': a spent allowance comes back on the provider's schedule, an
+  # expired login does not - it stays expired until someone logs the CLI in again on that box.
+  #
+  # scope: processor - the OAuth session is installed on the box the CLI runs on, exactly like the
+  # allowance above. 'api' would key the block on an API key that did not fail; 'function' would
+  # stand down Processors whose login is still valid.
+  # incrementTries: true - the reasoning of 'api-credentials-rejected': waiting does not fix a
+  # credential, so the Task spends its retries and lands in ERROR where a human sees it, instead of
+  # retrying free of charge forever on a box nobody has logged back in.
+  # (Superseded in 1.0.81: incrementTries: false. The expired login is on the user's side - only a
+  # human re-authorizing CC on that box fixes it - and MH gives a free retry exactly when the failure
+  # was never the Task's fault. With true the Task burned its retries, landed in ERROR and had to be
+  # reset by hand after the re-login; with false the Processor stays blocked and the first retry after
+  # the re-login succeeds. The human is told by the block itself - this rule's name is its recorded
+  # reason - and a retry costs nothing: CC fails at authentication, before any model call.)
+  # timeout: 30min - the same as 'api-credentials-rejected'.
+  # The anchor keeps 'could not be refreshed': that clause is what makes the line fatal, and a rule
+  # that costs a retry must not fire on any wording that does not say the refresh failed.
+  - name: cli-auth-expired-cc
+    regex:
+      - 'OAuth session expired and could not be refreshed'
+    timeout: 30min
+    incrementTries: false
+    scope: processor

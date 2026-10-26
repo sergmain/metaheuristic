@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.GateData;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskUtils;
+import ai.metaheuristic.ai.yaml.api_analyzers.ApiAnalyzersYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.ParamsVersion;
 import ai.metaheuristic.commons.S;
@@ -34,6 +35,8 @@ import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -270,5 +273,64 @@ public class ExecutionGateUtils {
             return GateData.Admission.rejected(Enums.TaskRejectingStatus.downgrade_not_supported, "taskParams v" + pacp.psy().taskParamsVersion);
         }
         return GateData.Admission.ADMITTED;
+    }
+
+    /** The classpath resource holding the analyzer rules MH ships for every Function. */
+    public static final String MH_API_ANALYZERS_YAML = "mh-api-analyzers.yaml";
+
+    /**
+     * The rules of an mh-api-analyzers.yaml document, as private deep copies (see {@link #copyAnalyzers}).
+     *
+     * <p>Validated on the way in, with the rules a Function descriptor is held to - a broken rule throws
+     * here rather than loading cleanly and never firing.
+     */
+    public static List<FunctionConfigYaml.Analyzer> parseApiAnalyzers(String yaml) {
+        return copyAnalyzers(ApiAnalyzersYamlUtils.BASE_YAML_UTILS.to(yaml).analyzers);
+    }
+
+    /**
+     * The rules of the named classpath resource, read once when the Dispatcher starts.
+     *
+     * <p>❗ A missing or broken resource FAILS the start rather than being treated as "no rules". The file
+     * ships inside MH, so either outcome is a build defect, and a Dispatcher that quietly runs without the
+     * rules would retry into the very walls they exist to recognise.
+     */
+    public static List<FunctionConfigYaml.Analyzer> readApiAnalyzers(String resourceName) {
+        try (InputStream is = ExecutionGateUtils.class.getClassLoader().getResourceAsStream(resourceName)) {
+            if (is == null) {
+                throw new IllegalStateException("01.322.140 classpath resource " + resourceName + " wasn't found");
+            }
+            return parseApiAnalyzers(new String(is.readAllBytes(), StandardCharsets.UTF_8));
+        }
+        catch (IllegalStateException e) {
+            throw e;
+        }
+        catch (Throwable th) {
+            throw new IllegalStateException("01.322.160 classpath resource " + resourceName + " can't be read: " + th.getMessage(), th);
+        }
+    }
+
+    /**
+     * Every analyzer rule that applies to one Function, in the order they are consulted.
+     *
+     * <p>⚠️ CONCATENATED, not merged - every rule from every source applies and none is discarded; a label
+     * is not an identity. The order is the precedence, because first hit wins downstream:
+     * <ol>
+     * <li>the operator's rules ({@code mh.dispatcher.execution-gate.analyzers}) - whoever runs this
+     *     Dispatcher has the last word;</li>
+     * <li>the Function's own rules - its author knows its console best;</li>
+     * <li>the rules MH ships for every Function (mh-api-analyzers.yaml) - the most general, so consulted
+     *     last, where the two above can still refine what the same console text means.</li>
+     * </ol>
+     */
+    public static List<FunctionConfigYaml.Analyzer> joinAnalyzers(
+            List<FunctionConfigYaml.Analyzer> dispatcherLevel,
+            List<FunctionConfigYaml.Analyzer> functionLevel,
+            List<FunctionConfigYaml.Analyzer> mhLevel) {
+        final List<FunctionConfigYaml.Analyzer> all = new ArrayList<>(dispatcherLevel.size() + functionLevel.size() + mhLevel.size());
+        all.addAll(dispatcherLevel);
+        all.addAll(functionLevel);
+        all.addAll(mhLevel);
+        return List.copyOf(all);
     }
 }
