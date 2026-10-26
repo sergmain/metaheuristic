@@ -71,8 +71,10 @@ public class MhApiAnalyzersTest {
     // ---------- the real resource ----------
 
     @Test
-    public void test_shippedResource_readsSixRulesInDeclaredOrder() {
-        assertEquals(List.of("api-quota-exhausted", "api-provider-unavailable", "api-credentials-rejected",
+    public void test_shippedResource_readsEightRulesInDeclaredOrder() {
+        // order is precedence (first hit wins): the spend cap before the request limit before any other 429
+        assertEquals(List.of("api-quota-exhausted", "api-request-limit", "api-token-limit",
+                        "api-provider-unavailable", "api-credentials-rejected",
                         "cli-usage-limit-chatgpt", "cli-usage-limit-cc", "cli-auth-expired-cc"),
                 names(shipped()));
     }
@@ -80,28 +82,99 @@ public class MhApiAnalyzersTest {
     @Test
     public void test_shippedResource_everyFieldOfARuleIsRead() {
         final FunctionConfigYaml.Analyzer quota = shipped().get(0);
-        assertEquals(List.of("Anthropic API call failed with status 429", "\"type\":\"rate_limit_error\""), quota.regex);
-        assertEquals("20min", quota.timeout);
+        assertEquals(List.of("enforced_spend_limit_reached"), quota.regex);
+        assertEquals("1h", quota.timeout);
         assertFalse(quota.incrementTries);
         assertEquals(EnumsApi.GateScope.api, quota.scope);
 
-        final FunctionConfigYaml.Analyzer credentials = shipped().get(2);
+        final FunctionConfigYaml.Analyzer requests = shipped().get(1);
+        assertEquals("30s", requests.timeout);
+        assertFalse(requests.incrementTries);
+        assertEquals(EnumsApi.GateScope.api, requests.scope);
+
+        final FunctionConfigYaml.Analyzer tokens = shipped().get(2);
+        assertEquals(List.of("Anthropic API call failed with status 429", "\"type\":\"rate_limit_error\""), tokens.regex);
+        assertEquals("60s", tokens.timeout);
+        assertFalse(tokens.incrementTries);
+        assertEquals(EnumsApi.GateScope.api, tokens.scope);
+
+        final FunctionConfigYaml.Analyzer credentials = shipped().get(4);
         assertEquals("30min", credentials.timeout);
         assertTrue(credentials.incrementTries, "api-credentials-rejected spends a retry");
 
-        final FunctionConfigYaml.Analyzer authExpired = shipped().get(5);
+        final FunctionConfigYaml.Analyzer authExpired = shipped().get(7);
         assertEquals(List.of("OAuth session expired and could not be refreshed"), authExpired.regex);
         assertEquals("30min", authExpired.timeout);
         assertFalse(authExpired.incrementTries);
         assertEquals(EnumsApi.GateScope.processor, authExpired.scope);
     }
 
+    /** What AnthropicApiExecutor prints for a non-2xx response: status, rate-limit headers, then the failure. */
+    private static String apiFailure(int status, String headerLines, String body) {
+        return "API response status: " + status + "\n" + headerLines +
+                "java.lang.RuntimeException: 777.100 Anthropic API call failed with status " + status + "; body=" + body + "\n";
+    }
+
+    private static final String RATE_LIMIT_BODY =
+            "{\"type\":\"error\",\"error\":{\"type\":\"rate_limit_error\",\"message\":\"rate limit exceeded\"}}";
+
     @Test
-    public void test_shippedResource_matchesTheApiExecutorsFailureLine() {
-        final FunctionConfigYaml.Analyzer hit = FunctionAnalyzerUtils.firstHit(shipped(),
-                "API response status: 429\n777.100 Anthropic API call failed with status 429; body={\"type\":\"error\"}");
-        assertNotNull(hit);
-        assertEquals("api-quota-exhausted", hit.name);
+    public void test_shippedResource_spendCap_isQuotaExhausted_notARateLimit() {
+        // same status, same error type as a rate limit - only error_code tells them apart, and no retry-after
+        final String console = apiFailure(429,
+                "anthropic-ratelimit-requests-remaining: 0\n",
+                "{\"type\":\"error\",\"error\":{\"type\":\"rate_limit_error\",\"message\":\"You have reached your API usage limits\"," +
+                        "\"details\":{\"error_code\":\"enforced_spend_limit_reached\"}}}");
+        assertEquals("api-quota-exhausted", hitName(shipped(), console));
+    }
+
+    @Test
+    public void test_shippedResource_requestLimit() {
+        final String console = apiFailure(429,
+                "retry-after: 2\n" +
+                "anthropic-ratelimit-requests-remaining: 0\n" +
+                "anthropic-ratelimit-tokens-remaining: 380000\n" +
+                "anthropic-ratelimit-input-tokens-remaining: 300000\n" +
+                "anthropic-ratelimit-output-tokens-remaining: 80000\n",
+                RATE_LIMIT_BODY);
+        assertEquals("api-request-limit", hitName(shipped(), console));
+    }
+
+    @Test
+    public void test_shippedResource_inputTokenLimit() {
+        final String console = apiFailure(429,
+                "retry-after: 25\n" +
+                "anthropic-ratelimit-requests-remaining: 812\n" +
+                "anthropic-ratelimit-tokens-remaining: 0\n" +
+                "anthropic-ratelimit-input-tokens-remaining: 0\n" +
+                "anthropic-ratelimit-output-tokens-remaining: 74000\n",
+                RATE_LIMIT_BODY);
+        assertEquals("api-token-limit", hitName(shipped(), console));
+    }
+
+    @Test
+    public void test_shippedResource_requestsRemainingIsNotReadAsZeroWhenItStartsWithZero() {
+        // 'remaining: 0' must be the whole number: 05 is not 0, and neither is 0.5-style noise
+        final String console = apiFailure(429,
+                "anthropic-ratelimit-requests-remaining: 05\n" +
+                "anthropic-ratelimit-input-tokens-remaining: 0\n",
+                RATE_LIMIT_BODY);
+        assertEquals("api-token-limit", hitName(shipped(), console));
+    }
+
+    @Test
+    public void test_shippedResource_429WithoutAnyHeaders_isTreatedAsATokenLimit() {
+        // an executor that predates the header lines, or an acceleration limit: any other 429 lands here
+        assertEquals("api-token-limit", hitName(shipped(), apiFailure(429, "", RATE_LIMIT_BODY)));
+    }
+
+    @Test
+    public void test_shippedResource_requestsRemainingZeroOnA529_isNotARateLimit() {
+        // the header lines are printed for every non-2xx response; only a 429 is a rate limit
+        final String console = apiFailure(529,
+                "anthropic-ratelimit-requests-remaining: 0\n",
+                "{\"type\":\"error\",\"error\":{\"type\":\"overloaded_error\",\"message\":\"Overloaded\"}}");
+        assertEquals("api-provider-unavailable", hitName(shipped(), console));
     }
 
     @Test
@@ -327,11 +400,11 @@ public class MhApiAnalyzersTest {
     }
 
     @Test
-    public void test_shadowed_fnCallCcStyle_allSixShippedNamesAreReserved() {
+    public void test_shadowed_fnCallCcStyle_allShippedNamesAreReserved() {
         // a Function declaring the very rules MH ships (fn-call-cc does): every one is skipped, and the
         // join holds each rule exactly once
         final List<FunctionConfigYaml.Analyzer> sameAsShipped = shipped();
-        assertEquals(6, ExecutionGateUtils.shadowedByMhRules(sameAsShipped, shipped()).size());
+        assertEquals(shipped().size(), ExecutionGateUtils.shadowedByMhRules(sameAsShipped, shipped()).size());
         assertEquals(names(shipped()), names(ExecutionGateUtils.joinAnalyzers(List.of(), sameAsShipped, shipped())));
     }
 

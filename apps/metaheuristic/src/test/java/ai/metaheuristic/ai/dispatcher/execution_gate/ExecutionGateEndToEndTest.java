@@ -273,7 +273,7 @@ public class ExecutionGateEndToEndTest extends PreparingSourceCode {
         // ---- EFFECT 1: the KEY is blocked, by the rule MH ships ----------------------------------
         final ExecutionGate row = executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.api.name(), apiKey);
         assertNotNull(row, "the recovery pass must have opened a block on the API key - only mh-api-analyzers.yaml declares a rule for this console");
-        assertEquals("api-quota-exhausted", row.reasonCode, "the shipped rule's name becomes the recorded reason");
+        assertEquals("api-token-limit", row.reasonCode, "the shipped rule's name becomes the recorded reason - a rate-limit 429 without requests-remaining: 0 is a token limit");
         assertTrue(row.blockedUntil > System.currentTimeMillis(), "the block must still be live");
         assertEquals(task.id, row.getExecutionGateParamsYaml().triggeredByTaskId,
                 "the row must say which Task's failure opened it");

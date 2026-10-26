@@ -24,15 +24,54 @@ version: 1
 #     API response status: <code>
 #     777.100 Anthropic API call failed with status <code>; body=<first 2000 chars>
 # so both the status line and the API's own error type in the body snippet are matchable.
+# (Since 2026-10-26 it also prints, between those two lines, the rate-limit response headers that
+# were present, one per line: retry-after, anthropic-ratelimit-requests-remaining,
+# anthropic-ratelimit-tokens-remaining, anthropic-ratelimit-input-tokens-remaining,
+# anthropic-ratelimit-output-tokens-remaining - as '<header>: <value>'.)
 analyzers:
   # Quota exhausted. Every Task using this key would hit the same wall, so the block is on
   # the KEY, not on this Function and not on the Processor that happened to run it.
   # incrementTries: false - the Task did nothing wrong and must not spend a retry on it.
+  # (Narrowed 2026-10-26: this rule used to take EVERY 429 for 20min. Per
+  # https://platform.claude.com/docs/en/api/rate-limits a 429 is one of three things, and only one of
+  # them is a quota: the monthly SPEND CAP. It comes as 429 with the same error type as a rate limit
+  # ("type":"rate_limit_error") and is told apart only by error.details.error_code =
+  # enforced_spend_limit_reached; it has no retry-after and lifts at 00:00 UTC on the 1st of the next
+  # month, or when the tier is raised. 1h: retrying sooner buys nothing, and a raised tier is still
+  # picked up within the hour. This rule must stay FIRST - its body also matches the rate-limit rules
+  # below, and first hit wins. The two rate limits follow as their own rules.)
   - name: api-quota-exhausted
+    regex:
+      - 'enforced_spend_limit_reached'
+    timeout: 1h
+    incrementTries: false
+    scope: api
+
+  # Request rate limit (RPM) - a throttle, not a quota. AnthropicApiExecutor prints the rate-limit
+  # response headers of a non-2xx response one per line, as '<header>: <value>'; the request limiter
+  # is the one that is out when requests-remaining is exactly 0 ((?!\d): 05 is not 0). Requests come
+  # back continuously (token bucket, 60 RPM may be enforced as 1 per second), so the wait is short.
+  # Must stay BEFORE api-token-limit, which takes every other 429.
+  # The pattern is anchored on the 429 status line as well: the header lines are printed for EVERY
+  # non-2xx response, and a 529 or a 401 that happens to report requests-remaining: 0 must still reach
+  # its own rule below. (?s) lets '.*?' cross the lines between the status line and the header line.
+  - name: api-request-limit
+    regex:
+      - '(?s)API response status: 429\b.*?anthropic-ratelimit-requests-remaining: 0(?!\d)'
+    timeout: 30s
+    incrementTries: false
+    scope: api
+
+  # Token rate limit (input or output tokens per minute) - also a throttle. Every 429 that is neither
+  # the spend cap nor the request limit lands here: a token limiter (*-tokens-remaining is rounded to
+  # the nearest thousand, so it is not reliably 0 when a large prompt is refused), an acceleration
+  # limit, or a response from an executor that predates the header lines. 60s: the token limiters are
+  # per minute, and one large prompt can need most of a minute's refill.
+  - name: api-token-limit
     regex:
       - 'Anthropic API call failed with status 429'
       - '"type":"rate_limit_error"'
-    timeout: 20min
+    timeout: 60s
     incrementTries: false
     scope: api
 
