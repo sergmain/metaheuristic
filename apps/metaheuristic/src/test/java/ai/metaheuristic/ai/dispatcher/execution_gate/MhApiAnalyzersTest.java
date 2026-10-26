@@ -253,10 +253,86 @@ public class MhApiAnalyzersTest {
     }
 
     @Test
-    public void test_join_identicalRulesAreKept_aLabelIsNotAnIdentity() {
+    public void test_join_functionRuleNamedLikeShippedOne_isSkipped() {
         final List<FunctionConfigYaml.Analyzer> actual = ExecutionGateUtils.joinAnalyzers(
                 List.of(), List.of(analyzer("same", "x")), List.of(analyzer("same", "x")));
-        assertEquals(2, actual.size());
+        assertEquals(1, actual.size(), "a Function rule named like a shipped rule is skipped");
+    }
+
+    @Test
+    public void test_join_shadowedFunctionRule_shippedOneAppliesInItsPlace() {
+        final FunctionConfigYaml.Analyzer fnOwn = analyzer("fn-own", "a");
+        final FunctionConfigYaml.Analyzer fnRedefinition = new FunctionConfigYaml.Analyzer(
+                "api-quota-exhausted", new ArrayList<>(List.of("quota")), "5min", true, EnumsApi.GateScope.function);
+        final FunctionConfigYaml.Analyzer shipped = new FunctionConfigYaml.Analyzer(
+                "api-quota-exhausted", new ArrayList<>(List.of("status 429")), "20min", false, EnumsApi.GateScope.api);
+        final FunctionConfigYaml.Analyzer op = analyzer("op", "o");
+
+        final List<FunctionConfigYaml.Analyzer> actual = ExecutionGateUtils.joinAnalyzers(
+                List.of(op), List.of(fnRedefinition, fnOwn), List.of(shipped));
+
+        assertEquals(List.of("op", "fn-own", "api-quota-exhausted"), names(actual));
+        assertSame(shipped, actual.get(2), "the shipped rule, not the Function's redefinition, must be the one present");
+        assertFalse(actual.contains(fnRedefinition), "a redefinition with different content is skipped too - the NAME is reserved");
+    }
+
+    @Test
+    public void test_join_shadowedFunctionRule_noLongerWinsFirstHit() {
+        // the Function's copy used to be consulted first; now only the shipped rule can answer
+        final FunctionConfigYaml.Analyzer fnRedefinition = new FunctionConfigYaml.Analyzer(
+                "limit", new ArrayList<>(List.of("usage limit")), "5min", false, EnumsApi.GateScope.function);
+        final FunctionConfigYaml.Analyzer shipped = new FunctionConfigYaml.Analyzer(
+                "limit", new ArrayList<>(List.of("usage limit")), "1h", false, EnumsApi.GateScope.processor);
+
+        final FunctionConfigYaml.Analyzer hit = FunctionAnalyzerUtils.firstHit(
+                ExecutionGateUtils.joinAnalyzers(List.of(), List.of(fnRedefinition), List.of(shipped)), "Claude usage limit reached");
+
+        assertSame(shipped, hit);
+    }
+
+    @Test
+    public void test_join_operatorRuleNamedLikeShippedOne_isKept() {
+        final FunctionConfigYaml.Analyzer op = analyzer("same", "o");
+        final FunctionConfigYaml.Analyzer shipped = analyzer("same", "m");
+
+        final List<FunctionConfigYaml.Analyzer> actual = ExecutionGateUtils.joinAnalyzers(List.of(op), List.of(), List.of(shipped));
+
+        assertEquals(2, actual.size(), "only a Function's rules are subject to the reserved names");
+        assertSame(op, actual.get(0));
+        assertSame(shipped, actual.get(1));
+    }
+
+    @Test
+    public void test_join_functionRuleWithOtherName_isKept() {
+        final List<FunctionConfigYaml.Analyzer> actual = ExecutionGateUtils.joinAnalyzers(
+                List.of(), List.of(analyzer("fn", "x")), List.of(analyzer("mh", "x")));
+        assertEquals(List.of("fn", "mh"), names(actual));
+    }
+
+    @Test
+    public void test_shadowed_listsEveryReservedNameInFunctionOrder() {
+        final List<FunctionConfigYaml.Analyzer> fn = List.of(
+                analyzer("b", "1"), analyzer("keep", "2"), analyzer("a", "3"), analyzer("b", "4"));
+        final List<FunctionConfigYaml.Analyzer> mh = List.of(analyzer("a", "m"), analyzer("b", "m"));
+
+        assertEquals(List.of("b", "a", "b"), names(ExecutionGateUtils.shadowedByMhRules(fn, mh)));
+        assertEquals(List.of("keep", "a", "b"), names(ExecutionGateUtils.joinAnalyzers(List.of(), fn, mh)),
+                "both copies of a twice-declared reserved name are skipped");
+    }
+
+    @Test
+    public void test_shadowed_emptyWhenEitherSideIsEmpty() {
+        assertEquals(List.of(), ExecutionGateUtils.shadowedByMhRules(List.of(), List.of(analyzer("a", "m"))));
+        assertEquals(List.of(), ExecutionGateUtils.shadowedByMhRules(List.of(analyzer("a", "f")), List.of()));
+    }
+
+    @Test
+    public void test_shadowed_fnCallCcStyle_allSixShippedNamesAreReserved() {
+        // a Function declaring the very rules MH ships (fn-call-cc does): every one is skipped, and the
+        // join holds each rule exactly once
+        final List<FunctionConfigYaml.Analyzer> sameAsShipped = shipped();
+        assertEquals(6, ExecutionGateUtils.shadowedByMhRules(sameAsShipped, shipped()).size());
+        assertEquals(names(shipped()), names(ExecutionGateUtils.joinAnalyzers(List.of(), sameAsShipped, shipped())));
     }
 
     @Test

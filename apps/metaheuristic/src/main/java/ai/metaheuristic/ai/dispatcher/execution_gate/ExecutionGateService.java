@@ -387,6 +387,13 @@ public class ExecutionGateService {
         final List<FunctionConfigYaml.Analyzer> functionLevel =
                 ExecutionGateUtils.copyAnalyzers(function.getFunctionConfigYaml().function.analyzers);
 
+        // a Function may not redefine a rule MH ships: its rule of the same name is skipped, and said so once -
+        // this runs once per Function code, the result is cached in analyzersByFunctionCode
+        for (FunctionConfigYaml.Analyzer skipped : ExecutionGateUtils.shadowedByMhRules(functionLevel, mhApiAnalyzers)) {
+            log.warn("01.320.200 function {} declares analyzer '{}', a name reserved by {}; the Function's rule is skipped and the shipped one applies",
+                    functionCode, skipped.name, ExecutionGateUtils.MH_API_ANALYZERS_YAML);
+        }
+
         // dispatcher rules first, so an operator's rule is consulted before a Function author's when
         // both match the same console — first hit wins downstream
         // (and MH's own rules from mh-api-analyzers.yaml last, the most general - see joinAnalyzers)

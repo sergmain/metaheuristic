@@ -40,7 +40,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * The decision arithmetic behind the admission gate, as pure functions over a map that is passed in.
@@ -322,15 +324,37 @@ public class ExecutionGateUtils {
      * <li>the rules MH ships for every Function (mh-api-analyzers.yaml) - the most general, so consulted
      *     last, where the two above can still refine what the same console text means.</li>
      * </ol>
+     *
+     * <p>❗ One exception to "none is discarded": a Function rule NAMED like a rule MH ships is skipped - see
+     * {@link #shadowedByMhRules}. The name of a shipped rule is reserved: a Function cannot redefine it,
+     * and the shipped rule applies in its place. Operator rules are not affected.
      */
     public static List<FunctionConfigYaml.Analyzer> joinAnalyzers(
             List<FunctionConfigYaml.Analyzer> dispatcherLevel,
             List<FunctionConfigYaml.Analyzer> functionLevel,
             List<FunctionConfigYaml.Analyzer> mhLevel) {
+        final List<FunctionConfigYaml.Analyzer> shadowed = shadowedByMhRules(functionLevel, mhLevel);
         final List<FunctionConfigYaml.Analyzer> all = new ArrayList<>(dispatcherLevel.size() + functionLevel.size() + mhLevel.size());
         all.addAll(dispatcherLevel);
-        all.addAll(functionLevel);
+        functionLevel.stream().filter(a -> !shadowed.contains(a)).forEach(all::add);
         all.addAll(mhLevel);
         return List.copyOf(all);
+    }
+
+    /**
+     * The Function's own rules whose name is also the name of a rule MH ships in mh-api-analyzers.yaml, in
+     * the Function's order. These are skipped by {@link #joinAnalyzers}; the caller reports them.
+     *
+     * <p>Matched by NAME, whatever the rules contain - an identical copy and a redefinition are treated the
+     * same, because a shipped rule's name is reserved. Every copy of a shadowed rule is skipped, including a
+     * rule the Function declares twice.
+     */
+    public static List<FunctionConfigYaml.Analyzer> shadowedByMhRules(
+            List<FunctionConfigYaml.Analyzer> functionLevel, List<FunctionConfigYaml.Analyzer> mhLevel) {
+        if (functionLevel.isEmpty() || mhLevel.isEmpty()) {
+            return List.of();
+        }
+        final Set<String> reserved = mhLevel.stream().map(a -> a.name).collect(Collectors.toSet());
+        return functionLevel.stream().filter(a -> reserved.contains(a.name)).toList();
     }
 }
