@@ -287,6 +287,58 @@ public class ExecutionGateEndToEndTest extends PreparingSourceCode {
                 "api-quota-exhausted is scope api - the Function itself must stay unblocked");
     }
 
+    @Test
+    public void test_aFreeRetryHitOnATaskWithNoTriesLeft_doesNotEndInError() {
+        // a throttle: the provider said "not now", the Task did nothing wrong. With incrementTries=false the
+        // recovery pass must retry it free of charge after the block - even when the Task has no tries of its
+        // own left (triesAfterError: 0)
+        globals.dispatcher.executionGate.analyzers.clear();
+        final String functionCode = "e2e-fn-throttle-" + System.nanoTime() + ":1.0";
+        blockedFunctionCodes.add(functionCode);
+        globals.dispatcher.executionGate.analyzers.add(new FunctionConfigYaml.Analyzer(
+                "throttled", new ArrayList<>(List.of("failed with status 429")), "30s", false,
+                EnumsApi.GateScope.function));
+
+        final DispatcherContext context = new DispatcherContext(getAccount(), getCompany());
+        final ExecContextCreatorService.ExecContextCreationResult result =
+                txSupportForTestingService.createExecContext(getSourceCode(), context.asUserExecContext());
+        setExecContextForTest(result.execContext);
+        final Long execContextId = getExecContextForTest().id;
+
+        final TaskParamsYaml tpy = taskParams(execContextId, functionCode);
+        tpy.task.triesAfterError = 0;
+        final TaskImpl task = txTestingService.create(execContextId, TaskParamsYamlUtils.UTILS.toString(tpy));
+
+        ExecContextSyncService.getWithSyncVoid(execContextId, () ->
+                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
+                            final OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(
+                                    execContextId, List.of(),
+                                    List.of(new TaskApiData.TaskWithContext(task.id, CommonConsts.TOP_LEVEL_CONTEXT_ID)));
+                            assertEquals(EnumsApi.OperationStatus.OK, osr.status);
+                        })));
+
+        TaskSyncService.getWithSyncVoid(task.id, () -> taskFinishingTxService.finishWithErrorWithTx(
+                task.id, "API response status: 429\nsome-api call failed with status 429; body={\"error\":\"too many requests\"}"));
+        assertEquals(EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value, Objects.requireNonNull(taskRepository.findByIdReadOnly(task.id)).execState,
+                "setup failed: the Task must reach ERROR_WITH_RECOVERY for the recovery pass to see it");
+
+        execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(new ResetTasksWithErrorEvent(execContextId));
+
+        // the rule matched: the Function is blocked for the throttle window
+        final ExecutionGate row = executionGateRepository.findByScopeAndRefKey(EnumsApi.GateScope.function.name(), functionCode);
+        assertNotNull(row, "setup failed: the throttle rule must have matched");
+        assertEquals("throttled", row.reasonCode);
+
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+                .until(() -> Objects.requireNonNull(taskRepository.findByIdReadOnly(task.id)).execState != EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value);
+        final TaskImpl after = Objects.requireNonNull(taskRepository.findByIdReadOnly(task.id));
+
+        // a free retry goes back into the queue; the block above is what delays it
+        assertEquals(EnumsApi.TaskExecState.NONE.value, after.execState,
+                "a free-retry hit must send the Task back to NONE - never ERROR - even with no tries left");
+    }
+
     private static ProcessorData.ProcessorAndCoreParams processorAndCore() {
         final ProcessorStatusYaml psy = new ProcessorStatusYaml();
         psy.env = new ProcessorStatusYaml.Env();

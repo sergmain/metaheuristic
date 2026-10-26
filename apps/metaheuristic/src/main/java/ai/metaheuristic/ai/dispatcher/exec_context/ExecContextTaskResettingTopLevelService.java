@@ -169,7 +169,7 @@ public class ExecContextTaskResettingTopLevelService {
             int triesWasMade = ai == null ? 0 : ai;
             int maxTries = tpy.task.triesAfterError == null ? 0 : tpy.task.triesAfterError;
             // after a try of recovering, we don't need to use CACHE. so it'll be NONE
-            final EnumsApi.TaskExecState targetState = maxTries > triesWasMade ? EnumsApi.TaskExecState.NONE : EnumsApi.TaskExecState.ERROR;
+            final EnumsApi.TaskExecState targetStateByTries = maxTries > triesWasMade ? EnumsApi.TaskExecState.NONE : EnumsApi.TaskExecState.ERROR;
 
             // ask the Function's own rules what its output meant. The Function author is the one who
             // knows what their tool prints when its key is exhausted or its host is broken; nothing
@@ -183,6 +183,10 @@ public class ExecContextTaskResettingTopLevelService {
             // incrementTries=false means the failure was never this Task's fault, so the attempt is not
             // charged against it - that is the whole difference between a free retry and a normal one
             final int tries = (hit!=null && !hit.incrementTries) ? triesWasMade : triesWasMade+1;
+            // ...and for the same reason it can never end the Task: a free retry goes back to NONE even when
+            // the Task has no tries of its own left (triesAfterError: 0 included). The block opened above is
+            // what delays it - e.g. a throttled API (429) is retried after the rule's timeout, not marked ERROR.
+            final EnumsApi.TaskExecState targetState = (hit!=null && !hit.incrementTries) ? EnumsApi.TaskExecState.NONE : targetStateByTries;
 
             log.warn("999.010 resetTasksWithErrorForRecovery: task #{}, currentState: {}, targetState: {}, triesWasMade: {}, maxTries: {}, execContextId: {}", taskId, EnumsApi.TaskExecState.from(task.execState), targetState, triesWasMade, maxTries, event.execContextId);
             statuses.add(new TaskData.TaskWithRecoveryStatus(taskId, tries, targetState));
