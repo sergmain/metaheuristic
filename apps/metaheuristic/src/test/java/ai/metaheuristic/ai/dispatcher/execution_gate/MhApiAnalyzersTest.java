@@ -93,7 +93,7 @@ public class MhApiAnalyzersTest {
         assertEquals(EnumsApi.GateScope.api, requests.scope);
 
         final FunctionConfigYaml.Analyzer tokens = shipped().get(2);
-        assertEquals(List.of("Anthropic API call failed with status 429", "\"type\":\"rate_limit_error\""), tokens.regex);
+        assertEquals(List.of("Anthropic API call failed with status 429\\b", "\"type\":\"rate_limit_error\""), tokens.regex);
         assertEquals("60s", tokens.timeout);
         assertFalse(tokens.incrementTries);
         assertEquals(EnumsApi.GateScope.api, tokens.scope);
@@ -168,8 +168,61 @@ public class MhApiAnalyzersTest {
         assertEquals("api-token-limit", hitName(shipped(), apiFailure(429, "", RATE_LIMIT_BODY)));
     }
 
+    /**
+     * What a Python Function prints (mh_api_call.py / nrvv_api_agent.py): the rate-limit header lines from its HTTP
+     * boundary FIRST, no 'API response status' line, then the failure it raises.
+     */
+    private static String pythonApiFailure(int status, String headerLines, String body) {
+        return headerLines +
+                "Traceback (most recent call last):\n  File \"nrvv_implement.py\", line 120, in main\n" +
+                "nrvv_api_agent.AgentError: Anthropic API call failed with status " + status + "; body=" + body + "\n";
+    }
+
     @Test
-    public void test_shippedResource_requestsRemainingZeroOnA529_isNotARateLimit() {
+    public void test_shippedResource_pythonFunction_requestLimit() {
+        final String console = pythonApiFailure(429,
+                "retry-after: 2\n" +
+                "anthropic-ratelimit-requests-remaining: 0\n" +
+                "anthropic-ratelimit-input-tokens-remaining: 300000\n",
+                RATE_LIMIT_BODY);
+        assertEquals("api-request-limit", hitName(shipped(), console),
+                "no status line and the headers BEFORE the failure line - the rule must not depend on either");
+    }
+
+    @Test
+    public void test_shippedResource_pythonFunction_tokenLimit() {
+        final String console = pythonApiFailure(429,
+                "retry-after: 25\n" +
+                "anthropic-ratelimit-requests-remaining: 812\n" +
+                "anthropic-ratelimit-output-tokens-remaining: 0\n",
+                RATE_LIMIT_BODY);
+        assertEquals("api-token-limit", hitName(shipped(), console));
+    }
+
+    @Test
+    public void test_shippedResource_pythonFunction_spendCap() {
+        final String console = pythonApiFailure(429,
+                "anthropic-ratelimit-requests-remaining: 0\n",
+                "{\"type\":\"error\",\"error\":{\"type\":\"rate_limit_error\",\"details\":{\"error_code\":\"enforced_spend_limit_reached\"}}}");
+        assertEquals("api-quota-exhausted", hitName(shipped(), console));
+    }
+
+    @Test
+    public void test_shippedResource_pythonFunction_requestsRemainingZeroOnA529_isNotARateLimit() {
+        final String console = pythonApiFailure(529,
+                "anthropic-ratelimit-requests-remaining: 0\n",
+                "{\"type\":\"error\",\"error\":{\"type\":\"overloaded_error\",\"message\":\"Overloaded\"}}");
+        assertEquals("api-provider-unavailable", hitName(shipped(), console));
+    }
+
+    @Test
+    public void test_shippedResource_status4290IsNot429() {
+        final String console = pythonApiFailure(4290, "anthropic-ratelimit-requests-remaining: 0\n", "{}");
+        assertNull(FunctionAnalyzerUtils.firstHit(shipped(), console));
+    }
+
+    @Test
+    public void test_shippedResource_requestsRemainingZeroOnA529_isNotARateLimit_java() {
         // the header lines are printed for every non-2xx response; only a 429 is a rate limit
         final String console = apiFailure(529,
                 "anthropic-ratelimit-requests-remaining: 0\n",

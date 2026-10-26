@@ -28,6 +28,9 @@ version: 1
 # were present, one per line: retry-after, anthropic-ratelimit-requests-remaining,
 # anthropic-ratelimit-tokens-remaining, anthropic-ratelimit-input-tokens-remaining,
 # anthropic-ratelimit-output-tokens-remaining - as '<header>: <value>'.)
+# (2026-10-26, later: the live callers are the Python Functions, not the Java executor - see api-request-limit.
+# They print the same header lines from their HTTP boundary, before the failure line, and only
+# 'Anthropic API call failed with status <code>; body=...' is printed by every one of them.)
 analyzers:
   # Quota exhausted. Every Task using this key would hit the same wall, so the block is on
   # the KEY, not on this Function and not on the Processor that happened to run it.
@@ -55,9 +58,14 @@ analyzers:
   # The pattern is anchored on the 429 status line as well: the header lines are printed for EVERY
   # non-2xx response, and a 529 or a 401 that happens to report requests-remaining: 0 must still reach
   # its own rule below. (?s) lets '.*?' cross the lines between the status line and the header line.
+  # (Superseded 2026-10-26: anchored on the FAILURE line instead, order-free. The API is called by external Python
+  # Functions - call_cc/anthropic_api_executor.py, mh_api_call.py, nrvv_api_agent.py - and the Processor sees only their
+  # console. They print the header lines from their HTTP boundary BEFORE the failure line, and two of the three print no
+  # 'API response status' line at all; every one prints 'Anthropic API call failed with status <code>'. Two lookaheads
+  # from \A: the failure line says 429, and some line says requests-remaining is exactly 0 - in either order.)
   - name: api-request-limit
     regex:
-      - '(?s)API response status: 429\b.*?anthropic-ratelimit-requests-remaining: 0(?!\d)'
+      - '(?s)\A(?=.*Anthropic API call failed with status 429\b)(?=.*anthropic-ratelimit-requests-remaining: 0(?!\d))'
     timeout: 30s
     incrementTries: false
     scope: api
@@ -69,7 +77,7 @@ analyzers:
   # per minute, and one large prompt can need most of a minute's refill.
   - name: api-token-limit
     regex:
-      - 'Anthropic API call failed with status 429'
+      - 'Anthropic API call failed with status 429\b'
       - '"type":"rate_limit_error"'
     timeout: 60s
     incrementTries: false
