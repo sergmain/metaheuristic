@@ -71,7 +71,7 @@ public class ExecContextReadinessService {
 
     @PostConstruct
     public void init() {
-        startProcessReadinessEventThreadedPool = new MultiTenantedQueue<>(100, Duration.ZERO, false, "ExecContextReadinessService-", (event) -> {
+        startProcessReadinessEventThreadedPool = new MultiTenantedQueue<>(100, Duration.ZERO, true, "ExecContextReadinessService-", (event) -> {
             prepare(event.getId());
             execContextReadinessStateService.remove(event.getId());
         });
