@@ -25,8 +25,8 @@ import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevel
 import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextInListEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.UpdateExecContextStatusEvent;
+import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
-import jakarta.annotation.PreDestroy;
 import java.time.Duration;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -69,7 +69,7 @@ import java.util.List;
 @Profile("dispatcher")
 @Service
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class ExecContextTopLevelService {
+public class ExecContextTopLevelService implements ShutdownInterface {
 
     public static final String ERROR = "<Error>";
     private final ExecContextTxService execContextTxService;
@@ -89,8 +89,16 @@ public class ExecContextTopLevelService {
             new MultiTenantedQueue<>(100, Duration.ZERO, true, "UpdateExecContextStatus-",
                     event -> updateExecContextStatus(event.execContextId));
 
-    @PreDestroy
-    public void onExit() {
+    private volatile boolean shutdown = false;
+
+    @Override
+    public boolean isShutdown() {
+        return shutdown;
+    }
+
+    @Override
+    public void shutdown() {
+        shutdown = true;
         updateExecContextStatusMTQ.shutdown();
     }
 
@@ -236,6 +244,9 @@ public class ExecContextTopLevelService {
     @Async
     @EventListener
     public void handleUpdateExecContextStatusEvent(UpdateExecContextStatusEvent event) {
+        if (isShutdown()) {
+            return;
+        }
         updateExecContextStatusMTQ.putToQueue(event);
     }
 
