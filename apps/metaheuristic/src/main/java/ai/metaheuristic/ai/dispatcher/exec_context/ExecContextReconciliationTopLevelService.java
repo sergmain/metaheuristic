@@ -46,6 +46,8 @@ import static ai.metaheuristic.api.EnumsApi.FunctionExecContext;
 import static ai.metaheuristic.api.EnumsApi.TaskExecState;
 
 /**
+ * <p>Error code prefix: {@code 01.307.} (unique to this class).
+ *
  * @author Serge
  * Date: 4/20/2021
  * Time: 9:58 PM
@@ -162,6 +164,17 @@ public class ExecContextReconciliationTopLevelService {
                         // ---> This is a normal situation, will occur after restarting a dispatcher
                         log.warn("307.087 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, trying to update a state of task in execContextGraph",
                                 tv.taskId, TaskExecState.from(taskState.execState()), tv.state, allocatedTask.state);
+                        TaskProviderTopLevelService.deregisterTask(execContextId, tv.taskId);
+                        taskIds.add(tv.taskId);
+                    }
+                    else if (taskState.execState() == TaskExecState.PRE_INIT.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.NONE) {
+                        // 01.307.090 Found different states for task #2, db: PRE_INIT, graph: NONE, assigned: false, state in queue: NONE
+                        // ---> MH_TASK is the source of truth: the Task left NONE there without the queue and the graph following it
+                        // (2026-10-28 22:14: 299 Tasks, logged as 307.100 "required steps are unknown")
+                        log.warn("01.307.090 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, trying to update a state of task in execContextGraph",
+                                tv.taskId, TaskExecState.from(taskState.execState()), tv.state, allocatedTask.state);
+                        // the graph alone isn't enough: the entry stays queued as NONE, the hand-out stops at it on every poll
+                        // and nothing queued behind it is handed out (TaskHandOutStaleQueueEntryTest)
                         TaskProviderTopLevelService.deregisterTask(execContextId, tv.taskId);
                         taskIds.add(tv.taskId);
                     }
