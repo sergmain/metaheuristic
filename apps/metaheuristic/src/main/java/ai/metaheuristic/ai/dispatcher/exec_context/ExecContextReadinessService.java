@@ -132,7 +132,10 @@ public class ExecContextReadinessService {
                 }
             }
         }
-        execContextReconciliationTopLevelService.reconcileStates(execContext.id);
+        // reconcileStates(execContext.id) was called here (f4701e3b2, 2021-09-27). It has returned at once ever since its
+        // isNotReady() guard came in (238cdf740, 2021-09-30): prepare() runs while this ExecContext is in
+        // execContextReadinessStateService, which is cleared only after prepare() returns. The scheduler's
+        // updateExecContextStatuses() reconciles every STARTED ExecContext 63 s after the start, with its status applied.
     }
 
 }
