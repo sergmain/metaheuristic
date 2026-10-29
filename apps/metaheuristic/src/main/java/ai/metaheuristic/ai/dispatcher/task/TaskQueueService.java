@@ -133,4 +133,18 @@ public class TaskQueueService {
         getWithSyncVoid(taskQueue::resetAll);
     }
 
+    // read-only views of the queue - each copies the state out under the read lock, see TaskQueueData
+
+    public static List<TaskQueueData.GroupState> getGroupStatesWithReadSync(@Nullable Long execContextId) {
+        return getWithReadSync(() -> taskQueue.getGroupStates(execContextId));
+    }
+
+    public static TaskQueueData.QueueSummary getSummaryWithReadSync() {
+        return getWithReadSync(() -> TaskQueueData.summarize(taskQueue.groupCount(), taskQueue.getGroupStates(null)));
+    }
+
+    public static java.util.Optional<TaskQueueData.TaskState> getTaskStateWithReadSync(Long taskId) {
+        return getWithReadSync(() -> java.util.Optional.ofNullable(taskQueue.getTaskState(taskId)));
+    }
+
 }

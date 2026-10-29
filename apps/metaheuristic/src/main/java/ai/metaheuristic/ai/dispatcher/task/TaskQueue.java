@@ -661,4 +661,46 @@ public class TaskQueue {
     public int groupCount() {
         return taskGroups.size();
     }
+
+    /**
+     * Read-only copy of every non-empty group, in queue order (the order the hand-out walks them in);
+     * a non-null {@code execContextId} keeps only that ExecContext's groups.
+     * The caller holds the queue's read lock - see {@link TaskQueueService#getGroupStatesWithReadSync}.
+     */
+    public List<TaskQueueData.GroupState> getGroupStates(@Nullable Long execContextId) {
+        final List<TaskQueueData.GroupState> result = new ArrayList<>();
+        for (int i = 0; i < taskGroups.size(); i++) {
+            final TaskGroup g = taskGroups.get(i);
+            if (g.noneTasks()) {
+                continue;
+            }
+            if (execContextId != null && !execContextId.equals(g.execContextId)) {
+                continue;
+            }
+            final List<TaskQueueData.TaskState> tasks = new ArrayList<>();
+            for (AllocatedTask t : g.tasks) {
+                if (t != null) {
+                    tasks.add(toTaskState(t));
+                }
+            }
+            result.add(new TaskQueueData.GroupState(i, g.execContextId, g.priority, g.locked, g.allocated, g.groupSize, List.copyOf(tasks)));
+        }
+        return result;
+    }
+
+    /**
+     * Read-only copy of one queued Task, or {@code null} when the Task isn't in the queue.
+     */
+    public TaskQueueData.@Nullable TaskState getTaskState(Long taskId) {
+        final AllocatedTask t = alreadyRegisteredAsTask(taskId);
+        return t == null ? null : toTaskState(t);
+    }
+
+    static TaskQueueData.TaskState toTaskState(AllocatedTask t) {
+        final QueuedTask q = t.queuedTask;
+        final TaskParamsYaml.FunctionConfig f = q.taskParamYaml.task.function;
+        return new TaskQueueData.TaskState(q.taskId, q.execContextId, q.execContext, t.state, t.assigned,
+                q.task == null ? null : EnumsApi.TaskExecState.from(q.task.execState),
+                f == null ? null : f.code, q.tag, q.priority);
+    }
 }
