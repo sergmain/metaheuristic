@@ -36,6 +36,8 @@ import org.springframework.stereotype.Service;
 import java.util.Set;
 
 /**
+ * <p>Error code prefix: {@code 01.189.} (unique to this class).
+ *
  * @author Serge
  * Date: 12/18/2020
  * Time: 12:58 PM
@@ -162,6 +164,15 @@ public class TaskStateService {
             // terminal flow-control decision for THIS run; a completing parent must NOT un-skip it back to INIT.
             TaskImpl subTaskEntity = taskRepository.findByIdReadOnly(subTask.taskId);
             if (subTaskEntity != null && EnumsApi.TaskExecState.from(subTaskEntity.execState) == EnumsApi.TaskExecState.SKIPPED) {
+                continue;
+            }
+            // ToInit is the transition PRE_INIT -> INIT and nothing else. In the normal flow this event comes when the parent
+            // finishes, and every child is still PRE_INIT then. A late one - the reconciliation re-sends it for a PRE_INIT Task
+            // stuck under finished parents - meets children that have moved on: INIT, CHECK_CACHE / NONE (after the variable
+            // init), IN_PROGRESS on a Processor, finished. They are left as they are (ChangeTaskStateToInitForChildrenTest).
+            if (subTaskEntity == null || subTaskEntity.execState != EnumsApi.TaskExecState.PRE_INIT.value) {
+                log.info("01.189.240 not advancing task #{} to INIT: its state is {}, only PRE_INIT goes to INIT, parent task #{}",
+                        subTask.taskId, subTaskEntity == null ? "<doesn't exist>" : EnumsApi.TaskExecState.from(subTaskEntity.execState), event.taskId);
                 continue;
             }
             // A child whose EVERY direct parent is dead (ERROR/SKIPPED) is on a dead branch and must NOT be

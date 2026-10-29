@@ -48,8 +48,10 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.awaitility.Awaitility.await;
@@ -123,21 +125,16 @@ public class TaskHandOutStaleQueueEntryTest extends FeatureMethods {
 
         execContextReconciliationTopLevelService.reconcileStates(a.execContextId1);
 
-        final DispatcherCommParamsYaml.AssignedTask assigned = poll(a, 3);
+        final Set<Long> handedOut = handOutToBothCores(a, 6);
 
         final TaskQueue.AllocatedTask abandonedEntry = TaskProviderTopLevelService.getTaskExecStates(a.execContextId1).get(a.abandonedTaskId);
-        final EnumsApi.TaskExecState graphState = graphState(a.execContextId1, a.abandonedTaskId);
-        printState(code, a, abandonedEntry, assigned);
-        System.out.println(code + " graph state of Task #" + a.abandonedTaskId + ": " + graphState);
+        printState(code, a, abandonedEntry, null);
+        System.out.println(code + " Task #" + a.abandonedTaskId + " MH_TASK: " + EnumsApi.TaskExecState.from(mhTaskState(a.abandonedTaskId)) +
+                ", graph: " + graphState(a.execContextId1, a.abandonedTaskId) + "; handed out: " + handedOut);
 
-        // MH_TASK is the source of truth: the graph follows it to PRE_INIT, a PRE_INIT Task has no entry in the queue,
-        // and the next Task is handed out
-        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200))
-                .until(() -> graphState(a.execContextId1, a.abandonedTaskId) == EnumsApi.TaskExecState.PRE_INIT);
-        assertNull(abandonedEntry, code + ": the abandoned entry of Task #" + a.abandonedTaskId + " is still queued as " +
-                (abandonedEntry == null ? null : abandonedEntry.state) + " while MH_TASK has it PRE_INIT");
-        assertNotNull(assigned, code + ": nothing was handed out, every poll stopped at the abandoned entry of Task #" + a.abandonedTaskId);
-        assertEquals(a.nextTaskId, assigned.taskId, code + ": Task #" + a.nextTaskId + " must be handed out");
+        // MH_TASK is the source of truth: the reconciliation aligns the queue and the graph to it (01.307.090) and advances the
+        // PRE_INIT Task under its finished direct parent (01.307.410) - nothing is held up any more, both Tasks are handed out
+        assertEquals(Set.of(a.abandonedTaskId, a.nextTaskId), handedOut, code + ": both Tasks must be handed out");
     }
 
     /**
@@ -155,21 +152,16 @@ public class TaskHandOutStaleQueueEntryTest extends FeatureMethods {
         // in production Schedulers refreshes the ExecContext status cache every 9 s
         execContextStatusService.resetStatus();
 
-        final DispatcherCommParamsYaml.AssignedTask assigned = poll(a, 3);
+        final Set<Long> handedOut = handOutToBothCores(a, 6);
 
         final TaskQueue.AllocatedTask abandonedEntry = TaskProviderTopLevelService.getTaskExecStates(a.execContextId1).get(a.abandonedTaskId);
-        final EnumsApi.TaskExecState graphState = graphState(a.execContextId1, a.abandonedTaskId);
-        printState(code, a, abandonedEntry, assigned);
-        System.out.println(code + " graph state of Task #" + a.abandonedTaskId + ": " + graphState);
+        printState(code, a, abandonedEntry, null);
+        System.out.println(code + " Task #" + a.abandonedTaskId + " MH_TASK: " + EnumsApi.TaskExecState.from(mhTaskState(a.abandonedTaskId)) +
+                ", graph: " + graphState(a.execContextId1, a.abandonedTaskId) + "; handed out: " + handedOut);
 
-        // STOPPED -> STARTED reconciles the ExecContext: the graph follows MH_TASK to PRE_INIT, a PRE_INIT Task has no
-        // entry in the queue, and the next Task is handed out
-        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200))
-                .until(() -> graphState(a.execContextId1, a.abandonedTaskId) == EnumsApi.TaskExecState.PRE_INIT);
-        assertNull(abandonedEntry, code + ": the abandoned entry of Task #" + a.abandonedTaskId + " is still queued as " +
-                (abandonedEntry == null ? null : abandonedEntry.state) + " after STOPPED -> STARTED");
-        assertNotNull(assigned, code + ": nothing was handed out after STOPPED -> STARTED, every poll stopped at the abandoned entry of Task #" + a.abandonedTaskId);
-        assertEquals(a.nextTaskId, assigned.taskId, code + ": Task #" + a.nextTaskId + " must be handed out");
+        // STOPPED -> STARTED reconciles the ExecContext: the queue and the graph follow MH_TASK (01.307.090), the PRE_INIT Task
+        // under its finished direct parent is advanced (01.307.410) - nothing is held up any more, both Tasks are handed out
+        assertEquals(Set.of(a.abandonedTaskId, a.nextTaskId), handedOut, code + ": both Tasks must be handed out after STOPPED -> STARTED");
     }
 
     private void changeState(String code, Long execContextId, EnumsApi.ExecContextState state) {
@@ -213,6 +205,33 @@ public class TaskHandOutStaleQueueEntryTest extends FeatureMethods {
             assigned = taskProviderTopLevelService.findTask(a.cores.coreId1, false);
         }
         return assigned;
+    }
+
+    /** Hands out to both cores of the Processor until each has a Task - a core that has one gets the same Task again. */
+    private Set<Long> handOutToBothCores(Abandoned a, int times) {
+        DispatcherCommParamsYaml.AssignedTask onCore1 = null;
+        DispatcherCommParamsYaml.AssignedTask onCore2 = null;
+        for (int i = 0; i < times && (onCore1 == null || onCore2 == null); i++) {
+            preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(Objects.requireNonNull(execContextCache.findById(a.execContextId2, true)));
+            if (onCore1 == null) {
+                onCore1 = taskProviderTopLevelService.findTask(a.cores.coreId1, false);
+            }
+            if (onCore2 == null) {
+                onCore2 = taskProviderTopLevelService.findTask(a.cores.coreId2, false);
+            }
+        }
+        final Set<Long> ids = new LinkedHashSet<>();
+        if (onCore1 != null) {
+            ids.add(onCore1.taskId);
+        }
+        if (onCore2 != null) {
+            ids.add(onCore2.taskId);
+        }
+        return ids;
+    }
+
+    private int mhTaskState(Long taskId) {
+        return Objects.requireNonNull(jdbcTemplate.queryForObject("select EXEC_STATE from MH_TASK where ID = ?", Integer.class, taskId));
     }
 
     private EnumsApi.TaskExecState graphState(Long execContextId, Long taskId) {

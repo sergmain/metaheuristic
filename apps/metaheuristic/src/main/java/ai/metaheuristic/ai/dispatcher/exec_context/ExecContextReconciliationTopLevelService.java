@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
+import ai.metaheuristic.ai.dispatcher.event.events.ChangeTaskStateToInitForChildrenTasksEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
@@ -39,6 +40,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -292,6 +294,28 @@ public class ExecContextReconciliationTopLevelService {
                         }
                     }
                 });
+
+        // A PRE_INIT Task whose direct parents are all finished in MH_TASK: its move to INIT, made when the last of them
+        // finished, didn't happen (e.g. MH_TASK was set to PRE_INIT afterwards), and nothing else ever moves a PRE_INIT Task.
+        // The event takes a direct parent's id and moves to INIT every PRE_INIT child of that parent whose parents are all
+        // finished - a child in any other state is left as it is (01.189.240) - so any one of the direct parents will do, and
+        // one event per parent is enough.
+        final ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentStates.Adjacency adjacency =
+                ai.metaheuristic.ai.dispatcher.exec_context_segment.SegmentStates.Adjacency.of(snapshot.lines());
+        states.entrySet().stream()
+                .filter(e -> TaskExecState.PRE_INIT.value == e.getValue().execState())
+                .map(e -> {
+                    final List<Long> parents = adjacency.parentsOf(e.getKey());
+                    if (parents.isEmpty() || !parents.stream().allMatch(p -> states.get(p) != null && TaskExecState.isFinishedState(states.get(p).execState()))) {
+                        return null;
+                    }
+                    log.warn("01.307.410 Task #{} is PRE_INIT while its direct parents {} are finished, ChangeTaskStateToInitForChildrenTasksEvent is sent for parent #{}",
+                            e.getKey(), parents, parents.getFirst());
+                    return parents.getFirst();
+                })
+                .filter(Objects::nonNull)
+                .distinct()
+                .forEach(parentId -> eventPublisher.publishEvent(new ChangeTaskStateToInitForChildrenTasksEvent(parentId)));
         return status;
     }
 
