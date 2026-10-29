@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.CheckTaskCanBeFinishedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.RegisterFunctionCodesForStartedExecContextTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateExecContextStatusEvent;
 import ai.metaheuristic.ai.dispatcher.signal_bus.ScopeRef;
 import ai.metaheuristic.ai.dispatcher.signal_bus.events.ExecContextStateSignalTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -108,6 +109,8 @@ public class ExecContextFSM {
         if (execContext == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "303.040 execContext wasn't found, execContextId: " + execContextId);
         }
+        // read before the state is changed below
+        final boolean stoppedToStarted = execContext.state == EnumsApi.ExecContextState.STOPPED.code && execState == EnumsApi.ExecContextState.STARTED;
         if (execContext.state != execState.code) {
             execContext.setState(execState.code);
             execContextCache.save(execContext);
@@ -121,6 +124,15 @@ public class ExecContextFSM {
         // they fire constantly, and re-announcing an unchanged state there would be noise. This method is
         // reached only from an explicit target-state request, so the volume is one signal per user action.
         publishExecContextStateSignal(execContext, execState);
+
+        // A resumed ExecContext is reconciled at once: the states of its Tasks in the queue and in the graph are brought in
+        // line with MH_TASK now, not at the scheduler's next pass (up to 630 s). A plain event, not a Tx-bound one: the
+        // reconciliation reads Tasks, the queue and the graph, not this ExecContext's state, so it doesn't wait for this
+        // commit; the status update after it takes the ExecContext's lock, which the caller holds until this transaction has
+        // committed.
+        if (stoppedToStarted) {
+            applicationEventPublisher.publishEvent(new UpdateExecContextStatusEvent(execContextId));
+        }
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

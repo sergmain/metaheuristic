@@ -105,7 +105,11 @@ public class ExecContextResumeHandOutTest extends FeatureMethods {
                 ", handed out: " + (assigned == null ? null : assigned.taskId));
 
         // Green-1: current behaviour - the Task stays queued as NONE and is never handed out
-        assertNull(assigned, code + ": Task #" + taskId + " handed out after STOPPED -> STARTED");
+        // observed 2026-10-29: shape 1 does not reproduce the incidents - after STOPPED -> STARTED alone the queued Task IS
+        // handed out; pinned here as the current behaviour. The defect that holds Tasks is a queue entry whose Task left NONE in
+        // MH_TASK - see ai.metaheuristic.ai.dispatcher.task.TaskHandOutStaleQueueEntryTest
+        assertNotNull(assigned, code + ": Task #" + taskId + " wasn't handed out after STOPPED -> STARTED");
+        assertEquals(taskId, assigned.taskId, code + ": Task #" + taskId + " must be handed out after STOPPED -> STARTED");
     }
 
     private Long awaitExternalTaskQueuedAsNone(Long execContextId) {

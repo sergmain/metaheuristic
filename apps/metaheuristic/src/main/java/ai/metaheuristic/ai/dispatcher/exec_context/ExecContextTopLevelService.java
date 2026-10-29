@@ -24,6 +24,10 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextInListEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateExecContextStatusEvent;
+import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
+import jakarta.annotation.PreDestroy;
+import java.time.Duration;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -78,6 +82,17 @@ public class ExecContextTopLevelService {
     private final TaskCheckCachingService taskCheckCachingTopLevelService;
     private final CacheProcessRepository cacheProcessRepository;
     private final TaskCheckCachingTxService taskCheckCachingTxService;
+
+    // the sink of UpdateExecContextStatusEvent, keyed by execContextId: one ExecContext is reconciled by one thread at a time,
+    // and a request for an ExecContext that is already waiting in the queue is dropped (checkForDouble)
+    private final MultiTenantedQueue<Long, UpdateExecContextStatusEvent> updateExecContextStatusMTQ =
+            new MultiTenantedQueue<>(100, Duration.ZERO, true, "UpdateExecContextStatus-",
+                    event -> updateExecContextStatus(event.execContextId));
+
+    @PreDestroy
+    public void onExit() {
+        updateExecContextStatusMTQ.shutdown();
+    }
 
     private static boolean isManagerRole(String role) {
         return switch (role) {
@@ -216,6 +231,12 @@ public class ExecContextTopLevelService {
     public OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState, Long companyUniqueId) {
         return ExecContextSyncService.getWithSync(execContextId,
                 () -> execContextFSM.changeExecContextStateWithTx(execState, execContextId, companyUniqueId));
+    }
+
+    @Async
+    @EventListener
+    public void handleUpdateExecContextStatusEvent(UpdateExecContextStatusEvent event) {
+        updateExecContextStatusMTQ.putToQueue(event);
     }
 
     public void updateExecContextStatus(Long execContextId) {
