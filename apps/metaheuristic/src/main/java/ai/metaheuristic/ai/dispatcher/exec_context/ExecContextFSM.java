@@ -190,6 +190,9 @@ public class ExecContextFSM {
     public void storeExecResult(TaskImpl task, ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         task.setFunctionExecResults(result.getResult());
         task.setResultReceived(1);
+        // the outputs are due from now on - TaskRepository.findForMissingResultVariables asks for a resend only when they are
+        // still missing 15 s later
+        task.setResultResourceScheduledOn(System.currentTimeMillis());
 
         eventPublisherService.publishCheckTaskCanBeFinishedTxEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id));
     }

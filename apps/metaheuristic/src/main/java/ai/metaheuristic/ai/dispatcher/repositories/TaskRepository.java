@@ -121,10 +121,13 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query("SELECT t.id FROM TaskImpl t where t.coreId is null and t.execContextId=:execContextId and (t.execState=0 or t.execState=6) and t.id in :ids")
     List<Long> findForAssigning(Long execContextId, List<Long> ids);
 
+    // the function's result is received (resultReceived=1, set by ExecContextFSM.storeExecResult) and the Task isn't finished:
+    // its outputs are what is missing. A Task is assigned to a core, so the Tasks are selected by the cores of the requesting
+    // Processor (before 2026-10-29: t.coreId=:processorId and t.resultReceived=0 and an OK state - a combination no Task reaches)
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-    @Query("SELECT t FROM TaskImpl t where t.coreId=:processorId and t.resultReceived=0 and " +
+    @Query("SELECT t FROM TaskImpl t where t.coreId in :coreIds and t.resultReceived=1 and " +
             " t.execState =:execState and (:mills - t.resultResourceScheduledOn > 15000) ")
-    List<TaskImpl> findForMissingResultVariables(Long processorId, long mills, int execState);
+    List<TaskImpl> findForMissingResultVariables(List<Long> coreIds, long mills, int execState);
 
     @Query(value="select v.id from TaskImpl v where v.execContextId=:execContextId")
     List<Long> findAllByExecContextId(Pageable pageable, Long execContextId);

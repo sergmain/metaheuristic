@@ -61,6 +61,7 @@ public class TaskService {
     private final ExecContextCache execContextCache;
     private final TaskTxService taskTxService;
     private final TaskRepository taskRepository;
+    private final ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository processorCoreRepository;
     private final VariableTxService variableService;
     private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final ApplicationEventPublisher applicationEventPublisher;
@@ -189,8 +190,15 @@ public class TaskService {
     }
 
     public DispatcherCommParamsYaml.ResendTaskOutputs variableReceivingChecker(Long processorId) {
-        List<TaskImpl> tasks = taskRepository.findForMissingResultVariables(processorId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
         DispatcherCommParamsYaml.ResendTaskOutputs result = new DispatcherCommParamsYaml.ResendTaskOutputs();
+        // a Task is assigned to a core of the Processor, never to the Processor itself
+        final List<Long> coreIds = processorCoreRepository.findIdsAndCodesByProcessorId(processorId).stream()
+                .map(ai.metaheuristic.ai.dispatcher.data.ProcessorData.ProcessorCore::id).toList();
+        if (coreIds.isEmpty()) {
+            return result;
+        }
+        // the function's result is received and the Task isn't finished - the outputs are what is missing
+        List<TaskImpl> tasks = taskRepository.findForMissingResultVariables(coreIds, System.currentTimeMillis(), EnumsApi.TaskExecState.IN_PROGRESS.value);
         for (TaskImpl task : tasks) {
             ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
             if (ec==null || EnumsApi.ExecContextState.isFinishedState(ec.state)) {
