@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateExecContextStatusEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
@@ -51,7 +52,8 @@ public class ExecContextSchedulerService {
         List<Long> execContextIds = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
         for (Long execContextId : execContextIds) {
             try {
-                execContextTopLevelService.updateExecContextStatus(execContextId);
+                // asynchronous, one ExecContext per MTQ thread (ExecContextTopLevelService.handleUpdateExecContextStatusEvent)
+                eventPublisher.publishEvent(new UpdateExecContextStatusEvent(execContextId));
             } catch (CommonRollbackException e) {
                 //
             }

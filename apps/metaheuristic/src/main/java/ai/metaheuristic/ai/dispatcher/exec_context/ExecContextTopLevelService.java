@@ -87,7 +87,14 @@ public class ExecContextTopLevelService implements ShutdownInterface {
     // and a request for an ExecContext that is already waiting in the queue is dropped (checkForDouble)
     private final MultiTenantedQueue<Long, UpdateExecContextStatusEvent> updateExecContextStatusMTQ =
             new MultiTenantedQueue<>(100, Duration.ZERO, true, "UpdateExecContextStatus-",
-                    event -> updateExecContextStatus(event.execContextId));
+                    event -> {
+                        try {
+                            updateExecContextStatus(event.execContextId);
+                        } catch (CommonRollbackException e) {
+                            // a rollback signal, not a failure - swallowed, as ExecContextSchedulerService.updateExecContextStatuses()
+                            // did when it called updateExecContextStatus() directly; the MTQ would log it as an error
+                        }
+                    });
 
     private volatile boolean shutdown = false;
 

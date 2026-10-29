@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReconciliationTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
@@ -85,6 +86,7 @@ public class TaskHandOutStaleQueueEntryTest extends FeatureMethods {
     @Autowired private ExecContextReconciliationTopLevelService execContextReconciliationTopLevelService;
     @Autowired private ExecContextSegmentReadService segmentReadService;
     @Autowired private ExecContextTopLevelService execContextTopLevelService;
+    @Autowired private ExecContextSchedulerService execContextSchedulerService;
     @Autowired private JdbcTemplate jdbcTemplate;
 
     private record Abandoned(PreparingData.ProcessorIdAndCoreIds cores, Long execContextId1, Long abandonedTaskId,
@@ -162,6 +164,29 @@ public class TaskHandOutStaleQueueEntryTest extends FeatureMethods {
         // STOPPED -> STARTED reconciles the ExecContext: the queue and the graph follow MH_TASK (01.307.090), the PRE_INIT Task
         // under its finished direct parent is advanced (01.307.410) - nothing is held up any more, both Tasks are handed out
         assertEquals(Set.of(a.abandonedTaskId, a.nextTaskId), handedOut, code + ": both Tasks must be handed out after STOPPED -> STARTED");
+    }
+
+    /**
+     * The scheduler's pass - {@link ExecContextSchedulerService#updateExecContextStatuses()}, every 630 s in production -
+     * reconciles every STARTED ExecContext: the abandoned entry no longer holds anything up.
+     */
+    @Test
+    public void test_schedulerPass_reconcilesTheAbandonedEntry() {
+        final String code = SharedItEnv.uniqueCode("SCHEDULER_RECONCILE");
+        final Abandoned a = prepareAbandonedEntryAheadOfNextTask(code);
+
+        execContextSchedulerService.updateExecContextStatuses();
+
+        final Set<Long> handedOut = handOutToBothCores(a, 6);
+
+        final TaskQueue.AllocatedTask abandonedEntry = TaskProviderTopLevelService.getTaskExecStates(a.execContextId1).get(a.abandonedTaskId);
+        printState(code, a, abandonedEntry, null);
+        System.out.println(code + " Task #" + a.abandonedTaskId + " MH_TASK: " + EnumsApi.TaskExecState.from(mhTaskState(a.abandonedTaskId)) +
+                ", graph: " + graphState(a.execContextId1, a.abandonedTaskId) + "; handed out: " + handedOut);
+
+        // the scheduler's pass reconciles the ExecContext: the queue and the graph follow MH_TASK (01.307.090), the PRE_INIT
+        // Task under its finished direct parent is advanced (01.307.410) - nothing is held up any more, both Tasks are handed out
+        assertEquals(Set.of(a.abandonedTaskId, a.nextTaskId), handedOut, code + ": both Tasks must be handed out after the scheduler's pass");
     }
 
     private void changeState(String code, Long execContextId, EnumsApi.ExecContextState state) {
