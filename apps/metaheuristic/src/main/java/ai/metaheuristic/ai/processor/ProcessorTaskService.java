@@ -321,6 +321,8 @@ public class ProcessorTaskService {
                 if (isTaskForRerun(task)) {
                     log.info("01.713.680 Found dir of task with id: {}, {}, {}, {}", taskId, groupDirName, name, dispatcherUrl.url);
                 }
+                // also after fixing the state - a Task completed by markAsFinished() has nothing to recover
+                recoverAtLoad(core, task);
             }
         } catch (IOException e) {
             String es = "713.140 Error";
@@ -341,6 +343,78 @@ public class ProcessorTaskService {
      */
     public static boolean isTaskForRerun(ProcessorCoreTask task) {
         return !task.completed && task.finishedOn == null && !task.reported;
+    }
+
+    /**
+     * What a Task loaded from disk at startup needs so that it can complete: whether its delivery to the Dispatcher must be
+     * redone ({@code reported} and {@code delivered} set back to false), and which of its outputs must be uploaded again.
+     *
+     * @param resetDelivery   set {@code reported} and {@code delivered} back to false
+     * @param outputsToUpload the ids of the output Variables to upload again
+     */
+    public record RecoveryAtLoad(boolean resetDelivery, List<Long> outputsToUpload) {
+        public static final RecoveryAtLoad NOTHING = new RecoveryAtLoad(false, List.of());
+    }
+
+    /**
+     * Pure - decided from the Task alone, testable without a Spring context. Called by processTaskDir() for a Task of an
+     * ExecContext that isn't FINISHED.
+     */
+    /**
+     * A Task recovered at startup whose outputs are to be uploaded again - drained by ProcessorService once the Processor is up,
+     * when the upload actor and the Dispatcher lookups are ready.
+     */
+    public record UploadAfterLoad(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId, List<Long> variableIds) {}
+
+    private final java.util.concurrent.ConcurrentLinkedQueue<UploadAfterLoad> uploadsAfterLoad = new java.util.concurrent.ConcurrentLinkedQueue<>();
+
+    /** Applies {@link #recoveryAtLoad} to a Task loaded at startup: the delivery is reset now, the uploads are queued later. */
+    private void recoverAtLoad(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task) {
+        final RecoveryAtLoad recovery = recoveryAtLoad(task);
+        if (!recovery.resetDelivery()) {
+            return;
+        }
+        log.warn("01.713.720 task #{} finished but its output(s) {} weren't uploaded - its result is delivered again and the outputs are uploaded again",
+                task.taskId, recovery.outputsToUpload());
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, task.taskId));
+        try {
+            lock.lock();
+            task.reported = false;
+            task.reportedOn = null;
+            task.delivered = false;
+            save(core, task);
+        } finally {
+            lock.unlock();
+        }
+        uploadsAfterLoad.add(new UploadAfterLoad(core, task.taskId, recovery.outputsToUpload()));
+    }
+
+    /** @return the uploads recovered at startup, each one once */
+    public List<UploadAfterLoad> drainUploadsAfterLoad() {
+        final List<UploadAfterLoad> list = new ArrayList<>();
+        UploadAfterLoad u;
+        while ((u = uploadsAfterLoad.poll()) != null) {
+            list.add(u);
+        }
+        return list;
+    }
+
+    public static RecoveryAtLoad recoveryAtLoad(ProcessorCoreTask task) {
+        // a completed Task is done; a Task that didn't finish is re-run (isTaskForRerun) - neither has anything to recover
+        if (task.completed || task.finishedOn == null) {
+            return RecoveryAtLoad.NOTHING;
+        }
+        // the uploads of outputs are queued in memory only (UploadVariableService), a stop loses them - and nothing queues them
+        // again: the result is delivered again and every output that isn't uploaded is uploaded again
+        final List<Long> notUploaded = task.output.outputStatuses.stream()
+                .filter(o -> !o.uploaded)
+                .map(o -> o.variableId)
+                .sorted()
+                .toList();
+        if (notUploaded.isEmpty()) {
+            return RecoveryAtLoad.NOTHING;
+        }
+        return new RecoveryAtLoad(true, notUploaded);
     }
 
     /**

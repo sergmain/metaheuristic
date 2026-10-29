@@ -48,6 +48,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 
 import java.net.InetAddress;
 import java.security.MessageDigest;
@@ -61,6 +63,9 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * <p>Error code prefix: {@code 01.749.} (unique to this class).
+ */
 @Service
 @Slf4j
 @Profile("processor")
@@ -195,6 +200,22 @@ public class ProcessorService {
             }
         }
         return statuses;
+    }
+
+    /**
+     * The uploads of outputs a stop lost - found by ProcessorTaskService while loading the Tasks at startup
+     * ({@link ProcessorTaskService#recoveryAtLoad}), queued here once the Processor is up: the upload actor and the Dispatcher
+     * lookups are ready then. An upload of a Task the Dispatcher has reset comes back TASK_WAS_RESET and UploadVariableService
+     * deletes the Task - its core is free again either way.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void uploadOutputsLostAtStop() {
+        for (ProcessorTaskService.UploadAfterLoad u : processorTaskService.drainUploadsAfterLoad()) {
+            for (Long variableId : u.variableIds()) {
+                final Enums.ResendTaskOutputResourceStatus status = resendTaskOutputResources(u.core(), u.taskId(), variableId);
+                log.info("01.749.200 task #{}, output #{}: the upload lost at a stop is queued again, status {}", u.taskId(), variableId, status);
+            }
+        }
     }
 
     public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, Long variableId) {

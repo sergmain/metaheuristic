@@ -60,6 +60,8 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
+ * <p>Error code prefix: {@code 01.210.} (unique to this class).
+ *
  * @author Serge
  * Date: 7/4/2019
  * Time: 3:56 PM
@@ -284,6 +286,13 @@ public class ExecContextTopLevelService implements ShutdownInterface {
         if (task.execState == EnumsApi.TaskExecState.ERROR.value ||
                 task.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value||
                 task.execState == EnumsApi.TaskExecState.OK.value) {
+            return task.id;
+        }
+        // a NONE Task was reset - the result belongs to a run that is over. Stored, it would stay on the Task through its next
+        // assignment, and the next run's own result would be ignored (storeExecResultWithTx returns when a result is received).
+        // Acknowledged like the finished states above, so the Processor stops reporting it
+        if (task.execState == EnumsApi.TaskExecState.NONE.value) {
+            log.warn("01.210.195 the result of Task #{} isn't stored, the Task was reset (NONE)", task.id);
             return task.id;
         }
         // TODO 2021-11-22 it's not clear - do we have to check TaskExecState.SKIPPED state as well
