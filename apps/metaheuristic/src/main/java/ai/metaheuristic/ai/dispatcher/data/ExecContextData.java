@@ -17,7 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.dispatcher.Task;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jgrapht.graph.DefaultEdge;
@@ -67,6 +70,61 @@ public class ExecContextData {
     @AllArgsConstructor
     public static class ExecContextDescsRequest {
         public @Nullable List<Long> ids;
+    }
+
+    /**
+     * Body of {@code POST /rest/v1/dispatcher/source-code/exec-context-with-variables-add-commit}: the SourceCode to
+     * instantiate, and the values of its source-level input variables as name -&gt; value. A JSON null value becomes
+     * {@code VariableValue(null)} - the input is created NULLIFIED, which is accepted only for an input the SourceCode
+     * declares nullable ('?'). A non-string JSON scalar arrives as its text. Every declared input must be named, and
+     * no undeclared name may be (562.120 / 562.122, enforced where the variables are created).
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExecContextWithVariablesRequest {
+        public @Nullable Long sourceCodeId;
+        public @Nullable Map<String, @Nullable String> variables;
+    }
+
+    /**
+     * Answer of the same endpoint. {@code execContextId} is set when the ExecContext was created and its Tasks were
+     * produced; otherwise it is null and {@code errorMessages} says why - creation is all-or-nothing, so nothing is left
+     * behind.
+     */
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class ExecContextWithVariablesResult extends BaseDataClass {
+        public @Nullable Long execContextId;
+        public @Nullable Long sourceCodeId;
+        public @Nullable String sourceCodeUid;
+        public @Nullable Integer state;
+        public @Nullable String stateName;
+
+        /**
+         * Names errorMessages / infoMessages explicitly. Without it neither is serialized: BaseDataClass's
+         * {@code @JsonIgnore isErrorMessages()} is an accessor of the same logical property, and an ignoral on one
+         * accessor drops the whole property unless another names it with {@code @JsonProperty} - observed in
+         * {@code ExecContextWithVariablesRestControllerTest}: an answer without its refusal.
+         */
+        @JsonCreator
+        public ExecContextWithVariablesResult(
+                @JsonProperty("execContextId") @Nullable Long execContextId,
+                @JsonProperty("sourceCodeId") @Nullable Long sourceCodeId,
+                @JsonProperty("sourceCodeUid") @Nullable String sourceCodeUid,
+                @JsonProperty("state") @Nullable Integer state,
+                @JsonProperty("stateName") @Nullable String stateName,
+                @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+                @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.execContextId = execContextId;
+            this.sourceCodeId = sourceCodeId;
+            this.sourceCodeUid = sourceCodeUid;
+            this.state = state;
+            this.stateName = stateName;
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
 

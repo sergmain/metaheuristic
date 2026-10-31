@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
@@ -27,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStateDownloadServi
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -50,7 +52,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
+ * <p>Error code prefix: {@code 01.571.} (unique to this class).
+ *
  * @author Serge
  * Date: 7/4/2019
  * Time: 3:55 PM
@@ -214,6 +221,82 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
     public ExecContextData.ExecContextDescsResult execContextDescs(@RequestBody ExecContextData.@Nullable ExecContextDescsRequest request) {
         ExecContextData.ExecContextDescsResult result = execContextTopLevelService.execContextDescs(request);
+        return result;
+    }
+
+    /**
+     * Creates an ExecContext from a SourceCode that declares source-level input variables, initializes those
+     * variables from the body, and produces its Tasks - for a REUSABLE workflow, one that takes its subject at run
+     * time instead of having it written into the .mhsc. {@code /exec-context-add-commit} cannot launch such a
+     * SourceCode: it has no way to carry the values, and production refuses an uninitialized input (562.120).
+     *
+     * <pre>
+     * curl -u login:password -H "Content-Type: application/json" \
+     *   -d '{"sourceCodeId": 256, "variables": {"formUrl": "https://example.org/form", "production": null}}' \
+     *   http://localhost:8080/rest/v1/dispatcher/source-code/exec-context-with-variables-add-commit
+     * </pre>
+     *
+     * <p>The values are applied by the same service path as the {@code mh_create_exec_context_with_variables} MCP
+     * tool, so both refuse alike: a declared input with no value (562.120), a name the SourceCode doesn't declare
+     * (562.122), a null for an input not declared nullable (01.562.124). Each refusal comes back in
+     * {@code errorMessages} with {@code execContextId} null, and nothing is left behind.
+     */
+    @PostMapping(value = "/exec-context-with-variables-add-commit", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+    public ExecContextData.ExecContextWithVariablesResult execContextWithVariablesAddCommit(
+            @RequestBody ExecContextData.ExecContextWithVariablesRequest request, Authentication authentication) {
+        final Long sourceCodeId = request.sourceCodeId;
+        if (sourceCodeId==null) {
+            final ExecContextData.ExecContextWithVariablesResult result = new ExecContextData.ExecContextWithVariablesResult();
+            result.addErrorMessage("01.571.020 'sourceCodeId' is required: the body is "
+                + "{\"sourceCodeId\": <id>, \"variables\": {\"<name>\": \"<value>\" | null, ...}}");
+            return result;
+        }
+        UserContext context = userContextService.getContext(authentication);
+        final ExecContextCreatorService.ExecContextCreationResult creation = execContextCreatorTopLevelService.createExecContextAndStart(
+            sourceCodeId, new ExecContextApiData.UserExecContext(context.getAccountId(), context.getCompanyId()), true, null,
+            new ExecContextData.ExecContextCreationInfo("by /exec-context-with-variables-add-commit"),
+            toInputVariables(request.variables));
+        return toResult(sourceCodeId, creation);
+    }
+
+    /**
+     * The body's name -&gt; value map as the creator takes it. A null map is no values; a null value is an explicit
+     * "no value" ({@code VariableValue(null)}), not an absent one - so the map keeps the name.
+     */
+    public static Map<String, ExecContextData.VariableValue> toInputVariables(@Nullable Map<String, @Nullable String> variables) {
+        final Map<String, ExecContextData.VariableValue> values = new HashMap<>();
+        if (variables!=null) {
+            variables.forEach((name, value) -> values.put(name, new ExecContextData.VariableValue(value)));
+        }
+        return values;
+    }
+
+    /**
+     * The answer for one creation: the ExecContext's id and state when it exists, the creator's messages always, and
+     * an error of its own when there is neither an ExecContext nor an error saying why.
+     */
+    public static ExecContextData.ExecContextWithVariablesResult toResult(
+            Long sourceCodeId, ExecContextCreatorService.ExecContextCreationResult creation) {
+        final ExecContextData.ExecContextWithVariablesResult result = new ExecContextData.ExecContextWithVariablesResult();
+        result.sourceCodeId = sourceCodeId;
+        result.sourceCodeUid = creation.sourceCode==null ? null : creation.sourceCode.uid;
+        if (!creation.getErrorMessagesAsList().isEmpty()) {
+            result.addErrorMessages(creation.getErrorMessagesAsList());
+        }
+        if (!creation.getInfoMessagesAsList().isEmpty()) {
+            result.addInfoMessages(creation.getInfoMessagesAsList());
+        }
+        final ExecContextImpl ec = creation.execContext;
+        if (ec==null) {
+            if (!result.isErrorMessages()) {
+                result.addErrorMessage("01.571.040 ExecContext wasn't created and no error was reported");
+            }
+            return result;
+        }
+        result.execContextId = ec.id;
+        result.state = ec.state;
+        result.stateName = EnumsApi.ExecContextState.toState(ec.state).name();
         return result;
     }
 }
