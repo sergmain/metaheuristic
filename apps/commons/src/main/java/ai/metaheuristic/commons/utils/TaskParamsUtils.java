@@ -22,6 +22,8 @@ import org.jspecify.annotations.Nullable;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 
+import java.util.EnumSet;
+
 /**
  * @author Serge
  * Date: 12/11/2019
@@ -37,13 +39,20 @@ public class TaskParamsUtils {
      *
      * <p>An explicit policy always wins - a descriptor asking for ALL means the whole task dir goes, which
      * covers the asset dir too.
+     *
+     * <p>cleaningPolicy is a comma-separated list now. For a git-sourced Function the declared list is kept and ASSETS
+     * is added only when the list has neither ALL nor ASSETS - FULL_AFTER_ONE_WEEK alone would leave the asset dir
+     * for a week, which is exactly the stale and unbounded content the default exists to prevent. The result is the
+     * canonical form of the list, see CleaningPolicyUtils.asString(); an unknown name is refused.
      */
-    public static EnumsApi.@Nullable CleaningPolicy defaultCleaningPolicy(
-            EnumsApi.@Nullable FunctionSourcing sourcing, EnumsApi.@Nullable CleaningPolicy declared) {
-        if (declared!=null) {
-            return declared;
+    public static @Nullable String defaultCleaningPolicy(
+            EnumsApi.@Nullable FunctionSourcing sourcing, @Nullable String declared) {
+        final EnumSet<EnumsApi.CleaningPolicy> policies = CleaningPolicyUtils.parseStrict(declared);
+        if (sourcing==EnumsApi.FunctionSourcing.git
+                && !policies.contains(EnumsApi.CleaningPolicy.ALL) && !policies.contains(EnumsApi.CleaningPolicy.ASSETS)) {
+            policies.add(EnumsApi.CleaningPolicy.ASSETS);
         }
-        return sourcing==EnumsApi.FunctionSourcing.git ? EnumsApi.CleaningPolicy.ASSETS : null;
+        return CleaningPolicyUtils.asString(policies);
     }
 
     public static TaskParamsYaml.FunctionConfig toFunctionConfig(FunctionConfigYaml src) {

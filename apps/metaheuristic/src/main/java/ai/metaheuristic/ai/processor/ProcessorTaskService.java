@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
@@ -56,6 +57,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1014,6 +1016,82 @@ public class ProcessorTaskService {
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Applies the cleaning which is due for a Task: deletes its whole dir - as delete() does, and the Task is forgotten as
+     * well - or only its 'asset' sub-dir. The decision is made under the write lock of the Task, from its task.yaml as it
+     * is on disk at that moment, never from what a scan read before: a Task created again under the same id after its
+     * dir was listed is judged by its new state. A Task of a FINISHED ExecContext, which isn't loaded, is covered the same
+     * way - only its dir is needed.
+     *
+     * @param decision what is due for a Task, see ArtifactCleanerAtProcessor.cleaningAction()
+     * @return what was done, NONE when nothing was due or the dir has no readable task.yaml
+     */
+    public Enums.TaskCleaningAction applyCleaning(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, final long taskId,
+                                                  Function<ProcessorCoreTask, Enums.TaskCleaningAction> decision) {
+        MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.getProcessorEnv().metadataParams().processorStateByDispatcherUrl(core);
+
+        final Path processorDir = processorPath.resolve(core.coreCode);
+        final Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
+        final Path dispatcherDir = processorTaskDir.resolve(processorState.dispatcherCode);
+        final Path taskDir = DirUtils.getPoweredPath(dispatcherDir, taskId);
+
+        final ReentrantReadWriteLock.WriteLock lock = ProcessorTaskSyncService.getWriteLockNotHeld(taskYamlKey(core, taskId));
+        try {
+            lock.lock();
+            final Enums.TaskCleaningAction action = decideByTaskYaml(taskDir, decision);
+            if (action==Enums.TaskCleaningAction.TASK_DIR) {
+                processorEnvironment.getProcessorEnv().metadataParams().removeQuota(core.dispatcherUrl.url, taskId);
+            }
+            final Enums.TaskCleaningAction done = applyToTaskDir(taskDir, action);
+            if (action==Enums.TaskCleaningAction.TASK_DIR) {
+                getTasksForProcessorCore(core).remove(taskId);
+                getAllTasksForProcessorCore(core).remove(taskId);
+            }
+            return done;
+        } catch (Throwable th) {
+            log.error("01.713.740 Error while cleaning dir of task #" + taskId, th);
+            return Enums.TaskCleaningAction.NONE;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * What is due for the dir of a Task, decided from its task.yaml. A dir without a readable task.yaml is left as is -
+     * dealing with such a dir is the startup scan's business, see processTaskDir().
+     * Path-based and static on purpose - it's testable without a Spring context.
+     */
+    public static Enums.TaskCleaningAction decideByTaskYaml(Path taskDir, Function<ProcessorCoreTask, Enums.TaskCleaningAction> decision) {
+        final Path taskYaml = taskDir.resolve(Consts.TASK_YAML);
+        if (Files.notExists(taskYaml)) {
+            return Enums.TaskCleaningAction.NONE;
+        }
+        final ProcessorCoreTask task;
+        try (InputStream is = Files.newInputStream(taskYaml)) {
+            task = ProcessorTaskUtils.to(is);
+        } catch (Throwable th) {
+            log.warn("01.713.760 task.yaml in {} isn't readable, the dir is left as is: {}", taskDir, th.toString());
+            return Enums.TaskCleaningAction.NONE;
+        }
+        return decision.apply(task);
+    }
+
+    /**
+     * The file-system part of applyCleaning(). Path-based and static on purpose - it's testable without a Spring context.
+     *
+     * @return what was actually done - ASSETS stays due for a Task forever, so an 'asset' sub-dir deleted before is NONE
+     */
+    public static Enums.TaskCleaningAction applyToTaskDir(Path taskDir, Enums.TaskCleaningAction action) {
+        return switch (action) {
+            case TASK_DIR -> {
+                deleteDir(taskDir, "01.713.780 delete dir of task because of SourceCode's 'clean' or Function's cleaningPolicy");
+                yield Enums.TaskCleaningAction.TASK_DIR;
+            }
+            case ASSET_DIR -> deleteTaskAssetDir(taskDir) ? Enums.TaskCleaningAction.ASSET_DIR : Enums.TaskCleaningAction.NONE;
+            case NONE -> Enums.TaskCleaningAction.NONE;
+        };
     }
 
     @SneakyThrows

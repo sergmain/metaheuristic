@@ -47,6 +47,9 @@ public final class Enums {
 
     public enum ExecContextInitState {NONE, DELTA, FULL}
 
+    // what the cleaning by SourceCode's 'clean' and Function's cleaningPolicy does with the dir of a Task on the Processor
+    public enum TaskCleaningAction {NONE, ASSET_DIR, TASK_DIR}
+
     public enum ProcessorAndSessionStatus { ok, reassignProcessor, newSession, updateSession }
 
     public enum QuotaAllocation { disabled, present }

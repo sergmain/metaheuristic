@@ -22,6 +22,7 @@ import lombok.ToString;
 import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.time.Duration;
 
 public class EnumsApi {
 
@@ -282,7 +283,31 @@ public class EnumsApi {
      */
     public enum GateScope { global, company, api, function, processor }
 
-    public enum CleaningPolicy { ALL, ASSETS }
+    /** What a {@link CleaningPolicy} deletes in the dir of a Task on the Processor side */
+    public enum CleaningTarget { TASK_DIR, ASSET_DIR }
+
+    /**
+     * Processor-side cleaning of the dir of a Task, declared by a Function as a comma-separated list, e.g.
+     * {@code cleaningPolicy: ASSETS, FULL_AFTER_ONE_WEEK}. A policy is applied once the Task is done (delivered
+     * and completed) and its timeout since the Task's finishedOn has passed; Duration.ZERO - immediately.
+     * ALL - the whole dir of the Task, exactly the same as SourceCode's 'clean' option;
+     * ASSETS - only the 'asset' sub-dir of the Task's dir;
+     * FULL_AFTER_ONE_WEEK - the whole dir of the Task, as ALL, one week after the Task was finished.
+     */
+    public enum CleaningPolicy {
+        ALL(CleaningTarget.TASK_DIR, Duration.ZERO),
+        ASSETS(CleaningTarget.ASSET_DIR, Duration.ZERO),
+        FULL_AFTER_ONE_WEEK(CleaningTarget.TASK_DIR, Duration.ofDays(7));
+
+        public final CleaningTarget target;
+        // since the Task's finishedOn
+        public final Duration timeout;
+
+        CleaningPolicy(CleaningTarget target, Duration timeout) {
+            this.target = target;
+            this.timeout = timeout;
+        }
+    }
 
     public enum SourceCodeValidateStatus { OK, NOT_VERIFIED_YET,
         SOURCE_CODE_NOT_FOUND_ERROR,

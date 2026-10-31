@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.utils.CleaningPolicyUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -35,8 +36,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * <p>Error code prefix: {@code 01.339.} (unique to this class).
+ */
 @Service
 @Slf4j
 @Profile("processor")
@@ -55,6 +60,8 @@ public class ArtifactCleanerAtProcessor {
             // don't delete anything until the processor has received the full list of actual ExecContexts
             return;
         }
+        // one moment for the whole pass - the policies with a timeout are judged by it
+        final long now = System.currentTimeMillis();
 
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.getProcessorEnv().metadataParams().getAllEnabledRefsForCores()) {
             if (currentExecState.getCurrentInitState(core.dispatcherUrl) != Enums.ExecContextInitState.FULL) {
@@ -89,12 +96,13 @@ public class ArtifactCleanerAtProcessor {
                     continue;
                 }
                 final boolean done = task.delivered && task.completed;
-                if (isTaskDirCleaningRequired(task.clean, task.cleaningPolicy, done)) {
-                    log.info("Delete task with ((task.clean || cleaningPolicy==ALL) && task.delivered && task.completed), id {}, url {}", task.getTaskId(), core.dispatcherUrl.url);
+                final Set<EnumsApi.CleaningPolicy> cleaningPolicies = cleaningPoliciesOf(task);
+                if (isTaskDirCleaningRequired(task.clean, cleaningPolicies, done, task.finishedOn, now)) {
+                    log.info("Delete task with ((task.clean || cleaningPolicy ALL || a due FULL_AFTER_ONE_WEEK) && task.delivered && task.completed), id {}, url {}", task.getTaskId(), core.dispatcherUrl.url);
                     processorTaskService.delete(core, task.getTaskId());
                     continue;
                 }
-                if (isAssetDirCleaningRequired(task.cleaningPolicy, done)) {
+                if (isAssetDirCleaningRequired(cleaningPolicies, done, task.finishedOn, now)) {
                     processorTaskService.deleteAssetDir(core, task.getTaskId());
                 }
             }
@@ -105,16 +113,51 @@ public class ArtifactCleanerAtProcessor {
      * The whole dir of a task is deleted either because SourceCode declared 'clean',
      * or because Function of that task declared cleaningPolicy==ALL - both mean the very same thing.
      * Static and free of any state on purpose - it's testable without a Spring context.
+     * FULL_AFTER_ONE_WEEK deletes the very same as ALL, only once a week has passed since the Task's finishedOn,
+     * i.e. a policy counts when it's due at the moment 'now', see CleaningPolicyUtils.isDue().
      */
-    public static boolean isTaskDirCleaningRequired(boolean clean, EnumsApi.@Nullable CleaningPolicy cleaningPolicy, boolean done) {
-        return done && (clean || cleaningPolicy==EnumsApi.CleaningPolicy.ALL);
+    public static boolean isTaskDirCleaningRequired(boolean clean, Set<EnumsApi.CleaningPolicy> cleaningPolicies, boolean done,
+                                                    @Nullable Long finishedOn, long now) {
+        return done && (clean || isDue(cleaningPolicies, EnumsApi.CleaningTarget.TASK_DIR, finishedOn, now));
     }
 
     /**
      * Only the 'asset' sub-dir of a task's dir is deleted, the rest of taskDir stays.
      * cleaningPolicy==ALL is intentionally not handled here, it's already covered by isTaskDirCleaningRequired().
      */
-    public static boolean isAssetDirCleaningRequired(EnumsApi.@Nullable CleaningPolicy cleaningPolicy, boolean done) {
-        return done && cleaningPolicy==EnumsApi.CleaningPolicy.ASSETS;
+    public static boolean isAssetDirCleaningRequired(Set<EnumsApi.CleaningPolicy> cleaningPolicies, boolean done,
+                                                     @Nullable Long finishedOn, long now) {
+        return done && isDue(cleaningPolicies, EnumsApi.CleaningTarget.ASSET_DIR, finishedOn, now);
+    }
+
+    private static boolean isDue(Set<EnumsApi.CleaningPolicy> cleaningPolicies, EnumsApi.CleaningTarget target,
+                                 @Nullable Long finishedOn, long now) {
+        return cleaningPolicies.stream().anyMatch(p -> p.target==target && CleaningPolicyUtils.isDue(p, finishedOn, now));
+    }
+
+    /**
+     * What is due for a Task at the moment 'now' - the decision of fixedDelay() as one value. It's what the cleaning
+     * of every Task dir on disk, loaded or not, applies, see ProcessorTaskDirCleaner.
+     */
+    public static Enums.TaskCleaningAction cleaningAction(ProcessorCoreTask task, long now) {
+        final boolean done = task.delivered && task.completed;
+        final Set<EnumsApi.CleaningPolicy> cleaningPolicies = cleaningPoliciesOf(task);
+        if (isTaskDirCleaningRequired(task.clean, cleaningPolicies, done, task.finishedOn, now)) {
+            return Enums.TaskCleaningAction.TASK_DIR;
+        }
+        if (isAssetDirCleaningRequired(cleaningPolicies, done, task.finishedOn, now)) {
+            return Enums.TaskCleaningAction.ASSET_DIR;
+        }
+        return Enums.TaskCleaningAction.NONE;
+    }
+
+    /**
+     * The policies of a Task. Lenient on purpose - a name this Processor doesn't know, e.g. one sent by a newer
+     * Dispatcher, is logged and skipped while the rest of the list still applies. The Dispatcher is the strict side:
+     * FunctionConfigYaml.checkIntegrity() refuses an unknown name when a Function is registered.
+     */
+    public static Set<EnumsApi.CleaningPolicy> cleaningPoliciesOf(ProcessorCoreTask task) {
+        return CleaningPolicyUtils.parse(task.cleaningPolicy,
+                name -> log.warn("01.339.020 task #{} declares an unknown cleaningPolicy '{}', it's skipped", task.taskId, name));
     }
 }

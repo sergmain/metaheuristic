@@ -105,7 +105,9 @@ public class ProcessorCoreTask {
 
     // cleaning policy of Function of this task, null means that Function doesn't require any cleaning.
     // ALL is an equivalent of clean==true, ASSETS deletes only the 'asset' sub-dir of task's dir.
-    public EnumsApi.@Nullable CleaningPolicy cleaningPolicy;
+    // A comma-separated list of EnumsApi.CleaningPolicy names, e.g. 'ASSETS, FULL_AFTER_ONE_WEEK' - FULL_AFTER_ONE_WEEK
+    // deletes the whole dir as ALL does, a week after finishedOn. A task.yaml written when it was an enum has one name.
+    public @Nullable String cleaningPolicy;
 
     // TODO 2020-12-30 need to change it to DispatcherServerUrl when this class will be based on BaseClass
     // TODO 2021-08-07 you mean ProcessorAndCoreData.DispatcherUrl()? and what the point of this change?

@@ -24,6 +24,7 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.FunctionAnalyzerUtils;
+import ai.metaheuristic.commons.utils.CleaningPolicyUtils;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.*;
@@ -112,6 +113,19 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
                     }
                 }
             }
+        }
+
+        if (!errors.isEmpty()) {
+            throw new CheckIntegrityFailedException(errors.toString());
+        }
+
+        // the same reasoning as for analyzers above - checked at parse, so an unknown name is refused on every way a
+        // descriptor enters the system, exactly as the enum-typed field refused it before the field became a list
+        try {
+            CleaningPolicyUtils.parseStrict(function.cleaningPolicy);
+        }
+        catch (IllegalStateException e) {
+            errors.add(S.f("function %s: %s", function.code, e.getMessage()));
         }
 
         if (!errors.isEmpty()) {
@@ -330,8 +344,10 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
          * Processor-side cleaning policy, @Nullable per the @Nullable-exception rule of
          * the multi-versioning mechanic - no version bump. null means 'nothing to clean
          * because of this Function', the SourceCode's 'clean' option still applies.
+         * A comma-separated list of EnumsApi.CleaningPolicy names, e.g. 'ASSETS, FULL_AFTER_ONE_WEEK' -
+         * a String because a list in one scalar can't be bound to an enum, see CleaningPolicyUtils.
          */
-        public EnumsApi.@Nullable CleaningPolicy cleaningPolicy;
+        public @Nullable String cleaningPolicy;
 
         public FunctionConfigYaml.@Nullable Api api = null;
 

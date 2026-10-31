@@ -213,8 +213,9 @@ public class TaskParamsYaml implements BaseParams {
         /**
          * Processor-side cleaning policy, copied from FunctionConfigYaml.function.cleaningPolicy.
          * @Nullable per the @Nullable-exception rule of the multi-versioning mechanic - no version bump.
+         * A comma-separated list of EnumsApi.CleaningPolicy names, e.g. 'ASSETS, FULL_AFTER_ONE_WEEK', see CleaningPolicyUtils.
          */
-        public EnumsApi.@Nullable CleaningPolicy cleaningPolicy;
+        public @Nullable String cleaningPolicy;
 
         // Stage 5 (vault secret handoff): @Nullable per the @Nullable-exception
         // rule — no version bump. When non-null and task.companyId != 0L, the

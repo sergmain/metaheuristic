@@ -62,6 +62,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Schedulers {
@@ -599,6 +600,7 @@ public class Schedulers {
         private final Globals globals;
         private final ProcessorEventBusService processorEventBusService;
         private final FunctionRepositoryProcessorService functionRepositoryProcessorService;
+        private final ProcessorTaskDirCleaner processorTaskDirCleaner;
 
         // this scheduler is being run at the processor side
 
@@ -624,6 +626,24 @@ public class Schedulers {
             }
             log.info("Request Function repository");
             processorEventBusService.interactWithFunctionRepository();
+        }
+
+        /**
+         * Cleaning of every Task dir by SourceCode's 'clean' and the cleaning policies of Functions - FULL_AFTER_ONE_WEEK
+         * above all, which nothing else applies to the Tasks of FINISHED ExecContexts. Every 12 hours, the first time
+         * half an hour after start, i.e. never as a part of the startup: the startup scan of Task dirs re-runs Tasks and
+         * must find their dirs as they are. The scan runs in a virtual thread of its own, this method returns at once.
+         */
+        @Scheduled(initialDelay = 30, fixedDelay = 12 * 60, timeUnit = TimeUnit.MINUTES)
+        public void cleanTaskDirsByPolicies() {
+            if (globals.testing) {
+                return;
+            }
+            if (!globals.processor.enabled) {
+                return;
+            }
+            log.info("Start cleaning of Task dirs by policies");
+            processorTaskDirCleaner.startCleaningByPolicies();
         }
     }
 

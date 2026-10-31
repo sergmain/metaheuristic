@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 @Execution(CONCURRENT)
 public class FunctionConfigYamlCleaningPolicyTest {
 
-    private static FunctionConfigYaml createFunctionConfig(EnumsApi.@org.jspecify.annotations.Nullable CleaningPolicy cleaningPolicy) {
+    private static FunctionConfigYaml createFunctionConfig(@org.jspecify.annotations.Nullable String cleaningPolicy) {
         FunctionConfigYaml fc = new FunctionConfigYaml();
         fc.function.code = "fn:1.0";
         fc.function.type = "type";
@@ -47,19 +47,19 @@ public class FunctionConfigYamlCleaningPolicyTest {
 
     @Test
     public void test_cleaningPolicyAssets_roundTrip() {
-        String yaml = FunctionConfigYamlUtils.UTILS.toString(createFunctionConfig(EnumsApi.CleaningPolicy.ASSETS));
+        String yaml = FunctionConfigYamlUtils.UTILS.toString(createFunctionConfig("ASSETS"));
         FunctionConfigYaml loaded = FunctionConfigYamlUtils.UTILS.to(yaml);
 
         assertEquals(3, loaded.version);
-        assertEquals(EnumsApi.CleaningPolicy.ASSETS, loaded.function.cleaningPolicy);
+        assertEquals("ASSETS", loaded.function.cleaningPolicy);
     }
 
     @Test
     public void test_cleaningPolicyAll_roundTrip() {
-        String yaml = FunctionConfigYamlUtils.UTILS.toString(createFunctionConfig(EnumsApi.CleaningPolicy.ALL));
+        String yaml = FunctionConfigYamlUtils.UTILS.toString(createFunctionConfig("ALL"));
         FunctionConfigYaml loaded = FunctionConfigYamlUtils.UTILS.to(yaml);
 
-        assertEquals(EnumsApi.CleaningPolicy.ALL, loaded.function.cleaningPolicy);
+        assertEquals("ALL", loaded.function.cleaningPolicy);
     }
 
     @Test
@@ -76,14 +76,14 @@ public class FunctionConfigYamlCleaningPolicyTest {
         v3.function.code = "fn:1.0";
         v3.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         v3.function.assetDir = "assets";
-        v3.function.cleaningPolicy = EnumsApi.CleaningPolicy.ASSETS;
+        v3.function.cleaningPolicy = "ASSETS";
         v3.function.targets.put(CommonConsts.MH_DEFAULT_OS_KEY, new FunctionConfigYamlV3.TargetV3("src", "call-cc.jar"));
 
         String yamlV3 = new FunctionConfigYamlUtilsV3().toString(v3);
         assertTrue(yamlV3.contains("cleaningPolicy"), yamlV3);
 
         FunctionConfigYaml loaded = FunctionConfigYamlUtils.UTILS.to(yamlV3);
-        assertEquals(EnumsApi.CleaningPolicy.ASSETS, loaded.function.cleaningPolicy);
+        assertEquals("ASSETS", loaded.function.cleaningPolicy);
     }
 
     @Test
@@ -102,8 +102,8 @@ public class FunctionConfigYamlCleaningPolicyTest {
 
     @Test
     public void test_toFunctionConfig_propagatesCleaningPolicy() {
-        TaskParamsYaml.FunctionConfig trg = TaskParamsUtils.toFunctionConfig(createFunctionConfig(EnumsApi.CleaningPolicy.ASSETS));
-        assertEquals(EnumsApi.CleaningPolicy.ASSETS, trg.cleaningPolicy);
+        TaskParamsYaml.FunctionConfig trg = TaskParamsUtils.toFunctionConfig(createFunctionConfig("ASSETS"));
+        assertEquals("ASSETS", trg.cleaningPolicy);
     }
 
     @Test
@@ -118,11 +118,62 @@ public class FunctionConfigYamlCleaningPolicyTest {
         t.task.processCode = "p1";
         t.task.execContextId = 1L;
         t.task.context = EnumsApi.FunctionExecContext.external;
-        t.task.function = TaskParamsUtils.toFunctionConfig(createFunctionConfig(EnumsApi.CleaningPolicy.ASSETS));
+        t.task.function = TaskParamsUtils.toFunctionConfig(createFunctionConfig("ASSETS"));
 
         String yaml = TaskParamsYamlUtils.UTILS.toString(t);
         TaskParamsYaml loaded = TaskParamsYamlUtils.UTILS.to(yaml);
 
-        assertEquals(EnumsApi.CleaningPolicy.ASSETS, loaded.task.function.cleaningPolicy);
+        assertEquals("ASSETS", loaded.task.function.cleaningPolicy);
+    }
+
+    @Test
+    public void test_cleaningPolicyList_roundTrip() {
+        String yaml = FunctionConfigYamlUtils.UTILS.toString(createFunctionConfig("ASSETS, FULL_AFTER_ONE_WEEK"));
+        FunctionConfigYaml loaded = FunctionConfigYamlUtils.UTILS.to(yaml);
+
+        assertEquals("ASSETS, FULL_AFTER_ONE_WEEK", loaded.function.cleaningPolicy);
+    }
+
+    @Test
+    public void test_cleaningPolicyList_asWrittenInDescriptor() {
+        // the form of mh-function.yaml - an unquoted scalar with a comma
+        String yaml = """
+                version: 3
+                function:
+                  code: fn:1.0
+                  type: type
+                  sourcing: dispatcher
+                  targets:
+                    mh-default:
+                      src: src
+                      file: call-cc.jar
+                  cleaningPolicy: ASSETS, FULL_AFTER_ONE_WEEK
+                """;
+        FunctionConfigYaml loaded = FunctionConfigYamlUtils.UTILS.to(yaml);
+
+        assertEquals("ASSETS, FULL_AFTER_ONE_WEEK", loaded.function.cleaningPolicy);
+    }
+
+    @Test
+    public void test_cleaningPolicyWithUnknownName_isRefused() {
+        FunctionConfigYaml fc = createFunctionConfig("ASSETS, FULL_AFTER_A_WEEK");
+        RuntimeException e = assertThrows(RuntimeException.class, fc::checkIntegrity);
+        assertTrue(e.getMessage().contains("FULL_AFTER_A_WEEK"), e.getMessage());
+    }
+
+    @Test
+    public void test_taskParamsYaml_withEnumEraCleaningPolicy_isReadAsString() {
+        // task params stored before the field became a list carry one name - it must be read as is
+        TaskParamsYaml t = new TaskParamsYaml();
+        t.task.processCode = "p1";
+        t.task.execContextId = 1L;
+        t.task.context = EnumsApi.FunctionExecContext.external;
+        t.task.function = TaskParamsUtils.toFunctionConfig(createFunctionConfig("ASSETS, FULL_AFTER_ONE_WEEK"));
+
+        String yaml = TaskParamsYamlUtils.UTILS.toString(t);
+        assertTrue(yaml.contains("cleaningPolicy: ASSETS, FULL_AFTER_ONE_WEEK"), yaml);
+        TaskParamsYaml loaded = TaskParamsYamlUtils.UTILS.to(yaml.replace("cleaningPolicy: ASSETS, FULL_AFTER_ONE_WEEK", "cleaningPolicy: ASSETS"));
+
+        assertEquals("ASSETS", loaded.task.function.cleaningPolicy);
     }
 }
