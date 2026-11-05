@@ -26,6 +26,7 @@ import lombok.ToString;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.LongPredicate;
 
 /**
  * Data classes for the dispatcher Key Vault.
@@ -35,19 +36,41 @@ import java.util.List;
  */
 public class VaultData {
 
-    /** Status of the vault — whether it is currently unlocked in dispatcher memory. */
+    /**
+     * Whether one company's vault is currently unlocked in dispatcher memory. A company that has no vault
+     * at all is not opened.
+     */
+    public record CompanyVaultStatus(long companyId, boolean opened) {
+        public static CompanyVaultStatus of(long companyId, LongPredicate isOpened) {
+            return new CompanyVaultStatus(companyId, isOpened.test(companyId));
+        }
+    }
+
+    /**
+     * Status of the vault — whether it is currently unlocked in dispatcher memory.
+     *
+     * <p>Two vaults are reported: {@code management} is the vault of the management company
+     * ({@code companyId}=1), {@code current} is the vault of the current user's company. When the current
+     * user belongs to the management company, both report the same vault. Both are null only on a
+     * deserialized error response.
+     */
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class VaultStatus extends BaseDataClass {
-        public boolean opened;
+        @Nullable
+        public CompanyVaultStatus management;
+        @Nullable
+        public CompanyVaultStatus current;
 
-        public VaultStatus(boolean opened) {
-            this.opened = opened;
+        public VaultStatus(CompanyVaultStatus management, CompanyVaultStatus current) {
+            this.management = management;
+            this.current = current;
         }
 
-        public VaultStatus(boolean opened, String error) {
-            this.opened = opened;
+        public VaultStatus(CompanyVaultStatus management, CompanyVaultStatus current, String error) {
+            this.management = management;
+            this.current = current;
             addErrorMessage(error);
         }
 

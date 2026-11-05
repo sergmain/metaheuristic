@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.VaultData;
 import ai.metaheuristic.ai.dispatcher.vault.VaultBootUnlockService;
@@ -64,10 +65,15 @@ public class VaultRestController {
     private final UserContextService userContextService;
     private final VaultBootUnlockService vaultBootUnlockService;
 
+    /**
+     * Two statuses: the vault of the management company and the vault of the current user's company.
+     */
     @GetMapping("/status")
     public VaultData.VaultStatus status(Authentication authentication) {
         UserContext ctx = userContextService.getContext(authentication);
-        return new VaultData.VaultStatus(vaultService.isOpened(ctx.getCompanyId()));
+        return new VaultData.VaultStatus(
+                VaultData.CompanyVaultStatus.of(Consts.MANAGEMENT_COMPANY_ID, vaultService::isOpened),
+                VaultData.CompanyVaultStatus.of(ctx.getCompanyId(), vaultService::isOpened));
     }
 
     @PostMapping("/unlock")
