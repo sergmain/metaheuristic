@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.southbridge;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -111,10 +112,11 @@ public class AssetFileService {
      * {@code AssetUtils.prepareFileForVariable(dispatcherTempPath, "variable-<id>", ...)}.
      *
      * The path is {@code <dispatcherTempPath>/variable/variable-<variableId>}.
+     * Since layout v2 it is {@code <dispatcherTempPath>/variable/v2/<power10>/<power7>/<power4>/variable-<variableId>},
+     * the dir from {@link AssetUtils#getVariableCacheDir(Path, long)} - the same one deliverVariable uses.
      */
     private Path resolveAssetFile(Long variableId) {
-        return globals.dispatcherTempPath
-                .resolve(EnumsApi.DataType.variable.toString())
+        return AssetUtils.getVariableCacheDir(globals.dispatcherTempPath, variableId)
                 .resolve("" + EnumsApi.DataType.variable + '-' + variableId);
     }
 }

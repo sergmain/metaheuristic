@@ -150,7 +150,7 @@ public class TestSouthbridgeDeliverVariableStaleCache {
                 "first delivery must have invoked the data saver exactly once (cache miss)");
 
         // Verify the asset file was created on disk at the expected path
-        Path assetFile = dispatcherTempPath.resolve("variable").resolve("variable-" + variableId);
+        Path assetFile = dispatcherTempPath.resolve("variable").resolve("v2").resolve("0").resolve("0").resolve("1241").resolve("variable-" + variableId);
         assertTrue(Files.exists(assetFile), "asset file must exist on disk after first delivery");
         assertEquals(ORIGINAL_CONTENT, Files.readString(assetFile, StandardCharsets.UTF_8),
                 "asset file on disk must contain the original content");
@@ -240,7 +240,7 @@ public class TestSouthbridgeDeliverVariableStaleCache {
         assertEquals(ORIGINAL_CONTENT, firstDelivered);
         assertEquals(1, dataSaverInvocations.get());
 
-        Path assetFile = dispatcherTempPath.resolve("variable").resolve("variable-" + variableId);
+        Path assetFile = dispatcherTempPath.resolve("variable").resolve("v2").resolve("0").resolve("0").resolve("2242").resolve("variable-" + variableId);
         assertTrue(Files.exists(assetFile));
 
         // Phase 2: DB update AND cache invalidation (delete the asset file)

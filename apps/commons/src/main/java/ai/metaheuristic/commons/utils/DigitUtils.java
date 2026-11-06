@@ -22,13 +22,31 @@ public class DigitUtils {
 
     public static final int DIV = 10_000;
 
+    // the divisor of the middle level of getPower3(): its power7 holds the 3 digits above power4
+    public static final int DIV_MIDDLE = 1_000;
+
     @AllArgsConstructor
     public static class Power {
         public long power7;
         public long power4;
     }
 
+    /**
+     * Three levels of a number:
+     * power4 - num % 10_000, the same as power4 of {@link #getPower(long)};
+     * power7 - num / 10_000 % 1_000, the next 3 digits;
+     * power10 - num / 10_000_000, everything above them.
+     * 112222 -> 0, 11, 2222; 123456789 -> 12, 345, 6789.
+     */
+    public record Power3(long power10, long power7, long power4) {}
+
     public static Power getPower(long num) {
         return new Power(num/DIV, num % DIV );
+    }
+
+    // the split of getPower() with its upper part divided once more
+    public static Power3 getPower3(long num) {
+        final Power power = getPower(num);
+        return new Power3(power.power7 / DIV_MIDDLE, power.power7 % DIV_MIDDLE, power.power4);
     }
 }

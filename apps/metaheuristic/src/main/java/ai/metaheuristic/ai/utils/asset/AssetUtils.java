@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
+import ai.metaheuristic.commons.utils.DigitUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,29 @@ public class AssetUtils {
      */
     public static AssetFile prepareFileForVariable(Path rootDir, String dataId, @Nullable String variableFilename, EnumsApi.DataType binaryType) {
         return prepareAssetFile(rootDir, dataId, variableFilename, binaryType.toString());
+    }
+
+    /**
+     * The top-level dir of the three-level layout of {@link #getVariableCacheDir(Path, long)}. 'v2' names the model
+     * of division of ids - {@link DigitUtils#getPower3(long)}. The flat layout before it,
+     * {@code <dispatcherTempPath>/variable/variable-<id>}, had no such dir.
+     */
+    public static final String VARIABLE_CACHE_V2_DIR = "v2";
+
+    /**
+     * The dir of the Dispatcher's on-disk cache of a local Variable's content:
+     * {@code <dispatcherTempPath>/variable/v2/<power10>/<power7>/<power4>} of {@link DigitUtils#getPower3(long)},
+     * e.g. {@code variable/v2/0/11/2222} for variableId 112222. The cached file in it is {@code variable-<id>}.
+     * Pure - computes the path, creates nothing.
+     */
+    public static Path getVariableCacheDir(Path dispatcherTempPath, long variableId) {
+        final DigitUtils.Power3 power = DigitUtils.getPower3(variableId);
+        return dispatcherTempPath
+            .resolve(EnumsApi.DataType.variable.toString())
+            .resolve(VARIABLE_CACHE_V2_DIR)
+            .resolve(Long.toString(power.power10()))
+            .resolve(Long.toString(power.power7()))
+            .resolve(Long.toString(power.power4()));
     }
 
     public static AssetFile prepareOutputAssetFile(Path rootDir, String dataId) {

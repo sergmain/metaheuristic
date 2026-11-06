@@ -144,7 +144,7 @@ public class SouthbridgeService {
     // Extracted so it can be exercised directly in characterization tests without
     // wiring the full dispatcher context.
     CleanerInfo deliverVariable(@Nullable Long taskId, final String dataId, @Nullable final String chunkSize, final int chunkNum) {
-        AssetFile assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath, "" + EnumsApi.DataType.variable + '-' + dataId, null, EnumsApi.DataType.variable);
+        AssetFile assetFile = AssetUtils.prepareAssetFile(AssetUtils.getVariableCacheDir(globals.dispatcherTempPath, Long.parseLong(dataId)), "" + EnumsApi.DataType.variable + '-' + dataId, null);
         if (assetFile.isError) {
             String es = "444.120 Resource with id " + dataId + " is broken";
             log.error(es);

@@ -122,7 +122,7 @@ public class TestAssetFileService {
 
         // Arrange: dispatcherTempPath with an existing stale asset file for variableId
         Path dispatcherTempPath = tempDir.resolve("dispatcher-temp");
-        Path variableDir = dispatcherTempPath.resolve("variable");
+        Path variableDir = dispatcherTempPath.resolve("variable").resolve("v2").resolve("0").resolve("0").resolve("1241");
         Files.createDirectories(variableDir);
         Path staleAssetFile = variableDir.resolve("variable-" + variableId);
         Files.writeString(staleAssetFile, "STALE-CONTENT-FROM-PREVIOUS-RUN", StandardCharsets.UTF_8);
@@ -156,8 +156,8 @@ public class TestAssetFileService {
 
         // Arrange: dispatcherTempPath exists but NO asset file for this variable
         Path dispatcherTempPath = tempDir.resolve("dispatcher-temp");
-        Files.createDirectories(dispatcherTempPath.resolve("variable"));
-        Path missingAssetFile = dispatcherTempPath.resolve("variable").resolve("variable-" + variableId);
+        Files.createDirectories(dispatcherTempPath.resolve("variable").resolve("v2").resolve("0").resolve("0").resolve("9999"));
+        Path missingAssetFile = dispatcherTempPath.resolve("variable").resolve("v2").resolve("0").resolve("0").resolve("9999").resolve("variable-" + variableId);
         assertFalse(Files.exists(missingAssetFile));
 
         Globals globals = new Globals();
@@ -183,7 +183,7 @@ public class TestAssetFileService {
         final long variableId = 4242L;
 
         Path dispatcherTempPath = tempDir.resolve("dispatcher-temp");
-        Path variableDir = dispatcherTempPath.resolve("variable");
+        Path variableDir = dispatcherTempPath.resolve("variable").resolve("v2").resolve("0").resolve("0").resolve("4242");
         Files.createDirectories(variableDir);
         Path staleAssetFile = variableDir.resolve("variable-" + variableId);
         Files.writeString(staleAssetFile, "STALE", StandardCharsets.UTF_8);
