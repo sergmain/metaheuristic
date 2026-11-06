@@ -28,6 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * DigitUtils.getPower3: power10 = num / 10_000_000, power7 = num / 10_000 % 1_000, power4 = num % 10_000.
  * The layout v2 of the Dispatcher's variable cache depends on this split - a change here moves every cached file.
+ * 2026-11-06: the middle level is 4 digits: power10 = num / 100_000_000, power7 = num / 10_000 % 10_000, power4 = num % 10_000,
+ * i.e. 0-n / 0-9999 / 0-9999 - 123456789 -> 1/2345/6789.
  */
 @Execution(ExecutionMode.CONCURRENT)
 public class DigitUtilsTest {
@@ -46,7 +48,7 @@ public class DigitUtilsTest {
     @Test
     public void test_constants() {
         assertEquals(10_000, DigitUtils.DIV, "Value of DigitUtils.DIV was changed, must be always 10_000");
-        assertEquals(1_000, DigitUtils.DIV_MIDDLE, "Value of DigitUtils.DIV_MIDDLE was changed, must be always 1_000");
+        assertEquals(10_000, DigitUtils.DIV_MIDDLE, "Value of DigitUtils.DIV_MIDDLE was changed, must be always 10_000");
     }
 
     @Test
@@ -57,8 +59,8 @@ public class DigitUtilsTest {
 
     @Test
     public void test_getPower3_allThreeLevelsNonZero() {
-        assertPower3(123_456_789L, 12, 345, 6789);
-        assertPower3(9_876_543_210L, 987, 654, 3210);
+        assertPower3(123_456_789L, 1, 2345, 6789);
+        assertPower3(9_876_543_210L, 98, 7654, 3210);
     }
 
     @Test
@@ -78,21 +80,25 @@ public class DigitUtilsTest {
     @Test
     public void test_getPower3_boundaryOfPower7() {
         assertPower3(9_999_999L, 0, 999, 9999);
-        assertPower3(10_000_000L, 1, 0, 0);
-        assertPower3(10_000_001L, 1, 0, 1);
+        assertPower3(10_000_000L, 0, 1000, 0);
+        assertPower3(10_000_001L, 0, 1000, 1);
+        assertPower3(99_999_999L, 0, 9999, 9999);
+        assertPower3(100_000_000L, 1, 0, 0);
+        assertPower3(100_000_001L, 1, 0, 1);
     }
 
     @Test
     public void test_getPower3_maxLong() {
         // 9223372036854775807 = 922337203685 * 10^7 + 477 * 10^4 + 5807
-        assertPower3(Long.MAX_VALUE, 922_337_203_685L, 477, 5807);
+        // 2026-11-06, 4-digit middle level: 9223372036854775807 = 92233720368 * 10^8 + 5477 * 10^4 + 5807
+        assertPower3(Long.MAX_VALUE, 92_233_720_368L, 5477, 5807);
     }
 
     @Test
     public void test_getPower3_levelsReconstructTheNumber() {
         for (long num : NUMS) {
             final DigitUtils.Power3 p = DigitUtils.getPower3(num);
-            assertEquals(num, p.power10() * 10_000_000L + p.power7() * 10_000L + p.power4(), num + ": reconstructed");
+            assertEquals(num, p.power10() * 100_000_000L + p.power7() * 10_000L + p.power4(), num + ": reconstructed");
         }
     }
 
@@ -100,7 +106,7 @@ public class DigitUtilsTest {
     public void test_getPower3_levelsAreInRange() {
         for (long num : NUMS) {
             final DigitUtils.Power3 p = DigitUtils.getPower3(num);
-            assertTrue(p.power7() >= 0 && p.power7() < 1_000, num + ": power7 in [0, 1000), was " + p.power7());
+            assertTrue(p.power7() >= 0 && p.power7() < 10_000, num + ": power7 in [0, 10000), was " + p.power7());
             assertTrue(p.power4() >= 0 && p.power4() < 10_000, num + ": power4 in [0, 10000), was " + p.power4());
         }
     }
@@ -111,7 +117,7 @@ public class DigitUtilsTest {
             final DigitUtils.Power p2 = DigitUtils.getPower(num);
             final DigitUtils.Power3 p3 = DigitUtils.getPower3(num);
             assertEquals(p2.power4, p3.power4(), num + ": power4 of both splits");
-            assertEquals(p2.power7, p3.power10() * 1_000 + p3.power7(), num + ": upper part of getPower = power10, power7 of getPower3");
+            assertEquals(p2.power7, p3.power10() * 10_000 + p3.power7(), num + ": upper part of getPower = power10, power7 of getPower3");
         }
     }
 }

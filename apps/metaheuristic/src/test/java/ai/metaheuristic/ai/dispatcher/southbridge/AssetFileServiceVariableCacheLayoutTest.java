@@ -86,7 +86,7 @@ public class AssetFileServiceVariableCacheLayoutTest {
     public void test_deleteAssetFile_variable123456789(@TempDir Path tempDir) {
         final Path dispatcherTempPath = tempDir.resolve("dispatcher-temp");
         final Path flat = cached(flatFile(dispatcherTempPath, 123456789L));
-        final Path v2 = cached(v2File(dispatcherTempPath, "12", "345", "6789", 123456789L));
+        final Path v2 = cached(v2File(dispatcherTempPath, "1", "2345", "6789", 123456789L));
 
         assetFileService(dispatcherTempPath).deleteAssetFile(123456789L);
 
@@ -110,7 +110,7 @@ public class AssetFileServiceVariableCacheLayoutTest {
     public void test_deleteAssetFile_variable10000000(@TempDir Path tempDir) {
         final Path dispatcherTempPath = tempDir.resolve("dispatcher-temp");
         final Path flat = cached(flatFile(dispatcherTempPath, 10_000_000L));
-        final Path v2 = cached(v2File(dispatcherTempPath, "1", "0", "0", 10_000_000L));
+        final Path v2 = cached(v2File(dispatcherTempPath, "0", "1000", "0", 10_000_000L));
 
         assetFileService(dispatcherTempPath).deleteAssetFile(10_000_000L);
 

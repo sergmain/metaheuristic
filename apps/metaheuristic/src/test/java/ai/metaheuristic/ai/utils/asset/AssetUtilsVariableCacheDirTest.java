@@ -52,7 +52,7 @@ public class AssetUtilsVariableCacheDirTest {
     @Test
     public void test_allThreeLevelsNonZero() {
         final Path base = Path.of("mh-home", "dispatcher", "temp");
-        assertEquals(expected(base, "12", "345", "6789"), AssetUtils.getVariableCacheDir(base, 123_456_789L));
+        assertEquals(expected(base, "1", "2345", "6789"), AssetUtils.getVariableCacheDir(base, 123_456_789L));
     }
 
     @Test
@@ -61,7 +61,8 @@ public class AssetUtilsVariableCacheDirTest {
         assertEquals(expected(base, "0", "0", "42"), AssetUtils.getVariableCacheDir(base, 42L));
         assertEquals(expected(base, "0", "1", "0"), AssetUtils.getVariableCacheDir(base, 10_000L));
         assertEquals(expected(base, "0", "999", "9999"), AssetUtils.getVariableCacheDir(base, 9_999_999L));
-        assertEquals(expected(base, "1", "0", "0"), AssetUtils.getVariableCacheDir(base, 10_000_000L));
+        assertEquals(expected(base, "0", "1000", "0"), AssetUtils.getVariableCacheDir(base, 10_000_000L));
+        assertEquals(expected(base, "1", "0", "0"), AssetUtils.getVariableCacheDir(base, 100_000_000L));
     }
 
     @Test
