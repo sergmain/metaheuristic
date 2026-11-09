@@ -136,7 +136,7 @@ public class ProcessorTaskService {
        long mills = System.currentTimeMillis();
        init(processorPath);
        long endMills = System.currentTimeMillis();
-       log.info("713.020 ProcessorTaskService.postConstruct() was finished for {} milliseconds", endMills - mills);
+       log.warn("01.713.020 ProcessorTaskService.postConstruct() was finished for {} milliseconds", endMills - mills);
        //noinspection unused
        int i = 0;
     }
