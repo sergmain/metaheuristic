@@ -134,15 +134,20 @@ public class ProcessorTaskService {
        }
        this.processorPath = globals.processorPath;
        long mills = System.currentTimeMillis();
-       init(processorPath);
+       final long totalTasks = init(processorPath);
        long endMills = System.currentTimeMillis();
-       log.warn("01.713.020 ProcessorTaskService.postConstruct() was finished for {} milliseconds", endMills - mills);
+       log.warn("01.713.020 ProcessorTaskService.postConstruct() was finished for {} milliseconds, total Tasks: {}", endMills - mills, totalTasks);
        //noinspection unused
        int i = 0;
     }
 
+    /**
+     * The startup scan of Task dirs.
+     *
+     * @return the number of Task dirs found on disk - loaded, of FINISHED ExecContexts and not valid alike, see collectTaskDir()
+     */
     @SneakyThrows
-    private void init(Path processorPath) {
+    private long init(Path processorPath) {
         // stage 1 - the dirs of Tasks which don't belong to a FINISHED ExecContext, see collectTaskDir()
         final LinkedList<CompletableFuture<@Nullable TaskDir>> collected = new LinkedList<>();
         // stage 2 - what's done with the dir of each collected Task, see processTaskDir()
@@ -201,6 +206,7 @@ public class ProcessorTaskService {
         if (ofFinished.sum() > 0) {
             log.info("01.713.700 {} Task(s) of FINISHED ExecContexts weren't loaded, their dirs are kept as is", ofFinished.sum());
         }
+        return collected.size();
     }
 
     /** a dir of a Task which goes to stage 2 of the startup scan, processTaskDir() */

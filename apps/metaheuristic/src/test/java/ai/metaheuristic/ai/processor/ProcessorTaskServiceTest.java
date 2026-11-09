@@ -650,4 +650,26 @@ class ProcessorTaskServiceTest {
         assertNotNull(restarted.service().findByIdForCore(restarted.core(), 9972L));
         assertEquals(List.of(9972L), tasksSelectedForExecution(restarted));
     }
+
+    // ---- 01.713.020: what the startup scan reports about itself (the user, 2026-11-09) ----
+
+    private static final String SCAN_FINISHED = "01.713.020 ";
+
+    @Test
+    public void test_postConstruct_reportsTheTotalNumberOfTasks(@TempDir Path processorPath) throws IOException {
+        final StartedProcessor first = startStandaloneProcessor(processorPath);
+        // 7 Task dirs - a count no other @Test of this class seeds: the logger is shared by @Test methods running concurrently
+        for (long taskId = 9751L; taskId <= 9757L; taskId++) {
+            seedTaskOnDisk(first, newTask(first, taskId));
+        }
+
+        final Restart restart = restartCapturingLog(processorPath);
+
+        final List<String> lines = restart.messages().stream().filter(m -> m.startsWith(SCAN_FINISHED)).toList();
+        assertFalse(lines.isEmpty(), "the startup scan must report itself, captured: " + restart.messages());
+        // (Green-1 pinned: the line reported the time of the scan only.)
+        // Red: it also reports the number of Task dirs the scan found - the 7 seeded above
+        assertTrue(lines.stream().anyMatch(m -> m.matches("01\\.713\\.020 ProcessorTaskService\\.postConstruct\\(\\) was finished for \\d+ milliseconds, total Tasks: 7")),
+            lines.toString());
+    }
 }

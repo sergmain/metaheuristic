@@ -29,6 +29,7 @@ import java.util.Set;
 import static ai.metaheuristic.ai.processor.ArtifactCleanerAtProcessor.cleaningAction;
 import static ai.metaheuristic.ai.processor.ArtifactCleanerAtProcessor.cleaningPoliciesOf;
 import static ai.metaheuristic.ai.processor.ArtifactCleanerAtProcessor.isAssetDirCleaningRequired;
+import static ai.metaheuristic.ai.processor.ArtifactCleanerAtProcessor.isStartupDelayOver;
 import static ai.metaheuristic.ai.processor.ArtifactCleanerAtProcessor.isTaskDirCleaningRequired;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -54,6 +55,34 @@ public class ArtifactCleanerAtProcessorTest {
     @Test
     public void test_taskDirCleaning_clean() {
         assertTrue(isTaskDirCleaningRequired(true, NONE, true, FINISHED_ON, FINISHED_ON));
+    }
+
+    // ---- no Task is deleted during the first 25 minutes after the start of MH (the user, 2026-11-09) ----
+
+    private static final long STARTED_ON = 1_800_000_000_000L;
+    private static final long MINUTE = Duration.ofMinutes(1).toMillis();
+
+    @Test
+    public void test_startupDelay_is25Minutes() {
+        assertEquals(Duration.ofMinutes(25), ArtifactCleanerAtProcessor.STARTUP_DELAY);
+    }
+
+    @Test
+    public void test_startupDelay_notOverWithin25Minutes() {
+        assertFalse(isStartupDelayOver(STARTED_ON, STARTED_ON), "right at the start");
+        assertFalse(isStartupDelayOver(STARTED_ON, STARTED_ON + 2 * MINUTE), "after a startup scan of ~2 minutes");
+        assertFalse(isStartupDelayOver(STARTED_ON, STARTED_ON + 25 * MINUTE - 1), "one millisecond before the end of the delay");
+    }
+
+    @Test
+    public void test_startupDelay_overFrom25Minutes() {
+        assertTrue(isStartupDelayOver(STARTED_ON, STARTED_ON + 25 * MINUTE), "at the end of the delay");
+        assertTrue(isStartupDelayOver(STARTED_ON, STARTED_ON + 12 * 60 * MINUTE));
+    }
+
+    @Test
+    public void test_startupDelay_aClockBeforeTheStart_isNotOver() {
+        assertFalse(isStartupDelayOver(STARTED_ON, STARTED_ON - 30 * MINUTE), "a clock set back must not open the delay");
     }
 
     @Test

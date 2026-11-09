@@ -34,9 +34,12 @@ import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.lang.management.ManagementFactory;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -52,6 +55,52 @@ public class ArtifactCleanerAtProcessor {
     private final CurrentExecState currentExecState;
     private final Globals globals;
     private final ProcessorEnvironment processorEnvironment;
+
+    /**
+     * No Task is deleted during the first 25 minutes after the start of MH (the user, 2026-11-09): a start with ~100k
+     * Task dirs must not compete with the deletion of obsolete ones. Judged from the start of the JVM, so the startup
+     * scan of Task dirs - ProcessorTaskService.postConstruct(), minutes long on such a box - is inside the delay.
+     */
+    public static final Duration STARTUP_DELAY = Duration.ofMinutes(25);
+
+    // the start of MH - of the JVM - see isStartupDelayOver()
+    private final long startedOn = ManagementFactory.getRuntimeMXBean().getStartTime();
+
+    private final AtomicBoolean inProgress = new AtomicBoolean();
+
+    /**
+     * Starts fixedDelay() in a virtual thread of its own and returns at once - a pass over every Task with a dir may take
+     * minutes, and the thread of a scheduler must not be held for that long. Nothing is started before STARTUP_DELAY has
+     * passed since the start of MH, and a pass which is still running isn't started a second time.
+     */
+    public void startCleaning() {
+        if (!isStartupDelayOver(startedOn, System.currentTimeMillis())) {
+            return;
+        }
+        if (!inProgress.compareAndSet(false, true)) {
+            log.info("01.339.040 the previous cleaning of Task dirs is still in progress");
+            return;
+        }
+        Thread.ofVirtual().name("artifact-cleaner").start(() -> {
+            try {
+                fixedDelay();
+            }
+            catch (Throwable th) {
+                log.error("01.339.060 Error while cleaning Task dirs", th);
+            }
+            finally {
+                inProgress.set(false);
+            }
+        });
+    }
+
+    /**
+     * Whether STARTUP_DELAY has passed between 'startedOn' and 'now', both in milliseconds. Static and free of any state
+     * on purpose - it's testable without a Spring context.
+     */
+    public static boolean isStartupDelayOver(long startedOn, long now) {
+        return now - startedOn >= STARTUP_DELAY.toMillis();
+    }
 
     @SneakyThrows
     public void fixedDelay() {

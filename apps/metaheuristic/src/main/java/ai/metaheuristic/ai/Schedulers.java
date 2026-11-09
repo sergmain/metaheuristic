@@ -584,8 +584,8 @@ public class Schedulers {
             if (globals.testing || !globals.processor.enabled) {
                 return;
             }
-            log.info("Run artifactCleaner.fixedDelay()");
-            artifactCleaner.fixedDelay();
+            log.info("Run artifactCleaner.startCleaning()");
+            artifactCleaner.startCleaning();
         }
     }
 
