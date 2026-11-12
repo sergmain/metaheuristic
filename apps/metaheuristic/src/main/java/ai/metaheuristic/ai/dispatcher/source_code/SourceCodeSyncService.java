@@ -111,4 +111,17 @@ public class SourceCodeSyncService {
             lock.unlock();
         }
     }
+
+    public static void getWithSyncVoid(Long sourceCodeId, Runnable runnable) {
+        TxUtils.checkTxNotExists();
+        checkWriteLockNotPresent(sourceCodeId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(sourceCodeId);
+        try {
+            lock.lock();
+            runnable.run();
+        } finally {
+            lock.unlock();
+        }
+    }
 }

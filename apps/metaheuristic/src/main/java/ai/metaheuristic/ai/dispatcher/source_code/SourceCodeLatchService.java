@@ -32,6 +32,10 @@ import java.util.Map;
  * Latch format: code:latch_count[;code:latch_count] with 0..N pairs.
  * Empty string means no latches.
  *
+ * <p>Non-transactional: every call takes {@link SourceCodeSyncService}'s write lock of the SourceCode and runs the
+ * write transaction of {@link SourceCodeLatchTxService} inside it, so parallel latch writers on one SourceCode are
+ * serialized instead of racing on the row's @Version. Must be called with no transaction open.
+ *
  * @author Sergio Lissner
  * Date: 2/28/2026
  */
@@ -41,58 +45,26 @@ import java.util.Map;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SourceCodeLatchService {
 
-    private final SourceCodeCache sourceCodeCache;
+    private final SourceCodeLatchTxService sourceCodeLatchTxService;
 
     /**
      * Increase latch count for a specific code on a SourceCode.
      */
-    @Transactional
     public void increaseLatch(Long sourceCodeId, String code) {
-        SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
-        if (sourceCode == null) {
-            log.warn("566.060 SourceCode not found for id: {}, can't increase latch for code '{}'", sourceCodeId, code);
-            return;
-        }
-        Map<String, Integer> map = SourceCodeUtils.parseLatch(sourceCode.latch);
-        map.merge(code, 1, Integer::sum);
-        sourceCode.latch = SourceCodeUtils.serializeLatch(map);
-        sourceCodeCache.save(sourceCode);
+        SourceCodeSyncService.getWithSyncVoid(sourceCodeId, () -> sourceCodeLatchTxService.increaseLatch(sourceCodeId, code));
     }
 
     /**
      * Decrease latch count for a specific code on a SourceCode.
      */
-    @Transactional
     public void decreaseLatch(Long sourceCodeId, String code) {
-        SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
-        if (sourceCode == null) {
-            log.warn("566.080 SourceCode not found for id: {}, can't decrease latch for code '{}'", sourceCodeId, code);
-            return;
-        }
-        Map<String, Integer> map = SourceCodeUtils.parseLatch(sourceCode.latch);
-        Integer current = map.get(code);
-        if (current == null || current <= 0) {
-            log.warn("566.100 Latch count for code '{}' is already 0 or absent on SourceCode #{}", code, sourceCodeId);
-            return;
-        }
-        map.put(code, current - 1);
-        sourceCode.latch = SourceCodeUtils.serializeLatch(map);
-        sourceCodeCache.save(sourceCode);
+        SourceCodeSyncService.getWithSyncVoid(sourceCodeId, () -> sourceCodeLatchTxService.decreaseLatch(sourceCodeId, code));
     }
 
     /**
      * Reset (remove) latch for a specific code on a SourceCode.
      */
-    @Transactional
     public void resetLatch(Long sourceCodeId, String code) {
-        SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
-        if (sourceCode == null) {
-            log.warn("566.120 SourceCode not found for id: {}, can't reset latch for code '{}'", sourceCodeId, code);
-            return;
-        }
-        Map<String, Integer> map = SourceCodeUtils.parseLatch(sourceCode.latch);
-        map.remove(code);
-        sourceCode.latch = SourceCodeUtils.serializeLatch(map);
-        sourceCodeCache.save(sourceCode);
+        SourceCodeSyncService.getWithSyncVoid(sourceCodeId, () -> sourceCodeLatchTxService.resetLatch(sourceCodeId, code));
     }
 }
