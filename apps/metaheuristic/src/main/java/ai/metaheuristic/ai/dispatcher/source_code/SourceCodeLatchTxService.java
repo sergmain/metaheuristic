@@ -34,7 +34,7 @@ import java.util.Map;
  * SourceCode to be held by the caller across the whole call, commit included, so the next writer reads what this one
  * committed. {@link SourceCodeLatchService} is the non-transactional entry point that takes the lock.
  *
- * <p>Error code prefix: {@code 01.566.}
+ * <p>Error code prefix: {@code 01.566.} (unique to this class).
  *
  * @author Sergio Lissner
  * Date: 11/12/2026

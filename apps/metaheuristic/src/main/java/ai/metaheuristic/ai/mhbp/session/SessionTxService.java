@@ -42,6 +42,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
+ * <p>Error code prefix: {@code 01.572.} (unique to this class).
+ *
  * @author Sergio Lissner
  * Date: 3/22/2023
  * Time: 2:51 AM
@@ -83,7 +85,7 @@ public class SessionTxService {
         Session sourceCode = sessionRepository.findById(sessionId).orElse(null);
         if (sourceCode == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.OK,
-                    "566.200 session wasn't found, sessionId: " + sessionId, null);
+                    "01.572.200 session wasn't found, sessionId: " + sessionId, null);
         }
         sessionRepository.deleteById(sessionId);
         return OperationStatusRest.OPERATION_STATUS_OK;
